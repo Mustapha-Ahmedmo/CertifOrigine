@@ -1,0 +1,26 @@
+.menu {
+    width: 200px;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .menu .logo {
+    width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+  }
+  
+  .menu ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .menu ul li {
+    margin: 10px 0;
+  }
+  
+  .menu ul li a {
+    text-decoration: none;
+    color: #333;
+  }
+  

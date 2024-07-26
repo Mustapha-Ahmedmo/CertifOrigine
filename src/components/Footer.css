@@ -1,0 +1,24 @@
+.footer {
+    background-color: #000;
+    color: #fff;
+    padding: 5px 20px;  /* Adjusted padding */
+    text-align: center;
+    font-size: 12px;  /* Smaller font size */
+    height: 10px;  /* Fixed height */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+  }
+  
+  .footer a.footer-link {
+    color: #fff;
+    text-decoration: none;
+  }
+  
+  .footer a.footer-link:hover {
+    text-decoration: underline;
+  }
+  
