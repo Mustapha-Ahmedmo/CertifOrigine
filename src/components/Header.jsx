@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import cartIcon from '../assets/cart.jpg';
 import profileIcon from '../assets/profile.jpg';
 import './Header.css';
@@ -22,9 +23,9 @@ const Header = () => {
       <img src={profileIcon} alt="Profile" className="icon" onClick={toggleDropdown} />
       {dropdownOpen && (
         <div className={`dropdown ${dropdownOpen ? 'show' : ''}`}>
-          <a href="/profile">Profile</a>
-          <a href="/settings">Settings</a>
-          <a href="/logout">Logout</a>
+          <Link to="/profile">Profile</Link>
+          <Link to="/settings">Settings</Link>
+          <Link to="/login">Logout</Link>
         </div>
       )}
     </header>
