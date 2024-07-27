@@ -8,6 +8,7 @@ import Login from '../pages/Login';
 import MainLayout from '../components/MainLayout';
 import SimpleLayout from '../components/SimpleLayout';
 import './App.css';
+import ProtectedRoute from './ProtectedRoute';
 
 /*const App = () => {
   return (
@@ -33,7 +34,7 @@ export default App;*/
 const App = () => (
   <Routes>
     {/* Routes avec MainLayout */}
-    <Route path="/" element={<MainLayout />}>
+    <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
       <Route index element={<Home />} />
     </Route>
     {/* Routes avec SimpleLayout */}

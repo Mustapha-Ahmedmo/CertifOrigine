@@ -19,8 +19,19 @@
     margin: 10px 0;
   }
   
-  .menu ul li a {
+  .menu ul li a,
+  .menu ul li button {
     text-decoration: none;
     color: #333;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    text-align: left;
+  }
+  
+  .menu ul li button.logout-button {
+    color: red;
   }
   
