@@ -1,37 +1,104 @@
 .menu {
+    z-index: 100;
     width: 200px;
     padding: 20px;
+    background-color: #fff;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-  }
-  
-  .menu .logo {
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 100vh;
+}
+
+.menu .logo {
+    width: 150%; /* Augmentation de la taille du logo */
     height: auto;
     margin-bottom: 20px;
-  }
-  
-  .menu ul {
-    list-style-type: none;
+    display: block; /* Assurez-vous que le logo est centré si nécessaire */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.menu ul {
+    list-style: none;
     padding: 0;
-  }
-  
-  .menu ul li {
-    margin: 10px 0;
-  }
-  
-  .menu ul li a,
-  .menu ul li button {
+    margin: 0;
+    flex-grow: 1;
+}
+
+.menu ul li {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.menu ul li a,
+.menu-title {
     text-decoration: none;
     color: #333;
-    background: none;
-    border: none;
-    cursor: pointer;
     display: block;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 1rem; /* Taille de police d'origine */
+    transition: background-color 0.3s ease;
+}
+
+.menu-title {
+    cursor: pointer;
+    position: relative; /* Nécessaire pour positionner la flèche correctement */
+}
+
+.menu ul li a.active {
+    font-weight: bold;
+}
+
+.menu ul li a:hover,
+.submenu li a:hover {
+    background-color: #f0f0f0;
+}
+
+.arrow {
+    margin-left: 5px;
+    font-size: 0.5em; /* Plus petite flèche */
+    font-weight: normal; /* Moins grasse */
+    display: inline-block; /* Assure une meilleure manipulation des espaces */
+    transform: translateY(-2px); /* Alignement vertical */
+}
+
+.submenu {
+    list-style: none;
+    padding-left: 15px !important;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.submenu li {
+    margin-bottom: 10px;
+}
+
+.submenu li a {
+    padding: 8px;
+    font-size: 0.875rem !important; /* Police réduite de 2 par rapport à l'origine (0.875 rem au lieu de 1 rem) */
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #ccc;
+    margin: 15px 0;
+}
+
+.logout-button {
+    background-color: #ff0000;
+    color: #fff;
+    border: none;
+    padding: 10px;
     width: 100%;
-    text-align: left;
-  }
-  
-  .menu ul li button.logout-button {
-    color: red;
-  }
-  
+    cursor: pointer;
+    border-radius: 4px;
+    margin-top: 20px;
+    position: relative;
+    top: -2.5rem;
+}
+
+.logout-button:hover {
+    background-color: #cc0000;
+}

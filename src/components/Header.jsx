@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import cartIcon from '../assets/cart.jpg';
 import profileIcon from '../assets/profile.jpg';
+import mailIcon from '../assets/mail.jpg'; // Importez l'icône de mail
 import './Header.css';
 
 const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [cartItemCount, setCartItemCount] = useState(3); // Nombre d'articles dans le panier
+  const [mailNotificationCount, setMailNotificationCount] = useState(7); // Nombre de notifications de mail
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
@@ -13,14 +16,15 @@ const Header = () => {
 
   return (
     <header className="header">
-      <span className="company-name">Company Name</span>
-      <select className="select-company">
-        <option>Change Company</option>
-        <option>Company A</option>
-        <option>Company B</option>
-      </select>
-      <img src={cartIcon} alt="Cart" className="icon" />
-      <img src={profileIcon} alt="Profile" className="icon" onClick={toggleDropdown} />
+      <div className="icon-container">
+        <img src={mailIcon} alt="Mail" className="mail-icon" />
+        {mailNotificationCount > 0 && <span className="badge mail-badge">{mailNotificationCount}</span>}
+      </div>
+      <div className="icon-container">
+        <img src={cartIcon} alt="Cart" className="cart-icon" />
+        {cartItemCount > 0 && <span className="badge cart-badge">{cartItemCount}</span>}
+      </div>
+      <img src={profileIcon} alt="Profile" className="profile-icon" onClick={toggleDropdown} />
       {dropdownOpen && (
         <div className={`dropdown ${dropdownOpen ? 'show' : ''}`}>
           <Link to="/profile">Profile</Link>
