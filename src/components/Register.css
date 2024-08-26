@@ -1,0 +1,136 @@
+.register-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+  }
+  
+  .register-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .form-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  
+  .form-row-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .small-label {
+    flex: 1;
+  }
+  
+  .large-label {
+    flex: 2;
+  }
+  
+  .inline-input {
+    margin-left: 10px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  label {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9em;
+    color: #333;
+  }
+  
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9em;
+    margin-top: 5px;
+  }
+  
+  .toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  input[type="checkbox"] {
+    margin-right: 10px;
+  }
+  
+  .toggle-switch input[type="checkbox"] {
+    display: none;
+  }
+  
+  .toggle-label {
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    background-color: #ccc;
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+  }
+  
+  .toggle-slider {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+  }
+  
+  input[type="checkbox"]:checked + .toggle-label .toggle-slider {
+    transform: translateX(26px);
+  }
+  
+  .gender-label {
+    font-weight: bold;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  button[type="submit"] {
+    background-color: #28a745;
+    color: #fff;
+  }
+  
+  button[type="button"] {
+    background-color: #dc3545;
+    color: #fff;
+  }
+  
