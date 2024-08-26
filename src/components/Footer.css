@@ -1,71 +1,56 @@
 .footer {
-    background-color: #ffffff;
-    padding: 10px 20px; /* Réduction du padding pour un footer plus compact */
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
-  }
-  
-  .footer-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    max-width: 1200px;
-    margin: 0 auto;
-    flex-wrap: nowrap; /* Les sections restent sur une seule ligne */
-  }
-  
-  .footer-section {
-    flex: 1;
-    margin-right: 10px; /* Réduction de l'espacement entre les sections */
-    min-width: 150px; /* Réduction de la largeur minimale pour un design plus compact */
-  }
-  
-  .footer-section h4 {
-    font-size: 16px; /* Taille de police réduite pour les titres */
-    margin-bottom: 10px; /* Réduction de la marge inférieure */
-    color: #333;
-  }
-  
-  .footer-section ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .footer-section ul li {
-    margin-bottom: 5px; /* Réduction de la marge entre les éléments de liste */
-  }
-  
-  .footer-section ul li a {
-    text-decoration: none;
-    color: #666;
-    font-size: 14px; /* Taille de police réduite pour les liens */
-    transition: color 0.3s ease;
-  }
-  
-  .footer-section ul li a:hover {
-    color: #007bff;
-  }
-  
-  .footer-section p {
-    color: #666;
-    margin-bottom: 5px; /* Réduction de la marge inférieure pour les paragraphes */
-    font-size: 14px; /* Taille de police réduite pour les paragraphes */
-  }
-  
-  .footer-bottom {
-    text-align: center;
-    margin-top: 10px; /* Réduction de la marge supérieure */
-    padding-top: 10px; /* Réduction du padding supérieur */
-    border-top: 1px solid #ddd;
-    color: #999;
-  }
-  
-  .footer-bottom p {
-    margin: 0;
-    font-size: 12px; /* Taille de police réduite pour le texte de copyright */
-  }
-  
-  .footer-container > .footer-section:last-child {
-    margin-right: 0; /* Supprime la marge à droite du dernier élément */
-  }
-  
+  background-color: #ffffff; /* Fond blanc */
+  padding: 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.1); /* Ajoute une légère ombre pour la séparation */
+}
+
+.footer-container {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Centrer tout le contenu */
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 20px;
+}
+
+.footer-logo {
+  font-weight: bold; /* Optionnel : pour mettre en valeur le texte */
+  margin-right: 20px; /* Ajoute un espacement entre le texte et les autres informations */
+}
+
+.footer-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.footer-info > p, .footer-info > a {
+  margin: 0 15px;
+}
+
+
+.footer-link {
+  margin-bottom: 10px;
+  color: orange; /* Couleur orange pour le lien "Mentions légales" */
+  text-decoration: none;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+}
+
+.footer-email a {
+  color: orange; /* Couleur orange pour le lien email */
+  text-decoration: none;
+}
+
+.footer-email a:hover {
+  text-decoration: underline;
+}
