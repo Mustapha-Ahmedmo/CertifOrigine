@@ -41,6 +41,46 @@ const Menu = () => {
           <span className={`menu-title ${openMenu.dashboard ? 'open' : ''}`}>
             Tableau de bord <span className="arrow">▼</span>
           </span>
+          {openMenu.dashboard && (
+            <ul className="submenu">
+              <li>
+                <Link
+                  to="/to-complete"
+                  className={activeLink === 'completer' ? 'active' : ''}
+                  onClick={() => handleLinkClick('dashboard', 'completer')}
+                >
+                  Commandes à compléter
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/to-pay"
+                  className={activeLink === 'payer' ? 'active' : ''}
+                  onClick={() => handleLinkClick('dashboard', 'payer')}
+                >
+                  Commandes à payer
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/returned-orders"
+                  className={activeLink === 'retourne' ? 'active' : ''}
+                  onClick={() => handleLinkClick('dashboard', 'retourne')}
+                >
+                  Commandes retourné
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/completed-orders-this-year"
+                  className={activeLink === 'completedThisYear' ? 'active' : ''}
+                  onClick={() => handleLinkClick('dashboard', 'completedThisYear')}
+                >
+                  Commandes complété cette année
+                </Link>
+              </li>
+            </ul>
+          )}
         </li>
 
         <hr />
@@ -51,8 +91,24 @@ const Menu = () => {
           </span>
           {openMenu.newOrder && (
             <ul className="submenu">
-              <li><Link to="/" className={activeLink === 'certificat' ? 'active' : ''} onClick={() => handleLinkClick('newOrder', 'certificat')}>Certificat d'origine</Link></li>
-              <li><Link to="/" className={activeLink === 'legalisation' ? 'active' : ''} onClick={() => handleLinkClick('newOrder', 'legalisation')}>Legalisation des demandes</Link></li>
+              <li>
+                <Link
+                  to="/"
+                  className={activeLink === 'certificat' ? 'active' : ''}
+                  onClick={() => handleLinkClick('newOrder', 'certificat')}
+                >
+                  Certificat d'origine
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/"
+                  className={activeLink === 'legalisation' ? 'active' : ''}
+                  onClick={() => handleLinkClick('newOrder', 'legalisation')}
+                >
+                  Legalisation des demandes
+                </Link>
+              </li>
             </ul>
           )}
         </li>
@@ -66,8 +122,8 @@ const Menu = () => {
           {openMenu.pastOrders && (
             <ul className="submenu">
               <li>
-                <Link 
-                  to="/" 
+                <Link
+                  to="/"
                   className={activeLink === '1mois' ? 'active' : ''}
                   onClick={() => handleLinkClick('pastOrders', '1mois')}
                 >
@@ -75,8 +131,8 @@ const Menu = () => {
                 </Link>
               </li>
               <li>
-                <Link 
-                  to="/" 
+                <Link
+                  to="/"
                   className={activeLink === '3mois' ? 'active' : ''}
                   onClick={() => handleLinkClick('pastOrders', '3mois')}
                 >
@@ -84,8 +140,8 @@ const Menu = () => {
                 </Link>
               </li>
               <li>
-                <Link 
-                  to="/" 
+                <Link
+                  to="/"
                   className={activeLink === '6mois' ? 'active' : ''}
                   onClick={() => handleLinkClick('pastOrders', '6mois')}
                 >
@@ -93,8 +149,8 @@ const Menu = () => {
                 </Link>
               </li>
               <li>
-                <Link 
-                  to="/" 
+                <Link
+                  to="/"
                   className={activeLink === 'currentYear' ? 'active' : ''}
                   onClick={() => handleLinkClick('pastOrders', 'currentYear')}
                 >
@@ -102,8 +158,8 @@ const Menu = () => {
                 </Link>
               </li>
               <li>
-                <Link 
-                  to="/" 
+                <Link
+                  to="/"
                   className={activeLink === 'lastYear' ? 'active' : ''}
                   onClick={() => handleLinkClick('pastOrders', 'lastYear')}
                 >
@@ -122,8 +178,24 @@ const Menu = () => {
           </span>
           {openMenu.myInfo && (
             <ul className="submenu">
-              <li><Link to="/" className={activeLink === 'choix1' ? 'active' : ''} onClick={() => handleLinkClick('myInfo', 'choix1')}>Choix 1</Link></li>
-              <li><Link to="/" className={activeLink === 'choix2' ? 'active' : ''} onClick={() => handleLinkClick('myInfo', 'choix2')}>Choix 2</Link></li>
+              <li>
+                <Link
+                  to="/"
+                  className={activeLink === 'choix1' ? 'active' : ''}
+                  onClick={() => handleLinkClick('myInfo', 'choix1')}
+                >
+                  Choix 1
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/"
+                  className={activeLink === 'choix2' ? 'active' : ''}
+                  onClick={() => handleLinkClick('myInfo', 'choix2')}
+                >
+                  Choix 2
+                </Link>
+              </li>
             </ul>
           )}
         </li>
