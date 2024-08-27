@@ -13,6 +13,7 @@ import ToPay from './orders/ToPay';
 import ReturnedOrders from './orders/ReturnedOrders';
 import CompletedOrdersThisYear from './orders/CompletedOrdersThisYear';
 import Register from './Register';
+import CreateOrder from './orders/Create/CreateOrder';
 
 const App = () => (
   <Routes>
@@ -23,6 +24,7 @@ const App = () => (
       <Route path="/to-pay" element={<ToPay />} />
       <Route path="/returned-orders" element={<ReturnedOrders />} />
       <Route path="/completed-orders-this-year" element={<CompletedOrdersThisYear />} />
+      <Route path="/create-order" element={<CreateOrder />} />
     </Route>
     {/* Routes avec SimpleLayout */}
     <Route path="/login" element={<SimpleLayout />}>

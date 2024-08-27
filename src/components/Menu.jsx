@@ -91,24 +91,8 @@ const Menu = () => {
           </span>
           {openMenu.newOrder && (
             <ul className="submenu">
-              <li>
-                <Link
-                  to="/"
-                  className={activeLink === 'certificat' ? 'active' : ''}
-                  onClick={() => handleLinkClick('newOrder', 'certificat')}
-                >
-                  Certificat d'origine
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/"
-                  className={activeLink === 'legalisation' ? 'active' : ''}
-                  onClick={() => handleLinkClick('newOrder', 'legalisation')}
-                >
-                  Legalisation des demandes
-                </Link>
-              </li>
+              <li><Link to="/create-order" className={activeLink === 'certificat' ? 'active' : ''} onClick={() => handleLinkClick('newOrder', 'certificat')}>Certificat d'origine</Link></li>
+              <li><Link to="/create-order" className={activeLink === 'legalisation' ? 'active' : ''} onClick={() => handleLinkClick('newOrder', 'legalisation')}>Document de légalisation</Link></li>
             </ul>
           )}
         </li>

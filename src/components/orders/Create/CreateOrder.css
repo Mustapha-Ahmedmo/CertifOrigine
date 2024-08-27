@@ -1,0 +1,88 @@
+.create-order-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+  }
+  
+  .steps-progress {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  .step {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+  }
+  
+  .step.active {
+    background-color: #007bff;
+    color: #fff;
+  }
+  
+  .step-content {
+    margin-bottom: 20px;
+  }
+  
+  .step-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .next-button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .next-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .document-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .document-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+  
+  .document-list li button {
+    background-color: transparent;
+    border: none;
+    color: red;
+    cursor: pointer;
+  }
+  
+  .recap-section {
+    margin-bottom: 20px;
+  }
+  
+  .recap-section h4 {
+    margin-bottom: 10px;
+  }
+  
+  .recap-section p,
+  .recap-section ul {
+    margin: 0;
+    padding: 0;
+  }
+  
