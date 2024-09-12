@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Step1 from './steps/Step1';
 import Step2 from './steps/Step2';
 import Step3 from './steps/Step3';
 import Step4 from './steps/Step4';
 import Step5 from './steps/Step5';
+import { generatePDF } from '../GeneratePDF';
 
 const CreateOrder = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -12,7 +13,7 @@ const CreateOrder = () => {
     productType: '',
     originCountry: '',
     destinationCountry: '',
-    transportModes: { air: false, terre: false, mer: false },
+    transportModes: { truck: false, ship: false, plane: false, train: false },
     comment: '',
     merchandises: [],
     copies: 1,
@@ -41,8 +42,12 @@ const CreateOrder = () => {
 
   const handleSubmit = () => {
     console.log('Order Submitted:', formData);
-    // Here you would send the formData to your server or API
+    generatePDF(formData); // Appeler la fonction pour générer le PDF lors du submit
   };
+
+  useEffect(() => {
+    console.log('Updated formData:', formData);
+  }, [formData]); // Ce code s'exécutera chaque fois que formData est mis à jour
 
   const renderStep = () => {
     switch (currentStep) {

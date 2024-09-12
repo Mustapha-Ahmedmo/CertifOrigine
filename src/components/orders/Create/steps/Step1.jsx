@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 
-const Step1 = ({ nextStep }) => {
-  const [orderName, setOrderName] = useState('');
-  const [productType, setProductType] = useState('certificat');
+const Step1 = ({ nextStep, handleChange, values }) => {
+  const [orderName, setOrderName] = useState(values.orderName || ''); // Initialize with formData value
+  const [productType, setProductType] = useState(values.productType || 'certificat'); // Initialize with formData value
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Validate and proceed to the next step
-    nextStep();
+    handleChange('orderName', orderName); // Update formData with orderName
+    handleChange('productType', productType); // Update formData with productType
+    nextStep(); // Proceed to the next step
   };
 
   return (
@@ -17,8 +18,10 @@ const Step1 = ({ nextStep }) => {
         <label>Order Name</label>
         <input
           type="text"
-          value={orderName}
-          onChange={(e) => setOrderName(e.target.value)}
+          value={values.orderName} 
+          onChange={(e) => {
+            handleChange('orderName', e.target.value);
+          }}
           required
         />
       </div>

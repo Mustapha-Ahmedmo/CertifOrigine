@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
 
-const Step2 = ({ nextStep, prevStep }) => {
-  const [originCountry, setOriginCountry] = useState('');
-  const [destinationCountry, setDestinationCountry] = useState('');
-  const [transportModes, setTransportModes] = useState({
-    air: false,
-    terre: false,
-    mer: false,
-  });
-  const [comment, setComment] = useState('');
-  const [merchandises, setMerchandises] = useState([]);
+const Step2 = ({ nextStep, prevStep, handleChange, values }) => {
+  const { originCountry, destinationCountry, transportModes, comment, merchandises } = values; // Extraire les valeurs de formData
+
   const [merchandise, setMerchandise] = useState({
     designation: '',
     reference: '',
@@ -18,7 +11,7 @@ const Step2 = ({ nextStep, prevStep }) => {
 
   const handleTransportChange = (e) => {
     const { name, checked } = e.target;
-    setTransportModes({
+    handleChange('transportModes', {
       ...transportModes,
       [name]: checked,
     });
@@ -33,19 +26,18 @@ const Step2 = ({ nextStep, prevStep }) => {
   };
 
   const addMerchandise = () => {
-    setMerchandises([...merchandises, merchandise]);
+    handleChange('merchandises', [...merchandises, merchandise]);
     setMerchandise({ designation: '', reference: '', quantity: '' });
   };
 
   const removeMerchandise = (index) => {
     const updatedMerchandises = merchandises.filter((_, i) => i !== index);
-    setMerchandises(updatedMerchandises);
+    handleChange('merchandises', updatedMerchandises);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Validate and proceed to the next step
-    nextStep();
+    nextStep(); // Pass to the next step
   };
 
   return (
@@ -56,7 +48,7 @@ const Step2 = ({ nextStep, prevStep }) => {
         <input
           type="text"
           value={originCountry}
-          onChange={(e) => setOriginCountry(e.target.value)}
+          onChange={(e) => handleChange('originCountry', e.target.value)}
           required
         />
       </div>
@@ -65,7 +57,7 @@ const Step2 = ({ nextStep, prevStep }) => {
         <input
           type="text"
           value={destinationCountry}
-          onChange={(e) => setDestinationCountry(e.target.value)}
+          onChange={(e) => handleChange('destinationCountry', e.target.value)}
           required
         />
       </div>
@@ -75,29 +67,38 @@ const Step2 = ({ nextStep, prevStep }) => {
           <label>
             <input
               type="checkbox"
-              name="air"
-              checked={transportModes.air}
+              name="truck" // Mettre les bons noms correspondant aux clés
+              checked={transportModes.truck} // Correspond à la clé dans transportModes
               onChange={handleTransportChange}
             />
-            Air
+            Camion
           </label>
           <label>
             <input
               type="checkbox"
-              name="terre"
-              checked={transportModes.terre}
+              name="ship" // Correspond à la clé dans transportModes
+              checked={transportModes.ship}
               onChange={handleTransportChange}
             />
-            Terre
+            Bateau
           </label>
           <label>
             <input
               type="checkbox"
-              name="mer"
-              checked={transportModes.mer}
+              name="train" // Correspond à la clé dans transportModes
+              checked={transportModes.train}
               onChange={handleTransportChange}
             />
-            Mer
+            Train
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              name="plane" // Correspond à la clé dans transportModes
+              checked={transportModes.plane}
+              onChange={handleTransportChange}
+            />
+            Avion
           </label>
         </div>
       </div>
@@ -105,7 +106,7 @@ const Step2 = ({ nextStep, prevStep }) => {
         <label>Commentaire</label>
         <textarea
           value={comment}
-          onChange={(e) => setComment(e.target.value)}
+          onChange={(e) => handleChange('comment', e.target.value)}
         ></textarea>
       </div>
       <div className="form-group">
