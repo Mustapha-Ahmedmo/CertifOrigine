@@ -5,40 +5,42 @@ import Step3 from './steps/Step3';
 import Step4 from './steps/Step4';
 import Step5 from './steps/Step5';
 import { generatePDF } from '../GeneratePDF';
-import './CreateOrder.css';  // Importation du fichier CSS
+import './CreateOrder.css';
 
 const CreateOrder = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    orderName: '',
-    productType: '',
-    originCountry: '',
-    destinationCountry: '',
-    transportModes: { truck: false, ship: false, plane: false, train: false },
-    comment: '',
-    merchandises: [],
-    copies: 1,
-    documents: [],
+    orderName: '',  // Nom de la commande indépendant
+    merchandises: [], // Marchandises stockées ici
+    // autres champs...
   });
 
-  const steps = [
-    { number: 1, label: 'Step 1: Nature de la Marchandise' },
-    { number: 2, label: 'Step 2: Origine des marchandises' },
-    { number: 3, label: 'Step 3: Nombre de copie certifié' },
-    { number: 4, label: 'Step 4: Pièces justificatives' },
-    { number: 5, label: 'Step 5: Récapitulatif' },
-  ];
-  
+  useEffect(() => {
+    console.log("formData updated:", formData);
+  }, [formData]);
+
   const nextStep = () => {
-    setCurrentStep((prevStep) => (prevStep < steps.length ? prevStep + 1 : prevStep));
+    setCurrentStep((prevStep) => (prevStep < 5 ? prevStep + 1 : prevStep));
   };
 
   const prevStep = () => {
     setCurrentStep((prevStep) => (prevStep > 1 ? prevStep - 1 : prevStep));
   };
 
+  // Gestion du changement pour les champs individuels comme le nom de la commande
   const handleChange = (input, value) => {
-    setFormData({ ...formData, [input]: value });
+    setFormData((prevState) => ({
+      ...prevState,
+      [input]: value,
+    }));
+  };
+
+  // Gestion du changement pour l'ajout des marchandises
+  const handleMerchandiseChange = (newMerchandise) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      merchandises: [...prevState.merchandises, newMerchandise],
+    }));
   };
 
   const handleSubmit = () => {
@@ -46,14 +48,10 @@ const CreateOrder = () => {
     generatePDF(formData); // Appeler la fonction pour générer le PDF lors du submit
   };
 
-  useEffect(() => {
-    console.log('Updated formData:', formData);
-  }, [formData]); // Ce code s'exécutera chaque fois que formData est mis à jour
-
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <Step1 nextStep={nextStep} handleChange={handleChange} values={formData} />;
+        return <Step1 nextStep={nextStep} handleMerchandiseChange={handleMerchandiseChange} handleChange={handleChange} values={formData} />;
       case 2:
         return <Step2 nextStep={nextStep} prevStep={prevStep} handleChange={handleChange} values={formData} />;
       case 3:
@@ -70,15 +68,13 @@ const CreateOrder = () => {
   return (
     <div className="create-order-container">
       <div className="steps-progress">
-        {steps.map((step) => (
-          <div key={step.number} className={`step ${currentStep === step.number ? 'active' : ''}`}>
-            {step.label}
+        {[1, 2, 3, 4, 5].map((step) => (
+          <div key={step} className={`step ${currentStep === step ? 'active' : ''}`}>
+            Step {step}
           </div>
         ))}
       </div>
-      <div className="step-content">
-        {renderStep()}
-      </div>
+      <div className="step-content">{renderStep()}</div>
     </div>
   );
 };
