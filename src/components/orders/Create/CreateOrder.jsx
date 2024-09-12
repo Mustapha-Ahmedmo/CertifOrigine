@@ -5,6 +5,7 @@ import Step3 from './steps/Step3';
 import Step4 from './steps/Step4';
 import Step5 from './steps/Step5';
 import { generatePDF } from '../GeneratePDF';
+import './CreateOrder.css';  // Importation du fichier CSS
 
 const CreateOrder = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -21,13 +22,13 @@ const CreateOrder = () => {
   });
 
   const steps = [
-    { number: 1, label: 'Step 1: Command Details' },
+    { number: 1, label: 'Step 1: Nature de la Marchandise' },
     { number: 2, label: 'Step 2: Origine des marchandises' },
     { number: 3, label: 'Step 3: Nombre de copie certifié' },
     { number: 4, label: 'Step 4: Pièces justificatives' },
     { number: 5, label: 'Step 5: Récapitulatif' },
   ];
-
+  
   const nextStep = () => {
     setCurrentStep((prevStep) => (prevStep < steps.length ? prevStep + 1 : prevStep));
   };

@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
 
 const Step2 = ({ nextStep, prevStep, handleChange, values }) => {
-  const { originCountry, destinationCountry, transportModes, comment, merchandises } = values; // Extraire les valeurs de formData
-
-  const [merchandise, setMerchandise] = useState({
-    designation: '',
-    reference: '',
-    quantity: '',
-  });
+  const { originCountry, destinationCountry, transportModes, comment } = values; // Extraire les valeurs de formData
 
   const handleTransportChange = (e) => {
     const { name, checked } = e.target;
@@ -17,27 +11,9 @@ const Step2 = ({ nextStep, prevStep, handleChange, values }) => {
     });
   };
 
-  const handleMerchandiseChange = (e) => {
-    const { name, value } = e.target;
-    setMerchandise({
-      ...merchandise,
-      [name]: value,
-    });
-  };
-
-  const addMerchandise = () => {
-    handleChange('merchandises', [...merchandises, merchandise]);
-    setMerchandise({ designation: '', reference: '', quantity: '' });
-  };
-
-  const removeMerchandise = (index) => {
-    const updatedMerchandises = merchandises.filter((_, i) => i !== index);
-    handleChange('merchandises', updatedMerchandises);
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    nextStep(); // Pass to the next step
+    nextStep(); // Passer à l'étape suivante
   };
 
   return (
@@ -67,8 +43,8 @@ const Step2 = ({ nextStep, prevStep, handleChange, values }) => {
           <label>
             <input
               type="checkbox"
-              name="truck" // Mettre les bons noms correspondant aux clés
-              checked={transportModes.truck} // Correspond à la clé dans transportModes
+              name="truck"
+              checked={transportModes.truck}
               onChange={handleTransportChange}
             />
             Camion
@@ -76,7 +52,7 @@ const Step2 = ({ nextStep, prevStep, handleChange, values }) => {
           <label>
             <input
               type="checkbox"
-              name="ship" // Correspond à la clé dans transportModes
+              name="ship"
               checked={transportModes.ship}
               onChange={handleTransportChange}
             />
@@ -85,7 +61,7 @@ const Step2 = ({ nextStep, prevStep, handleChange, values }) => {
           <label>
             <input
               type="checkbox"
-              name="train" // Correspond à la clé dans transportModes
+              name="train"
               checked={transportModes.train}
               onChange={handleTransportChange}
             />
@@ -94,7 +70,7 @@ const Step2 = ({ nextStep, prevStep, handleChange, values }) => {
           <label>
             <input
               type="checkbox"
-              name="plane" // Correspond à la clé dans transportModes
+              name="plane"
               checked={transportModes.plane}
               onChange={handleTransportChange}
             />
@@ -108,45 +84,6 @@ const Step2 = ({ nextStep, prevStep, handleChange, values }) => {
           value={comment}
           onChange={(e) => handleChange('comment', e.target.value)}
         ></textarea>
-      </div>
-      <div className="form-group">
-        <h4>Liste des marchandises</h4>
-        <div className="merchandise-form">
-          <input
-            type="text"
-            name="designation"
-            placeholder="Désignation"
-            value={merchandise.designation}
-            onChange={handleMerchandiseChange}
-          />
-          <input
-            type="text"
-            name="reference"
-            placeholder="Réference"
-            value={merchandise.reference}
-            onChange={handleMerchandiseChange}
-          />
-          <input
-            type="number"
-            name="quantity"
-            placeholder="Quantité"
-            value={merchandise.quantity}
-            onChange={handleMerchandiseChange}
-          />
-          <button type="button" onClick={addMerchandise}>
-            Add
-          </button>
-        </div>
-        <ul className="merchandise-list">
-          {merchandises.map((item, index) => (
-            <li key={index}>
-              {item.designation} - {item.reference} - {item.quantity}{' '}
-              <button type="button" onClick={() => removeMerchandise(index)}>
-                ❌
-              </button>
-            </li>
-          ))}
-        </ul>
       </div>
       <div className="step-actions">
         <button type="button" onClick={prevStep}>

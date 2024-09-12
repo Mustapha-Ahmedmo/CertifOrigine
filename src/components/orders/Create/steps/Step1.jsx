@@ -1,55 +1,60 @@
 import React, { useState } from 'react';
 
-const Step1 = ({ nextStep, handleChange, values }) => {
-  const [orderName, setOrderName] = useState(values.orderName || ''); // Initialize with formData value
-  const [productType, setProductType] = useState(values.productType || 'certificat'); // Initialize with formData value
+const Step1 = ({ nextStep }) => {
+  const [orderName, setOrderName] = useState('');
+  const [brand, setBrand] = useState('');
+  const [description, setDescription] = useState('');
+  const [weight, setWeight] = useState('');
+  const [quantity, setQuantity] = useState(''); // Quantité comme un champ classique
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    handleChange('orderName', orderName); // Update formData with orderName
-    handleChange('productType', productType); // Update formData with productType
-    nextStep(); // Proceed to the next step
+    nextStep();
   };
 
   return (
     <form onSubmit={handleSubmit} className="step-form">
-      <h3>Step 1: Command Details</h3>
+      <h3>Step 1: Nature de la Marchandise</h3>
+
       <div className="form-group">
-        <label>Order Name</label>
+        <label>Marque</label>
         <input
           type="text"
-          value={values.orderName} 
-          onChange={(e) => {
-            handleChange('orderName', e.target.value);
-          }}
+          value={brand}
+          onChange={(e) => setBrand(e.target.value)}
           required
         />
       </div>
+
       <div className="form-group">
-        <label>Product Type</label>
-        <div className="radio-group">
-          <label>
-            <input
-              type="radio"
-              name="productType"
-              value="certificat"
-              checked={productType === 'certificat'}
-              onChange={() => setProductType('certificat')}
-            />
-            Certificat d'origine
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="productType"
-              value="legalisation"
-              checked={productType === 'legalisation'}
-              onChange={() => setProductType('legalisation')}
-            />
-            Document de légalisation
-          </label>
-        </div>
+        <label>Description de la marchandise</label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          required
+        />
       </div>
+
+      <div className="form-group">
+        <label>Poids de chaque marchandise (en kg)</label>
+        <input
+          type="text"
+          value={weight}  // Input classique pour le poids
+          onChange={(e) => setWeight(e.target.value)}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Quantité</label>
+        <input
+          type="text"  // Input classique pour la quantité
+          value={quantity}
+          onChange={(e) => setQuantity(e.target.value)}
+          required
+        />
+      </div>
+
       <button type="submit" className="next-button">Next</button>
     </form>
   );
