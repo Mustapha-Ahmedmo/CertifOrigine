@@ -23,11 +23,11 @@
   white-space: normal;
   overflow: visible;
   text-overflow: initial;
-  margin-right: 10px; /* Ajoute un espace entre chaque étape */
+  margin-right: 10px;
 }
 
 .step:last-child {
-  margin-right: 0; /* Supprime la marge pour la dernière étape */
+  margin-right: 0;
 }
 
 .step.active {
@@ -67,6 +67,50 @@
   margin-bottom: 20px;
 }
 
+.merchandise-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.merchandise-table th, .merchandise-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.merchandise-table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+.merchandise-table td button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.merchandise-table td button:hover {
+  background-color: #c82333;
+}
+
+.add-button {
+  background-color: #28a745;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.add-button:hover {
+  background-color: #218838;
+}
+
 .recap-section h4 {
   margin-bottom: 10px;
 }
@@ -75,4 +119,25 @@
 .recap-section ul {
   margin: 0;
   padding: 0;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.add-button, .next-button {
+  width: auto;   /* Laisse la taille des boutons s'ajuster à leur contenu */
+  padding: 8px 16px;  /* Diminue la taille des boutons */
+  text-align: center;
+}
+
+.add-button {
+  background-color: #dc3545; /* Rouge pour Add */
+}
+
+.next-button {
+  background-color: #28a745; /* Vert pour Next */
 }
