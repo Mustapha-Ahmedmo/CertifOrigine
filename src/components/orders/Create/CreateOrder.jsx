@@ -27,7 +27,6 @@ const CreateOrder = () => {
     setCurrentStep((prevStep) => (prevStep > 1 ? prevStep - 1 : prevStep));
   };
 
-  // Gestion du changement pour les champs individuels comme le nom de la commande
   const handleChange = (input, value) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -35,7 +34,6 @@ const CreateOrder = () => {
     }));
   };
 
-  // Gestion du changement pour l'ajout des marchandises
   const handleMerchandiseChange = (newMerchandise) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -45,7 +43,7 @@ const CreateOrder = () => {
 
   const handleSubmit = () => {
     console.log('Order Submitted:', formData);
-    generatePDF(formData); // Appeler la fonction pour générer le PDF lors du submit
+    generatePDF(formData);
   };
 
   const renderStep = () => {
@@ -83,9 +81,15 @@ const CreateOrder = () => {
   return (
     <div className="create-order-container">
       <div className="steps-progress">
-        {[1, 2, 3, 4, 5].map((step) => (
-          <div key={step} className={`step ${currentStep === step ? 'active' : ''}`}>
-            Step {step}
+        {[1, 2, 3, 4].map((step) => (
+          <div key={step} className={`step-item ${currentStep >= step ? 'completed' : ''}`}>
+            <div className="step-circle">{currentStep > step ? '✔️' : step}</div>
+            <div className="step-label">
+              {step === 1 && 'ÉTAPE1\nCRÉATION D\'UNE COMMANDE'}
+              {step === 2 && 'ÉTAPE2\nDÉTAILS DU PRODUIT'}
+              {step === 3 && 'ÉTAPE3\nLIVRAISON ET FACTURATION'}
+              {step === 4 && 'ÉTAPE4\nFINALISATION DE LA COMMANDE'}
+            </div>
           </div>
         ))}
       </div>
