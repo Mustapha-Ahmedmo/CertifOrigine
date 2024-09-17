@@ -12,11 +12,11 @@ const CreateOrder = () => {
   const [formData, setFormData] = useState({
     orderName: '',  // Nom de la commande indépendant
     merchandises: [], // Marchandises stockées ici
-    // autres champs...
+    remarks: ''
   });
 
   useEffect(() => {
-    console.log("formData updated:", formData);
+    console.log('formData updated:', formData);
   }, [formData]);
 
   const nextStep = () => {
@@ -51,15 +51,30 @@ const CreateOrder = () => {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <Step1 nextStep={nextStep} handleMerchandiseChange={handleMerchandiseChange} handleChange={handleChange} values={formData} />;
+        return (
+          <Step1
+            nextStep={nextStep}
+            handleMerchandiseChange={handleMerchandiseChange}
+            handleChange={handleChange}
+            values={formData}
+          />
+        );
       case 2:
-        return <Step2 nextStep={nextStep} prevStep={prevStep} handleChange={handleChange} values={formData} />;
+        return (
+          <Step2 nextStep={nextStep} prevStep={prevStep} handleChange={handleChange} values={formData} />
+        );
       case 3:
-        return <Step3 nextStep={nextStep} prevStep={prevStep} handleChange={handleChange} values={formData} />;
+        return (
+          <Step3 nextStep={nextStep} prevStep={prevStep} handleChange={handleChange} values={formData} />
+        );
       case 4:
-        return <Step4 nextStep={nextStep} prevStep={prevStep} handleChange={handleChange} values={formData} />;
+        return (
+          <Step4 nextStep={nextStep} prevStep={prevStep} handleChange={handleChange} values={formData} />
+        );
       case 5:
-        return <Step5 prevStep={prevStep} values={formData} handleSubmit={handleSubmit} />;
+        return (
+          <Step5 prevStep={prevStep} values={formData} handleSubmit={handleSubmit} />
+        );
       default:
         return null;
     }

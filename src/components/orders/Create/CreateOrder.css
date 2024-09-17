@@ -1,8 +1,6 @@
 .create-order-container {
-  max-width: 600px;
-  margin: 20px auto;
   padding: 20px;
-  background-color: #f9f9f9;
+  background-color: #ffffff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
 }
@@ -15,15 +13,14 @@
 
 .step {
   flex: 1;
-  padding: 10px;
+  padding: 15px;
   text-align: center;
-  background-color: #e0e0e0;
-  border-radius: 5px;
+  background-color: #e6e6e6;
+  border-radius: 10px;
   transition: background-color 0.3s ease;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: initial;
-  margin-right: 10px;
+  margin-right: 15px;
+  font-weight: 500;
+  color: #555;
 }
 
 .step:last-child {
@@ -31,7 +28,7 @@
 }
 
 .step.active {
-  background-color: #28a745;
+  background-color: #0056b3;
   color: white;
   font-weight: bold;
 }
@@ -41,30 +38,62 @@
 }
 
 .step-content {
-  margin-bottom: 20px;
-}
-
-.step-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.next-button {
-  background-color: #28a745;
-  color: white;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.next-button:hover {
-  background-color: #218838;
+  margin-bottom: 30px;
 }
 
 .form-group {
+  display: flex;
+  flex-direction: column;
   margin-bottom: 20px;
+}
+
+.form-group label {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  width: 100%;
+  max-width: 100%; /* S'assurer que les champs ne dépassent pas leur conteneur */
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: #0056b3;
+  outline: none;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.add-button,
+.next-button {
+  background-color: #0056b3;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.add-button:hover,
+.next-button:hover {
+  background-color: #004494;
 }
 
 .merchandise-table {
@@ -73,14 +102,15 @@
   margin-top: 20px;
 }
 
-.merchandise-table th, .merchandise-table td {
+.merchandise-table th,
+.merchandise-table td {
   border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
+  padding: 12px;
+  text-align: left;
 }
 
 .merchandise-table th {
-  background-color: #f4f4f4;
+  background-color: #f0f0f0;
   font-weight: bold;
 }
 
@@ -95,49 +125,4 @@
 
 .merchandise-table td button:hover {
   background-color: #c82333;
-}
-
-.add-button {
-  background-color: #28a745;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-.add-button:hover {
-  background-color: #218838;
-}
-
-.recap-section h4 {
-  margin-bottom: 10px;
-}
-
-.recap-section p,
-.recap-section ul {
-  margin: 0;
-  padding: 0;
-}
-
-.button-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.add-button, .next-button {
-  width: auto;   /* Laisse la taille des boutons s'ajuster à leur contenu */
-  padding: 8px 16px;  /* Diminue la taille des boutons */
-  text-align: center;
-}
-
-.add-button {
-  background-color: #dc3545; /* Rouge pour Add */
-}
-
-.next-button {
-  background-color: #28a745; /* Vert pour Next */
 }

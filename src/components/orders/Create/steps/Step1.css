@@ -1,0 +1,159 @@
+/* Style général pour le formulaire */
+.step-form {
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+  }
+  
+  h3 {
+    font-size: 24px;
+    color: #0056b3;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+  
+  .section-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin: 30px 0 10px;
+  }
+  
+  /* Grouping fields into two columns */
+  .form-group-row {
+    display: flex;
+    gap: 20px; /* Espace entre les colonnes */
+    justify-content: space-between;
+  }
+  
+  .form-group-row .form-group {
+    flex: 1; /* Permet aux éléments de prendre toute la place disponible */
+  }
+  
+  /* Champ pour ajuster les marges des groupes */
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    font-size: 14px;
+    color: #333;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: #0056b3;
+    outline: none;
+  }
+  
+  .form-group input[type="radio"],
+  .form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 10px;
+  }
+  
+  .transport-options label {
+    margin-right: 15px;
+    font-size: 14px;
+    color: #333;
+  }
+  
+  hr {
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid #ddd;
+  }
+  
+  button {
+    padding: 10px 20px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  button:hover {
+    background-color: #004494;
+  }
+  
+  .add-button {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .submit-button {
+    background-color: #0056b3;
+    color: white;
+  }
+  
+  .previous-button {
+    background-color: #6c757d;
+    color: white;
+  }
+  
+  .button-group {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  .table th,
+  .table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+  }
+  
+  .table td button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  
+  .table td button:hover {
+    background-color: #c82333;
+  }
+  
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  .character-counter {
+    font-size: 12px;
+    color: #999;
+    margin-top: 5px;
+  }
