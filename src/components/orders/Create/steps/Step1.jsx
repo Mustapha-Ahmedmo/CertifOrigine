@@ -39,7 +39,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
   return (
     <form onSubmit={handleSubmit} className="step-form">
-      <h3>ÉTAPE2 - DÉTAILS DU CERTIFICAT D'ORIGINE</h3>
+      <h3>ÉTAPE 1 - DÉTAILS DU CERTIFICAT D'ORIGINE</h3>
 
       <div className="section-title">1/9 EXPORTATEUR</div>
 

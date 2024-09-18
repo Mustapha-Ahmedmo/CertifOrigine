@@ -157,3 +157,7 @@
     color: #999;
     margin-top: 5px;
   }
+
+  .transport-options {
+    display: flex;
+  }

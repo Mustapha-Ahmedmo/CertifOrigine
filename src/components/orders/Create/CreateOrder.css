@@ -72,7 +72,7 @@
 }
 
 .step-item:last-child::before {
-  display: none;
+  display: block;
 }
 
 .step-content {
