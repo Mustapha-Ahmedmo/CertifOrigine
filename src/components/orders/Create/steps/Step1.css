@@ -161,3 +161,32 @@
   .transport-options {
     display: flex;
   }
+
+  .form-group-row {
+    display: flex;
+    gap: 15px;
+    align-items: center; /* Aligne verticalement les éléments */
+  }
+  
+  .form-group-row .form-group {
+    flex: 1; /* Assure que chaque champ prend une part égale de l'espace */
+  }
+  
+  .form-group-row .button-group-inline {
+    flex: 0; /* Le bouton ne prendra pas de largeur excessive */
+  }
+  
+  .form-group-row button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #0056b3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .form-group-row button:hover {
+    background-color: #004494;
+  }

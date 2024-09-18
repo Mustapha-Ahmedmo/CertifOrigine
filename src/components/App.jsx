@@ -14,6 +14,7 @@ import ReturnedOrders from './orders/ReturnedOrders';
 import CompletedOrdersThisYear from './orders/CompletedOrdersThisYear';
 import Register from './Register';
 import CreateOrder from './orders/Create/CreateOrder';
+import Accueil from '../pages/Accueil';
 
 const App = () => (
   <Routes>
@@ -39,6 +40,7 @@ const App = () => (
     <Route path="/reset-password" element={<SimpleLayout />}>
       <Route index element={<ResetPassword />} />
     </Route>
+    <Route path="/acceuil" element={<Accueil/>} />
   </Routes>
 );
 

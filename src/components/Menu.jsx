@@ -11,7 +11,7 @@ const Menu = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate('/login');
+    navigate('/acceuil');
   };
 
   const currentYear = new Date().getFullYear();

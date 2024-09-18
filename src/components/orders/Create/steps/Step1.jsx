@@ -4,15 +4,49 @@ import './Step1.css';
 const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
   const [designation, setDesignation] = useState('');
   const [unit, setUnit] = useState('kg poids brut - gros');
-  const [brand, setBrand] = useState('');
-  const [description, setDescription] = useState('');
-  const [weight, setWeight] = useState('');
   const [quantity, setQuantity] = useState('');
   const [isNewExporter, setIsNewExporter] = useState(true); // Pour gérer exportateur
   const [isNewDestinataire, setIsNewDestinataire] = useState(true); // Pour gérer destinataire
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const countries = [
+    "Afghanistan", "Albanie", "Algérie", "Andorre", "Angola", "Antigua-et-Barbuda", "Argentine", "Arménie", "Australie", "Autriche",
+    "Azerbaïdjan", "Bahamas", "Bahreïn", "Bangladesh", "Barbade", "Biélorussie", "Belgique", "Belize", "Bénin", "Bhoutan",
+    "Bolivie", "Bosnie-Herzégovine", "Botswana", "Brésil", "Brunei", "Bulgarie", "Burkina Faso", "Burundi", "Cambodge",
+    "Cameroun", "Canada", "Cap-Vert", "République centrafricaine", "Tchad", "Chili", "Chine", "Colombie", "Comores", "Congo-Brazzaville",
+    "Congo-Kinshasa", "Costa Rica", "Croatie", "Cuba", "Chypre", "République tchèque", "Danemark", "Djibouti", "Dominique", "République dominicaine",
+    "Timor oriental", "Équateur", "Égypte", "Salvador", "Guinée équatoriale", "Érythrée", "Estonie", "Eswatini", "Éthiopie", "Fidji",
+    "Finlande", "France", "Gabon", "Gambie", "Géorgie", "Allemagne", "Ghana", "Grèce", "Grenade", "Guatemala",
+    "Guinée", "Guinée-Bissau", "Guyana", "Haïti", "Honduras", "Hongrie", "Islande", "Inde", "Indonésie", "Iran",
+    "Irak", "Irlande", "Israël", "Italie", "Jamaïque", "Japon", "Jordanie", "Kazakhstan", "Kenya", "Kiribati",
+    "Corée du Nord", "Corée du Sud", "Koweït", "Kirghizistan", "Laos", "Lettonie", "Liban", "Lesotho", "Libéria", "Libye",
+    "Liechtenstein", "Lituanie", "Luxembourg", "Madagascar", "Malawi", "Malaisie", "Maldives", "Mali", "Malte", "Îles Marshall",
+    "Mauritanie", "Maurice", "Mexique", "Micronésie", "Moldavie", "Monaco", "Mongolie", "Monténégro", "Maroc", "Mozambique",
+    "Myanmar", "Namibie", "Nauru", "Népal", "Pays-Bas", "Nouvelle-Zélande", "Nicaragua", "Niger", "Nigéria", "Norvège",
+    "Oman", "Pakistan", "Palaos", "Panama", "Papouasie-Nouvelle-Guinée", "Paraguay", "Pérou", "Philippines", "Pologne", "Portugal",
+    "Qatar", "Roumanie", "Russie", "Rwanda", "Saint-Kitts-et-Nevis", "Sainte-Lucie", "Saint-Vincent-et-les Grenadines", "Samoa", "Saint-Marin", "Sao Tomé-et-Principe",
+    "Arabie saoudite", "Sénégal", "Serbie", "Seychelles", "Sierra Leone", "Singapour", "Slovaquie", "Slovénie", "Îles Salomon", "Somalie",
+    "Afrique du Sud", "Soudan du Sud", "Espagne", "Sri Lanka", "Soudan", "Suriname", "Suède", "Suisse", "Syrie", "Taïwan",
+    "Tadjikistan", "Tanzanie", "Thaïlande", "Togo", "Tonga", "Trinité-et-Tobago", "Tunisie", "Turquie", "Turkménistan", "Tuvalu",
+    "Ouganda", "Ukraine", "Émirats arabes unis", "Royaume-Uni", "États-Unis", "Uruguay", "Ouzbékistan", "Vanuatu", "Vatican", "Venezuela",
+    "Viêt Nam", "Yémen", "Zambie", "Zimbabwe"
+  ];
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    const isTransportSelected = values.transportModes.air || values.transportModes.terre || values.transportModes.mer;
+    if (!isTransportSelected) {
+      setErrorMessage("Veuillez sélectionner au moins un mode de transport.");
+      return;
+    }
+
+    if (values.merchandises.length === 0) {
+      setErrorMessage("Veuillez ajouter au moins une marchandise.");
+      return;
+    }
+
+    setErrorMessage(''); // Réinitialiser le message d'erreur
     nextStep();
   };
 
@@ -40,6 +74,19 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
   return (
     <form onSubmit={handleSubmit} className="step-form">
       <h3>ÉTAPE 1 - DÉTAILS DU CERTIFICAT D'ORIGINE</h3>
+
+      {/* Champ Order Name */}
+      <div className="form-group">
+        <label>Nom de la commande *</label>
+        <input
+          type="text"
+          value={values.orderName}
+          onChange={(e) => handleChange('orderName', e.target.value)}
+          required
+        />
+      </div>
+
+      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
       <div className="section-title">1/9 EXPORTATEUR</div>
 
@@ -137,8 +184,9 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
                 onChange={(e) => handleChange('exporterCountry', e.target.value)}
                 required
               >
-                <option value="France">France</option>
-                {/* Ajoutez d'autres options de pays */}
+                {countries.map((country) => (
+                  <option key={country} value={country}>{country}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -249,8 +297,9 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
                 onChange={(e) => handleChange('receiverCountry', e.target.value)}
                 required
               >
-                <option value="France">France</option>
-                {/* Ajoutez d'autres options de pays */}
+                {countries.map((country) => (
+                  <option key={country} value={country}>{country}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -268,8 +317,9 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           onChange={(e) => handleChange('goodsOrigin', e.target.value)}
           required
         >
-          <option value="France">🇫🇷 France</option>
-          {/* Ajoutez d'autres options de pays */}
+          {countries.map((country) => (
+            <option key={country} value={country}>{country}</option>
+          ))}
         </select>
       </div>
       <div className="form-group">
@@ -285,7 +335,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
       <hr />
 
-      {/* Section 4/9 Modes de transport */}
+      {/* Modes de transport */}
       <div className="section-title">4/9 MODES DE TRANSPORT</div>
       <div className="form-group">
         <label>Modes de transport</label>
@@ -293,33 +343,25 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           <label>
             <input
               type="checkbox"
-              checked={values.transportAir}
-              onChange={(e) => handleChange('transportAir', e.target.checked)}
+              checked={values.transportModes.air}
+              onChange={(e) => handleChange('transportModes', { ...values.transportModes, air: e.target.checked })}
             /> Air
           </label>
           <label>
             <input
               type="checkbox"
-              checked={values.transportSea}
-              onChange={(e) => handleChange('transportSea', e.target.checked)}
+              checked={values.transportModes.mer}
+              onChange={(e) => handleChange('transportModes', { ...values.transportModes, mer: e.target.checked })}
             /> Mer
           </label>
           <label>
             <input
               type="checkbox"
-              checked={values.transportLand}
-              onChange={(e) => handleChange('transportLand', e.target.checked)}
+              checked={values.transportModes.terre}
+              onChange={(e) => handleChange('transportModes', { ...values.transportModes, terre: e.target.checked })}
             /> Terre
           </label>
         </div>
-      </div>
-      <div className="form-group">
-        <label>Commentaire transport</label>
-        <textarea
-          value={values.transportComment}
-          onChange={(e) => handleChange('transportComment', e.target.value)}
-          placeholder="Écrire un commentaire"
-        />
       </div>
 
       <hr />
@@ -342,36 +384,41 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
       {/* Section 6/9 Liste des marchandises */}
       <div className="section-title">6/9 LISTE DES MARCHANDISES</div>
-      <div className="form-group">
-        <label>Désignation</label>
-        <input
-          type="text"
-          value={designation}
-          onChange={(e) => setDesignation(e.target.value)}
-        />
-      </div>
+      <div className="form-group-row">
+        <div className="form-group">
+          <label>Désignation</label>
+          <input
+            type="text"
+            value={designation}
+            onChange={(e) => setDesignation(e.target.value)}
+          />
+        </div>
 
-      <div className="form-group">
-        <label>Quantité</label>
-        <input
-          type="number"
-          value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
-        />
-      </div>
+        <div className="form-group">
+          <label>Quantité</label>
+          <input
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+          />
+        </div>
 
-      <div className="form-group">
-        <label>Unité</label>
-        <select
-          value={values.unit}
-          onChange={(e) => handleChange('unit', e.target.value)}
-        >
-          <option value="kg">kg poids brut - gros</option>
-          <option value="unit2">Autre unité</option>
-        </select>
-        <button type="button" onClick={addMerchandise}>
-          Ajouter la marchandise
-        </button>
+        <div className="form-group">
+          <label>Unité</label>
+          <select
+            value={values.unit}
+            onChange={(e) => handleChange('unit', e.target.value)}
+          >
+            <option value="kg">kg poids brut - gros</option>
+            <option value="unit2">Autre unité</option>
+          </select>
+        </div>
+
+        <div className="form-group button-group-inline">
+          <button type="button" onClick={addMerchandise}>
+            Ajouter la marchandise
+          </button>
+        </div>
       </div>
 
       {/* Render list of added merchandises */}

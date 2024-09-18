@@ -10,9 +10,30 @@ import './CreateOrder.css';
 const CreateOrder = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    orderName: '',  // Nom de la commande indépendant
-    merchandises: [], // Marchandises stockées ici
-    remarks: ''
+    orderName: '',  
+    merchandises: [], 
+    remarks: '',
+    transportModes: {  // Ajout des modes de transport ici
+      air: false,
+      mer: false,
+      terre: false,
+    },
+    isPaperCopy: false,
+    isTemplate: false,
+    exporterName: '',
+    exporterCompany2: '',
+    exporterAddress: '',
+    exporterAddress2: '',
+    exporterPostalCode: '',
+    exporterCity: '',
+    exporterCountry: '',
+    receiverName: '',
+    receiverCompany2: '',
+    receiverAddress: '',
+    receiverAddress2: '',
+    receiverPostalCode: '',
+    receiverCity: '',
+    receiverCountry: '',
   });
 
   useEffect(() => {
