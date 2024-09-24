@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './Step1.css';
 
 const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
+  const { t } = useTranslation();
   const [designation, setDesignation] = useState('');
   const [unit, setUnit] = useState('kg poids brut - gros');
   const [quantity, setQuantity] = useState('');
@@ -73,11 +75,11 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
   return (
     <form onSubmit={handleSubmit} className="step-form">
-      <h3>ÉTAPE 1 - DÉTAILS DU CERTIFICAT D'ORIGINE</h3>
+      <h3>{t('step1.title')}</h3>
 
       {/* Champ Order Name */}
       <div className="form-group">
-        <label>Nom de la commande *</label>
+        <label>{t('orderName')}</label>
         <input
           type="text"
           value={values.orderName}
@@ -88,9 +90,9 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
-      <div className="section-title">1/9 EXPORTATEUR</div>
+      <div className="section-title">{t('step1.exporterTitle')}</div>
 
-      {/* Choisir ou saisir un exportateur */}
+      {/* Exporter Field */}
       <div className="form-group">
         <label>
           <input
@@ -98,7 +100,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             name="exportateur"
             value="choisir"
             onChange={() => setIsNewExporter(false)}
-          /> Choisir un exportateur
+          /> {t('step1.chooseExporter')}
         </label>
         <label>
           <input
@@ -107,7 +109,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             value="saisir"
             defaultChecked
             onChange={() => setIsNewExporter(true)}
-          /> Saisir un nouveau exportateur
+          /> {t('step1.enterNewExporter')}
         </label>
       </div>
 
@@ -116,7 +118,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         <>
           <div className="form-group-row">
             <div className="form-group">
-              <label>Raison sociale *</label>
+              <label>{t('step1.companyName')} *</label>
               <input
                 type="text"
                 value={values.exporterName}
@@ -126,7 +128,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             </div>
 
             <div className="form-group">
-              <label>Raison sociale 2</label>
+              <label>{t('step1.companyName2')}</label>
               <input
                 type="text"
                 value={values.exporterCompany2}
@@ -137,7 +139,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
           <div className="form-group-row">
             <div className="form-group">
-              <label>Adresse *</label>
+              <label>{t('step1.address')} *</label>
               <input
                 type="text"
                 value={values.exporterAddress}
@@ -147,7 +149,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             </div>
 
             <div className="form-group">
-              <label>Complément d'adresse</label>
+              <label>{t('step1.addressNext')}</label>
               <input
                 type="text"
                 value={values.exporterAddress2}
@@ -158,7 +160,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
           <div className="form-group-row">
             <div className="form-group">
-              <label>C.P *</label>
+              <label>{t('step1.cp')} *</label>
               <input
                 type="text"
                 value={values.exporterPostalCode}
@@ -168,7 +170,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             </div>
 
             <div className="form-group">
-              <label>Ville *</label>
+              <label>{t('step1.city')} *</label>
               <input
                 type="text"
                 value={values.exporterCity}
@@ -178,7 +180,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             </div>
 
             <div className="form-group">
-              <label>Pays *</label>
+              <label>{t('step1.country')} *</label>
               <select
                 value={values.exporterCountry}
                 onChange={(e) => handleChange('exporterCountry', e.target.value)}
@@ -193,7 +195,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
           <div className="form-group">
             <label>
-              <input type="checkbox" /> Afficher la mention "Union Européenne" sur le document à côté du pays de l'exportateur ?
+              <input type="checkbox" /> {t('step1.ueRules')}
             </label>
           </div>
         </>
@@ -201,9 +203,8 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
       <hr />
 
-      <div className="section-title">2/9 DESTINATAIRE</div>
+      <div className="section-title">{t('step1.receiverTitle')}</div>
 
-      {/* Choisir ou saisir un destinataire */}
       <div className="form-group">
         <label>
           <input
@@ -211,7 +212,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             name="destinataire"
             value="choisir"
             onChange={() => setIsNewDestinataire(false)}
-          /> Choisir un destinataire
+          /> {t('step1.chooseReceiver')}
         </label>
         <label>
           <input
@@ -220,16 +221,16 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             value="saisir"
             defaultChecked
             onChange={() => setIsNewDestinataire(true)}
-          /> Saisir un nouveau destinataire
+          /> {t('step1.enterNewReceiver')}
         </label>
       </div>
 
-      {/* Afficher les champs uniquement si "Saisir un nouveau destinataire" est sélectionné */}
+
       {isNewDestinataire && (
         <>
           <div className="form-group-row">
             <div className="form-group">
-              <label>Raison sociale *</label>
+              <label>{t('step1.companyName')} *</label>
               <input
                 type="text"
                 value={values.receiverName}
@@ -239,7 +240,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             </div>
 
             <div className="form-group">
-              <label>Raison sociale 2</label>
+              <label>{t('step1.companyName2')}</label>
               <input
                 type="text"
                 value={values.receiverCompany2}
@@ -250,7 +251,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
           <div className="form-group-row">
             <div className="form-group">
-              <label>Adresse *</label>
+              <label>{t('step1.address')} *</label>
               <input
                 type="text"
                 value={values.receiverAddress}
@@ -260,7 +261,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             </div>
 
             <div className="form-group">
-              <label>Complément d'adresse</label>
+              <label>{t('step1.addressNext')}</label>
               <input
                 type="text"
                 value={values.receiverAddress2}
@@ -271,7 +272,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
           <div className="form-group-row">
             <div className="form-group">
-              <label>C.P *</label>
+              <label>{t('step1.cp')} *</label>
               <input
                 type="text"
                 value={values.receiverPostalCode}
@@ -281,7 +282,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             </div>
 
             <div className="form-group">
-              <label>Ville *</label>
+              <label>{t('step1.city')} *</label>
               <input
                 type="text"
                 value={values.receiverCity}
@@ -291,7 +292,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             </div>
 
             <div className="form-group">
-              <label>Pays *</label>
+              <label>{t('step1.country')} *</label>
               <select
                 value={values.receiverCountry}
                 onChange={(e) => handleChange('receiverCountry', e.target.value)}
@@ -305,6 +306,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           </div>
         </>
       )}
+
 
       <hr />
 

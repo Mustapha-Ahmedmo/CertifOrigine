@@ -10,11 +10,11 @@
 
 .icon-container {
   position: relative;
-  margin-right: 20px; /* Espacement entre les icônes */
+  margin-right: 20px;
 }
 
 .header .cart-icon {
-  width: 24px; /* Taille de l'icône du panier */
+  width: 24px;
   height: 24px;
   cursor: pointer;
 }
@@ -22,16 +22,15 @@
 .header .mail-icon {
   width: 30px;
   height: 30px;
-  position: relative;
   cursor: pointer;
-  top: 3px; /* Positionnement spécifique pour l'icône de mail */
+  top: 3px;
 }
 
 .header .profile-icon {
-  width: 30px; /* Taille de l'image de profil */
+  width: 30px;
   height: 30px;
   cursor: pointer;
-  border-radius: 50%; /* Pour une image de profil ronde */
+  border-radius: 50%;
 }
 
 .badge {
@@ -45,13 +44,13 @@
 }
 
 .mail-badge {
-  top: -5px; /* Ajustement du badge de mail */
-  right: -10px; /* Ajustement du badge de mail */
+  top: -5px;
+  right: -10px;
 }
 
 .cart-badge {
-  top: -5px; /* Ajustement du badge du panier */
-  right: -5px; /* Ajustement du badge du panier */
+  top: -5px;
+  right: -5px;
 }
 
 .header .dropdown {
@@ -79,4 +78,52 @@
 
 .header .dropdown.show {
   display: flex;
+}
+
+/* Language dropdown styling */
+.language-container {
+  position: relative;
+}
+
+.language-button {
+  background-color: #ffffff;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #333;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.language-dropdown {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 5px 0;
+  z-index: 1000;
+}
+
+.language-dropdown button {
+  background: none;
+  color:black;
+  border: none;
+  padding: 10px 20px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.language-dropdown button:hover {
+  background-color: #f4f4f4;
+}
+
+.language-dropdown .active {
+  font-weight: bold;
+  color: #007bff;
 }

@@ -2,16 +2,27 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import cartIcon from '../assets/cart.jpg';
 import profileIcon from '../assets/profile.jpg';
-import mailIcon from '../assets/mail.jpg'; // Importez l'icône de mail
+import mailIcon from '../assets/mail.jpg'; 
+import { useTranslation } from 'react-i18next';
 import './Header.css';
 
 const Header = () => {
+  const { t, i18n } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [cartItemCount, setCartItemCount] = useState(3); // Nombre d'articles dans le panier
-  const [mailNotificationCount, setMailNotificationCount] = useState(7); // Nombre de notifications de mail
+  const [cartItemCount, setCartItemCount] = useState(3);
+  const [mailNotificationCount, setMailNotificationCount] = useState(7);
+  const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
+
+  const changeLanguage = (language) => {
+    i18n.changeLanguage(language);
+  };
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
+  };
+
+  const toggleLanguageDropdown = () => {
+    setLanguageDropdownOpen(!languageDropdownOpen);
   };
 
   return (
@@ -27,11 +38,23 @@ const Header = () => {
       <img src={profileIcon} alt="Profile" className="profile-icon" onClick={toggleDropdown} />
       {dropdownOpen && (
         <div className={`dropdown ${dropdownOpen ? 'show' : ''}`}>
-          <Link to="/profile">Profile</Link>
-          <Link to="/settings">Settings</Link>
-          <Link to="/login">Logout</Link>
+          <Link to="/profile">{t('header.profile')}</Link>
+          <Link to="/settings">{t('header.settings')}</Link>
+          <Link to="/login">{t('header.logout')}</Link>
         </div>
       )}
+
+      <div className="language-container">
+        <button onClick={toggleLanguageDropdown} className="language-button">
+          🌐 {i18n.language.toUpperCase()}
+        </button>
+        {languageDropdownOpen && (
+          <div className="language-dropdown">
+            <button onClick={() => changeLanguage('fr')}>Français</button>
+            <button onClick={() => changeLanguage('en')}>English</button>
+          </div>
+        )}
+      </div>
     </header>
   );
 };

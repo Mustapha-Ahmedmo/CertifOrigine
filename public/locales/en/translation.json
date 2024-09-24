@@ -1,0 +1,59 @@
+{
+  "step1": {
+    "title": "STEP 1 - CERTIFICATE OF ORIGIN DETAILS",
+    "exporterTitle": "1/9 EXPORTER",
+    "chooseExporter": "Choose an exporter",
+    "enterNewExporter": "Enter a new exporter",
+    "companyName": "Company name",
+    "companyName2": "Company name 2",
+    "transportModes": "4/9 TRANSPORT MODES",
+    "selectTransportMode": "Transport modes",
+    "air": "Air",
+    "sea": "Sea",
+    "land": "Land",
+    "addMerchandiseTitle": "6/9 MERCHANDISE LIST",
+    "designation": "Designation",
+    "quantity": "Quantity",
+    "unit": "Unit",
+    "kg": "kg gross weight - large",
+    "otherUnit": "Other unit",
+    "action": "Action",
+    "back": "Back",
+    "errorTransport": "Please select at least one mode of transport.",
+    "errorMerchandise": "Please add at least one merchandise."
+  },
+  "orderName": "Order Name",
+  "brand": "Brand",
+  "description": "Description",
+  "weight": "Weight",
+  "quantity": "Quantity",
+  "addMerchandise": "Add Merchandise",
+  "next": "Next",
+  "merchandiseTable": "Merchandise Table",
+  "header": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "mail": "Mail",
+    "cart": "Cart",
+    "language": "Language"
+  },
+  "footer": {
+    "copyright": "@2024 - CHAMBER OF COMMERCE OF DJIBOUTI",
+    "legalMentions": "Legal Mentions",
+    "address": "Address: Place Lagarde, Djibouti - +(253) 21 35 10 70",
+    "email": "Email",
+    "openingHours": "Opening Hours"
+  },
+  "home": {
+    "dashboardOverview": "Dashboard Overview",
+    "ordersToComplete": "Orders to Complete",
+    "ordersToPay": "Orders to Pay",
+    "returnedOrders": "Returned Orders",
+    "completedOrdersThisYear": "Completed Orders This Year",
+    "goToUncompletedOrders": "Go to Uncompleted Orders",
+    "goToOrdersToPay": "Go to Orders to Pay",
+    "goToReturnedOrders": "Go to Returned Orders",
+    "goToCompletedOrders": "Go to Completed Orders"
+  }
+}

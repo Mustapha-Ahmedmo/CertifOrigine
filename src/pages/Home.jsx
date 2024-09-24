@@ -1,8 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import './Home.css';
 
 const Home = () => {
+  const { t } = useTranslation();
+
   // Example data for each section (just a few orders)
   const toCompleteOrders = [
     { id: 1, name: 'Order 1', date: '2024-08-01' },
@@ -26,10 +29,10 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      <h2>Dashboard Overview</h2>
+      <h2>{t('home.dashboardOverview')}</h2>
       <div className="dashboard-grid">
         <div className="dashboard-item">
-          <h3>Orders to Complete</h3>
+          <h3>{t('home.ordersToComplete')}</h3>
           <ul>
             {toCompleteOrders.map(order => (
               <li key={order.id}>
@@ -37,11 +40,11 @@ const Home = () => {
               </li>
             ))}
           </ul>
-          <Link to="/to-complete" className="dashboard-button">Go to Uncompleted Orders</Link>
+          <Link to="/to-complete" className="dashboard-button">{t('home.goToUncompletedOrders')}</Link>
         </div>
         
         <div className="dashboard-item">
-          <h3>Orders to Pay</h3>
+          <h3>{t('home.ordersToPay')}</h3>
           <ul>
             {toPayOrders.map(order => (
               <li key={order.id}>
@@ -49,11 +52,11 @@ const Home = () => {
               </li>
             ))}
           </ul>
-          <Link to="/to-pay" className="dashboard-button">Go to Orders to Pay</Link>
+          <Link to="/to-pay" className="dashboard-button">{t('home.goToOrdersToPay')}</Link>
         </div>
         
         <div className="dashboard-item">
-          <h3>Returned Orders</h3>
+          <h3>{t('home.returnedOrders')}</h3>
           <ul>
             {returnedOrders.map(order => (
               <li key={order.id}>
@@ -61,11 +64,11 @@ const Home = () => {
               </li>
             ))}
           </ul>
-          <Link to="/returned-orders" className="dashboard-button">Go to Returned Orders</Link>
+          <Link to="/returned-orders" className="dashboard-button">{t('home.goToReturnedOrders')}</Link>
         </div>
         
         <div className="dashboard-item">
-          <h3>Completed Orders This Year</h3>
+          <h3>{t('home.completedOrdersThisYear')}</h3>
           <ul>
             {completedOrdersThisYear.map(order => (
               <li key={order.id}>
@@ -73,7 +76,7 @@ const Home = () => {
               </li>
             ))}
           </ul>
-          <Link to="/completed-orders-this-year" className="dashboard-button">Go to Completed Orders</Link>
+          <Link to="/completed-orders-this-year" className="dashboard-button">{t('home.goToCompletedOrders')}</Link>
         </div>
       </div>
     </div>
