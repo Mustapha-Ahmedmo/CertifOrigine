@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../slices/authSlice';
-import '../components/Login.css';
+import './Login.css';
 import logo from '../assets/logo.jpg';
 
 const Login = () => {
@@ -18,7 +18,7 @@ const Login = () => {
       const user = { username }; // Vous pouvez ajouter plus de détails utilisateur ici
       dispatch(login(user));
       // Rediriger vers la page d'accueil
-      navigate('/');
+      navigate('/dashboard');
     } else {
       alert('Nom d\'utilisateur ou mot de passe incorrect');
     }
@@ -60,9 +60,6 @@ const Login = () => {
             <p>Vous n'avez pas de compte? <a href="/register">Inscription</a></p>
           </div>
         </form>
-        <footer>
-          <p>&copy;2023 Chambre de Commerce de Djibouti</p>
-        </footer>
       </div>
     </div>
   );

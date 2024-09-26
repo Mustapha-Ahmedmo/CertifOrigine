@@ -35,9 +35,9 @@
   },
   "step1": {
     "title": "ÉTAPE 1 - DÉTAILS DU CERTIFICAT D'ORIGINE",
-    "exporterTitle": "1/9 EXPORTATEUR",
-    "chooseExporter": "Choisir un exportateur",
-    "enterNewExporter": "Saisir un nouveau exportateur",
+    "exporterTitle": "1/9 CLIENT",
+    "chooseExporter": "Choisir un Client",
+    "enterNewExporter": "Saisir un nouveau Client",
     "companyName": "Raison sociale",
     "companyName2": "Raison sociale 2",
     "transportModes": "4/9 MODES DE TRANSPORT",

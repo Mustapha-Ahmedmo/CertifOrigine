@@ -1,5 +1,5 @@
 import React from 'react';
-import '../components/Login.css';  // Réutiliser les styles de la page de login
+import './Login.css';  // Réutiliser les styles de la page de login
 import logo from '../assets/logo.jpg'; // Assurez-vous que le logo est dans le bon chemin
 
 const ForgotPassword = () => {
@@ -16,9 +16,6 @@ const ForgotPassword = () => {
           </div>
           <button type="submit" className="btn-login">Envoyer</button>
         </form>
-        <footer>
-          <p>&copy;2023 Chambre de Commerce de Djibouti</p>
-        </footer>
       </div>
     </div>
   );

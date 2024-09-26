@@ -16,6 +16,7 @@ const Register = () => {
     country: '',
     companyType: 'SARL',
     taxId: '',
+    freeZoneDetails: '',
     acceptsConditions: false,
     acceptsDataProcessing: false,
     isInFreeZone: false,
@@ -132,7 +133,6 @@ const Register = () => {
               >
                 <option value="SARL">SARL</option>
                 <option value="SA">SA</option>
-                {/* Add other company types as needed */}
               </select>
             </label>
             <label className="large-label">
@@ -182,31 +182,43 @@ const Register = () => {
             <label>
               <input
                 type="radio"
-                name="zoneStatus"
-                value="freeZone"
-                checked={formData.isInFreeZone}
-                onChange={handleChange}
+                name="isInFreeZone"
+                value="true"
+                checked={formData.isInFreeZone === true}
+                onChange={() => setFormData({ ...formData, isInFreeZone: true })}
               />
-              Société en zone franche
+              Société en zone franche (N° Patente)
             </label>
+            {formData.isInFreeZone && (
+              <input
+                type="text"
+                name="freeZoneDetails"
+                value={formData.freeZoneDetails || ''}
+                onChange={handleChange}
+                className="inline-input full-width"
+                placeholder="Entrez le nom de la société en zone franche"
+              />
+            )}
             <label>
               <input
                 type="radio"
-                name="zoneStatus"
-                value="other"
-                checked={!formData.isInFreeZone}
-                onChange={handleChange}
+                name="isInFreeZone"
+                value="false"
+                checked={formData.isInFreeZone === false}
+                onChange={() => setFormData({ ...formData, isInFreeZone: false })}
               />
-              Autre N° d’identification fiscale:
+              Autre (N° d’identification fiscale)
+            </label>
+            {!formData.isInFreeZone && (
               <input
                 type="text"
                 name="taxId"
                 value={formData.taxId}
                 onChange={handleChange}
-                disabled={!formData.isInFreeZone}
-                className="inline-input"
+                className="inline-input full-width"
+                placeholder="Entrez le N° d'identification fiscale"
               />
-            </label>
+            )}
           </div>
         </div>
 
@@ -219,7 +231,7 @@ const Register = () => {
               onChange={handleChange}
               required
             />
-            J’accepte les conditions générales de vente.
+            Je certifie être habilité à faire des formalités export pour la société que je viens de désigner ci dessus.
           </label>
           <label>
             <input
@@ -229,8 +241,7 @@ const Register = () => {
               onChange={handleChange}
               required
             />
-            J’autorise la collecte, le traitement, et la conservation de mes
-            données personnelles.
+            J'accepte les conditions générales de vente
           </label>
         </div>
 

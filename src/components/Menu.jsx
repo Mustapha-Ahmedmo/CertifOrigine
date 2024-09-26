@@ -11,7 +11,7 @@ const Menu = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate('/acceuil');
+    navigate('/');
   };
 
   const currentYear = new Date().getFullYear();
@@ -45,7 +45,7 @@ const Menu = () => {
             <ul className="submenu">
               <li>
                 <Link
-                  to="/to-complete"
+                  to="/dashboard/to-complete"
                   className={activeLink === 'completer' ? 'active' : ''}
                   onClick={() => handleLinkClick('dashboard', 'completer')}
                 >
@@ -54,7 +54,7 @@ const Menu = () => {
               </li>
               <li>
                 <Link
-                  to="/to-pay"
+                  to="/dashboard/to-pay"
                   className={activeLink === 'payer' ? 'active' : ''}
                   onClick={() => handleLinkClick('dashboard', 'payer')}
                 >
@@ -63,7 +63,7 @@ const Menu = () => {
               </li>
               <li>
                 <Link
-                  to="/returned-orders"
+                  to="/dashboard/returned-orders"
                   className={activeLink === 'retourne' ? 'active' : ''}
                   onClick={() => handleLinkClick('dashboard', 'retourne')}
                 >
@@ -72,7 +72,7 @@ const Menu = () => {
               </li>
               <li>
                 <Link
-                  to="/completed-orders-this-year"
+                  to="/dashboard/completed-orders-this-year"
                   className={activeLink === 'completedThisYear' ? 'active' : ''}
                   onClick={() => handleLinkClick('dashboard', 'completedThisYear')}
                 >
@@ -91,8 +91,8 @@ const Menu = () => {
           </span>
           {openMenu.newOrder && (
             <ul className="submenu">
-              <li><Link to="/create-order" className={activeLink === 'certificat' ? 'active' : ''} onClick={() => handleLinkClick('newOrder', 'certificat')}>Certificat d'origine</Link></li>
-              <li><Link to="/create-order" className={activeLink === 'legalisation' ? 'active' : ''} onClick={() => handleLinkClick('newOrder', 'legalisation')}>Document de légalisation</Link></li>
+              <li><Link to="/dashboard/create-order" className={activeLink === 'certificat' ? 'active' : ''} onClick={() => handleLinkClick('newOrder', 'certificat')}>Certificat d'origine</Link></li>
+              <li><Link to="/dashboard/create-order" className={activeLink === 'legalisation' ? 'active' : ''} onClick={() => handleLinkClick('newOrder', 'legalisation')}>Document de légalisation</Link></li>
             </ul>
           )}
         </li>

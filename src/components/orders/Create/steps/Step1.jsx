@@ -92,26 +92,6 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
       <div className="section-title">{t('step1.exporterTitle')}</div>
 
-      {/* Exporter Field */}
-      <div className="form-group">
-        <label>
-          <input
-            type="radio"
-            name="exportateur"
-            value="choisir"
-            onChange={() => setIsNewExporter(false)}
-          /> {t('step1.chooseExporter')}
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="exportateur"
-            value="saisir"
-            defaultChecked
-            onChange={() => setIsNewExporter(true)}
-          /> {t('step1.enterNewExporter')}
-        </label>
-      </div>
 
       {/* Afficher les champs uniquement si "Saisir un nouveau exportateur" est sélectionné */}
       {isNewExporter && (
