@@ -54,6 +54,10 @@
     "goToUncompletedOrders": "Go to Uncompleted Orders",
     "goToOrdersToPay": "Go to Orders to Pay",
     "goToReturnedOrders": "Go to Returned Orders",
-    "goToCompletedOrders": "Go to Completed Orders"
+    "goToCompletedOrders": "Go to Completed Orders",
+    "edit": "Edit",
+    "delete": "Delete",
+    "pay": "To Pay",
+    "complete":"To complete"
   }
 }
