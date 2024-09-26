@@ -80,7 +80,7 @@ const CreateOrder = () => {
         );
       case 2:
         return (
-          <Step2 nextStep={nextStep} prevStep={prevStep} handleChange={handleChange} values={formData} />
+          <Step4 nextStep={nextStep} prevStep={prevStep} handleChange={handleChange} values={formData} />
         );
       case 3:
         return (
