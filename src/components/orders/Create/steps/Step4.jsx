@@ -36,7 +36,7 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
 
   return (
     <form onSubmit={handleSubmit} className="step-form">
-      <h3>Etape 2: Documents à importer</h3>
+      <h3>Step 2: Documents à importer</h3>
 
       {/* Section pour les pièces justificatives (obligatoires) */}
       <div className="section-title">Pièces justificatives (obligatoire)</div>

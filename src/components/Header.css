@@ -28,27 +28,28 @@
   display: flex;
   margin-right: 25px;
   align-items: center;
-  gap: 15px; /* Réduire l'espacement entre les icônes */
+  gap: 30px; /* Augmenter l'espacement entre les icônes */
 }
 
-.icon-container {
-  position: relative;
+.header-icon-container {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 0; /* Supprimer les marges inutiles */
+  flex-direction: column; /* Aligner les icônes et les labels verticalement */
+  align-items: center; /* Centrer les éléments */
+  position: relative;
 }
 
-.header .cart-icon,
-.header .mail-icon,
-.header .profile-icon {
-  width: 24px; /* Taille des icônes réduite */
-  height: 24px;
+.header-icon {
+  width: 16px; /* Taille réduite des icônes */
+  height: 16px; /* Taille réduite des icônes */
   cursor: pointer;
+  /* border: 2px solid #111111; */ /* Retirer le contour */
+  /* border-radius: 50%; */ /* Retirer l'arrondi si nécessaire */
 }
 
-.header .profile-icon {
-  border-radius: 50%; /* Forme ronde pour l'icône de profil */
+.icon-label {
+  font-size: 12px; /* Ajuste la taille du texte */
+  color: #111111; /* Couleur du texte */
+  margin-top: 4px; /* Espacement entre l'icône et le titre */
 }
 
 .badge {
@@ -59,8 +60,8 @@
   border-radius: 50%;
   font-size: 12px;
   font-weight: bold;
-  top: -5px;
-  right: -5px;
+  top: -5px; /* Positionnement au-dessus de l'icône */
+  right: -5px; /* Positionnement à droite de l'icône */
 }
 
 .language-container {

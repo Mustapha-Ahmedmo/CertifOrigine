@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faClipboardList, faDollarSign, faBoxOpen, faUndo } from '@fortawesome/free-solid-svg-icons';
 import './Home.css';
+import '@fontsource/poppins'; // Cela importe la police Poppins
 
 const Home = () => {
   const { t } = useTranslation();
@@ -29,22 +32,25 @@ const Home = () => {
 
   return (
     <div className="home-container">
+      <div className="welcome-message">
+        Bienvenue Entreprise 1
+      </div>
       <div className="tabs-container">
         <div className={`tab-item ${activeTab === 'complete' ? 'active' : ''}`} onClick={() => handleTabClick('complete')}>
-          {t('home.ordersToComplete')} <span className="tab-counter">2</span>
+          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" /> {t('home.ordersToComplete')} <span className="tab-counter">2</span>
         </div>
         <div className={`tab-item ${activeTab === 'pay' ? 'active' : ''}`} onClick={() => handleTabClick('pay')}>
-          {t('home.ordersToPay')} <span className="tab-counter">2</span>
+          <FontAwesomeIcon icon={faDollarSign} className="tab-icon" /> {t('home.ordersToPay')} <span className="tab-counter">2</span>
         </div>
         <div className={`tab-item ${activeTab === 'returned' ? 'active' : ''}`} onClick={() => handleTabClick('returned')}>
-          {t('home.returnedOrders')} <span className="tab-counter">2</span>
+          <FontAwesomeIcon icon={faUndo} className="tab-icon" /> {t('home.returnedOrders')} <span className="tab-counter">2</span>
         </div>
       </div>
 
       <div className="dashboard-grid">
         {activeTab === 'complete' && (
           <div className="dashboard-item">
-            <h3>{t('home.ordersToComplete')}</h3>
+            <FontAwesomeIcon icon={faClipboardList} className="section-icon" />
             <ul>
               {toCompleteOrders.map(order => (
                 <li key={order.id} className="order-item">
@@ -62,7 +68,7 @@ const Home = () => {
 
         {activeTab === 'pay' && (
           <div className="dashboard-item">
-            <h3>{t('home.ordersToPay')}</h3>
+            <FontAwesomeIcon icon={faDollarSign} className="section-icon" />
             <ul>
               {toPayOrders.map(order => (
                 <li key={order.id} className="order-item">
@@ -79,7 +85,7 @@ const Home = () => {
 
         {activeTab === 'returned' && (
           <div className="dashboard-item">
-            <h3>{t('home.returnedOrders')}</h3>
+            <FontAwesomeIcon icon={faUndo} className="section-icon" />
             <ul>
               {returnedOrders.map(order => (
                 <li key={order.id} className="order-item">

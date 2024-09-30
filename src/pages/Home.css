@@ -141,3 +141,24 @@
   border-color: #bbb;
   color: #0056b3;
 }
+
+.section-icon {
+  font-size: 40px; /* Ajustez la taille de l'icône de la section */
+  color: #007bff; /* Couleur de l'icône */
+  margin-bottom: 20px; /* Espacement entre l'icône et la liste */
+}
+
+.tab-icon {
+  font-size: 20px; /* Ajustez la taille de l'icône de l'onglet */
+  margin-right: 8px; /* Espacement entre l'icône et le texte */
+  color: #007bff; /* Couleur de l'icône de l'onglet */
+}
+
+.welcome-message {
+  font-size: 18px; /* Taille de la police */
+  font-family: 'Poppins', sans-serif; /* Appliquer la police Poppins */
+  font-weight: bold; /* Mettre en gras */
+  color: #333; /* Couleur du texte */
+  margin-bottom: 50px;
+  text-align: left;
+}

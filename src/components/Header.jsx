@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import cartIcon from '../assets/cart.jpg';
-import profileIcon from '../assets/profile.jpg';
-import mailIcon from '../assets/mail.jpg'; 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBell, faShoppingCart, faUser } from '@fortawesome/free-solid-svg-icons'; // Icônes pour le header
 import logo from '../assets/logo.jpg'; // Importer le logo
 import { useTranslation } from 'react-i18next';
 import './Header.css';
@@ -32,22 +31,27 @@ const Header = () => {
         <img src={logo} alt="Chambre de Commerce de Djibouti" className="logo" />
       </div>
       <div className="header-right">
-        <div className="icon-container">
-          <img src={mailIcon} alt="Mail" className="mail-icon" />
+        <div className="header-icon-container">
+          <FontAwesomeIcon icon={faBell} className="header-icon" />
           {mailNotificationCount > 0 && <span className="badge mail-badge">{mailNotificationCount}</span>}
+          <div className="icon-label">Notifications</div>
         </div>
-        <div className="icon-container">
-          <img src={cartIcon} alt="Cart" className="cart-icon" />
+        <div className="header-icon-container">
+          <FontAwesomeIcon icon={faShoppingCart} className="header-icon" />
           {cartItemCount > 0 && <span className="badge cart-badge">{cartItemCount}</span>}
+          <div className="icon-label">Panier</div>
         </div>
-        <img src={profileIcon} alt="Profile" className="profile-icon" onClick={toggleDropdown} />
-        {dropdownOpen && (
-          <div className={`dropdown ${dropdownOpen ? 'show' : ''}`}>
-            <Link to="/profile">{t('header.profile')}</Link>
-            <Link to="/settings">{t('header.settings')}</Link>
-            <Link to="/login">{t('header.logout')}</Link>
-          </div>
-        )}
+        <div className="header-icon-container">
+          <FontAwesomeIcon icon={faUser} className="header-icon" onClick={toggleDropdown} />
+          {dropdownOpen && (
+            <div className={`dropdown ${dropdownOpen ? 'show' : ''}`}>
+              <Link to="/profile">{t('header.profile')}</Link>
+              <Link to="/settings">{t('header.settings')}</Link>
+              <Link to="/login">{t('header.logout')}</Link>
+            </div>
+          )}
+          <div className="icon-label">Profil</div>
+        </div>
 
         <div className="language-container">
           <button onClick={toggleLanguageDropdown} className="language-button">
