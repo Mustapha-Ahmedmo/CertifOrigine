@@ -11,7 +11,7 @@ const Step3 = ({ nextStep, prevStep, handleChange, values }) => {
 
   return (
     <form onSubmit={handleSubmit} className="step-form">
-      <h3>Step 3: Nombre de copie certifié</h3>
+      <h3>Etape 2: Nombre de copie certifié</h3>
       <div className="form-group">
         <label>Nombre de copie certifié</label>
         <input

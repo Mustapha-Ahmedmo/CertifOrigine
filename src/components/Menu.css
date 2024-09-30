@@ -1,29 +1,27 @@
 .menu {
     z-index: 100;
-    width: 200px;
-    padding: 20px;
-    background-color: #fff;
+    width: 250px; /* Largeur fixe du menu */
+    background-color: #2154a2;
+    color: #fff;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    position: fixed; /* Menu fixe sur le côté gauche */
+    top: 60px; /* Correspond à la hauteur du header */
+    bottom: 0; /* Fixe le menu jusqu'en bas de l'écran */
+    left: 0;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    height: 100vh;
-}
-
-.menu .logo {
-    width: 150%; /* Augmentation de la taille du logo */
-    height: auto;
-    margin-bottom: 20px;
-    display: block; /* Assurez-vous que le logo est centré si nécessaire */
-    margin-left: auto;
-    margin-right: auto;
+    overflow-y: auto; /* Ajoute la possibilité de défilement */
+   
 }
 
 .menu ul {
     list-style: none;
     padding: 0;
     margin: 0;
-    flex-grow: 1;
+    flex-grow: 1; /* Permet au menu de s'étendre et d'utiliser tout l'espace disponible */
+    overflow-y: auto; /* Assure le défilement dans le menu si nécessaire */
+    margin-top: 100px;
+    
 }
 
 .menu ul li {
@@ -34,71 +32,46 @@
 .menu ul li a,
 .menu-title {
     text-decoration: none;
-    color: #333;
-    display: block;
+    color: #ecf0f1;
+    display: flex;
+    align-items: center;
     padding: 10px;
     border-radius: 4px;
-    font-size: 1rem; /* Taille de police d'origine */
+    font-size: 1rem;
     transition: background-color 0.3s ease;
 }
 
-.menu-title {
-    cursor: pointer;
-    position: relative; /* Nécessaire pour positionner la flèche correctement */
+.menu ul li a.menu-title {
+    font-weight: bold; /* Titre du menu principal en gras */
 }
 
-.menu ul li a.active {
-    font-weight: bold;
+.submenu li a {
+    font-weight: normal; /* Sous-menus en texte normal */
 }
 
+.menu ul li a.active,
 .menu ul li a:hover,
-.submenu li a:hover {
-    background-color: #f0f0f0;
+.menu-title:hover {
+    background-color: #2c3e50;
+    font-weight: bold; /* Le titre reste en gras au survol */
 }
 
 .arrow {
-    margin-left: 5px;
-    font-size: 0.5em; /* Plus petite flèche */
-    font-weight: normal; /* Moins grasse */
-    display: inline-block; /* Assure une meilleure manipulation des espaces */
-    transform: translateY(-2px); /* Alignement vertical */
+    margin-left: auto;
+    font-size: 0.8em;
 }
 
 .submenu {
     list-style: none;
-    padding-left: 15px !important;
-    margin-top: 10px;
-    margin-bottom: 10px;
+    padding-left: 20px;
 }
 
-.submenu li {
-    margin-bottom: 10px;
-}
-
-.submenu li a {
-    padding: 8px;
-    font-size: 0.875rem !important; /* Police réduite de 2 par rapport à l'origine (0.875 rem au lieu de 1 rem) */
+.icon {
+    margin-right: 10px;
 }
 
 hr {
     border: none;
-    border-top: 1px solid #ccc;
+    border-top: 1px solid #7f8c8d;
     margin: 15px 0;
-}
-
-.logout-button {
-    background-color: #ff0000;
-    color: #fff;
-    border: none;
-    padding: 10px;
-    width: 100%;
-    cursor: pointer;
-    border-radius: 4px;
-    margin-top: 20px;
-    position: relative;
-    top: -2.5rem;
-}
-
-.logout-button:hover {
-    background-color: #cc0000;
 }

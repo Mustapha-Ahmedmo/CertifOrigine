@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Login.css';  // Réutiliser les styles de la page de login
+import { Link } from 'react-router-dom'; // Utilisation de Link pour la navigation
 import logo from '../assets/logo.jpg'; // Assurez-vous que le logo est dans le bon chemin
 
 const ResetPassword = () => {
@@ -53,6 +54,9 @@ const ResetPassword = () => {
           </div>
           <button type="submit" className="btn-login">Réinitialiser</button>
         </form>
+        <div className="back-to-login">
+          <Link to="/login">Revenir à la page de connexion</Link> {/* Lien vers la page de connexion */}
+        </div>
       </div>
     </div>
   );

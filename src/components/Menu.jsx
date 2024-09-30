@@ -1,19 +1,10 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { logout } from '../slices/authSlice';
-import logo from '../assets/logo.jpg';
+import { Link } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTachometerAlt, faClipboardList, faShoppingCart, faHistory, faUser, faBuilding, faUsers, faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons'; // Importation des nouvelles icônes
 import './Menu.css';
 
 const Menu = () => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate('/');
-  };
-
   const currentYear = new Date().getFullYear();
   const [openMenu, setOpenMenu] = useState({});
   const [activeLink, setActiveLink] = useState('');
@@ -35,11 +26,10 @@ const Menu = () => {
 
   return (
     <nav className="menu">
-      <img src={logo} alt="Logo" className="logo" />
       <ul>
         <li onClick={() => toggleMenu('dashboard')}>
           <span className={`menu-title ${openMenu.dashboard ? 'open' : ''}`}>
-            Tableau de bord <span className="arrow">▼</span>
+            <FontAwesomeIcon icon={faTachometerAlt} className="icon" /> Tableau de bord <span className="arrow">▼</span>
           </span>
           {openMenu.dashboard && (
             <ul className="submenu">
@@ -67,7 +57,7 @@ const Menu = () => {
                   className={activeLink === 'retourne' ? 'active' : ''}
                   onClick={() => handleLinkClick('dashboard', 'retourne')}
                 >
-                  Commandes retourné
+                  Commandes retournées
                 </Link>
               </li>
               <li>
@@ -76,7 +66,7 @@ const Menu = () => {
                   className={activeLink === 'completedThisYear' ? 'active' : ''}
                   onClick={() => handleLinkClick('dashboard', 'completedThisYear')}
                 >
-                  Commandes complété cette année
+                  Commandes complétées cette année
                 </Link>
               </li>
             </ul>
@@ -87,7 +77,7 @@ const Menu = () => {
 
         <li onClick={() => toggleMenu('newOrder')}>
           <span className={`menu-title ${openMenu.newOrder ? 'open' : ''}`}>
-            Nouvelle Commande <span className="arrow">▼</span>
+            <FontAwesomeIcon icon={faShoppingCart} className="icon" /> Nouvelle Commande <span className="arrow">▼</span>
           </span>
           {openMenu.newOrder && (
             <ul className="submenu">
@@ -101,7 +91,7 @@ const Menu = () => {
 
         <li onClick={() => toggleMenu('pastOrders')}>
           <span className={`menu-title ${openMenu.pastOrders ? 'open' : ''}`}>
-            Mes commandes passées <span className="arrow">▼</span>
+            <FontAwesomeIcon icon={faHistory} className="icon" /> Mes commandes passées <span className="arrow">▼</span>
           </span>
           {openMenu.pastOrders && (
             <ul className="submenu">
@@ -156,28 +146,40 @@ const Menu = () => {
 
         <hr />
 
-        <li onClick={() => toggleMenu('myInfo')}>
-          <span className={`menu-title ${openMenu.myInfo ? 'open' : ''}`}>
-            Mes Informations <span className="arrow">▼</span>
+        <li onClick={() => toggleMenu('clients')}>
+          <span className={`menu-title ${openMenu.clients ? 'open' : ''}`}>
+            <FontAwesomeIcon icon={faUsers} className="icon" /> Mes clients <span className="arrow">▼</span>
           </span>
-          {openMenu.myInfo && (
+          {openMenu.clients && (
             <ul className="submenu">
               <li>
                 <Link
-                  to="/"
-                  className={activeLink === 'choix1' ? 'active' : ''}
-                  onClick={() => handleLinkClick('myInfo', 'choix1')}
+                  to="/clients/list"
+                  className={activeLink === 'listClients' ? 'active' : ''}
+                  onClick={() => handleLinkClick('clients', 'listClients')}
                 >
-                  Choix 1
+                  Liste des clients
                 </Link>
               </li>
+            </ul>
+          )}
+        </li>
+
+        <hr />  {/* Séparateur ajouté entre "Mes clients" et "Mes facturations" */}
+
+        <li onClick={() => toggleMenu('facturations')}>
+          <span className={`menu-title ${openMenu.facturations ? 'open' : ''}`}>
+            <FontAwesomeIcon icon={faFileInvoiceDollar} className="icon" /> Mes facturations <span className="arrow">▼</span>
+          </span>
+          {openMenu.facturations && (
+            <ul className="submenu">
               <li>
                 <Link
-                  to="/"
-                  className={activeLink === 'choix2' ? 'active' : ''}
-                  onClick={() => handleLinkClick('myInfo', 'choix2')}
+                  to="/facturations/list"
+                  className={activeLink === 'listFacturations' ? 'active' : ''}
+                  onClick={() => handleLinkClick('facturations', 'listFacturations')}
                 >
-                  Choix 2
+                  Liste des factures
                 </Link>
               </li>
             </ul>
@@ -188,13 +190,12 @@ const Menu = () => {
 
         <li onClick={() => toggleMenu('myCCI')}>
           <span className={`menu-title ${openMenu.myCCI ? 'open' : ''}`}>
-            Ma CCI <span className="arrow">▼</span>
+            <FontAwesomeIcon icon={faBuilding} className="icon" /> Ma CCI <span className="arrow">▼</span>
           </span>
         </li>
 
         <hr />
       </ul>
-      <button onClick={handleLogout} className="logout-button">Se déconnecter</button>
     </nav>
   );
 };

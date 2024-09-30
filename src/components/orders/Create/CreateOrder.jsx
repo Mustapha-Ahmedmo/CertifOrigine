@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import Step1 from './steps/Step1';
-import Step2 from './steps/Step2';
 import Step3 from './steps/Step3';
 import Step4 from './steps/Step4';
 import Step5 from './steps/Step5';
@@ -82,15 +81,7 @@ const CreateOrder = () => {
         return (
           <Step4 nextStep={nextStep} prevStep={prevStep} handleChange={handleChange} values={formData} />
         );
-      case 3:
-        return (
-          <Step3 nextStep={nextStep} prevStep={prevStep} handleChange={handleChange} values={formData} />
-        );
-      case 4:
-        return (
-          <Step4 nextStep={nextStep} prevStep={prevStep} handleChange={handleChange} values={formData} />
-        );
-      case 5:
+      case 3 :
         return (
           <Step5 prevStep={prevStep} values={formData} handleSubmit={handleSubmit} />
         );
@@ -102,14 +93,13 @@ const CreateOrder = () => {
   return (
     <div className="create-order-container">
       <div className="steps-progress">
-        {[1, 2, 3, 4].map((step) => (
+        {[1, 2,].map((step) => (
           <div key={step} className={`step-item ${currentStep >= step ? 'completed' : ''}`}>
             <div className="step-circle">{currentStep > step ? '✔️' : step}</div>
             <div className="step-label">
               {step === 1 && 'ÉTAPE1\nCRÉATION D\'UNE COMMANDE'}
-              {step === 2 && 'ÉTAPE2\nDÉTAILS DU PRODUIT'}
-              {step === 3 && 'ÉTAPE3\nLIVRAISON ET FACTURATION'}
-              {step === 4 && 'ÉTAPE4\nFINALISATION DE LA COMMANDE'}
+              {step === 2 && 'ÉTAPE2\nPIECE JUSTIFICATIVE'}
+              {step === 3 && 'ÉTAPE3\nNOMBRE DE COPIE CERTIFIÉ'}
             </div>
           </div>
         ))}
