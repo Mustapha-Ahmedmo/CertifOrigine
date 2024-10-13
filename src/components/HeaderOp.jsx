@@ -37,11 +37,6 @@ const Header = () => {
           <div className="icon-label">Notifications</div>
         </div>
         <div className="header-icon-container">
-          <FontAwesomeIcon icon={faShoppingCart} className="header-icon" />
-          {cartItemCount > 0 && <span className="badge cart-badge">{cartItemCount}</span>}
-          <div className="icon-label">Panier</div>
-        </div>
-        <div className="header-icon-container">
           <FontAwesomeIcon icon={faUser} className="header-icon" onClick={toggleDropdown} />
           {dropdownOpen && (
             <div className={`dropdown ${dropdownOpen ? 'show' : ''}`}>

@@ -52,11 +52,9 @@ const Menu = () => {
           {openMenu.dashboard && (
             <ul className="submenu">
               <li>
-                <Link to="/dashboard/to-complete" className={activeLink === 'completer' ? 'active' : ''} onClick={() => handleLinkClick('dashboard', 'completer')}>Commandes à compléter</Link>
+                <Link to="/dashboard/to-complete" className={activeLink === 'completer' ? 'active' : ''} onClick={() => handleLinkClick('dashboard', 'completer')}>Commandes en attente de validation de votre part</Link>
               </li>
-              <li>
-                <Link to="/dashboard/to-pay" className={activeLink === 'payer' ? 'active' : ''} onClick={() => handleLinkClick('dashboard', 'payer')}>Commandes à payer</Link>
-              </li>
+            
             </ul>
           )}
         </li>
@@ -64,31 +62,14 @@ const Menu = () => {
           onMouseEnter={() => handleMouseEnter('newOrder')}
           onMouseLeave={() => handleMouseLeave('newOrder')}
         >
-          <span className={`menu-title ${openMenu.newOrder ? 'open' : ''}`}>
-            <FontAwesomeIcon icon={faShoppingCart} className="icon" /> Nouvelle Commande
-          </span>
-          {openMenu.newOrder && (
-            <ul className="submenu">
-              <li>
-                <Link to="/dashboard/create-order" className={activeLink === 'certificat' ? 'active' : ''} onClick={() => handleLinkClick('newOrder', 'certificat')}>Certificat d'origine</Link>
-              </li>
-            </ul>
-          )}
+        
+    
         </li>
         <li 
           onMouseEnter={() => handleMouseEnter('pastOrders')}
           onMouseLeave={() => handleMouseLeave('pastOrders')}
         >
-          <span className={`menu-title ${openMenu.pastOrders ? 'open' : ''}`}>
-            <FontAwesomeIcon icon={faHistory} className="icon" /> Mes commandes passées
-          </span>
-          {openMenu.pastOrders && (
-            <ul className="submenu">
-              <li>
-                <Link to="/" className={activeLink === '1mois' ? 'active' : ''} onClick={() => handleLinkClick('pastOrders', '1mois')}>1 mois</Link>
-              </li>
-            </ul>
-          )}
+   
         </li>
         <li 
           onMouseEnter={() => handleMouseEnter('clients')}

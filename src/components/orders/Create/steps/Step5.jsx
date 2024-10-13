@@ -3,7 +3,7 @@ import React from 'react';
 const Step5 = ({ prevStep, values, handleSubmit }) => {
   return (
     <div className="step-form">
-      <h3>Step 5: Récapitulatif</h3>
+      <h3>Récapitulatif</h3>
 
       {/* Command Details */}
       <div className="recap-section">

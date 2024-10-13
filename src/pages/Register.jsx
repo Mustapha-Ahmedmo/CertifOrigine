@@ -65,7 +65,7 @@ const Register = () => {
                 <span className="gender-label">{formData.gender}</span>
               </div>
             </label>
-            <label className="large-label">
+            <label className="large-label required-label">
               Nom complet:
               <input
                 type="text"
@@ -75,7 +75,7 @@ const Register = () => {
                 required
               />
             </label>
-            <label className="large-label">
+            <label className="large-label required-label">
               Téléphone:
               <input
                 type="text"
@@ -87,7 +87,7 @@ const Register = () => {
             </label>
           </div>
           <div className="form-row">
-            <label className="large-label">
+            <label className="large-label required-label">
               E-mail:
               <input
                 type="email"
@@ -97,7 +97,7 @@ const Register = () => {
                 required
               />
             </label>
-            <label className="large-label">
+            <label className="large-label required-label">
               Mot de passe:
               <input
                 type="password"
@@ -107,7 +107,7 @@ const Register = () => {
                 required
               />
             </label>
-            <label className="large-label">
+            <label className="large-label required-label">
               Confirmer le Mot de passe:
               <input
                 type="password"
@@ -123,7 +123,7 @@ const Register = () => {
         <div className="form-section">
           <h3>Société</h3>
           <div className="form-row">
-            <label className="small-label">
+            <label className="small-label required-label">
               Catégorie:
               <select
                 name="companyType"
@@ -135,8 +135,8 @@ const Register = () => {
                 <option value="SA">SA</option>
               </select>
             </label>
-            <label className="large-label">
-              Raison sociale / Nom:
+            <label className="large-label required-label">
+              Raison sociale :
               <input
                 type="text"
                 name="companyName"
@@ -145,8 +145,8 @@ const Register = () => {
                 required
               />
             </label>
-            <label className="large-label">
-              N° d'immatriculation au RCS:
+            <label className="large-label required-label">
+              N° d'immatriculation :
               <input
                 type="text"
                 name="registrationNumber"
@@ -157,7 +157,7 @@ const Register = () => {
             </label>
           </div>
           <div className="form-row">
-            <label className="large-label">
+            <label className="large-label required-label">
               Adresse complète:
               <input
                 type="text"
@@ -167,7 +167,7 @@ const Register = () => {
                 required
               />
             </label>
-            <label className="large-label">
+            <label className="large-label required-label">
               Pays:
               <input
                 type="text"
@@ -223,7 +223,7 @@ const Register = () => {
         </div>
 
         <div className="form-section">
-          <label>
+          <label className="required-label">
             <input
               type="checkbox"
               name="acceptsConditions"
@@ -233,7 +233,7 @@ const Register = () => {
             />
             Je certifie être habilité à faire des formalités export pour la société que je viens de désigner ci dessus.
           </label>
-          <label>
+          <label className="required-label">
             <input
               type="checkbox"
               name="acceptsDataProcessing"

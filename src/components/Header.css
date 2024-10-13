@@ -1,36 +1,55 @@
 .header {
   background-color: #ffffff;
-  padding: 10px 20px;
+  padding: 0 20px; /* Réduire le padding */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between; /* Distribuer les éléments de chaque côté */
+  align-items: center; /* Centrer verticalement les éléments */
+  width: 100%; /* Prendre toute la largeur de la page */
+  height: 60px; /* Fixer une hauteur constante pour le header */
+  position: fixed; /* Position fixe pour rester en haut */
+  top: 0;
+  left: 0;
+  z-index: 1000; /* S'assurer que le header est toujours au-dessus du contenu */
+  overflow: hidden; /* Empêcher les éléments de dépasser */
+}
+
+.logo-container {
+  display: flex;
+  justify-content: flex-start; /* Alignement à gauche */
   align-items: center;
+}
+
+.logo {
+  height: 40px; /* Taille réduite du logo */
+}
+
+.header-right {
+  display: flex;
+  margin-right: 25px;
+  align-items: center;
+  gap: 30px; /* Augmenter l'espacement entre les icônes */
+}
+
+.header-icon-container {
+  display: flex;
+  flex-direction: column; /* Aligner les icônes et les labels verticalement */
+  align-items: center; /* Centrer les éléments */
   position: relative;
 }
 
-.icon-container {
-  position: relative;
-  margin-right: 20px;
+.header-icon {
+  width: 16px; /* Taille réduite des icônes */
+  height: 16px; /* Taille réduite des icônes */
+  cursor: pointer;
+  /* border: 2px solid #111111; */ /* Retirer le contour */
+  /* border-radius: 50%; */ /* Retirer l'arrondi si nécessaire */
 }
 
-.header .cart-icon {
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-}
-
-.header .mail-icon {
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  top: 3px;
-}
-
-.header .profile-icon {
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  border-radius: 50%;
+.icon-label {
+  font-size: 12px; /* Ajuste la taille du texte */
+  color: #111111; /* Couleur du texte */
+  margin-top: 4px; /* Espacement entre l'icône et le titre */
 }
 
 .badge {
@@ -41,89 +60,19 @@
   border-radius: 50%;
   font-size: 12px;
   font-weight: bold;
+  top: -5px; /* Positionnement au-dessus de l'icône */
+  right: -5px; /* Positionnement à droite de l'icône */
 }
 
-.mail-badge {
-  top: -5px;
-  right: -10px;
-}
-
-.cart-badge {
-  top: -5px;
-  right: -5px;
-}
-
-.header .dropdown {
-  position: absolute;
-  top: 100%;
-  right: 20px;
-  background-color: white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  display: none;
-  flex-direction: column;
-}
-
-.header .dropdown a {
-  padding: 10px;
-  text-decoration: none;
-  color: #333;
-  border-bottom: 1px solid #ddd;
-}
-
-.header .dropdown a:hover {
-  background-color: #f4f4f4;
-}
-
-.header .dropdown.show {
-  display: flex;
-}
-
-/* Language dropdown styling */
 .language-container {
   position: relative;
 }
 
 .language-button {
-  background-color: #ffffff;
+  background-color: transparent;
   border: none;
   font-size: 16px;
   cursor: pointer;
   color: #333;
-  padding: 10px;
-  display: flex;
-  align-items: center;
-}
-
-.language-dropdown {
-  position: absolute;
-  top: 40px;
-  right: 0;
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  padding: 5px 0;
-  z-index: 1000;
-}
-
-.language-dropdown button {
-  background: none;
-  color:black;
-  border: none;
-  padding: 10px 20px;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.language-dropdown button:hover {
-  background-color: #f4f4f4;
-}
-
-.language-dropdown .active {
-  font-weight: bold;
-  color: #007bff;
+  padding: 5px;
 }

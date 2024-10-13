@@ -2,7 +2,9 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import SimpleLayout from '../components/SimpleLayout';
+import OperateurLayout from '../components/OperateurLayout'; // Importer le nouveau layout
 import Home from '../pages/Home';
+import HomeOperateur from '../pages/HomeOperateur'; // Import de la nouvelle page
 import Login from '../pages/Login';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
@@ -21,11 +23,16 @@ const App = () => (
     {/* Routes avec MainLayout */}
     <Route path="/dashboard" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
       <Route index element={<Home />} />
-      <Route path="to-complete" element={<ToComplete />} />  {/* Enlever le '/' */}
-      <Route path="to-pay" element={<ToPay />} />            {/* Enlever le '/' */}
+      <Route path="to-complete" element={<ToComplete />} />
+      <Route path="to-pay" element={<ToPay />} />
       <Route path="returned-orders" element={<ReturnedOrders />} />
       <Route path="completed-orders-this-year" element={<CompletedOrdersThisYear />} />
       <Route path="create-order" element={<CreateOrder />} />
+    </Route>
+
+    {/* Routes pour l'opérateur avec OperateurLayout */}
+    <Route path="/home-operateur" element={<OperateurLayout />}>
+      <Route index element={<HomeOperateur />} />
     </Route>
 
     {/* Routes avec SimpleLayout */}

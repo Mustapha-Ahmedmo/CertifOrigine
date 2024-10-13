@@ -312,7 +312,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       <hr />
 
       {/* Section 3/9 Origine de la marchandise */}
-      <div className="section-title">3/9 ORIGINE DE LA MARCHANDISE</div>
+      <div className="section-title">3/8 ORIGINE DE LA MARCHANDISE</div>
       <div className="form-group">
         <label>Pays d'origine de la marchandise *</label>
         <select
@@ -342,7 +342,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       <hr />
 
       {/* Modes de transport */}
-      <div className="section-title">4/9 MODES DE TRANSPORT</div>
+      <div className="section-title">4/8 MODES DE TRANSPORT</div>
       <div className="form-group">
         <label>Modes de transport</label>
         <div className="transport-options">
@@ -370,9 +370,9 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           <label>
             <input
               type="checkbox"
-              checked={values.transportModes.mixte}
-              onChange={(e) => handleChange('transportModes', { ...values.transportModes, mixte: e.target.checked })}
-            /> Mixte
+              checked={values.transportModes.multimodal}
+              onChange={(e) => handleChange('transportModes', { ...values.transportModes, multimodal: e.target.checked })}
+            /> Multimodal
           </label>
         </div>
       </div>
@@ -393,10 +393,10 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       <hr />
 
       {/* Section 6/9 Liste des marchandises */}
-      <div className="section-title">6/9 LISTE DES MARCHANDISES</div>
+      <div className="section-title">5/8 LISTE DES MARCHANDISES</div>
       <div className="form-group-row">
         <div className="form-group">
-          <label>Désignation</label>
+          <label>Nature de la marchandise</label>
           <input
             type="text"
             value={designation}
@@ -405,7 +405,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         </div>
 
         <div className="form-group">
-          <label>Référence</label> {/* Nouveau champ pour la référence */}
+          <label>Référence / HSCODE</label> {/* Nouveau champ pour la référence */}
           <input
             type="text"
             value={boxReference}
@@ -415,6 +415,15 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
         <div className="form-group">
           <label>Quantité</label>
+          <input
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Poids</label>
           <input
             type="number"
             value={quantity}
@@ -471,7 +480,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       <hr />
 
       {/* Section 7/9 Nb d'exemplaires */}
-      <div className="section-title">7/9 Nombre de copie certifié</div>
+      <div className="section-title">6/8 Nombre de copie certifié</div>
       <div className="form-group">
         <input
           type="number"
@@ -485,7 +494,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       <hr />
 
       {/* Section 9/9 Engagement */}
-      <div className="section-title">9/9 ENGAGEMENT</div>
+      <div className="section-title">7/8 ENGAGEMENT</div>
       <p>
         En validant ces conditions générales d'utilisation vous demandez la délivrance du certificat d'origine
         pour les marchandises figurant en case 6, dont l'origine est indiquée en case 3.
@@ -508,7 +517,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       <hr/>
 
       {/* Section 5/9 Remarques */}
-      <div className="section-title">5/9 REMARQUES</div>
+      <div className="section-title">8/8 REMARQUES</div>
       <div className="form-group">
         <label>Remarques</label>
         <textarea
