@@ -10,4 +10,6 @@ RUN npm install
 COPY . .
 RUN npm run build  # This creates the dist folder
 
-# No need to copy anything to the nginx image here
+
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
