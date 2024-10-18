@@ -3,32 +3,9 @@ FROM node:18-alpine3.19 AS build
 WORKDIR /app
 
 # Install dependencies using npm
-COPY frontend/package.json frontend/package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm install
 
-# Copy the rest of the frontend source code
-COPY frontend ./
-
-# Define build arguments
-ARG VITE_API_URL
-
-# Set environment variables for the build
-ENV VITE_API_URL=${VITE_API_URL}
-
-# Build the frontend (this creates the dist folder)
-RUN npm run build
-
-# Stage 2: Serve the built frontend with Nginx
-FROM nginx:alpine
-
-# Copy the built frontend files from the build stage to Nginx's html directory
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Copy the custom Nginx configuration
-COPY nginx.prod.conf /etc/nginx/nginx.conf
-
-# Expose port 80 to the host
-EXPOSE 80
-
-# Start Nginx when the container launches
-CMD ["nginx", "-g", "daemon off;"]
+# Copy the rest of the source code and build it
+COPY . .
+RUN npm run build  # This creates the dist folder
