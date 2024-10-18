@@ -26,16 +26,17 @@
     "dashboardOverview": "Vue d'ensemble du tableau de bord",
     "ordersToComplete": "Commandes à compléter",
     "ordersToPay": "Commandes à payer",
-    "returnedOrders": "Commandes retournées",
+    "validatedOrders": "Commandes validées",
     "completedOrdersThisYear": "Commandes complétées cette année",
     "goToUncompletedOrders": "Voir les commandes non terminées",
     "goToOrdersToPay": "Voir les commandes à payer",
-    "goToReturnedOrders": "Voir les commandes retournées",
+    "goToValidatedOrders": "Voir les commandes validées",
     "goToCompletedOrders": "Voir les commandes terminées",
     "edit": "Modifier",
     "delete": "Supprimer",
     "pay": "Payer",
-    "complete": "A completer"
+    "complete": "A compléter",
+    "view": "Voir"
   },
   "step1": {
     "title": "ÉTAPE 1 - DÉTAILS DU CERTIFICAT D'ORIGINE",
