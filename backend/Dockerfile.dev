@@ -1,0 +1,23 @@
+# Utiliser une image Node.js officielle
+FROM node:16
+
+# Créer le répertoire de travail dans le conteneur
+WORKDIR /usr/src/app
+
+# Copier les fichiers package.json et package-lock.json
+COPY package*.json ./
+
+# Installer les dépendances
+RUN npm install
+
+# Copier tout le code dans le conteneur
+COPY . .
+
+# Installer nodemon pour le rechargement automatique pendant le développement
+RUN npm install -g nodemon
+
+# Exposer le port que l'application utilise
+EXPOSE 5000
+
+# Commande pour démarrer l'application en mode développement
+CMD ["nodemon", "server.js"]

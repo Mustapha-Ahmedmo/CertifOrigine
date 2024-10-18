@@ -4,23 +4,26 @@ import { useNavigate } from 'react-router-dom';
 import { login } from '../slices/authSlice';
 import './Login.css';
 import logo from '../assets/logo.jpg';
+import { loginUser } from '../services/apiServices';
 
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Logique de connexion (vous pouvez remplacer ceci par votre logique réelle)
-    if (username === 'admin' && password === 'password') {
-      const user = { username }; // Vous pouvez ajouter plus de détails utilisateur ici
+
+    try {
+      const data = await loginUser(username, password); // Call centralized API
+      localStorage.setItem('token', data.token);
+      const user = { username }; // You can add more user details here if needed
       dispatch(login(user));
-      // Rediriger vers la page d'accueil
       navigate('/dashboard');
-    } else {
-      alert('Nom d\'utilisateur ou mot de passe incorrect');
+    } catch (error) {
+      setError(error.message); // Set error message
     }
   };
 
@@ -52,6 +55,7 @@ const Login = () => {
               required
             />
           </div>
+          {error && <p className="error">{error}</p>}
           <div className="form-group">
             <a href="/forgot-password" className="forgot-password">Mot de passe oublié?</a>
           </div>
