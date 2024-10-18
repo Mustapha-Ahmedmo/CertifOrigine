@@ -29,7 +29,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod  # Use a production Dockerfile
     environment:
-      - VITE_API_URL=http://146.59.239.14//api  # Access backend via reverse proxy
+      - VITE_API_URL=http://146.59.239.14/api  # Access backend via reverse proxy
     networks:
       - app-network
     volumes:
