@@ -1,5 +1,18 @@
 version: '3'
 services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"  # Expose port 80 for the reverse proxy
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf  # Use a production Nginx config
+      - frontend-build:/usr/share/nginx/html  # Mount the built dist directory from frontend
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app-network
+
   backend:
     build:
       context: ./backend
@@ -16,23 +29,15 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod  # Use a production Dockerfile
     environment:
-      - VITE_API_URL=http://146.59.239.14/api  # Access backend via reverse proxy
+      - VITE_API_URL=http://nginx/api  # Access backend via reverse proxy
     networks:
       - app-network
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"  # Expose port 80 for the reverse proxy
     volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf  # Use a production Nginx config
-      - ./frontend/dist:/usr/share/nginx/html  # Mount the built dist directory
-    depends_on:
-      - backend
-      - frontend  # Ensure frontend and backend are started before Nginx
-    networks:
-      - app-network
+      - frontend-build:/app/dist  # Mount the built dist directory to the shared volume
 
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  frontend-build:
