@@ -1,0 +1,25 @@
+# Utiliser une image Node.js officielle pour construire l'application
+FROM node:16 AS build
+
+# Créer le répertoire de travail dans le conteneur
+WORKDIR /usr/src/app
+
+# Copier les fichiers package.json et package-lock.json
+COPY package*.json ./
+
+# Installer les dépendances
+RUN npm install
+
+# Copier le reste du code et construire l'application
+COPY . .
+RUN yarn build
+
+# Utiliser Nginx pour servir les fichiers statiques
+FROM nginx:alpine
+COPY --from=build /usr/src/app/build /usr/share/nginx/html
+
+# Exposer le port utilisé par Nginx
+EXPOSE 80
+
+# Lancer Nginx
+CMD ["nginx", "-g", "daemon off;"]

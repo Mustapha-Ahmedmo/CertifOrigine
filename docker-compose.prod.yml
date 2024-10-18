@@ -1,0 +1,37 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"  # Expose port 80 for the reverse proxy
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf  # Use a production Nginx config
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod  # Use a production Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - JWT_SECRET=your_jwt_secret
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod  # Use a production Dockerfile
+    environment:
+      - VITE_API_URL=http://146.59.239.14/api  # Access backend via reverse proxy
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
