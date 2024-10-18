@@ -15,7 +15,9 @@ import ToPay from './orders/ToPay';
 import ReturnedOrders from './orders/ReturnedOrders';
 import CompletedOrdersThisYear from './orders/CompletedOrdersThisYear';
 import Register from '../pages/Register';
+import RegisterOP from '../pages/RegisterOP';
 import CreateOrder from './orders/Create/CreateOrder';
+
 
 const App = () => (
   <Routes>
@@ -40,6 +42,9 @@ const App = () => (
       <Route index element={<Login />} />
     </Route>
     <Route path="/register" element={<Register />}>
+      <Route index element={<Login />} />
+    </Route>
+    <Route path="/registerop" element={<RegisterOP />}>
       <Route index element={<Login />} />
     </Route>
     <Route path="/forgot-password" element={<SimpleLayout />}>

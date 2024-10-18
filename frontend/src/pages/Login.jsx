@@ -4,66 +4,86 @@ import { useNavigate } from 'react-router-dom';
 import { login } from '../slices/authSlice';
 import './Login.css';
 import logo from '../assets/logo.jpg';
-import { loginUser } from '../services/apiServices';
 
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
+  const [showChoices, setShowChoices] = useState(false); // État pour afficher les choix
+  const [isDisappearing, setIsDisappearing] = useState(false); // État pour l'animation de disparition
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    try {
-      const data = await loginUser(username, password); // Call centralized API
-      localStorage.setItem('token', data.token);
-      const user = { username }; // You can add more user details here if needed
+    if (username === 'admin' && password === 'password') {
+      const user = { username };
       dispatch(login(user));
       navigate('/dashboard');
-    } catch (error) {
-      setError(error.message); // Set error message
+    } else {
+      alert('Nom d\'utilisateur ou mot de passe incorrect');
+    }
+  };
+
+  const handleShowChoices = () => {
+    if (showChoices) {
+      // Si les options sont déjà affichées, déclenche l'animation de disparition
+      setIsDisappearing(true);
+      // Après la durée de l'animation (0.5s), on masque complètement les options
+      setTimeout(() => {
+        setShowChoices(false);
+        setIsDisappearing(false); // Réinitialise l'animation
+      }, 500);
+    } else {
+      setShowChoices(true); // Affiche les options avec animation d'apparition
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <img src={logo} alt="Chambre de Commerce de Djibouti" className="logo" />
-        <h2>CONNEXION</h2>
+    <div className="login-page-wrapper">
+      <div className="login-page-card">
+        <img src={logo} alt="Logo" className="login-page-logo" />
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="username">Nom d'utilisateur</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Mot de passe</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          {error && <p className="error">{error}</p>}
-          <div className="form-group">
-            <a href="/forgot-password" className="forgot-password">Mot de passe oublié?</a>
-          </div>
-          <button type="submit" className="btn-login">Se connecter</button>
-          <div className="register-link">
-            <p>Vous n'avez pas de compte? <a href="/register">Inscription</a></p>
-          </div>
+          <input
+            type="text"
+            placeholder="Email"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            className="login-page-input-field"
+          />
+          <input
+            type="password"
+            placeholder="Mot de passe"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="login-page-input-field"
+          />
+          <a href="/forgot-password" className="login-page-forgot-password">Mot de passe oublié ?</a>
+          <button type="submit" className="login-page-btn-login">Connexion</button>
         </form>
+        <div className="login-page-divider">ou</div>
+        <button onClick={handleShowChoices} className="login-page-btn-register">
+          Ouvrir un compte
+        </button>
+
+        {/* Si showChoices est true, on affiche les options, sinon animation de disparition */}
+        {showChoices && (
+          <div className={`register-options ${isDisappearing ? 'disappearing' : ''}`}>
+            <button
+              onClick={() => navigate('/register')}
+              className="register-option-btn"
+            >
+              Inscription Client
+            </button>
+            <button
+              onClick={() => navigate('/registerop')}
+              className="register-option-btn"
+            >
+              Inscription Opérateur
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
