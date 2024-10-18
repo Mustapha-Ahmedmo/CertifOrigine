@@ -6,7 +6,7 @@ services:
       - "80:80"  # Expose port 80 for the reverse proxy
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf  # Use a production Nginx config
-      - ./frontend/dist:/usr/share/nginx/html 
+      - ./frontend/dist:/usr/share/nginx/html  # Mount the built dist directory
     depends_on:
       - backend
       - frontend

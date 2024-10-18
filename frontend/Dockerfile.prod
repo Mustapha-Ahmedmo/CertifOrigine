@@ -1,6 +1,11 @@
+# Stage 1: Build the frontend
 FROM node:18-alpine3.19 AS build
 WORKDIR /app
-COPY package.json .
+
+# Install dependencies
+COPY package.json yarn.lock ./
 RUN npm i
+
+# Copy the rest of the source code and build it
 COPY . .
-RUN npm run build
+RUN yarn build 
