@@ -3,8 +3,7 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const loginUser = async (username, password) => {
-  console.log('API URL:', API_URL);
-/*  try {
+  try {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
@@ -22,7 +21,7 @@ export const loginUser = async (username, password) => {
   } catch (error) {
     console.error('API call error:', error);
     throw error;
-  }*/
+  }
 };
 
 // You can add more functions for signup, fetching data, etc.
