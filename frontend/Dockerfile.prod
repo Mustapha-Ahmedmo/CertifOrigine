@@ -1,25 +1,16 @@
-# Utiliser une image Node.js officielle pour construire l'application
-FROM node:16 AS build
-
-# Créer le répertoire de travail dans le conteneur
-WORKDIR /usr/src/app
-
-# Copier les fichiers package.json et package-lock.json
-COPY package*.json ./
-
-# Installer les dépendances
-RUN npm install
-
-# Copier le reste du code et construire l'application
+FROM node:18-alpine3.19 AS build
+WORKDIR /app
+COPY package.json .
+RUN npm i
 COPY . .
-RUN yarn build
+RUN npm run build
 
-# Utiliser Nginx pour servir les fichiers statiques
+# Stage 2: Serve with Nginx
 FROM nginx:alpine
-COPY --from=build /usr/src/app/build /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Exposer le port utilisé par Nginx
+# Expose port 80 to the host
 EXPOSE 80
 
-# Lancer Nginx
+# Start Nginx when the container launches
 CMD ["nginx", "-g", "daemon off;"]
