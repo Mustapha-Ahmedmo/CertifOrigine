@@ -1,18 +1,5 @@
 version: '3'
 services:
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"  # Expose port 80 for the reverse proxy
-    volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf  # Use your custom Nginx config
-      - frontend-build:/usr/share/nginx/html  # Mount the shared named volume to serve frontend
-    depends_on:
-      - backend
-      - frontend
-    networks:
-      - app-network
-
   backend:
     build:
       context: ./backend
@@ -27,19 +14,30 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.prod  # Use a production Dockerfile
+      dockerfile: Dockerfile.prod  # Use the updated production Dockerfile
       args:
-        VITE_API_URL: "http://nginx/api"  # Pass the build argument
+        VITE_API_URL: "http://146.59.239.14/api"  # Pass the build argument
     environment:
-      - VITE_API_URL=http://nginx/api  # Access backend via reverse proxy (optional, for runtime use)
+      - VITE_API_URL=http://146.59.239.14/api  # Optional, for runtime use
     networks:
       - app-network
     volumes:
-      - frontend-build:/app/dist  # Mount the shared named volume to store built frontend
+      - ./frontend/dist:/app/dist  # Mount the host's dist directory to store built frontend
+    command: ["npm", "run", "build"]  # Run the build command
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"  # Expose port 80 for the reverse proxy and frontend
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf  # Use your custom Nginx config
+      - ./frontend/dist:/usr/share/nginx/html  # Mount the built dist directory from host
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app-network
 
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  frontend-build:

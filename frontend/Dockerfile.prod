@@ -18,17 +18,5 @@ ENV VITE_API_URL=${VITE_API_URL}
 # Build the frontend (this creates the dist folder)
 RUN npm run build
 
-# Verify that the dist folder exists
+# Verify that the dist folder exists and list its contents
 RUN ls -la /app/dist
-
-# Stage 2: Serve with Nginx
-FROM nginx:alpine
-
-# Copy the dist folder from the build stage to Nginx's html directory
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Expose port 80 to the host
-EXPOSE 80
-
-# Start Nginx when the container launches
-CMD ["nginx", "-g", "daemon off;"]
