@@ -1,5 +1,3 @@
-/* Login.css */
-
 /* Corps de la page de login */
 body {
   font-family: Arial, sans-serif;
@@ -31,6 +29,13 @@ body {
 
 .login-page-logo {
   width: 175px;
+  margin-bottom: 1rem;
+}
+
+/* Style pour le titre */
+.login-page-title {
+  font-size: 1.5rem;
+  color: #333;
   margin-bottom: 1.5rem;
 }
 
@@ -53,6 +58,25 @@ body {
   outline: none;
 }
 
+/* Bouton "Se connecter" */
+.login-page-btn-login {
+  width: 100%;
+  max-width: 340px;
+  padding: 14px;
+  background-color: #004080;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 1rem; /* Ajustement de la marge */
+}
+
+.login-page-btn-login:hover {
+  background-color: #003366;
+}
+
+/* Lien "Mot de passe oublié ?" */
 .login-page-forgot-password {
   display: block;
   margin-bottom: 1.5rem;
@@ -65,101 +89,19 @@ body {
   text-decoration: underline;
 }
 
-.login-page-btn-login {
-  width: 100%;
-  max-width: 340px;
-  padding: 14px;
-  background-color: #004080;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.login-page-btn-login:hover {
-  background-color: #003366;
-}
-
-.login-page-divider {
-  margin: 1.5rem 0;
-  font-size: 0.9rem;
-  color: #999;
-}
-
-.login-page-btn-register {
-  width: 100%;
-  max-width: 340px;
-  padding: 14px;
-  background-color: white;
-  color: #333;
-  border: 1px solid #333;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: border-color 0.3s ease;
-}
-
-.login-page-btn-register:hover {
-  border-color: #0056b3; /* La bordure devient bleue */
-  background-color: white; /* Le fond reste blanc */
-  color: #333; /* Le texte reste noir */
-}
-
-/* Animation pour les options d'inscription */
-.register-options {
-  display: flex;
-  flex-direction: column;
+/* Texte "Vous n'avez pas de compte ?" et lien "Créer un compte" */
+.login-page-no-account {
   margin-top: 1rem;
-  opacity: 0;
-  animation: slideDown 0.5s forwards; /* Animation à l'apparition */
-}
-
-/* Animation de glissement vers le bas */
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Animation de disparition */
-.disappearing {
-  animation: slideUp 0.5s forwards; /* Animation à la disparition */
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-}
-
-/* Style des boutons d'option d'inscription */
-.register-option-btn {
-  background-color: white;
+  font-size: 0.95rem;
   color: #333;
-  border: 1px solid #333;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: border-color 0.3s ease;
-  width: 100%;
-  max-width: 340px;
 }
 
-/* Au survol, seule la bordure devient bleue pour les options d'inscription */
-.register-option-btn:hover {
-  border-color: #0056b3; /* La bordure devient bleue */
-  background-color: white; /* Le fond reste blanc */
-  color: #333; /* Le texte reste noir */
+.login-page-create-account-link {
+  color: #0056b3;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.login-page-create-account-link:hover {
+  text-decoration: underline;
 }

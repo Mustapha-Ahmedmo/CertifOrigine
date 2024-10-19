@@ -10,8 +10,6 @@ const Login = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showChoices, setShowChoices] = useState(false); // État pour afficher les choix
-  const [isDisappearing, setIsDisappearing] = useState(false); // État pour l'animation de disparition
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -24,24 +22,11 @@ const Login = () => {
     }
   };
 
-  const handleShowChoices = () => {
-    if (showChoices) {
-      // Si les options sont déjà affichées, déclenche l'animation de disparition
-      setIsDisappearing(true);
-      // Après la durée de l'animation (0.5s), on masque complètement les options
-      setTimeout(() => {
-        setShowChoices(false);
-        setIsDisappearing(false); // Réinitialise l'animation
-      }, 500);
-    } else {
-      setShowChoices(true); // Affiche les options avec animation d'apparition
-    }
-  };
-
   return (
     <div className="login-page-wrapper">
       <div className="login-page-card">
         <img src={logo} alt="Logo" className="login-page-logo" />
+        <h2 className="login-page-title">Connexion</h2>
         <form onSubmit={handleSubmit}>
           <input
             type="text"
@@ -59,31 +44,15 @@ const Login = () => {
             required
             className="login-page-input-field"
           />
-          <a href="/forgot-password" className="login-page-forgot-password">Mot de passe oublié ?</a>
-          <button type="submit" className="login-page-btn-login">Connexion</button>
+          <button type="submit" className="login-page-btn-login">Se connecter</button>
         </form>
-        <div className="login-page-divider">ou</div>
-        <button onClick={handleShowChoices} className="login-page-btn-register">
-          Ouvrir un compte
-        </button>
-
-        {/* Si showChoices est true, on affiche les options, sinon animation de disparition */}
-        {showChoices && (
-          <div className={`register-options ${isDisappearing ? 'disappearing' : ''}`}>
-            <button
-              onClick={() => navigate('/register')}
-              className="register-option-btn"
-            >
-              Inscription Client
-            </button>
-            <button
-              onClick={() => navigate('/registerop')}
-              className="register-option-btn"
-            >
-              Inscription Opérateur
-            </button>
-          </div>
-        )}
+        <a href="/forgot-password" className="login-page-forgot-password">Mot de passe oublié ?</a>
+        <div className="login-page-no-account">
+          Vous n'avez pas de compte ?{' '}
+          <a href="http://localhost:5173/register" className="login-page-create-account-link">
+            Créer un compte
+          </a>
+        </div>
       </div>
     </div>
   );

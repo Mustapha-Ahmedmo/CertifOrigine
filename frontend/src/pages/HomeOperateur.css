@@ -1,0 +1,50 @@
+.home-operateur-container {
+    padding: 20px;
+    overflow-x: auto;
+    padding-top: 100px;
+}
+  
+.home-operateur-dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Espace entre les éléments du tableau */
+}
+  
+.home-operateur-dashboard-item {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles pour le bouton "Valider" */
+.home-operateur-validate-button {
+    padding: 8px 12px;
+    border: 2px solid #28a745; /* Couleur de contour verte */
+    background-color: transparent; /* Pas de fond */
+    border-radius: 4px;
+    cursor: pointer;
+    color: #28a745; /* Texte vert */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.home-operateur-validate-button:hover {
+    background-color: #28a745; /* Fond au survol */
+    color: white; /* Texte au survol */
+}
+
+/* Styles pour le bouton "Retourner" */
+.home-operateur-return-button {
+    padding: 8px 12px;
+    border: 2px solid #dc3545; /* Couleur de contour rouge */
+    background-color: transparent; /* Pas de fond */
+    border-radius: 4px;
+    cursor: pointer;
+    color: #dc3545; /* Texte rouge */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.home-operateur-return-button:hover {
+    background-color: #dc3545; /* Fond au survol */
+    color: white; /* Texte au survol */
+}

@@ -11,6 +11,7 @@ import ResetPassword from '../pages/ResetPassword';
 import ProtectedRoute from './ProtectedRoute';
 import './App.css';
 import ToComplete from './orders/ToComplete';
+import ToValidateOP from './orders/ToValidateOP';
 import ToPay from './orders/ToPay';
 import ReturnedOrders from './orders/ReturnedOrders';
 import CompletedOrdersThisYear from './orders/CompletedOrdersThisYear';
@@ -35,6 +36,8 @@ const App = () => (
     {/* Routes pour l'opérateur avec OperateurLayout */}
     <Route path="/home-operateur" element={<OperateurLayout />}>
       <Route index element={<HomeOperateur />} />
+      <Route path="to-validateOP" element={<ToValidateOP />} />
+      
     </Route>
 
     {/* Routes avec SimpleLayout */}
