@@ -1,6 +1,15 @@
+/* Corps de la page (Assurez-vous que cette règle est appliquée globalement) */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+/* Footer */
 .footer {
   background-color: #ffffff; /* Fond blanc */
-  padding: 20px 0;
+  padding: 15px 0; /* Réduction du padding pour une apparence plus compacte */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -8,49 +17,85 @@
   width: 100%;
   bottom: 0;
   left: 0;
-  box-shadow: 0 -2px 5px rgba(0,0,0,0.1); /* Ajoute une légère ombre pour la séparation */
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Légère ombre pour la séparation */
+  z-index: 1000; /* Assure que le footer reste au-dessus des autres éléments */
 }
 
+/* Conteneur principal du footer */
 .footer-container {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: center; /* Centrer tout le contenu */
+  justify-content: space-between; /* Espace entre le logo et les informations */
   width: 100%;
   max-width: 1200px;
   padding: 0 20px;
+  flex-wrap: wrap; /* Permet au contenu de se réorganiser sur les petits écrans */
 }
 
+/* Logo du footer */
 .footer-logo {
-  font-weight: bold; /* Optionnel : pour mettre en valeur le texte */
-  margin-right: 20px; /* Ajoute un espacement entre le texte et les autres informations */
+  font-weight: bold; /* Met en valeur le texte */
+  font-size: 12px; /* Réduction de la taille de la police */
+  color: #333333; /* Couleur sombre pour une meilleure lisibilité */
+  margin-bottom: 10px; /* Espacement en bas pour les petits écrans */
 }
 
+/* Section des informations du footer */
 .footer-info {
   display: flex;
   flex-direction: row;
   align-items: center;
+  flex-wrap: wrap; /* Permet au contenu de se réorganiser sur les petits écrans */
+  justify-content: center; /* Centrer les éléments sur les petits écrans */
 }
 
-.footer-info > p, .footer-info > a {
-  margin: 0 15px;
+/* Paragraphes et liens dans le footer */
+.footer-info > p,
+.footer-info > a {
+  margin: 5px 10px; /* Réduction des marges pour une apparence plus compacte */
+  font-size: 0.9rem; /* Taille de police réduite */
+  color: #555555; /* Couleur légèrement plus claire pour une meilleure lisibilité */
 }
 
-
+/* Liens spécifiques */
 .footer-link {
-  margin-bottom: 10px;
-  color: orange; /* Couleur orange pour le lien "Mentions légales" */
+  color: #FF8C00; /* Orange foncé pour les liens "Mentions légales" */
   text-decoration: none;
+  transition: color 0.3s ease;
 }
 
 .footer-link:hover {
+  color: #FFB84D; /* Orange plus clair au survol */
   text-decoration: underline;
 }
 
 .footer-email a {
-  color: orange; /* Couleur orange pour le lien email */
+  color: #FF8C00; /* Orange foncé pour le lien email */
   text-decoration: none;
+  transition: color 0.3s ease;
 }
 
 .footer-email a:hover {
+  color: #FFB84D; /* Orange plus clair au survol */
   text-decoration: underline;
+}
+
+/* Responsivité */
+@media (max-width: 768px) {
+  .footer-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .footer-info {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .footer-info > p,
+  .footer-info > a {
+    margin: 5px 0;
+    text-align: center;
+  }
 }

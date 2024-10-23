@@ -36,7 +36,9 @@
     "delete": "Supprimer",
     "pay": "Payer",
     "complete": "A compléter",
-    "view": "Voir"
+    "view": "Voir",
+    "returnedOrders": "Commandes retournées",
+    "goToReturnedOrders": "Voir les commandes retournées"
   },
   "step1": {
     "title": "ÉTAPE 1 - DÉTAILS DU CERTIFICAT D'ORIGINE",

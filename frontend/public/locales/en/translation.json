@@ -20,7 +20,7 @@
     "legalMentions": "Legal notices",
     "address": "Address: Place Lagarde, Djibouti - +(253) 21 35 10 70",
     "email": "Email",
-    "openingHours": "Opening Hours"
+    "openingHours": "Opening Hours "
   },
   "home": {
     "dashboardOverview": "Dashboard Overview",
@@ -36,7 +36,9 @@
     "delete": "Delete",
     "pay": "Pay",
     "complete": "To complete",
-    "view": "View"
+    "view": "View",
+    "returnedOrders": "Return Orders",
+    "goToReturnedOrders": "View returned orders"
   },
   "step1": {
     "title": "STEP 1 - DETAILS OF THE CERTIFICATE OF ORIGIN",

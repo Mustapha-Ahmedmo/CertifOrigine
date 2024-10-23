@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import './Login.css';  // Réutiliser les styles de la page de login
-import { Link } from 'react-router-dom'; // Utilisation de Link pour la navigation
+import './ResetPassword.css';  // Utiliser le nouveau fichier CSS spécifique
+import { Link } from 'react-router-dom'; // Pour la navigation
 import logo from '../assets/logo.jpg'; // Assurez-vous que le logo est dans le bon chemin
 
 const ResetPassword = () => {
@@ -17,31 +17,61 @@ const ResetPassword = () => {
       return;
     }
     // Logique de soumission du formulaire
+    console.log('Formulaire soumis avec succès!');
+    // Vous pouvez ajouter ici une redirection ou une notification de succès
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <img src={logo} alt="Chambre de Commerce de Djibouti" className="logo" />
-        <h2>RÉINITIALISER LE MOT DE PASSE</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="verificationCode">Code de vérification reçu par mail</label>
-            <input type="text" id="verificationCode" name="verificationCode" required />
+    <div className="reset-password-page-wrapper">
+      <div className="reset-password-card">
+        <img src={logo} alt="Chambre de Commerce de Djibouti" className="reset-password-logo" />
+        <h2 className="reset-password-title">RÉINITIALISER LE MOT DE PASSE</h2>
+        <form onSubmit={handleSubmit} className="reset-password-form">
+          <div className="reset-password-form-group">
+            <input
+              type="text"
+              id="verificationCode"
+              name="verificationCode"
+              required
+              className="reset-password-input-field"
+              placeholder="Code de vérification reçu par mail"
+              aria-label="Code de vérification reçu par mail"
+            />
           </div>
-          <div className="form-group">
-            <label htmlFor="email">Votre e-mail</label>
-            <input type="email" id="email" name="email" required />
+          <div className="reset-password-form-group">
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              className="reset-password-input-field"
+              placeholder="Votre e-mail"
+              aria-label="Votre e-mail"
+            />
           </div>
-          <div className="form-group">
-            <label htmlFor="password">Nouveau mot de passe</label>
-            <input type="password" id="password" name="password" required />
+          <div className="reset-password-form-group">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              className="reset-password-input-field"
+              placeholder="Nouveau mot de passe"
+              aria-label="Nouveau mot de passe"
+            />
           </div>
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirmer le mot de passe</label>
-            <input type="password" id="confirmPassword" name="confirmPassword" required />
+          <div className="reset-password-form-group">
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              required
+              className="reset-password-input-field"
+              placeholder="Confirmer le mot de passe"
+              aria-label="Confirmer le mot de passe"
+            />
           </div>
-          <div className="form-group checkbox-group">
+          <div className="reset-password-form-group reset-password-checkbox-group">
             <input 
               type="checkbox" 
               id="terms" 
@@ -49,13 +79,17 @@ const ResetPassword = () => {
               checked={termsAccepted} 
               onChange={handleCheckboxChange} 
               required 
+              className="reset-password-checkbox"
+              aria-label="Accepter les conditions générales de vente"
             />
-            <label htmlFor="terms">J'ai pris connaissance et j'accepte les conditions générales de vente</label>
+            <label htmlFor="terms" className="reset-password-checkbox-label">
+              J'ai pris connaissance et j'accepte les conditions générales de vente
+            </label>
           </div>
-          <button type="submit" className="btn-login">Réinitialiser</button>
+          <button type="submit" className="reset-password-btn-submit">Réinitialiser</button>
         </form>
-        <div className="back-to-login">
-          <Link to="/login">Revenir à la page de connexion</Link> {/* Lien vers la page de connexion */}
+        <div className="reset-password-back-to-login">
+          <Link to="/login" className="reset-password-back-link">Revenir à la page de connexion</Link>
         </div>
       </div>
     </div>

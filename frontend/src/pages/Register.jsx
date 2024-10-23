@@ -12,6 +12,7 @@ import {
   faLock,
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../assets/logo.jpg'; // Importation du logo
+import { Helmet } from 'react-helmet';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -85,6 +86,10 @@ const Register = () => {
 
   return (
     <div className="register-page-container">
+      <Helmet>
+        <title>Créer un Compte</title>
+        <meta name="description" content="Inscrivez-vous pour créer un compte." />
+      </Helmet>
       {/* Logo en dehors du formulaire */}
       <div className="register-logo-container">
         <img src={logo} alt="Logo" className="register-logo" />
@@ -294,7 +299,7 @@ const Register = () => {
                         value={formData.rchNumber}
                         onChange={handleChange}
                         className="register-client-input"
-                        placeholder="Numéro d'immatriculation RCH"
+                        placeholder="Numéro d'immatriculation RCS"
                       />
                       {/* Pas d'astérisque car le champ n'est plus obligatoire */}
                     </div>
@@ -303,7 +308,7 @@ const Register = () => {
                   {/* Télécharger le numéro d'immatriculation RCH */}
                   <div className="register-client-field register-client-half-width">
                     <label className="register-client-file-label">
-                      Télécharger le numéro d'immatriculation RCH
+                      Télécharger le numéro d'immatriculation RCS
                       <input
                         type="file"
                         name="rchFile"

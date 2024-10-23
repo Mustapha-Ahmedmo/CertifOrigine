@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { login } from '../slices/authSlice';
 import './Login.css';
 import logo from '../assets/logo.jpg';
+import { Helmet } from 'react-helmet';
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -24,6 +25,10 @@ const Login = () => {
 
   return (
     <div className="login-page-wrapper">
+      <Helmet>
+        <title>Connexion</title> {/* Titre de la page */}
+        <meta name="description" content="Connectez-vous à votre compte." /> {/* Description de la page */}
+      </Helmet>
       <div className="login-page-card">
         <img src={logo} alt="Logo" className="login-page-logo" />
         <h2 className="login-page-title">Connexion</h2>
@@ -49,7 +54,7 @@ const Login = () => {
         <a href="/forgot-password" className="login-page-forgot-password">Mot de passe oublié ?</a>
         <div className="login-page-no-account">
           Vous n'avez pas de compte ?{' '}
-          <a href="http://localhost:5173/register" className="login-page-create-account-link">
+          <a href="register" className="login-page-create-account-link">
             Créer un compte
           </a>
         </div>
