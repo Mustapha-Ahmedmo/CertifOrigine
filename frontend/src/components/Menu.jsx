@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTachometerAlt, faClipboardList, faShoppingCart, faHistory, faUser, faBuilding, faUsers, faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
+import { faTachometerAlt, faClipboardList, faShoppingCart, faHistory, faUser, faBuilding, faUsers } from '@fortawesome/free-solid-svg-icons';
 import './Menu.css';
 import '@fontsource/poppins'; // Cela importe la police Poppins
 
@@ -46,9 +46,9 @@ const Menu = () => {
           onMouseEnter={() => handleMouseEnter('dashboard')}
           onMouseLeave={() => handleMouseLeave('dashboard')}
         >
-          <span className={`menu-title ${openMenu.dashboard ? 'open' : ''}`}>
+          <Link to="/dashboard" className={`menu-title ${openMenu.dashboard ? 'open' : ''}`}>
             <FontAwesomeIcon icon={faTachometerAlt} className="icon" /> Tableau de bord
-          </span>
+          </Link>
           {openMenu.dashboard && (
             <ul className="submenu">
               <li>
@@ -56,6 +56,9 @@ const Menu = () => {
               </li>
               <li>
                 <Link to="/dashboard/to-pay" className={activeLink === 'payer' ? 'active' : ''} onClick={() => handleLinkClick('dashboard', 'payer')}>Commandes à payer</Link>
+              </li>
+              <li>
+                <Link to="/dashboard/returned-orders" className={activeLink === 'returned' ? 'active' : ''} onClick={() => handleLinkClick('dashboard', 'returned')}>Commandes retournées</Link>
               </li>
             </ul>
           )}
@@ -105,7 +108,6 @@ const Menu = () => {
             </ul>
           )}
         </li>
-      
         <li 
           onMouseEnter={() => handleMouseEnter('myCCI')}
           onMouseLeave={() => handleMouseLeave('myCCI')}

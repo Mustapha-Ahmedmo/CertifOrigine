@@ -11,6 +11,11 @@ const ToComplete = () => {
 
   const [orders, setOrders] = useState(initialOrders);
 
+  const handleEdit = (id) => {
+    console.log(`Edit order ${id}`);
+    // Ajoutez ici votre logique d'édition
+  };
+
   return (
     <div className="to-complete-container">
       {/* Ajout de l'indication en haut à gauche */}
@@ -32,6 +37,7 @@ const ToComplete = () => {
             <th>Origine de la marchandise</th>
             <th>Modes de transport</th>
             <th>Nombre de copie certifié</th>
+            <th>Actions</th> {/* Nouvelle colonne Actions */}
           </tr>
         </thead>
         <tbody>
@@ -51,6 +57,9 @@ const ToComplete = () => {
               <td>{order.origine}</td>
               <td>{order.modeTransport}</td>
               <td>{order.nombreCopie}</td>
+              <td>
+                <button className="edit-button" onClick={() => handleEdit(order.id)}>Éditer</button> {/* Bouton Éditer */}
+              </td>
             </tr>
           ))}
         </tbody>

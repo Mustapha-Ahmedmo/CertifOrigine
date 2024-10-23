@@ -2,52 +2,89 @@ import React, { useState } from 'react';
 import './ToPay.css';
 
 const ToPay = () => {
-  // Example data for orders
+  // Exemple de données pour les commandes
   const initialOrders = [
-    { id: 1, name: 'Order 1', date: '2024-08-01' },
-    { id: 2, name: 'Order 2', date: '2024-08-02' },
-    { id: 3, name: 'Order 3', date: '2024-08-03' },
-    { id: 4, name: 'Order 4', date: '2024-08-04' },
-    { id: 5, name: 'Order 5', date: '2024-08-05' },
-    { id: 6, name: 'Order 6', date: '2024-08-06' },
-    { id: 7, name: 'Order 7', date: '2024-08-07' },
-    { id: 8, name: 'Order 8', date: '2024-08-08' },
-    { id: 9, name: 'Order 9', date: '2024-08-09' },
-    { id: 10, name: 'Order 10', date: '2024-08-10' },
-    { id: 11, name: 'Order 11', date: '2024-08-11' },
-    { id: 12, name: 'Order 12', date: '2024-08-12' },
+    {
+      id: 1,
+      numeroCommande: 'CMD-001',
+      dateTransmission: '2024-08-01',
+      dateLivraison: '2024-08-05',
+      destinataire: 'Entreprise Alpha',
+      numeroFacture: 'FACT-001',
+      montant: '150.75 DJF',
+      statut: 'En attente',
+      listeMarchandises: 'Marchandise A',
+      origine: 'France',
+      modeTransport: 'Route',
+      nombreCopie: 2,
+    },
+    {
+      id: 2,
+      numeroCommande: 'CMD-002',
+      dateTransmission: '2024-08-02',
+      dateLivraison: '2024-08-06',
+      destinataire: 'Entreprise Beta',
+      numeroFacture: 'FACT-002',
+      montant: '230.50 DJF',
+      statut: 'En attente',
+      listeMarchandises: 'Marchandise B',
+      origine: 'Allemagne',
+      modeTransport: 'Mer',
+      nombreCopie: 1,
+    },
+    // Ajoutez plus de commandes si nécessaire...
   ];
 
-  const [orders, setOrders] = useState(initialOrders.slice(0, 10));
-  const [showMore, setShowMore] = useState(false);
-
-  const handleShowMore = () => {
-    setShowMore(true);
-    setOrders(initialOrders);
-  };
-
-  const handlePay = (id) => {
-    console.log(`Pay for order ${id}`);
-    // Logic to pay for the order
-  };
+  const [orders, setOrders] = useState(initialOrders);
 
   return (
     <div className="to-pay-container">
-      <h2>Orders to Pay</h2>
-      <ul className="to-pay-list">
-        {orders.map((order) => (
-          <li key={order.id} className="to-pay-item">
-            <span className="order-name">{order.name}</span>
-            <span className="order-date">{order.date}</span>
-            <div className="order-actions">
-              <button onClick={() => handlePay(order.id)} className="pay-button">Pay</button>
-            </div>
-          </li>
-        ))}
-      </ul>
-      {!showMore && initialOrders.length > 10 && (
-        <button onClick={handleShowMore} className="show-more-button">Show more</button>
-      )}
+      {/* Ajout de l'indication en haut à gauche */}
+      <div className="page-info">
+        <h1>Commandes à payer</h1>
+      </div>
+
+      <table className="to-pay-table">
+        <thead>
+          <tr>
+            <th>Numéro de commande</th>
+            <th>Date de transmission</th>
+            <th>Date de livraison</th>
+            <th>Destinataire</th>
+            <th>Numéro de facture</th>
+            <th>Montant</th>
+            <th>Statut</th>
+            <th>Liste des marchandises</th>
+            <th>Origine de la marchandise</th>
+            <th>Modes de transport</th>
+            <th>Nombre de copie certifié</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orders.map((order) => (
+            <tr key={order.id}>
+              <td>{order.numeroCommande}</td>
+              <td>{order.dateTransmission}</td>
+              <td>{order.dateLivraison}</td>
+              <td>{order.destinataire}</td>
+              <td>{order.numeroFacture}</td>
+              <td>{order.montant}</td>
+              <td>
+                <span className="status-dot"></span>
+                {order.statut}
+              </td>
+              <td>{order.listeMarchandises}</td>
+              <td>{order.origine}</td>
+              <td>{order.modeTransport}</td>
+              <td>{order.nombreCopie}</td>
+              <td>
+                <button className="pay-button">Payer</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

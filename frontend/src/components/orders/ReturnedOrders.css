@@ -1,114 +1,64 @@
 .returned-orders-container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #ffffff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-  }
-  
-  .returned-orders-container h2 {
-    margin-bottom: 20px;
-    text-align: center;
-    color: #333;
-  }
-  
-  .returned-orders-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .returned-orders-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid #ddd;
-  }
-  
-  .order-name {
-    font-weight: bold;
-    color: #333;
-  }
-  
-  .order-date {
-    color: #666;
-    margin-right: 20px;
-  }
-  
-  .order-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .edit-button {
-    padding: 5px 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    background-color: #007bff;
-    color: #fff;
-  }
-  
-  .edit-button:hover {
-    background-color: #0056b3;
-  }
-  
-  .info-icon {
-    position: relative;
-    display: inline-block;
-    font-size: 14px;
-    color: #007bff;
-    cursor: pointer;
-  }
-  
-  .info-icon:hover .tooltip {
-    visibility: visible;
-    opacity: 1;
-  }
-  
-  .tooltip {
-    visibility: hidden;
-    opacity: 0;
-    width: 200px;
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    border-radius: 4px;
-    padding: 5px;
-    position: absolute;
-    z-index: 1;
-    bottom: 150%; /* Increased the space between the tooltip and icon */
-    left: 50%;
-    transform: translateX(-50%);
-    transition: opacity 0.3s ease-in-out;
-  }
-  
-  .tooltip::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 5px;
-    border-style: solid;
-    border-color: #333 transparent transparent transparent;
-  }
-  
-  .show-more-button {
-    display: block;
-    margin: 20px auto 0;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .show-more-button:hover {
-    background-color: #0056b3;
-  }
-  
+  padding: 20px;
+  overflow-x: auto;
+  padding-top: 100px;
+}
+
+.returned-orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Arial', sans-serif;
+  font-size: 14px;
+  color: #333;
+}
+
+.returned-orders-table th, 
+.returned-orders-table td {
+  padding: 12px 8px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.returned-orders-table th {
+  background-color: #f4f4f4;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.returned-orders-table tbody tr {
+  background-color: #fff;
+}
+
+.returned-orders-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.returned-orders-table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.page-info {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.page-info h1 {
+  font-size: 24px;
+  color: #333;
+  font-weight: 600;
+  margin: 0;
+}
+
+.edit-button {
+  padding: 5px 10px; /* Espacement interne */
+  background-color: #007bff; /* Couleur du bouton */
+  color: white; /* Couleur du texte */
+  border: none; /* Pas de bordure */
+  border-radius: 4px; /* Coins arrondis */
+  cursor: pointer; /* Curseur main */
+  transition: background-color 0.3s ease; /* Transition au survol */
+}
+
+.edit-button:hover {
+  background-color: #0056b3; /* Couleur plus foncée au survol */
+}

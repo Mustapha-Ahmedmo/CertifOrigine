@@ -57,3 +57,17 @@
   font-weight: 600;
   margin: 0;
 }
+
+.edit-button {
+  padding: 5px 10px; /* Espacement interne */
+  background-color: #007bff; /* Couleur du bouton */
+  color: white; /* Couleur du texte */
+  border: none; /* Pas de bordure */
+  border-radius: 4px; /* Coins arrondis */
+  cursor: pointer; /* Curseur main */
+  transition: background-color 0.3s ease; /* Transition au survol */
+}
+
+.edit-button:hover {
+  background-color: #0056b3; /* Couleur plus foncée au survol */
+}
