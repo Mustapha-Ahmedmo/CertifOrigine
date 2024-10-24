@@ -47,7 +47,7 @@ const Menu = () => {
     <nav className="menu">
       <ul>
         <li>
-          <Link to="/" className={`menu-title`} onClick={() => handleLinkClick('home', 'home')}>
+          <Link to="/dashboard" className={`menu-title`} onClick={() => handleLinkClick('home', 'home')}>
             <FontAwesomeIcon icon={faHome} className="icon" /> Accueil {/* Icône de maison */}
           </Link>
         </li>
@@ -55,9 +55,9 @@ const Menu = () => {
           onMouseEnter={() => handleMouseEnter('dashboard')}
           onMouseLeave={() => handleMouseLeave('dashboard')}
         >
-          <Link to="/dashboard" className={`menu-title ${openMenu.dashboard ? 'open' : ''}`}>
+          <span className={`menu-title ${openMenu.dashboard ? 'open' : ''}`}>
             <FontAwesomeIcon icon={faTachometerAlt} className="icon" /> Tableau de bord
-          </Link>
+          </span>
           {openMenu.dashboard && (
             <ul className="submenu">
               <li>
