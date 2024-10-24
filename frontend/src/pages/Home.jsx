@@ -24,21 +24,21 @@ const Home = () => {
     setActiveTab(tab);
   };
 
-  // Données d'exemple
+  // Données d'exemple avec format de date et nom de commande modifié
   const ordersVisa = [
-    { id: 1, date: '2024-08-01', orderNumber: 'CMD-001', designation: 'Produit A' },
-    { id: 2, date: '2024-08-02', orderNumber: 'CMD-002', designation: 'Produit B' },
+    { id: 1, date: '01/08/2024', orderNumber: 'O-06789/25', designation: 'Produit A' },
+    { id: 2, date: '02/08/2024', orderNumber: 'O-06789/25', designation: 'Produit B' },
   ];
 
   const ordersPayment = [
-    { id: 1, date: '2024-08-01', orderNumber: 'CMD-003', invoiceNumber: '', designation: 'Produit C', validationDate: '2024-08-05' },
-    { id: 2, date: '2024-08-03', orderNumber: 'CMD-004', invoiceNumber: '', designation: 'Produit D', validationDate: '2024-08-06' },
+    { id: 1, date: '01/08/2024', orderNumber: 'O-06789/25', invoiceNumber: '', designation: 'Produit C', validationDate: '05/08/2024' },
+    { id: 2, date: '03/08/2024', orderNumber: 'O-06789/25', invoiceNumber: '', designation: 'Produit D', validationDate: '06/08/2024' },
   ];
 
   const ordersValidation = [
-    { id: 1, date: '2024-08-01', orderNumber: 'CMD-005', designation: 'Produit E', submissionDate: '2024-08-02' },
-    { id: 2, date: '2024-08-04', orderNumber: 'CMD-006', designation: 'Produit F', submissionDate: '2024-08-05' },
-    { id: 3, date: '2024-08-06', orderNumber: 'CMD-007', designation: 'Produit G', submissionDate: '2024-08-07' },
+    { id: 1, date: '01/08/2024', orderNumber: 'O-06789/25', designation: 'Produit E', submissionDate: '02/08/2024' },
+    { id: 2, date: '04/08/2024', orderNumber: 'O-06789/25', designation: 'Produit F', submissionDate: '05/08/2024' },
+    { id: 3, date: '06/08/2024', orderNumber: 'O-06789/25', designation: 'Produit G', submissionDate: '07/08/2024' },
   ];
 
   return (
@@ -92,13 +92,15 @@ const Home = () => {
                     <td>{order.orderNumber}</td>
                     <td>{order.designation}</td>
                     <td>
-                      <button className="small-button"><FontAwesomeIcon icon={faEye} /></button>
+                      <button className="small-button"><FontAwesomeIcon icon={faPen} /> Modifier</button>
+                      <button className="small-button"><FontAwesomeIcon icon={faTimes} /> Supprimer</button>
                     </td>
                     <td>
-                      <button className="small-button"><FontAwesomeIcon icon={faPlus} /></button>
+                      <button className="small-button"><FontAwesomeIcon icon={faPlus} /> Ajouter</button>
                     </td>
                     <td>
-                      <button className="small-button"><FontAwesomeIcon icon={faEye} /></button>
+                      <button className="small-button"><FontAwesomeIcon icon={faPen} /> Modifier</button>
+                      <button className="small-button"><FontAwesomeIcon icon={faTimes} /> Supprimer</button>
                     </td>
                   </tr>
                 ))}
@@ -131,11 +133,11 @@ const Home = () => {
                     <td>{order.designation}</td>
                     <td>{order.submissionDate}</td>
                     <td>
-                      <button className="small-button"><FontAwesomeIcon icon={faEye} /></button>
+                      <button className="small-button"><FontAwesomeIcon icon={faEye} /> Voir</button>
                     </td>
                     <td></td> {/* Colonne vide pour Facture Commerciale */}
                     <td>
-                      <button className="small-button"><FontAwesomeIcon icon={faEye} /></button>
+                      <button className="small-button"><FontAwesomeIcon icon={faEye} /> Voir</button>
                     </td>
                   </tr>
                 ))}
@@ -170,11 +172,11 @@ const Home = () => {
                     <td>{order.designation}</td>
                     <td>{order.validationDate}</td>
                     <td>
-                      <button className="small-button"><FontAwesomeIcon icon={faEye} /></button>
+                      <button className="small-button"><FontAwesomeIcon icon={faEye} /> Voir</button>
                     </td>
                     <td></td> {/* Colonne vide pour Facture Commerciale */}
                     <td>
-                      <button className="small-button"><FontAwesomeIcon icon={faEye} /></button>
+                      <button className="small-button"><FontAwesomeIcon icon={faEye} /> Voir</button>
                     </td>
                   </tr>
                 ))}
