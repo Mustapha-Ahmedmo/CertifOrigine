@@ -13,6 +13,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../assets/logo.jpg'; // Importation du logo
 import { Helmet } from 'react-helmet';
+import { Link } from 'react-router-dom'; // Importer Link
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -509,6 +510,11 @@ const Register = () => {
             </button>
           </div>
         </form>
+
+        {/* Lien vers la page de connexion */}
+        <div className="register-client-login-link">
+          <Link to="/login">Revenir à la page de connexion</Link>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTachometerAlt, faClipboardList, faShoppingCart, faHistory, faUser, faBuilding, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faTachometerAlt, faClipboardList, faShoppingCart, faHistory, faUsers, faHome } from '@fortawesome/free-solid-svg-icons';
 import './Menu.css';
 import '@fontsource/poppins'; // Cela importe la police Poppins
 
@@ -39,9 +39,18 @@ const Menu = () => {
     }));
   };
 
+  // Calcul des années
+  const currentYear = new Date().getFullYear();
+  const previousYear = currentYear - 1;
+
   return (
     <nav className="menu">
       <ul>
+        <li>
+          <Link to="/" className={`menu-title`} onClick={() => handleLinkClick('home', 'home')}>
+            <FontAwesomeIcon icon={faHome} className="icon" /> Accueil {/* Icône de maison */}
+          </Link>
+        </li>
         <li 
           onMouseEnter={() => handleMouseEnter('dashboard')}
           onMouseLeave={() => handleMouseLeave('dashboard')}
@@ -75,6 +84,12 @@ const Menu = () => {
               <li>
                 <Link to="/dashboard/create-order" className={activeLink === 'certificat' ? 'active' : ''} onClick={() => handleLinkClick('newOrder', 'certificat')}>Certificat d'origine</Link>
               </li>
+              <li>
+                <Link to="/dashboard/legalization" className={activeLink === 'legalisation' ? 'active' : ''} onClick={() => handleLinkClick('newOrder', 'legalisation')}>Légalisation de commande</Link>
+              </li>
+              <li>
+                <Link to="/dashboard/commercial-invoice" className={activeLink === 'facture' ? 'active' : ''} onClick={() => handleLinkClick('newOrder', 'facture')}>Facture commerciale</Link>
+              </li>
             </ul>
           )}
         </li>
@@ -88,7 +103,13 @@ const Menu = () => {
           {openMenu.pastOrders && (
             <ul className="submenu">
               <li>
-                <Link to="/" className={activeLink === '1mois' ? 'active' : ''} onClick={() => handleLinkClick('pastOrders', '1mois')}>1 mois</Link>
+                <Link to="/" className={activeLink === `${currentYear}` ? 'active' : ''} onClick={() => handleLinkClick('pastOrders', `${currentYear}`)}>{currentYear}</Link>
+              </li>
+              <li>
+                <Link to="/" className={activeLink === `${previousYear}` ? 'active' : ''} onClick={() => handleLinkClick('pastOrders', `${previousYear}`)}>{previousYear}</Link>
+              </li>
+              <li>
+                <Link to="/" className={activeLink === 'before-2023' ? 'active' : ''} onClick={() => handleLinkClick('pastOrders', 'before-2023')}>Avant {previousYear}</Link>
               </li>
             </ul>
           )}
@@ -98,23 +119,15 @@ const Menu = () => {
           onMouseLeave={() => handleMouseLeave('clients')}
         >
           <span className={`menu-title ${openMenu.clients ? 'open' : ''}`}>
-            <FontAwesomeIcon icon={faUsers} className="icon" /> Mes clients
+            <FontAwesomeIcon icon={faUsers} className="icon" /> Mes destinataires
           </span>
           {openMenu.clients && (
             <ul className="submenu">
               <li>
-                <Link to="/clients/list" className={activeLink === 'listClients' ? 'active' : ''} onClick={() => handleLinkClick('clients', 'listClients')}>Liste des clients</Link>
+                <Link to="/clients/list" className={activeLink === 'listClients' ? 'active' : ''} onClick={() => handleLinkClick('clients', 'listClients')}>Liste des destinataires</Link>
               </li>
             </ul>
           )}
-        </li>
-        <li 
-          onMouseEnter={() => handleMouseEnter('myCCI')}
-          onMouseLeave={() => handleMouseLeave('myCCI')}
-        >
-          <span className={`menu-title ${openMenu.myCCI ? 'open' : ''}`}>
-            <FontAwesomeIcon icon={faBuilding} className="icon" /> Ma CCI
-          </span>
         </li>
       </ul>
     </nav>
