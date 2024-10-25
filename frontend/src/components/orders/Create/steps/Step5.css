@@ -1,0 +1,183 @@
+/* Step5.css */
+
+/* Styles généraux pour le formulaire de récapitulatif */
+.step-form {
+  
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.step-form h3 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.recap-section {
+  margin-bottom: 30px;
+}
+
+.recap-section h4 {
+  margin-bottom: 15px;
+  color: #555;
+}
+
+/* Styles pour les éléments de récapitulatif */
+.recap-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.recap-label {
+  font-weight: bold;
+  width: 45%;
+  color: #333;
+}
+
+.recap-value {
+  width: 50%;
+  color: #555;
+}
+
+/* Styles spécifiques pour la liste des marchandises */
+.merchandise-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.merchandise-table th, .merchandise-table td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.merchandise-table th {
+  background-color: #f9f9f9;
+}
+
+.merchandise-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.merchandise-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Styles pour les actions */
+.step-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+}
+
+.step-actions button {
+  padding: 12px 25px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+}
+
+.previous-button {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.previous-button:hover {
+  background-color: #ddd;
+}
+
+.next-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.next-button:hover {
+  background-color: #45a049;
+}
+
+/* Styles pour la section d'upload */
+.upload-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.upload-button {
+  background: #c7c7c7;
+  color: #333; /* Couleur du texte */
+  padding: 8px 16px;
+  font-size: 14px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.upload-button:hover {
+  background: #c7c7c7;
+  color: #fff; /* Changement de la couleur du texte au survol */
+}
+
+.uploaded-files {
+  margin-top: 10px;
+}
+
+.uploaded-files ul {
+  list-style-type: disc;
+  padding-left: 20px;
+}
+
+.uploaded-files h5 {
+  margin-bottom: 5px;
+  color: #555;
+}
+
+/* Responsivité */
+@media screen and (max-width: 768px) {
+  .recap-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .recap-label, .recap-value {
+    width: 100%;
+  }
+
+  .step-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .step-actions button {
+    width: 100%;
+  }
+
+  .upload-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .upload-button {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .recap-section h4 {
+    font-size: 18px;
+  }
+
+  .upload-button {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+
+  .step-actions button {
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+}

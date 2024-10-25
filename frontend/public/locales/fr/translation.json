@@ -42,10 +42,10 @@
   },
   "step1": {
     "title": "ÉTAPE 1 - DÉTAILS DU CERTIFICAT D'ORIGINE",
-    "exporterTitle": "1/9 CLIENT",
+    "exporterTitle": "1/8 Demandeur",
     "chooseExporter": "Choisir un Client",
     "enterNewExporter": "Saisir un nouveau Client",
-    "companyName": "Raison sociale",
+    "companyName": "Nom de l'entreprise",
     "companyName2": "Raison sociale 2",
     "transportModes": "4/9 MODES DE TRANSPORT",
     "selectTransportMode": "Modes de transport",
@@ -68,7 +68,7 @@
     "city": "Ville",
     "country": "Pays",
     "ueRules": "Afficher la mention 'Union Européenne' sur le document à côté du pays de l'exportateur ?",
-    "receiverTitle": "2/9 DESTINATAIRE",
+    "receiverTitle": "2/8 Destinataire",
     "chooseReceiver": "Choisir un destinataire",
     "enterNewReceiver": "Saisir un nouveau destinataire"
   }

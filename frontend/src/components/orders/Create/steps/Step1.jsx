@@ -13,6 +13,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [saveRecipient, setSaveRecipient] = useState(false);
   const [copies, setCopies] = useState(values.copies || 1);
+  const [selectedFakeCompany, setSelectedFakeCompany] = useState(''); // Nouvel état pour l'entreprise fictive
 
   const countries = [
     "Afghanistan", "Albanie", "Algérie", "Andorre", "Angola", "Antigua-et-Barbuda", "Argentine", "Arménie", "Australie", "Autriche",
@@ -37,22 +38,20 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
     "Viêt Nam", "Yémen", "Zambie", "Zimbabwe"
   ];
 
-
   const fakeExporterData = {
-    exporterName: "Entreprise Fictive",
-    exporterCompany2: "Filiale Fictive",
-    exporterAddress: "123 Rue Fictive",
-    exporterAddress2: "Bâtiment 5",
-    exporterPostalCode: "75001",
-    exporterCity: "Paris",
-    exporterCountry: "France",
+    exporterName: "INDIGO TRADING FZCO", // Nom de l'entreprise demandeur
+    exporterCompany2: "",
+    exporterAddress: "",
+    exporterAddress2: "",
+    exporterPostalCode: "",
+    exporterCity: "",
+    exporterCountry: "",
   };
-
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const isTransportSelected = values.transportModes.air || values.transportModes.terre || values.transportModes.mer || values.transportModes.mixte;
+    const isTransportSelected = values.transportModes.air || values.transportModes.terre || values.transportModes.mer || values.transportModes.multimodal;
     if (!isTransportSelected) {
       setErrorMessage("Veuillez sélectionner au moins un mode de transport.");
       return;
@@ -90,109 +89,32 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
     handleChange('merchandises', updatedMerchandises);
   };
 
+  // Fonction pour gérer la sélection d'une entreprise fictive
+  const handleFakeCompanySelect = (e) => {
+    setSelectedFakeCompany(e.target.value);
+    // Aucune action supplémentaire nécessaire
+  };
+
   return (
     <form onSubmit={handleSubmit} className="step-form">
       <h3>{t('step1.title')}</h3>
 
-      {/* Champ Order Name */}
+      {/* Section 1/8 Demandeur */}
+      <div className="section-title">{t('step1.exporterTitle')}</div>
+      
+      {/* Nouveau champ pour le nom de l'entreprise demandeur */}
       <div className="form-group">
-        <label>{t('orderName')}</label>
         <input
           type="text"
-          value={values.orderName}
-          onChange={(e) => handleChange('orderName', e.target.value)}
-          required
+          value={fakeExporterData.exporterName}
+          readOnly
+          className="read-only-input" // Classe pour styliser en gris
         />
       </div>
 
-      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-
-      <div className="section-title">{t('step1.exporterTitle')}</div>
-
-
-      {/* Afficher les champs uniquement si "Saisir un nouveau exportateur" est sélectionné */}
-      {isNewExporter && (
-        <>
-          <div className="form-group-row">
-            <div className="form-group">
-              <label>{t('step1.companyName')}</label>
-              <input
-                type="text"
-                value={fakeExporterData.exporterName}
-                readOnly
-                disabled
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t('step1.companyName2')}</label>
-              <input
-                type="text"
-                value={fakeExporterData.exporterCompany2}
-                readOnly
-                disabled
-              />
-            </div>
-          </div>
-
-          <div className="form-group-row">
-            <div className="form-group">
-              <label>{t('step1.address')} *</label>
-              <input
-                type="text"
-                value={fakeExporterData.exporterAddress2}
-                readOnly
-                disabled
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t('step1.addressNext')}</label>
-              <input
-                type="text"
-                value={fakeExporterData.exporterPostalCode}
-                readOnly
-                disabled
-              />
-            </div>
-          </div>
-
-          <div className="form-group-row">
-            <div className="form-group">
-              <label>{t('step1.cp')} *</label>
-              <input
-                type="text"
-                value={fakeExporterData.exporterCity}
-                readOnly
-                disabled
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t('step1.city')}</label>
-              <input
-                type="text"
-                value={fakeExporterData.exporterCity}
-                readOnly
-                disabled
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t('step1.country')} *</label>
-              <select value={fakeExporterData.exporterCountry} disabled>
-                {countries.map((country) => (
-                  <option key={country} value={country}>{country}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-        </>
-      )}
-
       <hr />
 
+      {/* Section 2/8 Destinataire */}
       <div className="section-title">{t('step1.receiverTitle')}</div>
 
       <div className="form-group">
@@ -215,6 +137,21 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         </label>
       </div>
 
+      {!isNewDestinataire && (
+        <div className="form-group">
+          <label>Choisir une entreprise *</label>
+          <select
+            value={selectedFakeCompany}
+            onChange={handleFakeCompanySelect}
+            required
+          >
+            <option value="">-- Sélectionnez une entreprise --</option>
+            <option value="Entreprise Factice A">Entreprise Factice A</option>
+            <option value="Entreprise Factice B">Entreprise Factice B</option>
+            <option value="Entreprise Factice C">Entreprise Factice C</option>
+          </select>
+        </div>
+      )}
 
       {isNewDestinataire && (
         <div className="form-group">
@@ -227,6 +164,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           </label>
         </div>
       )}
+
       {isNewDestinataire && (
         <>
           <div className="form-group-row">
@@ -237,15 +175,6 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
                 value={values.receiverName}
                 onChange={(e) => handleChange('receiverName', e.target.value)}
                 required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t('step1.companyName2')}</label>
-              <input
-                type="text"
-                value={values.receiverCompany2}
-                onChange={(e) => handleChange('receiverCompany2', e.target.value)}
               />
             </div>
           </div>
@@ -272,10 +201,11 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           </div>
 
           <div className="form-group-row">
+            {/* Remplacement du champ C.P. par Numéro de téléphone */}
             <div className="form-group">
-              <label>{t('step1.cp')} *</label>
+              <label>Numéro de téléphone *</label>
               <input
-                type="text"
+                type="tel"
                 value={values.receiverPostalCode}
                 onChange={(e) => handleChange('receiverPostalCode', e.target.value)}
                 required
@@ -308,11 +238,10 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         </>
       )}
 
-
       <hr />
 
-      {/* Section 3/9 Origine de la marchandise */}
-      <div className="section-title">3/8 ORIGINE DE LA MARCHANDISE</div>
+      {/* Section 3/8 Origine de la marchandise */}
+      <div className="section-title">3/8 Origine de la marchandise</div>
       <div className="form-group">
         <label>Pays d'origine de la marchandise *</label>
         <select
@@ -341,8 +270,8 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
       <hr />
 
-      {/* Modes de transport */}
-      <div className="section-title">4/8 MODES DE TRANSPORT</div>
+      {/* Section 4/8 Modes de transport */}
+      <div className="section-title">4/8 Modes de transport</div>
       <div className="form-group">
         <label>Modes de transport</label>
         <div className="transport-options">
@@ -372,7 +301,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
               type="checkbox"
               checked={values.transportModes.multimodal}
               onChange={(e) => handleChange('transportModes', { ...values.transportModes, multimodal: e.target.checked })}
-            /> Multimodal
+            /> Mixte
           </label>
         </div>
       </div>
@@ -388,28 +317,23 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       </div>
       <hr />
 
-      
-
-      <hr />
-
-      {/* Section 6/9 Liste des marchandises */}
-      <div className="section-title">5/8 LISTE DES MARCHANDISES</div>
+      {/* Section 5/8 Déscription des marchandises */}
+      <div className="section-title">5/8 Déscription des marchandises</div>
       <div className="form-group-row">
-        <div className="form-group">
-          <label>Nature de la marchandise</label>
-          <input
-            type="text"
-            value={designation}
-            onChange={(e) => setDesignation(e.target.value)}
-          />
-        </div>
-
         <div className="form-group">
           <label>Référence / HSCODE</label> {/* Nouveau champ pour la référence */}
           <input
             type="text"
             value={boxReference}
             onChange={(e) => setBoxReference(e.target.value)}
+          />
+        </div>
+        <div className="form-group">
+          <label>Nature de la marchandise</label>
+          <input
+            type="text"
+            value={designation}
+            onChange={(e) => setDesignation(e.target.value)}
           />
         </div>
 
@@ -423,23 +347,25 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         </div>
 
         <div className="form-group">
-          <label>Poids</label>
-          <input
-            type="number"
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
           <label>Unité</label>
           <select
             value={values.unit}
             onChange={(e) => handleChange('unit', e.target.value)}
           >
-            <option value="kg">kg poids brut - gros</option>
+            <option value="kg">Kg</option>
+            <option value="Tonne">Tonne</option>
+            <option value="MTonne">Mtonne</option>
             <option value="unit2">Autre unité</option>
           </select>
+        </div>
+
+        <div className="form-group">
+          <label>Référence document justificatif</label>
+          <input
+            type="text"
+            value={designation}
+            onChange={(e) => setDesignation(e.target.value)}
+          />
         </div>
 
         <div className="form-group button-group-inline">
@@ -479,7 +405,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
       <hr />
 
-      {/* Section 7/9 Nb d'exemplaires */}
+      {/* Section 6/8 Nb d'exemplaires */}
       <div className="section-title">6/8 Nombre de copie certifié</div>
       <div className="form-group">
         <input
@@ -493,8 +419,8 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
       <hr />
 
-      {/* Section 9/9 Engagement */}
-      <div className="section-title">7/8 ENGAGEMENT</div>
+      {/* Section 7/8 Engagement */}
+      <div className="section-title">7/8 Engagement</div>
       <p>
         En validant ces conditions générales d'utilisation vous demandez la délivrance du certificat d'origine
         pour les marchandises figurant en case 6, dont l'origine est indiquée en case 3.
@@ -506,17 +432,19 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         conditions prévues par la réglementation relative à la définition de la notion d'origine des marchandises.
       </p>
       <div className="form-group">
-        <input
-          type="checkbox"
-          checked={values.isCommitted}
-          onChange={(e) => handleChange('isCommitted', e.target.checked)}
-        />
-        <label>Je certifie m'engager dans les conditions décrites ci-dessus</label>
+        {/* Placement du label à côté de la checkbox */}
+        <label>
+          <input
+            type="checkbox"
+            checked={values.isCommitted}
+            onChange={(e) => handleChange('isCommitted', e.target.checked)}
+          /> Je certifie m'engager dans les conditions décrites ci-dessus
+        </label>
       </div>
 
       <hr/>
 
-      {/* Section 5/9 Remarques */}
+      {/* Section 8/8 Remarques */}
       <div className="section-title">8/8 REMARQUES</div>
       <div className="form-group">
         <label>Remarques</label>

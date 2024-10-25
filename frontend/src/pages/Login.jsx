@@ -5,6 +5,7 @@ import { login } from '../slices/authSlice';
 import './Login.css';
 import logo from '../assets/logo.jpg';
 import { Helmet } from 'react-helmet';
+import '@fontsource/poppins'; // Cela importe la police Poppins
 
 const Login = () => {
   const dispatch = useDispatch();

@@ -2,7 +2,15 @@ import React, { useState } from 'react';
 
 const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
   // Fausse liste de documents disponibles à importer (à simuler depuis une BDD)
-  const fakeJustificativePieces = ['Facture', 'Bon de commande', 'Certificat d’origine'];
+  const fakeJustificativePieces = [
+    'Certificat sanitaire',
+    'Agrément d’exploitation',
+    'Bill of loading',
+    'Airway Bill',
+    'Facture fournisseur',
+    'Patente industrie',
+    'Autre',
+  ];
   const fakeAnnexes = ['Note explicative', 'Photocopie du contrat', 'Autre annexe'];
 
   const [selectedJustificative, setSelectedJustificative] = useState('');
@@ -10,16 +18,30 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
   const [justificativeRemarks, setJustificativeRemarks] = useState('');
   const [annexRemarks, setAnnexRemarks] = useState('');
   const [documents, setDocuments] = useState(values.documents || []);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const addDocument = (type) => {
     if (type === 'justificative' && selectedJustificative) {
-      setDocuments([...documents, { type: 'justificative', name: selectedJustificative, remarks: justificativeRemarks }]);
+      setDocuments([
+        ...documents,
+        {
+          type: 'justificative',
+          name: selectedJustificative,
+          remarks: justificativeRemarks,
+          file: selectedFile,
+        },
+      ]);
       setSelectedJustificative('');
       setJustificativeRemarks('');
+      setSelectedFile(null);
     } else if (type === 'annex' && selectedAnnex) {
-      setDocuments([...documents, { type: 'annex', name: selectedAnnex, remarks: annexRemarks }]);
+      setDocuments([
+        ...documents,
+        { type: 'annex', name: selectedAnnex, remarks: annexRemarks, file: selectedFile },
+      ]);
       setSelectedAnnex('');
       setAnnexRemarks('');
+      setSelectedFile(null);
     }
   };
 
@@ -34,12 +56,15 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
     nextStep();
   };
 
+  const handleFileChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="step-form">
-      <h3>Step 2: Documents à importer</h3>
+      <h3>Étape 2: Pièces justificatives</h3>
 
       {/* Section pour les pièces justificatives (obligatoires) */}
-      <div className="section-title">Pièces justificatives (obligatoire)</div>
       <div className="form-inline-group">
         <label>Choisir une pièce justificative</label>
         <select
@@ -53,10 +78,22 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
             </option>
           ))}
         </select>
-        <button type="button" onClick={() => addDocument('justificative')} className="upload-button">
-          Upload
-        </button>
+
+        {/* Bouton "Choisir le fichier" avec fond blanc et texte noir */}
+        <label htmlFor="file-upload" className="upload-button">
+          Choisir le fichier
+        </label>
+        <input
+          id="file-upload"
+          type="file"
+          onChange={handleFileChange}
+          className="file-input"
+        />
       </div>
+
+      {/* Afficher le nom du fichier sélectionné */}
+      {selectedFile && <p>Fichier sélectionné : {selectedFile.name}</p>}
+
       <div className="form-group">
         <label>Remarques</label>
         <textarea
@@ -66,39 +103,13 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
         />
       </div>
 
-      {/* Section pour les annexes */}
-      <div className="section-title">Annexes</div>
-      <div className="form-inline-group">
-        <label>Choisir une annexe</label>
-        <select
-          value={selectedAnnex}
-          onChange={(e) => setSelectedAnnex(e.target.value)}
-        >
-          <option value="">-- Sélectionnez une annexe --</option>
-          {fakeAnnexes.map((annex, index) => (
-            <option key={index} value={annex}>
-              {annex}
-            </option>
-          ))}
-        </select>
-        <button type="button" onClick={() => addDocument('annex')} className="upload-button">
-          Upload
-        </button>
-      </div>
-      <div className="form-group">
-        <label>Remarques</label>
-        <textarea
-          value={annexRemarks}
-          onChange={(e) => setAnnexRemarks(e.target.value)}
-          placeholder="Ajouter des remarques"
-        />
-      </div>
-
+      
       {/* Liste des documents ajoutés */}
       <ul className="document-list">
         {documents.map((doc, index) => (
           <li key={index}>
-            <strong>{doc.type === 'justificative' ? 'Justificative' : 'Annexe'}:</strong> {doc.name} - {doc.remarks}
+            <strong>{doc.type === 'justificative' ? 'Justificative' : 'Annexe'}:</strong> {doc.name} - {doc.remarks} -{' '}
+            {doc.file ? doc.file.name : 'Aucun fichier'}
             <button type="button" onClick={() => removeDocument(index)}>
               ❌
             </button>
@@ -130,15 +141,18 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
         .upload-button {
           padding: 5px 10px;
           font-size: 0.875rem;
-          background-color: #007bff;
-          color: white;
-          border: none;
+          background-color: white; /* Fond blanc */
+          color: black; /* Texte noir */
+          border: 1px solid #ced4da;
           border-radius: 4px;
           cursor: pointer;
           transition: background-color 0.3s ease;
         }
         .upload-button:hover {
-          background-color: #0056b3;
+          background-color: #e9ecef;
+        }
+        .file-input {
+          display: none; /* Masquer l'input réel */
         }
         .form-group {
           margin-bottom: 20px;

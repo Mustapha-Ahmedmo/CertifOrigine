@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTachometerAlt, faClipboardList, faShoppingCart, faHistory, faUsers, faHome } from '@fortawesome/free-solid-svg-icons';
 import './Menu.css';
-import '@fontsource/poppins'; // Cela importe la police Poppins
+
 
 const Menu = () => {
   const [openMenu, setOpenMenu] = useState({});

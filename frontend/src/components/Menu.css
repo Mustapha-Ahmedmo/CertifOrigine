@@ -11,7 +11,6 @@
     flex-direction: column;
     overflow-y: auto;
     height: 100vh; /* Utilise toute la hauteur de la fenêtre */
-    font-family: Poppins, sans-serif; /* Appliquer Poppins ici */
     margin-top: 60px;
 }
 

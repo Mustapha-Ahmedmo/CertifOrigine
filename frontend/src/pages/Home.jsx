@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboardList,
   faDollarSign,
-  faUndo,
   faCheckCircle,
   faPen,
   faTimes,
@@ -14,7 +13,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet'; // Importer Helmet
 import './Home.css';
-import '@fontsource/poppins'; // Cela importe la police Poppins
+
 
 const Home = () => {
   const { t } = useTranslation();
@@ -26,19 +25,19 @@ const Home = () => {
 
   // Données d'exemple avec format de date et nom de commande modifié
   const ordersVisa = [
-    { id: 1, date: '01/08/2024', orderNumber: 'O-06789/25', designation: 'Produit A' },
-    { id: 2, date: '02/08/2024', orderNumber: 'O-06789/25', designation: 'Produit B' },
+    { id: 1, date: '01/08/2024', orderNumber: 'O-06789/24', designation: 'Produit A' },
+    { id: 2, date: '02/08/2024', orderNumber: 'O-06779/24', designation: 'Produit B' },
   ];
 
   const ordersPayment = [
-    { id: 1, date: '01/08/2024', orderNumber: 'O-06789/25', invoiceNumber: '', designation: 'Produit C', validationDate: '05/08/2024' },
-    { id: 2, date: '03/08/2024', orderNumber: 'O-06789/25', invoiceNumber: '', designation: 'Produit D', validationDate: '06/08/2024' },
+    { id: 1, date: '01/08/2024', orderNumber: 'O-06759/24', invoiceNumber: '', designation: 'Produit C', validationDate: '05/08/2024' },
+    { id: 2, date: '03/08/2024', orderNumber: 'O-06749/24', invoiceNumber: '', designation: 'Produit D', validationDate: '06/08/2024' },
   ];
 
   const ordersValidation = [
-    { id: 1, date: '01/08/2024', orderNumber: 'O-06789/25', designation: 'Produit E', submissionDate: '02/08/2024' },
-    { id: 2, date: '04/08/2024', orderNumber: 'O-06789/25', designation: 'Produit F', submissionDate: '05/08/2024' },
-    { id: 3, date: '06/08/2024', orderNumber: 'O-06789/25', designation: 'Produit G', submissionDate: '07/08/2024' },
+    { id: 1, date: '01/08/2024', orderNumber: 'O-06791/24', designation: 'Produit E', submissionDate: '02/08/2024' },
+    { id: 2, date: '04/08/2024', orderNumber: 'O-06793/24', designation: 'Produit F', submissionDate: '05/08/2024' },
+    { id: 3, date: '06/08/2024', orderNumber: 'O-06734/24', designation: 'Produit G', submissionDate: '07/08/2024' },
   ];
 
   return (
@@ -54,13 +53,13 @@ const Home = () => {
           className={`tab-item ${activeTab === 'visa' ? 'active' : ''}`}
           onClick={() => handleTabClick('visa')}
         >
-          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" /> Commandes en attente de Visa ({ordersVisa.length})
+          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" /> Mes commandes ({ordersVisa.length})
         </div>
         <div
           className={`tab-item ${activeTab === 'validation' ? 'active' : ''}`}
           onClick={() => handleTabClick('validation')}
         >
-          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" /> Commandes en attente de validation ({ordersValidation.length})
+          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" /> Mes commandes en attente de Visa ({ordersValidation.length})
         </div>
         <div
           className={`tab-item ${activeTab === 'payment' ? 'active' : ''}`}
@@ -93,20 +92,22 @@ const Home = () => {
                     <td>{order.designation}</td>
                     <td>
                       <button className="small-button"><FontAwesomeIcon icon={faPen} /> Modifier</button>
-                      <button className="small-button"><FontAwesomeIcon icon={faTimes} /> Supprimer</button>
+                      <button className="small-button delete-button"><FontAwesomeIcon icon={faTimes} /> Supprimer</button>
                     </td>
                     <td>
                       <button className="small-button"><FontAwesomeIcon icon={faPlus} /> Ajouter</button>
                     </td>
                     <td>
                       <button className="small-button"><FontAwesomeIcon icon={faPen} /> Modifier</button>
-                      <button className="small-button"><FontAwesomeIcon icon={faTimes} /> Supprimer</button>
+                      <button className="small-button delete-button"><FontAwesomeIcon icon={faTimes} /> Supprimer</button>
+                    </td>
+                    <td>
+                      <button className="submit-button">Soumettre</button> {/* Ajout du bouton Soumettre */}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <button className="action-button">Voir les commandes en attente de Visa</button>
           </div>
         )}
 
@@ -143,7 +144,6 @@ const Home = () => {
                 ))}
               </tbody>
             </table>
-            <button className="action-button">Voir les commandes en attente de validation</button>
           </div>
         )}
 
@@ -182,7 +182,6 @@ const Home = () => {
                 ))}
               </tbody>
             </table>
-            <button className="action-button">Voir les commandes en attente de paiement</button>
           </div>
         )}
       </div>

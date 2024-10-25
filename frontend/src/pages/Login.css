@@ -1,6 +1,6 @@
 /* Corps de la page de login */
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Poppins', sans-serif; /* Changement de Arial à Poppins */
   background-color: #f6f6f6;
   margin: 0;
   padding: 0;
