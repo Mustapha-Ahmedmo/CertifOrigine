@@ -17,8 +17,17 @@ h3 {
 .section-title {
   font-size: 18px;
   font-weight: bold;
-  color: #333;
+  color: #28a745; /* Vert */
+  text-transform: uppercase;
   margin: 30px 0 10px;
+}
+
+/* Style pour le nom de l'entreprise */
+.exporter-name {
+  font-size: 16px;
+  color: #0056b3; /* Bleu */
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
 /* Grouping fields into two columns */

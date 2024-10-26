@@ -5,6 +5,7 @@ import './Step1.css';
 const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
   const { t } = useTranslation();
   const [designation, setDesignation] = useState('');
+  const [reference, setReference] = useState('');
   const [boxReference, setBoxReference] = useState('');
   const [unit, setUnit] = useState('kg poids brut - gros');
   const [quantity, setQuantity] = useState('');
@@ -37,16 +38,6 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
     "Ouganda", "Ukraine", "Émirats arabes unis", "Royaume-Uni", "États-Unis", "Uruguay", "Ouzbékistan", "Vanuatu", "Vatican", "Venezuela",
     "Viêt Nam", "Yémen", "Zambie", "Zimbabwe"
   ];
-
-  const fakeExporterData = {
-    exporterName: "INDIGO TRADING FZCO", // Nom de l'entreprise demandeur
-    exporterCompany2: "",
-    exporterAddress: "",
-    exporterAddress2: "",
-    exporterPostalCode: "",
-    exporterCity: "",
-    exporterCountry: "",
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -89,10 +80,8 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
     handleChange('merchandises', updatedMerchandises);
   };
 
-  // Fonction pour gérer la sélection d'une entreprise fictive
   const handleFakeCompanySelect = (e) => {
     setSelectedFakeCompany(e.target.value);
-    // Aucune action supplémentaire nécessaire
   };
 
   return (
@@ -101,16 +90,9 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
       {/* Section 1/8 Demandeur */}
       <div className="section-title">{t('step1.exporterTitle')}</div>
-      
-      {/* Nouveau champ pour le nom de l'entreprise demandeur */}
-      <div className="form-group">
-        <input
-          type="text"
-          value={fakeExporterData.exporterName}
-          readOnly
-          className="read-only-input" // Classe pour styliser en gris
-        />
-      </div>
+
+      {/* Affichage du nom de l'entreprise demandeur en bleu */}
+      <p className="exporter-name">INDIGO TRADING FZCO</p>
 
       <hr />
 
@@ -363,8 +345,8 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           <label>Référence document justificatif</label>
           <input
             type="text"
-            value={designation}
-            onChange={(e) => setDesignation(e.target.value)}
+            value={reference}
+            onChange={(e) => setReference(e.target.value)}
           />
         </div>
 

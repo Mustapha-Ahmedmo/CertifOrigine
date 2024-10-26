@@ -53,19 +53,19 @@ const Home = () => {
           className={`tab-item ${activeTab === 'visa' ? 'active' : ''}`}
           onClick={() => handleTabClick('visa')}
         >
-          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" /> Mes commandes ({ordersVisa.length})
+          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" /> Mes commandes à soumettre ({ordersVisa.length})
         </div>
         <div
           className={`tab-item ${activeTab === 'validation' ? 'active' : ''}`}
           onClick={() => handleTabClick('validation')}
         >
-          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" /> Mes commandes en attente de Visa ({ordersValidation.length})
+          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" /> Mes commandes en attente de la CCD ({ordersValidation.length})
         </div>
         <div
           className={`tab-item ${activeTab === 'payment' ? 'active' : ''}`}
           onClick={() => handleTabClick('payment')}
         >
-          <FontAwesomeIcon icon={faDollarSign} className="tab-icon" /> Commandes en attente de paiement ({ordersPayment.length})
+          <FontAwesomeIcon icon={faDollarSign} className="tab-icon" /> Mes commandes en attente de paiement ({ordersPayment.length})
         </div>
       </div>
 

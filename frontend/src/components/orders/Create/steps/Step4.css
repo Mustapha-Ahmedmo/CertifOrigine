@@ -1,193 +1,179 @@
-import React, { useState } from 'react';
+/* Global form styles */
+.step-form {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
 
-const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
-  // Fausse liste de documents disponibles à importer (à simuler depuis une BDD)
-  const fakeJustificativePieces = [
-    'Certificat sanitaire',
-    'Agrément d’exploitation',
-    'Bill of loading',
-    'Airway Bill',
-    'Facture fournisseur',
-    'Patente industrie',
-    'Autre',
-  ];
-  const fakeAnnexes = ['Note explicative', 'Photocopie du contrat', 'Autre annexe'];
+.step-form h3 {
+  text-align: center;
+  color: #343a40;
+  margin-bottom: 20px;
+}
 
-  const [selectedJustificative, setSelectedJustificative] = useState('');
-  const [selectedAnnex, setSelectedAnnex] = useState('');
-  const [justificativeRemarks, setJustificativeRemarks] = useState('');
-  const [annexRemarks, setAnnexRemarks] = useState('');
-  const [documents, setDocuments] = useState(values.documents || []);
-  const [selectedFile, setSelectedFile] = useState(null);
+.section-title {
+  margin-top: 20px;
+  font-weight: bold;
+  color: #007bff;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 5px;
+}
 
-  const addDocument = (type) => {
-    if (type === 'justificative' && selectedJustificative) {
-      setDocuments([
-        ...documents,
-        {
-          type: 'justificative',
-          name: selectedJustificative,
-          remarks: justificativeRemarks,
-          file: selectedFile,
-        },
-      ]);
-      setSelectedJustificative('');
-      setJustificativeRemarks('');
-      setSelectedFile(null);
-    } else if (type === 'annex' && selectedAnnex) {
-      setDocuments([
-        ...documents,
-        { type: 'annex', name: selectedAnnex, remarks: annexRemarks, file: selectedFile },
-      ]);
-      setSelectedAnnex('');
-      setAnnexRemarks('');
-      setSelectedFile(null);
-    }
-  };
+.form-group {
+  margin-bottom: 15px;
+}
 
-  const removeDocument = (index) => {
-    const updatedDocuments = documents.filter((_, i) => i !== index);
-    setDocuments(updatedDocuments);
-  };
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #495057;
+}
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    handleChange('documents', documents);
-    nextStep();
-  };
+.form-group select,
+.form-group textarea,
+.form-group input[type='text'] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 1rem;
+  color: #495057;
+  margin-bottom: 10px;
+  background-color: #ffffff;
+}
 
-  const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
-  };
+.form-group textarea {
+  height: 100px;
+  resize: vertical;
+}
 
-  return (
-    <form onSubmit={handleSubmit} className="step-form">
-      <h3>Étape 2: Pièces justificatives</h3>
+/* Inline form group styles */
+.form-inline-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
 
-      {/* Section pour les pièces justificatives (obligatoires) */}
-      <div className="form-inline-group">
-        <label>Choisir une pièce justificative</label>
-        <select
-          value={selectedJustificative}
-          onChange={(e) => setSelectedJustificative(e.target.value)}
-        >
-          <option value="">-- Sélectionnez une pièce --</option>
-          {fakeJustificativePieces.map((piece, index) => (
-            <option key={index} value={piece}>
-              {piece}
-            </option>
-          ))}
-        </select>
+.form-inline-group select {
+  flex-grow: 1;
+  padding: 5px;
+}
 
-        {/* Bouton "Choisir le fichier" avec fond blanc et texte noir */}
-        <label htmlFor="file-upload" className="upload-button">
-          Choisir le fichier
-        </label>
-        <input
-          id="file-upload"
-          type="file"
-          onChange={handleFileChange}
-          className="file-input"
-        />
-      </div>
+/* Custom upload button */
+.upload-button {
+  display: inline-block;
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: white; /* Fond blanc */
+  color: black; /* Texte noir */
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
 
-      {/* Afficher le nom du fichier sélectionné */}
-      {selectedFile && <p>Fichier sélectionné : {selectedFile.name}</p>}
+.file-input {
+  display: none; /* Masque l'input réel */
+}
 
-      <div className="form-group">
-        <label>Remarques</label>
-        <textarea
-          value={justificativeRemarks}
-          onChange={(e) => setJustificativeRemarks(e.target.value)}
-          placeholder="Ajouter des remarques"
-        />
-      </div>
+/* Button styles */
+button {
+  padding: 10px 15px;
+  border-radius: 4px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
 
-      <button type="button" onClick={() => addDocument('justificative')} className="add-button">
-        Ajouter
-      </button>
+button:hover {
+  background-color: #0056b3;
+}
 
-      {/* Liste des documents ajoutés */}
-      <ul className="document-list">
-        {documents.map((doc, index) => (
-          <li key={index}>
-            <strong>{doc.type === 'justificative' ? 'Justificative' : 'Annexe'}:</strong> {doc.name} - {doc.remarks} -{' '}
-            {doc.file ? doc.file.name : 'Aucun fichier'}
-            <button type="button" onClick={() => removeDocument(index)}>
-              ❌
-            </button>
-          </li>
-        ))}
-      </ul>
+button:disabled {
+  background-color: #dcdcdc;
+  cursor: not-allowed;
+}
 
-      <div className="step-actions">
-        <button type="button" onClick={prevStep}>
-          Retour
-        </button>
-        <button type="submit" className="next-button">
-          Suivant
-        </button>
-      </div>
+button[type='button'] {
+  margin-right: 10px;
+}
 
-      {/* Inline CSS for styling */}
-      <style jsx>{`
-        .form-inline-group {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 15px;
-        }
-        .form-inline-group select {
-          flex-grow: 1;
-          padding: 5px;
-        }
-        .upload-button {
-          padding: 5px 10px;
-          font-size: 0.875rem;
-          background-color: white; /* Fond blanc */
-          color: black; /* Texte noir */
-          border: 1px solid #ced4da;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: background-color 0.3s ease;
-        }
-        .upload-button:hover {
-          background-color: #e9ecef;
-        }
-        .file-input {
-          display: none; /* Masquer l'input réel */
-        }
-        .form-group {
-          margin-bottom: 20px;
-        }
-        .step-actions {
-          display: flex;
-          justify-content: space-between;
-        }
-        .document-list {
-          list-style-type: none;
-          padding: 0;
-        }
-        .document-list li {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 10px;
-        }
-        .next-button {
-          background-color: #28a745;
-          color: white;
-          padding: 8px 12px;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-        .next-button:hover {
-          background-color: #218838;
-        }
-      `}</style>
-    </form>
-  );
-};
+/* Add button */
+.add-button {
+  margin-bottom: 20px;
+}
 
-export default Step4;
+/* Document list styles */
+.document-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.document-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.document-list li strong {
+  margin-right: 5px;
+}
+
+.document-list li button {
+  background-color: #dc3545;
+  margin-left: 15px;
+}
+
+.document-list li button:hover {
+  background-color: #c82333;
+}
+
+/* Step actions */
+.step-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.next-button {
+  background-color: #28a745;
+}
+
+.next-button:hover {
+  background-color: #218838;
+}
+
+.previous-button {
+  background-color: #6c757d;
+}
+
+.previous-button:hover {
+  background-color: #5a6268;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .step-form {
+    padding: 15px;
+  }
+
+  button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .step-actions {
+    flex-direction: column;
+  }
+}
