@@ -4,17 +4,42 @@ import './Step1.css';
 
 const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
   const { t } = useTranslation();
-  const [designation, setDesignation] = useState('');
-  const [reference, setReference] = useState('');
-  const [boxReference, setBoxReference] = useState('');
-  const [unit, setUnit] = useState('kg poids brut - gros');
-  const [quantity, setQuantity] = useState('');
   const [isNewExporter, setIsNewExporter] = useState(true); // Pour gérer exportateur
   const [isNewDestinataire, setIsNewDestinataire] = useState(true); // Pour gérer destinataire
   const [errorMessage, setErrorMessage] = useState('');
   const [saveRecipient, setSaveRecipient] = useState(false);
-  const [copies, setCopies] = useState(values.copies || 1);
   const [selectedFakeCompany, setSelectedFakeCompany] = useState(''); // Nouvel état pour l'entreprise fictive
+
+  // Données fictives pour les entreprises
+  const fakeCompanies = {
+    'Entreprise Factice A': {
+      receiverName: 'Entreprise Factice A',
+      receiverAddress: '123 Rue Fictive',
+      receiverAddress2: 'Bâtiment A',
+      receiverPostalCode: '75001',
+      receiverCity: 'Paris',
+      receiverCountry: 'France',
+      receiverPhone: '0102030405',
+    },
+    'Entreprise Factice B': {
+      receiverName: 'Entreprise Factice B',
+      receiverAddress: '456 Avenue Imaginaire',
+      receiverAddress2: 'Suite 200',
+      receiverPostalCode: '1000',
+      receiverCity: 'Bruxelles',
+      receiverCountry: 'Belgique',
+      receiverPhone: '0203040506',
+    },
+    'Entreprise Factice C': {
+      receiverName: 'Entreprise Factice C',
+      receiverAddress: '789 Boulevard Inventé',
+      receiverAddress2: '',
+      receiverPostalCode: '8000',
+      receiverCity: 'Genève',
+      receiverCountry: 'Suisse',
+      receiverPhone: '0304050607',
+    },
+  };
 
   const countries = [
     "Afghanistan", "Albanie", "Algérie", "Andorre", "Angola", "Antigua-et-Barbuda", "Argentine", "Arménie", "Australie", "Autriche",
@@ -34,7 +59,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
     "Qatar", "Roumanie", "Russie", "Rwanda", "Saint-Kitts-et-Nevis", "Sainte-Lucie", "Saint-Vincent-et-les Grenadines", "Samoa", "Saint-Marin", "Sao Tomé-et-Principe",
     "Arabie saoudite", "Sénégal", "Serbie", "Seychelles", "Sierra Leone", "Singapour", "Slovaquie", "Slovénie", "Îles Salomon", "Somalie",
     "Afrique du Sud", "Soudan du Sud", "Espagne", "Sri Lanka", "Soudan", "Suriname", "Suède", "Suisse", "Syrie", "Taïwan",
-    "Tadjikistan", "Tanzanie", "Thaïlande", "Togo", "Tonga", "Trinité-et-Tobago", "Tunisie", "Turquie", "Turkménistan", "Tuvalu",
+    "Tadjikistan", "Tanzanie", "Thaïlande", "Togo", "Tonga", "Trinité-et-Trinidad", "Tunisie", "Turquie", "Turkménistan", "Tuvalu",
     "Ouganda", "Ukraine", "Émirats arabes unis", "Royaume-Uni", "États-Unis", "Uruguay", "Ouzbékistan", "Vanuatu", "Vatican", "Venezuela",
     "Viêt Nam", "Yémen", "Zambie", "Zimbabwe"
   ];
@@ -42,7 +67,11 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const isTransportSelected = values.transportModes.air || values.transportModes.terre || values.transportModes.mer || values.transportModes.multimodal;
+    const isTransportSelected =
+      values.transportModes.air ||
+      values.transportModes.terre ||
+      values.transportModes.mer ||
+      values.transportModes.multimodal;
     if (!isTransportSelected) {
       setErrorMessage("Veuillez sélectionner au moins un mode de transport.");
       return;
@@ -59,20 +88,21 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
   const addMerchandise = () => {
     // Vérification que tous les champs sont remplis
-    if (!designation || !quantity || !boxReference) return;
+    if (!values.designation || !values.quantity || !values.boxReference) return;
 
     const newMerchandise = {
-      designation,
-      boxReference, // Ajout de la référence de la boîte
-      quantity,
-      unit
+      designation: values.designation,
+      boxReference: values.boxReference,
+      quantity: values.quantity,
+      unit: values.unit,
     };
 
     handleMerchandiseChange(newMerchandise);
-    setDesignation('');
-    setQuantity('');
-    setBoxReference(''); // Réinitialiser le champ de référence
-    setUnit('kg poids brut - gros');
+    // Réinitialiser les champs dans values
+    handleChange('designation', '');
+    handleChange('quantity', '');
+    handleChange('boxReference', '');
+    handleChange('unit', 'kg poids brut - gros');
   };
 
   const removeMerchandise = (index) => {
@@ -81,7 +111,19 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
   };
 
   const handleFakeCompanySelect = (e) => {
-    setSelectedFakeCompany(e.target.value);
+    const selectedCompany = e.target.value;
+    setSelectedFakeCompany(selectedCompany);
+    const companyData = fakeCompanies[selectedCompany];
+    if (companyData) {
+      // Mettre à jour tous les champs pertinents dans values
+      handleChange('receiverName', companyData.receiverName);
+      handleChange('receiverAddress', companyData.receiverAddress);
+      handleChange('receiverAddress2', companyData.receiverAddress2);
+      handleChange('receiverPostalCode', companyData.receiverPostalCode);
+      handleChange('receiverCity', companyData.receiverCity);
+      handleChange('receiverCountry', companyData.receiverCountry);
+      handleChange('receiverPhone', companyData.receiverPhone);
+    }
   };
 
   return (
@@ -106,7 +148,8 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             name="destinataire"
             value="choisir"
             onChange={() => setIsNewDestinataire(false)}
-          /> {t('step1.chooseReceiver')}
+          />{' '}
+          {t('step1.chooseReceiver')}
         </label>
         <label>
           <input
@@ -115,7 +158,8 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             value="saisir"
             defaultChecked
             onChange={() => setIsNewDestinataire(true)}
-          /> {t('step1.enterNewReceiver')}
+          />{' '}
+          {t('step1.enterNewReceiver')}
         </label>
       </div>
 
@@ -142,7 +186,8 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
               type="checkbox"
               checked={saveRecipient}
               onChange={(e) => setSaveRecipient(e.target.checked)}
-            /> Sauvegarder ce destinataire pour réutilisation future
+            />{' '}
+            Sauvegarder ce destinataire pour réutilisation future
           </label>
         </div>
       )}
@@ -183,11 +228,10 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           </div>
 
           <div className="form-group-row">
-            {/* Remplacement du champ C.P. par Numéro de téléphone */}
             <div className="form-group">
-              <label>Numéro de téléphone *</label>
+              <label>{t('step1.postalCode')} *</label>
               <input
-                type="tel"
+                type="text"
                 value={values.receiverPostalCode}
                 onChange={(e) => handleChange('receiverPostalCode', e.target.value)}
                 required
@@ -212,10 +256,23 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
                 required
               >
                 {countries.map((country) => (
-                  <option key={country} value={country}>{country}</option>
+                  <option key={country} value={country}>
+                    {country}
+                  </option>
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Numéro de téléphone */}
+          <div className="form-group">
+            <label>Numéro de téléphone *</label>
+            <input
+              type="tel"
+              value={values.receiverPhone}
+              onChange={(e) => handleChange('receiverPhone', e.target.value)}
+              required
+            />
           </div>
         </>
       )}
@@ -231,6 +288,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           onChange={(e) => handleChange('goodsOrigin', e.target.value)}
           required
         >
+          <option value="">-- Sélectionnez un pays --</option>
           {countries.map((country) => (
             <option key={country} value={country}>{country}</option>
           ))}
@@ -244,6 +302,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           onChange={(e) => handleChange('goodsDestination', e.target.value)}
           required
         >
+          <option value="">-- Sélectionnez un pays --</option>
           {countries.map((country) => (
             <option key={country} value={country}>{country}</option>
           ))}
@@ -306,16 +365,16 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           <label>Référence / HSCODE</label> {/* Nouveau champ pour la référence */}
           <input
             type="text"
-            value={boxReference}
-            onChange={(e) => setBoxReference(e.target.value)}
+            value={values.boxReference}
+            onChange={(e) => handleChange('boxReference', e.target.value)}
           />
         </div>
         <div className="form-group">
           <label>Nature de la marchandise</label>
           <input
             type="text"
-            value={designation}
-            onChange={(e) => setDesignation(e.target.value)}
+            value={values.designation}
+            onChange={(e) => handleChange('designation', e.target.value)}
           />
         </div>
 
@@ -323,8 +382,8 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           <label>Quantité</label>
           <input
             type="number"
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
+            value={values.quantity}
+            onChange={(e) => handleChange('quantity', e.target.value)}
           />
         </div>
 
@@ -345,8 +404,8 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           <label>Référence document justificatif</label>
           <input
             type="text"
-            value={reference}
-            onChange={(e) => setReference(e.target.value)}
+            value={values.reference}
+            onChange={(e) => handleChange('reference', e.target.value)}
           />
         </div>
 
@@ -392,8 +451,8 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       <div className="form-group">
         <input
           type="number"
-          value={copies}
-          onChange={(e) => setCopies(e.target.value)}
+          value={values.copies}
+          onChange={(e) => handleChange('copies', e.target.value)}
           min="1"
           required
         />
@@ -437,9 +496,11 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         />
       </div>
       <div className="character-counter">
-        Caractère(s) restant(s) : {300 - values.remarks.length}
+        Caractère(s) restant(s) : {300 - (values.remarks ? values.remarks.length : 0)}
       </div>
-      
+
+      {errorMessage && <p className="error-message">{errorMessage}</p>}
+
       <div className="button-group">
         <button type="button" className="previous-button">Retour</button>
         <button type="submit" className="submit-button">Enregistrer et continuer</button>

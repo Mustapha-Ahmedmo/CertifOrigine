@@ -14,7 +14,6 @@ import {
 import { Helmet } from 'react-helmet'; // Importer Helmet
 import './Home.css';
 
-
 const Home = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('visa');
@@ -27,6 +26,7 @@ const Home = () => {
   const ordersVisa = [
     { id: 1, date: '01/08/2024', orderNumber: 'O-06789/24', designation: 'Produit A' },
     { id: 2, date: '02/08/2024', orderNumber: 'O-06779/24', designation: 'Produit B' },
+    { id: 3, date: '03/08/2024', orderNumber: 'O-06799/24', designation: 'Produit C' },
   ];
 
   const ordersPayment = [
@@ -82,6 +82,7 @@ const Home = () => {
                   <th>Certificat d'Origine</th>
                   <th>Facture Commerciale</th>
                   <th>Législation</th>
+                  <th></th> {/* En-tête vide pour le bouton Soumettre */}
                 </tr>
               </thead>
               <tbody>
@@ -91,18 +92,40 @@ const Home = () => {
                     <td>{order.orderNumber}</td>
                     <td>{order.designation}</td>
                     <td>
-                      <button className="small-button"><FontAwesomeIcon icon={faPen} /> Modifier</button>
-                      <button className="small-button delete-button"><FontAwesomeIcon icon={faTimes} /> Supprimer</button>
+                      {/* Certificat d'Origine */}
+                      {order.id === 2 || order.id === 3 ? (
+                        <button className="small-button"><FontAwesomeIcon icon={faPlus} /> Ajouter</button>
+                      ) : (
+                        <>
+                          <button className="small-button"><FontAwesomeIcon icon={faPen} /> Modifier</button>
+                          <button className="small-button delete-button"><FontAwesomeIcon icon={faTimes} /> Supprimer</button>
+                        </>
+                      )}
                     </td>
                     <td>
-                      <button className="small-button"><FontAwesomeIcon icon={faPlus} /> Ajouter</button>
+                      {/* Facture Commerciale */}
+                      {order.id === 3 ? (
+                        <>
+                          <button className="small-button"><FontAwesomeIcon icon={faPen} /> Modifier</button>
+                          <button className="small-button delete-button"><FontAwesomeIcon icon={faTimes} /> Supprimer</button>
+                        </>
+                      ) : (
+                        <button className="small-button"><FontAwesomeIcon icon={faPlus} /> Ajouter</button>
+                      )}
                     </td>
                     <td>
-                      <button className="small-button"><FontAwesomeIcon icon={faPen} /> Modifier</button>
-                      <button className="small-button delete-button"><FontAwesomeIcon icon={faTimes} /> Supprimer</button>
+                      {/* Législation */}
+                      {order.id === 3 ? (
+                        <button className="small-button"><FontAwesomeIcon icon={faPlus} /> Ajouter</button>
+                      ) : (
+                        <>
+                          <button className="small-button"><FontAwesomeIcon icon={faPen} /> Modifier</button>
+                          <button className="small-button delete-button"><FontAwesomeIcon icon={faTimes} /> Supprimer</button>
+                        </>
+                      )}
                     </td>
                     <td>
-                      <button className="submit-button">Soumettre</button> {/* Ajout du bouton Soumettre */}
+                      <button className="submit-button">Soumettre</button>
                     </td>
                   </tr>
                 ))}
