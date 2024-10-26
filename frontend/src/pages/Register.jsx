@@ -147,7 +147,7 @@ const Register = () => {
                     onChange={handleChange}
                     required
                     className="register-client-input"
-                    placeholder="Raison sociale"
+                    placeholder="Nom de l'entreprise"
                   />
                   <span className="register-client-required-asterisk">*</span>
                 </div>

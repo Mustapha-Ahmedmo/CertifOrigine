@@ -15,7 +15,7 @@
 }
 
 .highlight-text {
-  color: #007bff; /* Couleur bleue pour le texte "INDIGO TRADING FZCO" */
+  color: #007bff;
 }
 
 .tabs-container {
@@ -75,41 +75,56 @@
   background-color: #f4f4f4;
 }
 
-.small-button {
-  padding: 3px 6px; /* Taille réduite pour les boutons */
+.icon-button {
+  padding: 4px;
   border: none;
-  border-radius: 4px;
+  border-radius: 50%;
   cursor: pointer;
-  background-color: #007bff;
-  color: white;
-  font-size: 0.8em;
-  margin-left: 5px;
+  background-color: transparent;
+  color: #555;
+  font-size: 1em;
+  margin: 0 2px;
+  transition: background-color 0.2s, color 0.2s;
 }
 
-.small-button:hover {
-  background-color: #0056b3;
+.icon-button:hover {
+  background-color: #f0f0f0;
 }
 
-.delete-button {
-  background-color: red; /* Couleur rouge pour le bouton Supprimer */
-  color: white;
+.icon-button.delete-button {
+  color: red;
 }
 
-.delete-button:hover {
-  background-color: #B22222; /* Couleur plus foncée au survol */
+.icon-button.delete-button:hover {
+  background-color: #ffe5e5;
 }
 
+.icon-button-group {
+  display: flex;
+  align-items: center;
+}
+
+.icon-button-group .icon-button {
+  margin-right: 5px;
+}
 
 .submit-button {
   padding: 5px 10px;
-  background-color: green !important; /* Couleur verte pour le bouton Soumettre */
-  color: white !important; /* Texte blanc pour le bouton Soumettre */
-  border: none;
+  background-color: transparent;
+  color: green;
+  border: 1px solid green;
   border-radius: 4px;
   cursor: pointer;
-  margin-top: 5px; /* Espace au-dessus du bouton Soumettre */
+  margin-top: 5px;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .submit-button:hover {
-  background-color: darkgreen; /* Couleur plus foncée au survol */
+  background-color: green;
+  color: white;
+}
+
+.minimal-button {
+  padding: 4px;
+  border-radius: 4px;
 }
