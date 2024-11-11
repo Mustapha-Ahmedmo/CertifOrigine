@@ -4,75 +4,76 @@
     background-color: #01002D; /* Couleur de fond noire */
     color: #FFFFFF; /* Couleur du texte blanche */
     position: fixed;
-    top: 0; /* Menu fixé en haut */
+    top: 0;
     bottom: 0;
     left: 0;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    height: 100vh; /* Utilise toute la hauteur de la fenêtre */
+    height: 100vh;
     margin-top: 60px;
-}
-
-.menu ul {
+  }
+  
+  .menu ul {
     list-style: none;
     padding: 0;
     margin: 0;
-}
-
-.menu ul li {
+  }
+  
+  .menu ul li {
     position: relative;
     margin-bottom: 15px;
-}
-
-.menu-title {
+  }
+  
+  .menu-title {
     text-decoration: none;
-    color: #FFFFFF; /* Couleur du texte des titres de menu */
+    color: #FFFFFF;
     display: flex;
     align-items: center;
     padding: 10px;
     border-radius: 4px;
-    font-size: 12px; /* Taille de la police des titres */
-    font-weight: 500; /* Poids de la police */
+    font-size: 12px;
     transition: background-color 0.3s ease;
-}
-
-.menu ul li a.active,
-.menu ul li a:hover,
-.menu-title:hover {
-    background-color: rgba(255, 255, 255, 0.1); /* Effet de survol */
-}
-
-.icon {
+  }
+  
+  .menu-title[data-main-title] {
+    font-weight: bold;
+    font-size: 13px; /* Augmentation de la taille des titres principaux */
+  }
+  
+  
+  .menu ul li a.active,
+  .menu ul li a:hover,
+  .menu-title:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .icon {
     margin-right: 10px;
-}
-
-.submenu {
+  }
+  
+  .submenu {
     list-style: none;
     padding-left: 20px; /* Indentation des sous-menus */
-    color: white; /* Couleur du texte en blanc */
-    font-family: 'Poppins', sans-serif; /* Police du menu déroulant */
-    font-size: 12px; /* Taille de la police égale à celle des titres */
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
     margin-top: 5px; /* Marge pour séparer du titre principal */
-}
-
-.submenu li {
-    text-align: left; /* Alignement à gauche */
-    margin: 5px 0; /* Espacement entre les éléments du sous-menu */
-}
-
-.submenu li a {
-    text-decoration: none; /* Enlever le soulignement */
-    color: white; /* Couleur du texte des liens */
-    transition: color 0.3s ease; /* Animation pour le survol */
-}
-
-.submenu li a:hover {
-    color: rgba(255, 255, 255, 0.7); /* Changer la couleur au survol */
-}
-
-hr {
-    border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.3); /* Séparateur entre les éléments */
-    margin: 10px 0; /* Marge autour du séparateur */
-}
+  }
+  
+  .submenu li {
+    text-align: left;
+    margin: 5px 0;
+    padding-left: 15px; /* Ajout de retrait supplémentaire */
+  }
+  
+  .submenu li a {
+    text-decoration: none;
+    color: white;
+    transition: color 0.3s ease;
+  }
+  
+  .submenu li a:hover {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  

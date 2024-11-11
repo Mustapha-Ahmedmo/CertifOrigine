@@ -1,50 +1,153 @@
-.home-operateur-container {
+.home-operator-container {
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 20px;
-    overflow-x: auto;
-    padding-top: 100px;
+    margin-top: 50px;
+    text-align: center;
 }
-  
-.home-operateur-dashboard-grid {
+
+.welcome-message {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 50px;
+    text-align: left;
+}
+
+#person-select {
+    font-size: 16px;
+    padding: 5px;
+    margin-left: 10px;
+}
+
+.commands-title {
+    margin-bottom: 30px;
+}
+
+.highlight-text {
+    color: #007bff; /* Bleu correspondant à INDIGO TRADING FZCO */
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.tabs-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.tab-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-weight: bold;
+    position: relative;
+    color: #555;
+    transition: color 0.3s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-item.active {
+    color: #007bff;
+    border-bottom: 3px solid #007bff;
+}
+
+.dashboard-grid {
     display: flex;
     flex-direction: column;
-    gap: 20px; /* Espace entre les éléments du tableau */
+    gap: 30px;
+    width: 100%;
 }
-  
-.home-operateur-dashboard-item {
+
+.dashboard-item {
     background-color: #ffffff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    text-align: left;
+    transition: box-shadow 0.3s ease;
 }
 
-/* Styles pour le bouton "Valider" */
-.home-operateur-validate-button {
-    padding: 8px 12px;
-    border: 2px solid #28a745; /* Couleur de contour verte */
-    background-color: transparent; /* Pas de fond */
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.inscriptions-title {
+    margin-top: 50px;
+    margin-bottom: 30px;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.dashboard-table th {
+    background-color: #f4f4f4;
+}
+
+.icon-button {
+    padding: 4px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    background-color: transparent;
+    color: #555;
+    font-size: 1em;
+    margin: 0 2px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.icon-button:hover {
+    background-color: #f0f0f0;
+}
+
+.icon-button.delete-button {
+    color: red;
+}
+
+.icon-button.delete-button:hover {
+    background-color: #ffe5e5;
+}
+
+.icon-button-group {
+    display: flex;
+    align-items: center;
+}
+
+.icon-button-group .icon-button {
+    margin-right: 5px;
+}
+
+.submit-button {
+    padding: 5px 10px;
+    background-color: green !important;
+    color: white !important;
+    border: 1px solid green;
     border-radius: 4px;
     cursor: pointer;
-    color: #28a745; /* Texte vert */
-    transition: background-color 0.3s ease, color 0.3s ease;
+    margin-top: 5px;
+    transition: background-color 0.2s, color 0.2s;
 }
 
-.home-operateur-validate-button:hover {
-    background-color: #28a745; /* Fond au survol */
-    color: white; /* Texte au survol */
-}
-
-/* Styles pour le bouton "Retourner" */
-.home-operateur-return-button {
-    padding: 8px 12px;
-    border: 2px solid #dc3545; /* Couleur de contour rouge */
-    background-color: transparent; /* Pas de fond */
+.reject-button {
+    padding: 5px 10px;
+    background-color: red !important;
+    color: white !important;
+    border: 1px solid red;
     border-radius: 4px;
     cursor: pointer;
-    color: #dc3545; /* Texte rouge */
-    transition: background-color 0.3s ease, color 0.3s ease;
+    margin-top: 5px;
+    transition: background-color 0.2s, color 0.2s;
 }
 
-.home-operateur-return-button:hover {
-    background-color: #dc3545; /* Fond au survol */
-    color: white; /* Texte au survol */
+.minimal-button {
+    padding: 4px;
+    border-radius: 4px;
 }

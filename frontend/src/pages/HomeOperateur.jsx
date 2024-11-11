@@ -1,125 +1,274 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClipboardList, faUndo, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import './HomeOperateur.css'; // Utiliser le fichier CSS spécifique
-import '@fontsource/poppins'; // Cela importe la police Poppins
+import {
+  faClipboardList,
+  faDollarSign,
+  faCheckCircle,
+  faPen,
+  faTimes,
+  faPlus,
+  faEye,
+} from '@fortawesome/free-solid-svg-icons';
+import { Helmet } from 'react-helmet';
+import './HomeOperateur.css';
 
 const HomeOperateur = () => {
-  const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState('waiting');
+  const [activeTab, setActiveTab] = useState('visa');
+  const [activeInscriptionsTab, setActiveInscriptionsTab] = useState('newRegistrations');
+  const [selectedPerson, setSelectedPerson] = useState('M. Abdourhaman Abdi Ali');
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
 
-  // Exemple de données pour chaque section
-  const waitingOrders = [
-    { id: 1, name: 'Commande 1', date: '2024-08-01' },
-    { id: 2, name: 'Commande 2', date: '2024-08-02' },
+  const handleInscriptionsTabClick = (tab) => {
+    setActiveInscriptionsTab(tab);
+  };
+
+  // Données d'exemple
+  const ordersVisa = [
+    { id: 1, date: '01/08/2024', orderNumber: 'O-06789/24', client: 'INDIGO TRADING FZCO', designation: 'Produit A', submissionDate: '02/08/2024' },
   ];
 
-  const returnedOrders = [
-    { id: 3, name: 'Commande 3', date: '2024-08-05', reason: 'Produit endommagé' },
-    { id: 4, name: 'Commande 4', date: '2024-08-06', reason: 'Article incorrect' },
+  const ordersValidation = [
+    { id: 1, date: '01/08/2024', orderNumber: 'O-06791/24', designation: 'Produit E', submissionDate: '02/08/2024' },
   ];
 
-  const completedOrders = [
-    { id: 5, name: 'Commande 5', date: '2024-08-07' },
-    { id: 6, name: 'Commande 6', date: '2024-08-08' },
+  const ordersPayment = [
+    {
+      id: 1,
+      date: '14/10/2024',
+      orderNumber: 'O-06789/24',
+      client: 'INDIGO TRADING FZCO',
+      invoiceNumber: 'F-3993/24',
+      designation: 'Produit G',
+      validationDate: '16/10/2024',
+    },
+  ];
+
+  const newRegistrations = [
+    {
+      id: 1,
+      date: '14/10/2024',
+      category: 'SAS',
+      client: 'INDIGO TRADING FZCO',
+      licenceZF: 'ZF-00123',
+      autres: 'Détails supplémentaires',
+      contactPrincipal: 'Yusuf Daher',
+      fonction: 'Directeur Général',
+      email: 'indiotr@gmail.com',
+      numTel: '0123456789',
+      numPortable: '0698765432',
+    },
   ];
 
   return (
-    <div className="home-container">
+    <div className="home-operator-container">
+      <Helmet>
+        <title>Dashboard Opérateur</title>
+      </Helmet>
       <div className="welcome-message">
-        Bienvenue Opérateur 1
+        <label htmlFor="person-select">Bienvenue </label>
+        <select id="person-select" value={selectedPerson} onChange={(event) => setSelectedPerson(event.target.value)}>
+          <option value="M. Abdourhaman Abdi Ali">M. Abdourhaman Abdi Ali</option>
+          <option value="Mohamed Youssef">Mohamed Youssef</option>
+        </select>
       </div>
+
+      {/* Section COMMANDES */}
+      <div className="commands-title highlight-text">COMMANDES</div>
       <div className="tabs-container">
         <div
-          className={`tab-item ${activeTab === 'waiting' ? 'active' : ''}`}
-          onClick={() => handleTabClick('waiting')}
+          className={`tab-item ${activeTab === 'visa' ? 'active' : ''}`}
+          onClick={() => handleTabClick('visa')}
         >
-          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" /> Commandes en attente de validation de votre part{' '}
-          <span className="tab-counter">{waitingOrders.length}</span>
+          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" /> Nouvelles commandes ({ordersVisa.length})
         </div>
         <div
-          className={`tab-item ${activeTab === 'returned' ? 'active' : ''}`}
-          onClick={() => handleTabClick('returned')}
+          className={`tab-item ${activeTab === 'validation' ? 'active' : ''}`}
+          onClick={() => handleTabClick('validation')}
         >
-          <FontAwesomeIcon icon={faUndo} className="tab-icon" /> Commandes retournées{' '}
-          <span className="tab-counter">{returnedOrders.length}</span>
+          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" /> En cours de traitement ({ordersValidation.length})
         </div>
         <div
-          className={`tab-item ${activeTab === 'completed' ? 'active' : ''}`}
-          onClick={() => handleTabClick('completed')}
+          className={`tab-item ${activeTab === 'payment' ? 'active' : ''}`}
+          onClick={() => handleTabClick('payment')}
         >
-          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" /> Commandes terminées{' '}
-          <span className="tab-counter">{completedOrders.length}</span>
+          <FontAwesomeIcon icon={faDollarSign} className="tab-icon" /> En attente de paiement ({ordersPayment.length})
         </div>
       </div>
 
       <div className="dashboard-grid">
-        {activeTab === 'waiting' && (
+        {/* Commandes en attente de Visa */}
+        {activeTab === 'visa' && (
           <div className="dashboard-item">
-            <FontAwesomeIcon icon={faClipboardList} className="section-icon" />
-            <ul>
-              {waitingOrders.map((order) => (
-                <li key={order.id} className="order-item">
-                  {order.name} - {order.date}
-                  <div className="order-actions">
-                    <button className="home-operateur-validate-button" onClick={() => console.log(`Commande ${order.id} validée`)}>
-                      <FontAwesomeIcon icon={faCheckCircle} /> Valider
-                    </button>
-                    <button className="home-operateur-return-button" onClick={() => console.log(`Commande ${order.id} refusée`)}>
-                      <FontAwesomeIcon icon={faUndo} /> Retourner
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <Link to="/home-operateur/to-validateOP" className="dashboard-button">
-              Voir les commandes en attente
-            </Link>
+            <table className="dashboard-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>N° de Commande</th>
+                  <th>Client</th>
+                  <th>Désignation</th>
+                  <th>Date soumission</th>
+                  <th>Certificat d'Origine</th>
+                  <th>Facture Commerciale</th>
+                  <th>Légalisations</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {ordersVisa.map((order) => (
+                  <tr key={order.id}>
+                    <td>{order.date}</td>
+                    <td>{order.orderNumber}</td>
+                    <td>{order.client}</td>
+                    <td>{order.designation}</td>
+                    <td>{order.submissionDate}</td>
+                    <td>
+                      <button className="icon-button minimal-button">
+                        <FontAwesomeIcon icon={faEye} title="Vérifier" />
+                        <span className="button-text">Vérifier</span>
+                      </button>
+                    </td>
+                    <td>
+                      <button className="icon-button minimal-button">
+                        <FontAwesomeIcon icon={faPlus} title="Ajouter" />
+                      </button>
+                    </td>
+                    <td>
+                      <button className="icon-button minimal-button">
+                        <FontAwesomeIcon icon={faEye} title="Vérifier" />
+                        <span className="button-text">Vérifier</span>
+                      </button>
+                    </td>
+                    <td>
+                      <button className="submit-button minimal-button">Facturer</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
-        {activeTab === 'returned' && (
+       {/* Commandes en attente de validation */}
+   
+
+        {/* Commandes en attente de paiement */}
+        {activeTab === 'payment' && (
           <div className="dashboard-item">
-            <FontAwesomeIcon icon={faUndo} className="section-icon" />
-            <ul>
-              {returnedOrders.map((order) => (
-                <li key={order.id} className="order-item">
-                  {order.name} - {order.date} - Raison : {order.reason}
-                  <div className="order-actions">
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <Link to="/dashboard/returned-orders" className="dashboard-button">
-              Voir les commandes retournées
-            </Link>
+            <table className="dashboard-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>N° de commande</th>
+                  <th>Client</th>
+                  <th>N° de facture</th>
+                  <th>Désignation</th>
+                  <th>Date de validation</th>
+                  <th>Certificat d'origine</th>
+                  <th>Facture Commercial</th>
+                  <th>Légalisation</th>
+                  <th></th> {/* Colonne pour le bouton Payer */}
+                </tr>
+              </thead>
+              <tbody>
+                {ordersPayment.map((order) => (
+                  <tr key={order.id}>
+                    <td>{order.date}</td>
+                    <td>{order.orderNumber}</td>
+                    <td>{order.client}</td>
+                    <td>{order.invoiceNumber}</td>
+                    <td>{order.designation}</td>
+                    <td>{order.validationDate}</td>
+                    <td>
+                      <button className="icon-button minimal-button">
+                        <FontAwesomeIcon icon={faEye} title="Voir" />
+                        <span className="button-text">Détails</span>
+                      </button>
+                    </td>
+                    <td></td>
+                    <td>
+                      <button className="icon-button minimal-button">
+                        <FontAwesomeIcon icon={faEye} title="Voir" />
+                        <span className="button-text">Détails</span>
+                      </button>
+                    </td>
+                    <td>
+                      {/* Nouveau bouton Payer */}
+                      <button className="submit-button minimal-button">Payer</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
+      </div>
 
-        {activeTab === 'completed' && (
+      {/* Section INSCRIPTIONS */}
+      <div className="inscriptions-title highlight-text">INSCRIPTIONS</div>
+      <div className="tabs-container">
+        <div
+          className={`tab-item ${activeInscriptionsTab === 'newRegistrations' ? 'active' : ''}`}
+          onClick={() => handleInscriptionsTabClick('newRegistrations')}
+        >
+          <FontAwesomeIcon icon={faPlus} className="tab-icon" /> Nouvelles Inscriptions
+        </div>
+        <div
+          className={`tab-item ${activeInscriptionsTab === 'additionalRequest' ? 'active' : ''}`}
+          onClick={() => handleInscriptionsTabClick('additionalRequest')}
+        >
+          <FontAwesomeIcon icon={faPen} className="tab-icon" /> Demande de complément
+        </div>
+      </div>
+
+      <div className="dashboard-grid">
+        {/* Nouvelles Inscriptions */}
+        {activeInscriptionsTab === 'newRegistrations' && (
           <div className="dashboard-item">
-            <FontAwesomeIcon icon={faCheckCircle} className="section-icon" />
-            <ul>
-              {completedOrders.map((order) => (
-                <li key={order.id} className="order-item">
-                  {order.name} - {order.date}
-                  <div className="order-actions">
-                    <button className="home-operateur-return-button" onClick={() => console.log(`Commande ${order.id} vue`)}>
-                      Voir
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <Link to="/dashboard/completed-orders" className="dashboard-button">
-              Voir les commandes terminées
-            </Link>
+            <table className="dashboard-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Catégorie</th>
+                  <th>Client</th>
+                  <th>Licence ZF</th>
+                  <th>Autres</th>
+                  <th>Contact Principal</th>
+                  <th>Fonction</th>
+                  <th>E-mail</th>
+                  <th>Num. tel</th>
+                  <th>N° portable</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {newRegistrations.map((registration) => (
+                  <tr key={registration.id}>
+                    <td>{registration.date}</td>
+                    <td>{registration.category}</td>
+                    <td>{registration.client}</td>
+                    <td>
+                      <button className="icon-button minimal-button">
+                        <FontAwesomeIcon icon={faEye} title="Ouvrir" />
+                        <span className="button-text">Ouvrir</span>
+                      </button>
+                    </td>
+                    <td>{registration.autres}</td>
+                    <td>{registration.contactPrincipal}</td>
+                    <td>{registration.fonction}</td>
+                    <td>{registration.email}</td>
+                    <td>{registration.numTel}</td>
+                    <td>{registration.numPortable}</td>
+                    <td>
+                      <button className="submit-button minimal-button">Valider</button>
+                      <button className="submit-button minimal-button reject-button">Rejeter</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
