@@ -5,7 +5,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile.prod  # Use a production Dockerfile
     ports:
-      - "5000:5000"
+      - "5001:5001"
     environment:
       - JWT_SECRET=your_jwt_secret
       - POSTGRES_USER=exampleuser

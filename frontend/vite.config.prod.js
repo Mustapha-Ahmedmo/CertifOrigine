@@ -7,7 +7,7 @@ export default defineConfig({
     'process.env.NODE_ENV': JSON.stringify('production')
   },
   server: {
-    port: 5000,
+    port: 5001,
   },
   base: '/',
 });

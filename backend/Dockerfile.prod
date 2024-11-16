@@ -14,7 +14,7 @@ RUN npm install --only=production
 COPY . .
 
 # Exposer le port que l'application utilise
-EXPOSE 5000
+EXPOSE 5001
 
 # Commande pour démarrer l'application en mode production
 CMD ["node", "server.js"]
