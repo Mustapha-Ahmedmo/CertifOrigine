@@ -43,34 +43,35 @@ services:
       - app-network
 
   db:
-    image: mysql:8.0
-    container_name: mysql-container
+    image: postgres:13
+    container_name: postgres-container
     environment:
-      MYSQL_ROOT_PASSWORD: examplepassword
-      MYSQL_DATABASE: exampledb
-      MYSQL_USER: exampleuser
-      MYSQL_PASSWORD: exampleuserpassword
+      POSTGRES_USER: exampleuser
+      POSTGRES_PASSWORD: exampleuserpassword
+      POSTGRES_DB: djiboutiport
     volumes:
-      - mysql-data:/var/lib/mysql  # Persist MySQL data
+      - postgres-data:/var/lib/postgresql/data  # Persist PostgreSQL data
     ports:
-      - "3306:3306"
+      - "5432:5432"
     networks:
       - app-network
 
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin-container
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin-container
     environment:
-      PMA_HOST: db
-      MYSQL_ROOT_PASSWORD: examplepassword
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: adminpassword
     ports:
-      - "8080:80"  # Expose port 8080 for phpMyAdmin access
+      - "8081:80"  # Expose pgAdmin on port 8081
     networks:
       - app-network
+    depends_on:
+      - db
 
 networks:
   app-network:
     driver: bridge
 
 volumes:
-  mysql-data:
+  postgres-data:

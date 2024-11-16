@@ -2,6 +2,28 @@
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+export const registerUser = async (userData) => {
+  try {
+    const response = await fetch(`${API_URL}/auth/signup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Registration failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
+  }
+};
+
 export const loginUser = async (username, password) => {
   try {
     const response = await fetch(`${API_URL}/auth/login`, {

@@ -14,6 +14,7 @@ import {
 import logo from '../assets/logo.jpg'; // Importation du logo
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom'; // Importer Link
+import { registerUser } from '../services/apiServices';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -42,6 +43,9 @@ const Register = () => {
     acceptsConditions: false,
     acceptsDataProcessing: false,
   });
+
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
@@ -79,10 +83,50 @@ const Register = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
-    // Ajoutez ici votre logique de soumission du formulaire
+
+    // Validate formData (example for password confirmation)
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    try {
+      // Prepare the data to send
+      const userData = {
+        username: formData.email,
+        gender: formData.gender,
+        name: formData.name,
+        position: formData.position,
+        phoneFixed: formData.phoneFixed,
+        phoneMobile: formData.phoneMobile,
+        email: formData.email,
+        password: formData.password,
+        companyName: formData.companyName,
+        address: formData.address,
+        city: formData.city,
+        country: formData.country,
+        companyCategory: formData.companyCategory,
+        isFreeZoneCompany: formData.isFreeZoneCompany,
+        isOtherCompany: formData.isOtherCompany,
+        licenseNumber: formData.licenseNumber,
+        nif: formData.nif,
+        rchNumber: formData.rchNumber,
+        acceptsConditions: formData.acceptsConditions,
+        acceptsDataProcessing: formData.acceptsDataProcessing,
+      };
+
+      // Send the registration data to the backend
+      const response = await registerUser(userData);
+      setSuccessMessage('User registered successfully');
+      navigate('/dashboard');
+      setError('');
+      console.log('Registration success:', response);
+    } catch (err) {
+      setError(err.message);
+      setSuccessMessage('');
+    }
   };
 
   return (
@@ -98,7 +142,8 @@ const Register = () => {
 
       <div className="register-client-container">
         <h2>Créer un Compte</h2>
-
+        {error && <p className="error-message">{error}</p>}
+        {successMessage && <p className="success-message">{successMessage}</p>}
         <form onSubmit={handleSubmit} className="register-client-form">
           {/* Section Information Entreprise */}
           <div className="register-client-form-section">
