@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
-  // Fausse liste de documents disponibles à importer (à simuler depuis une BDD)
+  // Liste des pièces justificatives disponibles
   const fakeJustificativePieces = [
     'Certificat sanitaire',
     'Agrément d’exploitation',
@@ -11,48 +11,36 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
     'Patente industrie',
     'Autre',
   ];
-  const fakeAnnexes = ['Note explicative', 'Photocopie du contrat', 'Autre annexe'];
 
   const [selectedJustificative, setSelectedJustificative] = useState('');
-  const [selectedAnnex, setSelectedAnnex] = useState('');
   const [justificativeRemarks, setJustificativeRemarks] = useState('');
-  const [annexRemarks, setAnnexRemarks] = useState('');
   const [documents, setDocuments] = useState(values.documents || []);
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const addDocument = (type) => {
-    if (type === 'justificative' && selectedJustificative) {
-      setDocuments([
-        ...documents,
-        {
-          type: 'justificative',
-          name: selectedJustificative,
-          remarks: justificativeRemarks,
-          file: selectedFile,
-        },
-      ]);
-      setSelectedJustificative('');
-      setJustificativeRemarks('');
-      setSelectedFile(null);
-    } else if (type === 'annex' && selectedAnnex) {
-      setDocuments([
-        ...documents,
-        { type: 'annex', name: selectedAnnex, remarks: annexRemarks, file: selectedFile },
-      ]);
-      setSelectedAnnex('');
-      setAnnexRemarks('');
-      setSelectedFile(null);
-    }
-  };
-
-  const removeDocument = (index) => {
-    const updatedDocuments = documents.filter((_, i) => i !== index);
-    setDocuments(updatedDocuments);
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    handleChange('documents', documents);
+
+    if (selectedJustificative) {
+      const newDocument = {
+        type: 'justificative',
+        name: selectedJustificative,
+        remarks: justificativeRemarks,
+        file: selectedFile,
+      };
+
+      const updatedDocuments = [...documents, newDocument];
+
+      // Mettre à jour l'état local
+      setDocuments(updatedDocuments);
+
+      // Mettre à jour les valeurs globales
+      handleChange('documents', updatedDocuments);
+    } else {
+      // Si aucun document n'est sélectionné, transmettre l'état actuel
+      handleChange('documents', documents);
+    }
+
+    // Passer à l'étape suivante
     nextStep();
   };
 
@@ -64,7 +52,7 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
     <form onSubmit={handleSubmit} className="step-form">
       <h3>Étape 2: Pièces justificatives</h3>
 
-      {/* Section pour les pièces justificatives (obligatoires) */}
+      {/* Section pour les pièces justificatives */}
       <div className="form-inline-group">
         <label>Choisir une pièce justificative</label>
         <select
@@ -79,7 +67,7 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
           ))}
         </select>
 
-        {/* Bouton "Choisir le fichier" avec fond blanc et texte noir */}
+        {/* Bouton "Choisir le fichier" */}
         <label htmlFor="file-upload" className="upload-button">
           Choisir le fichier
         </label>
@@ -103,20 +91,6 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
         />
       </div>
 
-      
-      {/* Liste des documents ajoutés */}
-      <ul className="document-list">
-        {documents.map((doc, index) => (
-          <li key={index}>
-            <strong>{doc.type === 'justificative' ? 'Justificative' : 'Annexe'}:</strong> {doc.name} - {doc.remarks} -{' '}
-            {doc.file ? doc.file.name : 'Aucun fichier'}
-            <button type="button" onClick={() => removeDocument(index)}>
-              ❌
-            </button>
-          </li>
-        ))}
-      </ul>
-
       <div className="step-actions">
         <button type="button" onClick={prevStep}>
           Retour
@@ -126,7 +100,7 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
         </button>
       </div>
 
-      {/* Inline CSS for styling */}
+      {/* Styles en ligne */}
       <style jsx>{`
         .form-inline-group {
           display: flex;
@@ -141,8 +115,8 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
         .upload-button {
           padding: 5px 10px;
           font-size: 0.875rem;
-          background-color: white; /* Fond blanc */
-          color: black; /* Texte noir */
+          background-color: white;
+          color: black;
           border: 1px solid #ced4da;
           border-radius: 4px;
           cursor: pointer;
@@ -152,7 +126,7 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
           background-color: #e9ecef;
         }
         .file-input {
-          display: none; /* Masquer l'input réel */
+          display: none;
         }
         .form-group {
           margin-bottom: 20px;
@@ -160,16 +134,6 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
         .step-actions {
           display: flex;
           justify-content: space-between;
-        }
-        .document-list {
-          list-style-type: none;
-          padding: 0;
-        }
-        .document-list li {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 10px;
         }
         .next-button {
           background-color: #28a745;

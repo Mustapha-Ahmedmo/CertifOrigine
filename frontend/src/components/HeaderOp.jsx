@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faShoppingCart, faUser } from '@fortawesome/free-solid-svg-icons'; // Icônes pour le header
-import logo from '../assets/logo.jpg'; // Importer le logo
+import { faBell, faUser } from '@fortawesome/free-solid-svg-icons';
+import logo from '../assets/logo.jpg';
 import { useTranslation } from 'react-i18next';
-import './Header.css';
+import './HeaderOP.css';
 
 const Header = () => {
   const { t, i18n } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [cartItemCount, setCartItemCount] = useState(3);
   const [mailNotificationCount, setMailNotificationCount] = useState(7);
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
+  const [selectedPerson, setSelectedPerson] = useState('M. Abdourhaman Abdi Ali');
 
   const changeLanguage = (language) => {
     i18n.changeLanguage(language);
@@ -27,13 +27,30 @@ const Header = () => {
 
   return (
     <header className="header">
-      <div className="logo-container">
-        <img src={logo} alt="Chambre de Commerce de Djibouti" className="logo" />
+      <div className="header-left">
+        <div className="logo-container">
+          <img src={logo} alt="Chambre de Commerce de Djibouti" className="logo" />
+        </div>
       </div>
+
       <div className="header-right">
+        <div className="welcome-message">
+          <label htmlFor="person-select">Bienvenue </label>
+          <select
+            id="person-select"
+            value={selectedPerson}
+            onChange={(event) => setSelectedPerson(event.target.value)}
+          >
+            <option value="M. Abdourhaman Abdi Ali">M. Abdourhaman Abdi Ali</option>
+            <option value="Mohamed Youssef">Mohamed Youssef</option>
+          </select>
+        </div>
+
         <div className="header-icon-container">
           <FontAwesomeIcon icon={faBell} className="header-icon" />
-          {mailNotificationCount > 0 && <span className="badge mail-badge">{mailNotificationCount}</span>}
+          {mailNotificationCount > 0 && (
+            <span className="badge mail-badge">{mailNotificationCount}</span>
+          )}
           <div className="icon-label">Notifications</div>
         </div>
         <div className="header-icon-container">

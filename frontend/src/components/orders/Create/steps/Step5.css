@@ -1,5 +1,3 @@
-/* Step5.css */
-
 /* Styles généraux pour le formulaire de récapitulatif */
 .step-form {
   margin: 0 auto;
@@ -11,15 +9,92 @@
   text-align: center;
   margin-bottom: 30px;
   color: #333;
+  font-weight: bold; /* Titre principal en gras */
+  font-size: 24px; /* Augmentation de la taille de police */
 }
 
-.recap-section {
+/* Styles pour l'encadré "Désignation commande" */
+.designation-commande {
+  border: 1px solid #ddd;
+  padding: 20px;
   margin-bottom: 30px;
+  position: relative;
+  background-color: #f9f9f9;
 }
 
-.recap-section h4 {
+.designation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 15px;
+}
+
+.designation-header h4 {
+  margin: 0;
+  font-weight: bold; /* Titre en gras */
+  color: #007bff; /* Couleur bleue */
+}
+
+.modifier-button {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+}
+
+.modifier-button:hover {
+  background-color: #0056b3;
+}
+
+/* Style pour le Demandeur */
+.exporter-name {
+  color: #007bff; /* Couleur bleue */
+  font-weight: bold;
+}
+
+/* Styles pour les éléments de récapitulatif dans l'encadré */
+.designation-commande .recap-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.designation-commande .recap-label {
+  font-weight: bold;
+  width: 45%;
+  color: #333;
+}
+
+.designation-commande .recap-value {
+  width: 50%;
   color: #555;
+}
+
+/* Styles pour l'encadré "Contenu du certificat d'origine" */
+.contenu-certificat {
+  border: 1px solid #ddd;
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+.contenu-certificat h4 {
+  margin-bottom: 20px;
+  font-weight: bold; /* Titre en gras */
+  color: #007bff; /* Couleur bleue */
+}
+
+/* Styles pour les sous-sections dans le contenu du certificat */
+.contenu-certificat .recap-section {
+  margin-bottom: 25px;
+}
+
+.contenu-certificat h5 {
+  margin-bottom: 15px;
+  font-weight: bold; /* Sous-titres en gras */
+  color: #333;
 }
 
 /* Styles pour les éléments de récapitulatif */
@@ -46,7 +121,8 @@
   border-collapse: collapse;
 }
 
-.merchandise-table th, .merchandise-table td {
+.merchandise-table th,
+.merchandise-table td {
   padding: 12px;
   border: 1px solid #ddd;
   text-align: left;
@@ -54,6 +130,7 @@
 
 .merchandise-table th {
   background-color: #f9f9f9;
+  font-weight: bold; /* En-têtes du tableau en gras */
 }
 
 .merchandise-table tr:nth-child(even) {
@@ -62,6 +139,32 @@
 
 .merchandise-table tr:hover {
   background-color: #f1f1f1;
+}
+
+/* Styles pour l'encadré "Pièces justificatives" */
+.pieces-justificatives {
+  border: 1px solid #ddd;
+  padding: 20px;
+  margin-top: 30px;
+  background-color: #f9f9f9;
+}
+
+.pieces-justificatives h4 {
+  margin-bottom: 20px;
+  font-weight: bold;
+  color: #007bff;
+}
+
+/* Styles pour la liste des documents */
+.document-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.document-list li {
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #333;
 }
 
 /* Styles pour les actions */
@@ -100,7 +203,7 @@
   color: #333;
 }
 
-/* Bouton "Législation des documents" */
+/* Bouton "Légalisation des documents" */
 .legislation-button {
   background-color: red;
   color: white;
@@ -128,13 +231,6 @@
 
 .next-button:hover {
   background-color: #45a049;
-}
-
-/* Style pour le nom de l'entreprise en bleu */
-.exporter-name {
-  color: #007bff;
-  font-weight: bold;
-  font-size: 18px;
 }
 
 /* Responsivité */
@@ -170,10 +266,16 @@
     text-align: center;
     margin-bottom: 10px;
   }
+
+  .document-list li {
+    font-size: 14px;
+  }
 }
 
 @media screen and (max-width: 480px) {
-  .recap-section h4 {
+  .recap-section h4,
+  .contenu-certificat h4,
+  .contenu-certificat h5 {
     font-size: 18px;
   }
 

@@ -15,7 +15,6 @@ import './HomeOperateur.css';
 const HomeOperateur = () => {
   const [activeTab, setActiveTab] = useState('visa');
   const [activeInscriptionsTab, setActiveInscriptionsTab] = useState('newRegistrations');
-  const [selectedPerson, setSelectedPerson] = useState('M. Abdourhaman Abdi Ali');
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -27,12 +26,18 @@ const HomeOperateur = () => {
 
   // Données d'exemple
   const ordersVisa = [
-    { id: 1, date: '01/08/2024', orderNumber: 'O-06789/24', client: 'INDIGO TRADING FZCO', designation: 'Produit A', submissionDate: '02/08/2024' },
+    {
+      id: 1,
+      date: '01/08/2024',
+      orderNumber: 'O-06789/24',
+      client: 'INDIGO TRADING FZCO',
+      designation: 'Produit A',
+      submissionDate: '02/08/2024',
+    },
   ];
 
-  const ordersValidation = [
-    { id: 1, date: '01/08/2024', orderNumber: 'O-06791/24', designation: 'Produit E', submissionDate: '02/08/2024' },
-  ];
+  // Tableau vide pour les commandes en cours de traitement
+  const ordersValidation = [];
 
   const ordersPayment = [
     {
@@ -53,7 +58,11 @@ const HomeOperateur = () => {
       category: 'SAS',
       client: 'INDIGO TRADING FZCO',
       licenceZF: 'ZF-00123',
-      autres: 'Détails supplémentaires',
+      // Ajout de faux documents à télécharger
+      documents: [
+        { name: 'Document1.pdf', link: '#' },
+        { name: 'Document2.pdf', link: '#' },
+      ],
       contactPrincipal: 'Yusuf Daher',
       fonction: 'Directeur Général',
       email: 'indiotr@gmail.com',
@@ -67,13 +76,6 @@ const HomeOperateur = () => {
       <Helmet>
         <title>Dashboard Opérateur</title>
       </Helmet>
-      <div className="welcome-message">
-        <label htmlFor="person-select">Bienvenue </label>
-        <select id="person-select" value={selectedPerson} onChange={(event) => setSelectedPerson(event.target.value)}>
-          <option value="M. Abdourhaman Abdi Ali">M. Abdourhaman Abdi Ali</option>
-          <option value="Mohamed Youssef">Mohamed Youssef</option>
-        </select>
-      </div>
 
       {/* Section COMMANDES */}
       <div className="commands-title highlight-text">COMMANDES</div>
@@ -82,19 +84,22 @@ const HomeOperateur = () => {
           className={`tab-item ${activeTab === 'visa' ? 'active' : ''}`}
           onClick={() => handleTabClick('visa')}
         >
-          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" /> Nouvelles commandes ({ordersVisa.length})
+          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" /> Nouvelles commandes
+          {ordersVisa.length > 0 ? ` (${ordersVisa.length})` : ''}
         </div>
         <div
           className={`tab-item ${activeTab === 'validation' ? 'active' : ''}`}
           onClick={() => handleTabClick('validation')}
         >
-          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" /> En cours de traitement ({ordersValidation.length})
+          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" /> En cours de traitement
+          {ordersValidation.length > 0 ? ` (${ordersValidation.length})` : ''}
         </div>
         <div
           className={`tab-item ${activeTab === 'payment' ? 'active' : ''}`}
           onClick={() => handleTabClick('payment')}
         >
-          <FontAwesomeIcon icon={faDollarSign} className="tab-icon" /> En attente de paiement ({ordersPayment.length})
+          <FontAwesomeIcon icon={faDollarSign} className="tab-icon" /> En attente de paiement
+          {ordersPayment.length > 0 ? ` (${ordersPayment.length})` : ''}
         </div>
       </div>
 
@@ -130,11 +135,8 @@ const HomeOperateur = () => {
                         <span className="button-text">Vérifier</span>
                       </button>
                     </td>
-                    <td>
-                      <button className="icon-button minimal-button">
-                        <FontAwesomeIcon icon={faPlus} title="Ajouter" />
-                      </button>
-                    </td>
+                    {/* Suppression du bouton "+" dans la colonne "Facture Commerciale" */}
+                    <td></td>
                     <td>
                       <button className="icon-button minimal-button">
                         <FontAwesomeIcon icon={faEye} title="Vérifier" />
@@ -151,8 +153,12 @@ const HomeOperateur = () => {
           </div>
         )}
 
-       {/* Commandes en attente de validation */}
-   
+        {/* Commandes en attente de validation */}
+        {activeTab === 'validation' && ordersValidation.length > 0 && (
+          <div className="dashboard-item">
+            {/* Contenu du tableau pour les commandes en cours de traitement */}
+          </div>
+        )}
 
         {/* Commandes en attente de paiement */}
         {activeTab === 'payment' && (
@@ -167,7 +173,7 @@ const HomeOperateur = () => {
                   <th>Désignation</th>
                   <th>Date de validation</th>
                   <th>Certificat d'origine</th>
-                  <th>Facture Commercial</th>
+                  <th>Facture Commerciale</th>
                   <th>Légalisation</th>
                   <th></th> {/* Colonne pour le bouton Payer */}
                 </tr>
@@ -255,7 +261,19 @@ const HomeOperateur = () => {
                         <span className="button-text">Ouvrir</span>
                       </button>
                     </td>
-                    <td>{registration.autres}</td>
+                    <td>
+                      {registration.documents && registration.documents.length > 0 ? (
+                        registration.documents.map((doc, index) => (
+                          <div key={index}>
+                            <a href={doc.link} download>
+                              {doc.name}
+                            </a>
+                          </div>
+                        ))
+                      ) : (
+                        'Aucun document'
+                      )}
+                    </td>
                     <td>{registration.contactPrincipal}</td>
                     <td>{registration.fonction}</td>
                     <td>{registration.email}</td>
