@@ -17,7 +17,7 @@ COPY . .
 RUN npm install -g nodemon
 
 # Exposer le port que l'application utilise
-EXPOSE 5000
+EXPOSE 5001
 
 # Commande pour démarrer l'application en mode développement
 CMD ["nodemon", "server.js"]

@@ -17,7 +17,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile.dev
     ports:
-      - "5000:5000"
+      - "5001:5001"
     volumes:
       - ./backend:/usr/src/app  # Recharger les fichiers locaux
       - /usr/src/app/node_modules
@@ -42,6 +42,35 @@ services:
     networks:
       - app-network
 
+  db:
+    image: mysql:8.0
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: examplepassword
+      MYSQL_DATABASE: exampledb
+      MYSQL_USER: exampleuser
+      MYSQL_PASSWORD: exampleuserpassword
+    volumes:
+      - mysql-data:/var/lib/mysql  # Persist MySQL data
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin-container
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: examplepassword
+    ports:
+      - "8080:80"  # Expose port 8080 for phpMyAdmin access
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  mysql-data:
