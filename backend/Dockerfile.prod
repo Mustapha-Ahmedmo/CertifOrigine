@@ -1,20 +1,24 @@
-# Utiliser une image Node.js officielle
+# Use an official Node.js image
 FROM node:16
 
-# Créer le répertoire de travail dans le conteneur
+# Set the working directory
 WORKDIR /usr/src/app
 
-# Copier les fichiers package.json et package-lock.json
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Installer les dépendances
+# Install dependencies
 RUN npm install --only=production
 
-# Copier tout le code dans le conteneur
+# Copy the rest of your application code
 COPY . .
 
-# Exposer le port que l'application utilise
+# Copy the wait-for-it.sh script into the image and make it executable
+COPY wait-for-it.sh /wait-for-it.sh
+RUN chmod +x /wait-for-it.sh
+
+# Expose the port your app uses
 EXPOSE 5001
 
-# Commande pour démarrer l'application en mode production
-CMD ["node", "server.js"]
+# Use the wait-for-it.sh script in the CMD to wait for the database
+CMD ["/wait-for-it.sh", "db:5432", "--", "node", "server.js"]
