@@ -120,7 +120,6 @@ const Register = () => {
       // Send the registration data to the backend
       const response = await registerUser(userData);
       setSuccessMessage('User registered successfully');
-      navigate('/dashboard');
       setError('');
       console.log('Registration success:', response);
     } catch (err) {
