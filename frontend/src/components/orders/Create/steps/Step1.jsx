@@ -71,7 +71,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       values.transportModes.air ||
       values.transportModes.terre ||
       values.transportModes.mer ||
-      values.transportModes.multimodal;
+      values.transportModes.mixte;
     if (!isTransportSelected) {
       setErrorMessage("Veuillez sélectionner au moins un mode de transport.");
       return;
@@ -129,6 +129,21 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
   return (
     <form onSubmit={handleSubmit} className="step-form">
       <h3>{t('step1.title')}</h3>
+
+
+      {/* Nouveau champ pour le libellé de la commande */}
+      <div className="form-group">
+        <label htmlFor="orderLabel">
+          Libellé de la commande <span className="required">*</span>
+        </label>
+        <input
+          id="orderLabel"
+          type="text"
+          value={values.orderLabel}
+          onChange={(e) => handleChange('orderLabel', e.target.value)}
+          required
+        />
+      </div>
 
       {/* Section 1/8 Demandeur */}
       <div className="section-title">{t('step1.exporterTitle')}</div>
@@ -340,8 +355,8 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
           <label>
             <input
               type="checkbox"
-              checked={values.transportModes.multimodal}
-              onChange={(e) => handleChange('transportModes', { ...values.transportModes, multimodal: e.target.checked })}
+              checked={values.transportModes.mixte}
+              onChange={(e) => handleChange('transportModes', { ...values.transportModes, mixte: e.target.checked })}
             /> Mixte
           </label>
         </div>
@@ -353,7 +368,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         <textarea
           value={values.transportRemarks}
           onChange={(e) => handleChange('transportRemarks', e.target.value)}
-          placeholder="Ajouter des remarques concernant le transport"
+          
         />
       </div>
       <hr />

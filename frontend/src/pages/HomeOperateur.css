@@ -151,3 +151,82 @@
     padding: 4px;
     border-radius: 4px;
 }
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  
+  .modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 50%; /* Utiliser 80% de la largeur de l'écran */
+    width: 100%;
+    max-height: 90vh; /* Limiter la hauteur maximale à 90% de la hauteur de la fenêtre */
+    overflow-y: auto; /* Activer le défilement vertical si nécessaire */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    text-align: left; /* Aligner le texte à gauche pour une meilleure lisibilité */
+  }
+  
+  .close-modal-button {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+  }
+  
+  .close-modal-button:hover {
+    background-color: darkred;
+  }
+
+  
+  /* Conteneur des boutons d'actions dans le modal */
+.modal-actions {
+    display: flex; /* Aligne les boutons sur une ligne */
+    justify-content: space-between; /* Espacement entre les boutons */
+    margin-top: 20px; /* Espacement avec le contenu du modal */
+  }
+  
+  /* Bouton Rejeter */
+  .reject-button {
+    background-color: #ff4d4f; /* Rouge */
+    color: #fff; /* Texte blanc */
+    border: none; /* Pas de bordure */
+    padding: 10px 20px; /* Espace interne */
+    border-radius: 5px; /* Coins arrondis */
+    cursor: pointer; /* Curseur pointeur */
+    font-size: 14px; /* Taille du texte */
+  }
+  
+  .reject-button:hover {
+    background-color: #ff7875; /* Rouge clair au survol */
+  }
+  
+  /* Bouton Valider */
+  .validate-button {
+    background-color: #52c41a; /* Vert */
+    color: #fff; /* Texte blanc */
+    border: none; /* Pas de bordure */
+    padding: 10px 20px; /* Espace interne */
+    border-radius: 5px; /* Coins arrondis */
+    cursor: pointer; /* Curseur pointeur */
+    font-size: 14px; /* Taille du texte */
+  }
+  
+  .validate-button:hover {
+    background-color: #73d13d; /* Vert clair au survol */
+  }
+  
+ 

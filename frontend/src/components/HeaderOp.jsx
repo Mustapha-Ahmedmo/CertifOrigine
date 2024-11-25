@@ -34,18 +34,6 @@ const Header = () => {
       </div>
 
       <div className="header-right">
-        <div className="welcome-message">
-          <label htmlFor="person-select">Bienvenue </label>
-          <select
-            id="person-select"
-            value={selectedPerson}
-            onChange={(event) => setSelectedPerson(event.target.value)}
-          >
-            <option value="M. Abdourhaman Abdi Ali">M. Abdourhaman Abdi Ali</option>
-            <option value="Mohamed Youssef">Mohamed Youssef</option>
-          </select>
-        </div>
-
         <div className="header-icon-container">
           <FontAwesomeIcon icon={faBell} className="header-icon" />
           {mailNotificationCount > 0 && (

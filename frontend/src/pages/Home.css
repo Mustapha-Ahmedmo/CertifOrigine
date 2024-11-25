@@ -6,7 +6,7 @@
   text-align: center;
 }
 
-.welcome-message {
+.home-welcome-message {
   font-size: 18px;
   font-weight: bold;
   color: #333;
@@ -14,18 +14,18 @@
   text-align: left;
 }
 
-.highlight-text {
+.home-highlight-text {
   color: #007bff;
 }
 
-.tabs-container {
+.home-tabs-container {
   display: flex;
   justify-content: center;
   margin-bottom: 30px;
   border-bottom: 2px solid #f0f0f0;
 }
 
-.tab-item {
+.home-tab-item {
   flex: 1;
   text-align: center;
   padding: 10px 15px;
@@ -37,19 +37,23 @@
   border-bottom: 3px solid transparent;
 }
 
-.tab-item.active {
+.home-tab-item.home-active {
   color: #007bff;
   border-bottom: 3px solid #007bff;
 }
 
-.dashboard-grid {
+.home-tab-icon {
+  margin-right: 5px;
+}
+
+.home-dashboard-grid {
   display: flex;
   flex-direction: column;
   gap: 30px;
   width: 100%;
 }
 
-.dashboard-item {
+.home-dashboard-item {
   background-color: #ffffff;
   padding: 25px;
   border-radius: 10px;
@@ -58,24 +62,24 @@
   transition: box-shadow 0.3s ease;
 }
 
-.dashboard-table {
+.home-dashboard-table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 20px;
 }
 
-.dashboard-table th,
-.dashboard-table td {
+.home-dashboard-table th,
+.home-dashboard-table td {
   padding: 10px;
   border: 1px solid #ddd;
   text-align: left;
 }
 
-.dashboard-table th {
+.home-dashboard-table th {
   background-color: #f4f4f4;
 }
 
-.icon-button {
+.home-icon-button {
   padding: 4px;
   border: none;
   border-radius: 50%;
@@ -87,28 +91,28 @@
   transition: background-color 0.2s, color 0.2s;
 }
 
-.icon-button:hover {
+.home-icon-button:hover {
   background-color: #f0f0f0;
 }
 
-.icon-button.delete-button {
+.home-icon-button.home-delete-button {
   color: red;
 }
 
-.icon-button.delete-button:hover {
+.home-icon-button.home-delete-button:hover {
   background-color: #ffe5e5;
 }
 
-.icon-button-group {
+.home-icon-button-group {
   display: flex;
   align-items: center;
 }
 
-.icon-button-group .icon-button {
+.home-icon-button-group .home-icon-button {
   margin-right: 5px;
 }
 
-.submit-button {
+.home-submit-button {
   padding: 5px 10px;
   background-color: transparent;
   color: green;
@@ -119,12 +123,22 @@
   transition: background-color 0.2s, color 0.2s;
 }
 
-.submit-button:hover {
+.home-submit-button:hover {
   background-color: green;
   color: white;
 }
 
-.minimal-button {
+.home-minimal-button {
   padding: 4px;
   border-radius: 4px;
+}
+
+.home-button-text {
+  margin-left: 5px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.home-button-text:hover {
+  color: #007bff;
 }

@@ -207,3 +207,29 @@ textarea {
   cursor: not-allowed;
   color: #999; /* Ajout pour griser le texte */
 }
+
+.form-group label {
+  font-size: 14px;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.required {
+  color: red;
+  margin-left: 4px;
+}
+
+.form-group input {
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  border-color: #0056b3;
+  outline: none;
+}

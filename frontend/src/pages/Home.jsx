@@ -74,35 +74,35 @@ const Home = () => {
       <Helmet>
         <title>Dashboard</title>
       </Helmet>
-      <div className="welcome-message">
-        Bienvenue <span className="highlight-text">INDIGO TRADING FZCO</span>
+      <div className="home-welcome-message">
+        Bienvenue <span className="home-highlight-text">INDIGO TRADING FZCO</span>
       </div>
-      <div className="tabs-container">
+      <div className="home-tabs-container">
         <div
-          className={`tab-item ${activeTab === 'visa' ? 'active' : ''}`}
+          className={`home-tab-item ${activeTab === 'visa' ? 'home-active' : ''}`}
           onClick={() => handleTabClick('visa')}
         >
-          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" /> Mes commandes à soumettre ({ordersVisa.length})
+          <FontAwesomeIcon icon={faClipboardList} className="home-tab-icon" /> Mes commandes à soumettre ({ordersVisa.length})
         </div>
         <div
-          className={`tab-item ${activeTab === 'validation' ? 'active' : ''}`}
+          className={`home-tab-item ${activeTab === 'validation' ? 'home-active' : ''}`}
           onClick={() => handleTabClick('validation')}
         >
-          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" /> Mes commandes en attente de la CCD ({ordersValidation.length})
+          <FontAwesomeIcon icon={faCheckCircle} className="home-tab-icon" /> Mes commandes en attente de la CCD ({ordersValidation.length})
         </div>
         <div
-          className={`tab-item ${activeTab === 'payment' ? 'active' : ''}`}
+          className={`home-tab-item ${activeTab === 'payment' ? 'home-active' : ''}`}
           onClick={() => handleTabClick('payment')}
         >
-          <FontAwesomeIcon icon={faDollarSign} className="tab-icon" /> Mes commandes en attente de paiement ({ordersPayment.length})
+          <FontAwesomeIcon icon={faDollarSign} className="home-tab-icon" /> Mes commandes en attente de paiement ({ordersPayment.length})
         </div>
       </div>
 
-      <div className="dashboard-grid">
+      <div className="home-dashboard-grid">
         {/* Commandes en attente de Visa */}
         {activeTab === 'visa' && (
-          <div className="dashboard-item">
-            <table className="dashboard-table">
+          <div className="home-dashboard-item">
+            <table className="home-dashboard-table">
               <thead>
                 <tr>
                   <th>Date</th>
@@ -111,7 +111,7 @@ const Home = () => {
                   <th>Certificat d'Origine</th>
                   <th>Facture Commerciale</th>
                   <th>Législation</th>
-                  <th></th> {/* En-tête vide pour le bouton Soumettre */}
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -121,58 +121,55 @@ const Home = () => {
                     <td>{order.orderNumber}</td>
                     <td>{order.designation}</td>
                     <td>
-                      {/* Certificat d'Origine */}
                       {order.id === 2 || order.id === 3 ? (
-                        <button className="icon-button minimal-button">
+                        <button className="home-icon-button home-minimal-button">
                           <FontAwesomeIcon icon={faPlus} title="Ajouter" />
                         </button>
                       ) : (
-                        <div className="icon-button-group">
-                          <button className="icon-button minimal-button">
+                        <div className="home-icon-button-group">
+                          <button className="home-icon-button home-minimal-button">
                             <FontAwesomeIcon icon={faPen} title="Modifier" />
                           </button>
-                          <button className="icon-button delete-button minimal-button">
+                          <button className="home-icon-button home-delete-button home-minimal-button">
                             <FontAwesomeIcon icon={faTimes} title="Supprimer" />
                           </button>
                         </div>
                       )}
                     </td>
                     <td>
-                      {/* Facture Commerciale */}
                       {order.id === 3 ? (
-                        <div className="icon-button-group">
-                          <button className="icon-button minimal-button">
+                        <div className="home-icon-button-group">
+                          <button className="home-icon-button home-minimal-button">
                             <FontAwesomeIcon icon={faPen} title="Modifier" />
                           </button>
-                          <button className="icon-button delete-button minimal-button">
+                          <button className="home-icon-button home-delete-button home-minimal-button">
                             <FontAwesomeIcon icon={faTimes} title="Supprimer" />
                           </button>
                         </div>
                       ) : (
-                        <button className="icon-button minimal-button">
+                        <button className="home-icon-button home-minimal-button">
                           <FontAwesomeIcon icon={faPlus} title="Ajouter" />
                         </button>
                       )}
                     </td>
                     <td>
-                      {/* Législation */}
                       {order.id === 3 ? (
-                        <button className="icon-button minimal-button">
+                        <button className="home-icon-button home-minimal-button">
                           <FontAwesomeIcon icon={faPlus} title="Ajouter" />
                         </button>
                       ) : (
-                        <div className="icon-button-group">
-                          <button className="icon-button minimal-button">
+                        <div className="home-icon-button-group">
+                          <button className="home-icon-button home-minimal-button">
                             <FontAwesomeIcon icon={faPen} title="Modifier" />
                           </button>
-                          <button className="icon-button delete-button minimal-button">
+                          <button className="home-icon-button home-delete-button home-minimal-button">
                             <FontAwesomeIcon icon={faTimes} title="Supprimer" />
                           </button>
                         </div>
                       )}
                     </td>
                     <td>
-                      <button className="submit-button minimal-button">Soumettre</button>
+                      <button className="home-submit-button home-minimal-button">Soumettre</button>
                     </td>
                   </tr>
                 ))}
@@ -183,8 +180,8 @@ const Home = () => {
 
         {/* Commandes en attente de validation */}
         {activeTab === 'validation' && (
-          <div className="dashboard-item">
-            <table className="dashboard-table">
+          <div className="home-dashboard-item">
+            <table className="home-dashboard-table">
               <thead>
                 <tr>
                   <th>Date</th>
@@ -204,16 +201,16 @@ const Home = () => {
                     <td>{order.designation}</td>
                     <td>{order.submissionDate}</td>
                     <td>
-                      <button className="icon-button minimal-button">
+                      <button className="home-icon-button home-minimal-button">
                         <FontAwesomeIcon icon={faEye} title="Voir" />
-                        <span className="button-text">Détails</span>
+                        <span className="home-button-text">Détails</span>
                       </button>
                     </td>
                     <td></td>
                     <td>
-                      <button className="icon-button minimal-button">
+                      <button className="home-icon-button home-minimal-button">
                         <FontAwesomeIcon icon={faEye} title="Voir" />
-                        <span className="button-text">Détails</span>
+                        <span className="home-button-text">Détails</span>
                       </button>
                     </td>
                   </tr>
@@ -225,8 +222,8 @@ const Home = () => {
 
         {/* Commandes en attente de paiement */}
         {activeTab === 'payment' && (
-          <div className="dashboard-item">
-            <table className="dashboard-table">
+          <div className="home-dashboard-item">
+            <table className="home-dashboard-table">
               <thead>
                 <tr>
                   <th>Date</th>
@@ -237,7 +234,7 @@ const Home = () => {
                   <th>Certificat d'Origine</th>
                   <th>Facture Commerciale</th>
                   <th>Législation</th>
-                  <th></th> {/* En-tête vide pour le nouveau bouton */}
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -249,21 +246,20 @@ const Home = () => {
                     <td>{order.designation}</td>
                     <td>{order.validationDate}</td>
                     <td>
-                      <button className="icon-button minimal-button">
+                      <button className="home-icon-button home-minimal-button">
                         <FontAwesomeIcon icon={faEye} title="Voir" />
-                        <span className="button-text">Détails</span>
+                        <span className="home-button-text">Détails</span>
                       </button>
                     </td>
                     <td></td>
                     <td>
-                      <button className="icon-button minimal-button">
+                      <button className="home-icon-button home-minimal-button">
                         <FontAwesomeIcon icon={faEye} title="Voir" />
-                        <span className="button-text">Détails</span>
+                        <span className="home-button-text">Détails</span>
                       </button>
                     </td>
                     <td>
-                      {/* Nouveau bouton */}
-                      <button className="submit-button minimal-button">Payer</button>
+                      <button className="home-submit-button home-minimal-button">Payer</button>
                     </td>
                   </tr>
                 ))}

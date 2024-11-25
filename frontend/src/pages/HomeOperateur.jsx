@@ -11,10 +11,22 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
 import './HomeOperateur.css';
+import Step5 from '../components/orders/Create/steps/Step5';
+import ClientProfile from '../pages/ClientProfile';
+
+
+
+
+
 
 const HomeOperateur = () => {
   const [activeTab, setActiveTab] = useState('visa');
   const [activeInscriptionsTab, setActiveInscriptionsTab] = useState('newRegistrations');
+  const [showModal, setShowModal] = useState(false); // Gestion du modal principal
+  const [modalValues, setModalValues] = useState(null); // Contient les données dynamiques pour Step5
+  const [showSecondModal, setShowSecondModal] = useState(false); // Gestion du modal secondaire
+  const [secondModalContent, setSecondModalContent] = useState(null); // Données du modal secondaire
+
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -24,6 +36,29 @@ const HomeOperateur = () => {
     setActiveInscriptionsTab(tab);
   };
 
+  const openModal = (values) => {
+    setModalValues(values); // Passe les données dynamiques au modal
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setModalValues(null); // Réinitialise les données du modal
+    setShowModal(false);
+  };
+
+  // Gère l'ouverture du modal secondaire
+  const openSecondModal = (clientData) => {
+    setSecondModalContent(clientData);
+    setShowModal(false); // Ferme le modal principal
+    setShowSecondModal(true); // Ouvre le modal secondaire
+  };
+
+  // Gère la fermeture du modal secondaire
+  const closeSecondModal = () => {
+    setSecondModalContent(null);
+    setShowSecondModal(false);
+  };
+
   // Données d'exemple
   const ordersVisa = [
     {
@@ -31,12 +66,40 @@ const HomeOperateur = () => {
       date: '01/08/2024',
       orderNumber: 'O-06789/24',
       client: 'INDIGO TRADING FZCO',
-      designation: 'Produit A',
+      designation: 'Pneu Bridgestone',
       submissionDate: '02/08/2024',
+      values: {
+        exporterName: 'INDIGO TRADING FZCO SARL',
+        exporterAddress: 'DJIBOUTI FREE ZONE Po Box 2520',
+        exporterAddress2: 'REP. DE DJIBOUTI',
+        exporterActivity: 'Construction ',
+        exporterStatut: 'Actif ',
+        exporterContact: 'M. Vladimir Outof\nManager\noutof@indigotrading.ru\nTel: +253-77 016463',
+        orderLabel: 'Pneu Bridgestone',
+        receiverName: 'Good Construction Private Limited',
+        receiverAddress: 'Jackros, Gerji',
+        receiverCity: 'Addis Ababa',
+        receiverPostalCode: '75001',
+        receiverCountry: 'Ethiopie',
+        receiverPhone: '+251-11 646 3290',
+        goodsOrigin: 'Emirates Arabes Unis',
+        goodsDestination: 'Ethiopie',
+        transportModes: { air: false, mer: false, terre: true, multimodal: false },
+        transportRemarks: 'Transport urgent.',
+        merchandises: [
+          { designation: 'Produit A', boxReference: 'REF001', quantity: 10, unit: 'Kg' },
+          { designation: 'Produit B', boxReference: 'REF002', quantity: 5, unit: 'L' },
+        ],
+        copies: 1,
+        remarks: 'Commande prioritaire.',
+        isCommitted: true,
+        documents: [
+          { name: 'Borderau_changement.pdf', type: 'justificative', remarks: 'Facture originale', file: null },
+        ],
+      },
     },
   ];
 
-  // Tableau vide pour les commandes en cours de traitement
   const ordersValidation = [];
 
   const ordersPayment = [
@@ -58,7 +121,6 @@ const HomeOperateur = () => {
       category: 'SAS',
       client: 'INDIGO TRADING FZCO',
       licenceZF: 'ZF-00123',
-      // Ajout de faux documents à télécharger
       documents: [
         { name: 'Document1.pdf', link: '#' },
         { name: 'Document2.pdf', link: '#' },
@@ -76,6 +138,9 @@ const HomeOperateur = () => {
       <Helmet>
         <title>Dashboard Opérateur</title>
       </Helmet>
+
+      {/* Message de bienvenue */}
+      <div className="welcome-message">Bienvenue M. Abdourhaman Abdi Ali</div>
 
       {/* Section COMMANDES */}
       <div className="commands-title highlight-text">COMMANDES</div>
@@ -130,12 +195,14 @@ const HomeOperateur = () => {
                     <td>{order.designation}</td>
                     <td>{order.submissionDate}</td>
                     <td>
-                      <button className="icon-button minimal-button">
+                      <button
+                        className="icon-button minimal-button"
+                        onClick={() => openModal(order.values)}
+                      >
                         <FontAwesomeIcon icon={faEye} title="Vérifier" />
                         <span className="button-text">Vérifier</span>
                       </button>
                     </td>
-                    {/* Suppression du bouton "+" dans la colonne "Facture Commerciale" */}
                     <td></td>
                     <td>
                       <button className="icon-button minimal-button">
@@ -175,7 +242,6 @@ const HomeOperateur = () => {
                   <th>Certificat d'origine</th>
                   <th>Facture Commerciale</th>
                   <th>Légalisation</th>
-                  <th></th> {/* Colonne pour le bouton Payer */}
                 </tr>
               </thead>
               <tbody>
@@ -188,7 +254,10 @@ const HomeOperateur = () => {
                     <td>{order.designation}</td>
                     <td>{order.validationDate}</td>
                     <td>
-                      <button className="icon-button minimal-button">
+                      <button
+                        className="icon-button minimal-button"
+                        onClick={() => openModal(order.details)}
+                      >
                         <FontAwesomeIcon icon={faEye} title="Voir" />
                         <span className="button-text">Détails</span>
                       </button>
@@ -199,10 +268,6 @@ const HomeOperateur = () => {
                         <FontAwesomeIcon icon={faEye} title="Voir" />
                         <span className="button-text">Détails</span>
                       </button>
-                    </td>
-                    <td>
-                      {/* Nouveau bouton Payer */}
-                      <button className="submit-button minimal-button">Payer</button>
                     </td>
                   </tr>
                 ))}
@@ -230,7 +295,6 @@ const HomeOperateur = () => {
       </div>
 
       <div className="dashboard-grid">
-        {/* Nouvelles Inscriptions */}
         {activeInscriptionsTab === 'newRegistrations' && (
           <div className="dashboard-item">
             <table className="dashboard-table">
@@ -262,17 +326,13 @@ const HomeOperateur = () => {
                       </button>
                     </td>
                     <td>
-                      {registration.documents && registration.documents.length > 0 ? (
-                        registration.documents.map((doc, index) => (
-                          <div key={index}>
-                            <a href={doc.link} download>
-                              {doc.name}
-                            </a>
-                          </div>
-                        ))
-                      ) : (
-                        'Aucun document'
-                      )}
+                      {registration.documents.map((doc, index) => (
+                        <div key={index}>
+                          <a href={doc.link} download>
+                            {doc.name}
+                          </a>
+                        </div>
+                      ))}
                     </td>
                     <td>{registration.contactPrincipal}</td>
                     <td>{registration.fonction}</td>
@@ -280,9 +340,10 @@ const HomeOperateur = () => {
                     <td>{registration.numTel}</td>
                     <td>{registration.numPortable}</td>
                     <td>
-                      <button className="submit-button minimal-button">Valider</button>
-                      <button className="submit-button minimal-button reject-button">Rejeter</button>
+                      <button className="validate-button">Valider</button>
+                      <button className="reject-button">Rejeter</button>
                     </td>
+
                   </tr>
                 ))}
               </tbody>
@@ -290,7 +351,46 @@ const HomeOperateur = () => {
           </div>
         )}
       </div>
+
+      
+
+      {/* Modal principal */}
+      {showModal && modalValues && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <Step5
+            values={modalValues}
+            isModal={true}
+            handleSubmit={() => console.log('Soumis')}
+            openSecondModal={openSecondModal}
+          />
+
+            <div className="modal-actions">
+              <button onClick={() => console.log('Rejeté')} className="reject-button">
+                Rejeter
+              </button>
+              <button onClick={() => console.log('Validé')} className="validate-button">
+                Valider
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal secondaire */}
+      {showSecondModal && secondModalContent && (
+        <div className="modal-overlay" onClick={closeSecondModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <ClientProfile clientData={secondModalContent} closeModal={closeSecondModal} />
+          </div>
+        </div>
+      )}
+
+
+     
+
     </div>
+    
   );
 };
 
