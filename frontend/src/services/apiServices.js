@@ -85,3 +85,25 @@ export const fetchCountries = async (idList = null) => {
     throw error;
   }
 };
+
+export const setCustAccount = async (accountData) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/setCustAccount`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(accountData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Setting customer account failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
+  }
+};

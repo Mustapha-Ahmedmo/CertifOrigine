@@ -15,7 +15,7 @@ import {
 import logo from '../assets/logo.jpg';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
-import { registerUser, fetchSectors, fetchCountries } from '../services/apiServices';
+import { registerUser, fetchSectors, fetchCountries, setCustAccount } from '../services/apiServices';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 
@@ -165,7 +165,39 @@ const Register = () => {
       };
 
       // Send the registration data to the backend
-      const response = await registerUser(userData);
+     // const response = await registerUser(userData);
+
+     const selectedSector = sectors.find(
+      (sector) => sector.symbol_fr === formData.sector
+    );
+
+    const selectedCountry = countries.find(
+      (country) => country.symbol_fr === formData.country
+    );    
+
+      // Prepare customer account data (if needed)
+      const custAccountData = {
+        legal_form: formData.companyCategory, // This will be mapped to legal_form in controller
+        cust_name: formData.companyName,
+        trade_registration_num: formData.trade_registration_num || '12345', // Ensure trade_registration_num is collected
+        in_free_zone: formData.isFreeZoneCompany,
+        identification_number: formData.identification_number || 'ID123', // Ensure identification_number is collected
+        register_number: formData.register_number || 'RN456', // Ensure register_number is collected
+        full_address: formData.address,
+        id_sector: selectedSector ? selectedSector.id_sector : null,
+        other_sector: formData.otherSector || null,
+        id_country: selectedCountry ? selectedCountry.id_country : null,
+        statut_flag: 1, // Example value; set accordingly
+        idlogin:  1, // Assuming registerUser returns userId
+        billed_cust_name: formData.billed_cust_name || 'ABC Billing', // Collect from form or set default
+        bill_full_address: formData.bill_full_address || '456 Billing St', // Collect from form or set default
+        id_cust_account: null, // INOUT parameter; will be set by the procedure
+      };
+
+      // Set Customer Account
+      const accountResponse = await setCustAccount(custAccountData);
+      console.log('Set Cust Account response:', accountResponse);
+
       setSnackbarMessage('Inscription réussie');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
@@ -215,14 +247,14 @@ const Register = () => {
                     </option>
                     <option value="Auto-entrepreneur">Auto-entrepreneur</option>
                     <option value="Entreprise individuelle">Entreprise individuelle</option>
-                    <option value="EIRL">EIRL (Entreprise Individuelle à Responsabilité Limitée)</option>
-                    <option value="EURL">EURL (Entreprise Unipersonnelle à Responsabilité Limitée)</option>
-                    <option value="SARL">SARL (Société à Responsabilité Limitée)</option>
-                    <option value="SAS">SAS (Société par Actions Simplifiée)</option>
-                    <option value="SASU">SASU (Société par Actions Simplifiée Unipersonnelle)</option>
-                    <option value="SA">SA (Société Anonyme)</option>
-                    <option value="SNC">SNC (Société en Nom Collectif)</option>
-                    <option value="SCS">SCS (Société en Commandite Simple)</option>
+                    <option value="EIRL">EIRL</option>
+                    <option value="EURL">EURL</option>
+                    <option value="SARL">SARL</option>
+                    <option value="SAS">SAS</option>
+                    <option value="SASU">SASU</option>
+                    <option value="SA">SA</option>
+                    <option value="SNC">SNC</option>
+                    <option value="SCS">SCS</option>
                     <option value="Autre">Autre</option>
                   </select>
                   <span className="register-client-required-asterisk">*</span>
