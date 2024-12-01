@@ -10,6 +10,7 @@ import {
   faMobileAlt,
   faEnvelope,
   faLock,
+  faIndustry, // Import de l'icône pour le secteur
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../assets/logo.jpg'; // Importation du logo
 import { Helmet } from 'react-helmet';
@@ -38,6 +39,8 @@ const Register = () => {
     city: '',
     country: '',
     companyCategory: '',
+    sector: '', // Ajout de la propriété 'sector'
+    otherSector: '', // Ajout de la propriété 'otherSector' pour le secteur personnalisé
     isFreeZoneCompany: false,
     isOtherCompany: false,
     licenseNumber: '',
@@ -64,6 +67,229 @@ const Register = () => {
     }
     setSnackbarOpen(false);
   };
+
+  // Liste des pays
+  const countries = [
+    "Afghanistan",
+    "Afrique du Sud",
+    "Albanie",
+    "Algérie",
+    "Allemagne",
+    "Andorre",
+    "Angola",
+    "Antigua-et-Barbuda",
+    "Arabie saoudite",
+    "Argentine",
+    "Arménie",
+    "Australie",
+    "Autriche",
+    "Azerbaïdjan",
+    "Bahamas",
+    "Bahreïn",
+    "Bangladesh",
+    "Barbade",
+    "Belgique",
+    "Belize",
+    "Bénin",
+    "Bhoutan",
+    "Biélorussie",
+    "Birmanie",
+    "Bolivie",
+    "Bosnie-Herzégovine",
+    "Botswana",
+    "Brésil",
+    "Brunei",
+    "Bulgarie",
+    "Burkina Faso",
+    "Burundi",
+    "Cambodge",
+    "Cameroun",
+    "Canada",
+    "Cap-Vert",
+    "République centrafricaine",
+    "Chili",
+    "Chine",
+    "Chypre",
+    "Colombie",
+    "Comores",
+    "République du Congo",
+    "République démocratique du Congo",
+    "Corée du Nord",
+    "Corée du Sud",
+    "Costa Rica",
+    "Côte d'Ivoire",
+    "Croatie",
+    "Cuba",
+    "Danemark",
+    "Djibouti",
+    "Dominique",
+    "République dominicaine",
+    "Égypte",
+    "Émirats arabes unis",
+    "Équateur",
+    "Érythrée",
+    "Espagne",
+    "Estonie",
+    "Eswatini",
+    "États-Unis",
+    "Éthiopie",
+    "Fidji",
+    "Finlande",
+    "France",
+    "Gabon",
+    "Gambie",
+    "Géorgie",
+    "Ghana",
+    "Grèce",
+    "Grenade",
+    "Guatemala",
+    "Guinée",
+    "Guinée équatoriale",
+    "Guinée-Bissau",
+    "Guyana",
+    "Haïti",
+    "Honduras",
+    "Hongrie",
+    "Inde",
+    "Indonésie",
+    "Irak",
+    "Iran",
+    "Irlande",
+    "Islande",
+    "Israël",
+    "Italie",
+    "Jamaïque",
+    "Japon",
+    "Jordanie",
+    "Kazakhstan",
+    "Kenya",
+    "Kirghizistan",
+    "Kiribati",
+    "Koweït",
+    "Laos",
+    "Lesotho",
+    "Lettonie",
+    "Liban",
+    "Liberia",
+    "Libye",
+    "Liechtenstein",
+    "Lituanie",
+    "Luxembourg",
+    "Macédoine du Nord",
+    "Madagascar",
+    "Malaisie",
+    "Malawi",
+    "Maldives",
+    "Mali",
+    "Malte",
+    "Maroc",
+    "Marshall",
+    "Maurice",
+    "Mauritanie",
+    "Mexique",
+    "Micronésie",
+    "Moldavie",
+    "Monaco",
+    "Mongolie",
+    "Monténégro",
+    "Mozambique",
+    "Namibie",
+    "Nauru",
+    "Népal",
+    "Nicaragua",
+    "Niger",
+    "Nigeria",
+    "Norvège",
+    "Nouvelle-Zélande",
+    "Oman",
+    "Ouganda",
+    "Ouzbékistan",
+    "Pakistan",
+    "Palaos",
+    "Palestine",
+    "Panama",
+    "Papouasie-Nouvelle-Guinée",
+    "Paraguay",
+    "Pays-Bas",
+    "Pérou",
+    "Philippines",
+    "Pologne",
+    "Portugal",
+    "Qatar",
+    "Roumanie",
+    "Royaume-Uni",
+    "Russie",
+    "Rwanda",
+    "Saint-Kitts-et-Nevis",
+    "Saint-Marin",
+    "Saint-Vincent-et-les-Grenadines",
+    "Sainte-Lucie",
+    "Salomon",
+    "Salvador",
+    "Samoa",
+    "Sao Tomé-et-Principe",
+    "Sénégal",
+    "Serbie",
+    "Seychelles",
+    "Sierra Leone",
+    "Singapour",
+    "Slovaquie",
+    "Slovénie",
+    "Somalie",
+    "Soudan",
+    "Soudan du Sud",
+    "Sri Lanka",
+    "Suède",
+    "Suisse",
+    "Suriname",
+    "Syrie",
+    "Tadjikistan",
+    "Tanzanie",
+    "Tchad",
+    "République tchèque",
+    "Thaïlande",
+    "Timor oriental",
+    "Togo",
+    "Tonga",
+    "Trinité-et-Tobago",
+    "Tunisie",
+    "Turkménistan",
+    "Turquie",
+    "Tuvalu",
+    "Ukraine",
+    "Uruguay",
+    "Vanuatu",
+    "Vatican",
+    "Venezuela",
+    "Viêt Nam",
+    "Yémen",
+    "Zambie",
+    "Zimbabwe",
+  ];
+
+  // Liste des secteurs d'activité
+  const sectors = [
+    'Agriculture',
+    'Agroalimentaire',
+    'Automobile',
+    'Banque / Assurance',
+    'Bâtiment / Travaux publics',
+    'Chimie / Pharmacie',
+    'Commerce / Négoce / Distribution',
+    'Communication / Publicité / Média',
+    'Édition / Imprimerie / Reproduction',
+    'Électronique / Électricité',
+    'Études et conseils',
+    'Industrie',
+    'Informatique / Télécoms',
+    'Machines et équipements / Automobile',
+    'Métallurgie / Travail du métal',
+    'Plastique / Caoutchouc',
+    'Services aux entreprises',
+    'Textile / Habillement / Chaussure',
+    'Transports / Logistique',
+    'Autres',
+  ];
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
@@ -106,8 +332,8 @@ const Register = () => {
 
     // Validate formData (example for password confirmation)
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setSnackbarMessage('Passwords do not match');
+      setError('Les mots de passe ne correspondent pas');
+      setSnackbarMessage('Les mots de passe ne correspondent pas');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
@@ -129,6 +355,8 @@ const Register = () => {
         city: formData.city,
         country: formData.country,
         companyCategory: formData.companyCategory,
+        sector:
+          formData.sector === 'Autres' ? formData.otherSector : formData.sector,
         isFreeZoneCompany: formData.isFreeZoneCompany,
         isOtherCompany: formData.isOtherCompany,
         licenseNumber: formData.licenseNumber,
@@ -140,7 +368,7 @@ const Register = () => {
 
       // Send the registration data to the backend
       const response = await registerUser(userData);
-      setSnackbarMessage('Registration successful');
+      setSnackbarMessage('Inscription réussie');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     } catch (err) {
@@ -181,10 +409,10 @@ const Register = () => {
                     onChange={handleChange}
                     required
                     className={`register-client-input ${
-                      formData.companyCategory === '' ? 'grayed' : ''
+                      formData.companyCategory === '' ? 'placeholder' : ''
                     }`}
                   >
-                    <option value="" disabled>
+                    <option value="" disabled hidden>
                       Catégorie
                     </option>
                     <option value="Auto-entrepreneur">Auto-entrepreneur</option>
@@ -203,6 +431,56 @@ const Register = () => {
                 </div>
               </div>
 
+              {/* Secteur */}
+              <div className="register-client-field register-client-half-width">
+                <div className="register-client-input-wrapper">
+                  <FontAwesomeIcon icon={faIndustry} className="input-icon" />
+                  <select
+                    name="sector"
+                    value={formData.sector}
+                    onChange={handleChange}
+                    required
+                    className={`register-client-input ${
+                      formData.sector === '' ? 'placeholder' : ''
+                    }`}
+                  >
+                    <option value="" disabled hidden>
+                      Secteur
+                    </option>
+                    {sectors.map((sector, index) => (
+                      <option key={index} value={sector}>
+                        {sector}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="register-client-required-asterisk">*</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Champ pour 'Autres' secteur */}
+            {formData.sector === 'Autres' && (
+              <div className="register-client-form-row">
+                <div className="register-client-field register-client-full-width">
+                  <div className="register-client-input-wrapper">
+                    <FontAwesomeIcon icon={faIndustry} className="input-icon" />
+                    <input
+                      type="text"
+                      name="otherSector"
+                      value={formData.otherSector}
+                      onChange={handleChange}
+                      required
+                      className="register-client-input"
+                      placeholder="Veuillez préciser votre secteur d'activité"
+                    />
+                    <span className="register-client-required-asterisk">*</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Raison sociale et autre champs */}
+            <div className="register-client-form-row">
               {/* Raison sociale */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
@@ -219,9 +497,7 @@ const Register = () => {
                   <span className="register-client-required-asterisk">*</span>
                 </div>
               </div>
-            </div>
 
-            <div className="register-client-form-row">
               {/* Adresse complète */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
@@ -238,20 +514,31 @@ const Register = () => {
                   <span className="register-client-required-asterisk">*</span>
                 </div>
               </div>
+            </div>
 
+            <div className="register-client-form-row">
               {/* Pays */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
                   <FontAwesomeIcon icon={faGlobe} className="input-icon" />
-                  <input
-                    type="text"
+                  <select
                     name="country"
                     value={formData.country}
                     onChange={handleChange}
                     required
-                    className="register-client-input"
-                    placeholder="Pays"
-                  />
+                    className={`register-client-input ${
+                      formData.country === '' ? 'placeholder' : ''
+                    }`}
+                  >
+                    <option value="" disabled hidden>
+                      Pays
+                    </option>
+                    {countries.map((country, index) => (
+                      <option key={index} value={country}>
+                        {country}
+                      </option>
+                    ))}
+                  </select>
                   <span className="register-client-required-asterisk">*</span>
                 </div>
               </div>

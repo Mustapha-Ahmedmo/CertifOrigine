@@ -69,9 +69,19 @@
   color: #333; /* Couleur par défaut du texte */
 }
 
-/* Placeholder en gris */
+/* Placeholder en gris pour les inputs */
 .register-client-input::placeholder {
   color: #999; /* Texte des placeholders en gris */
+}
+
+/* Style pour le select lorsqu'il est en état de placeholder */
+.register-client-input.placeholder {
+  color: #999; /* Texte en gris pour le placeholder du select */
+}
+
+/* Réinitialiser la couleur du texte lorsqu'une option est sélectionnée */
+.register-client-input:not(.placeholder) {
+  color: #333; /* Texte normal */
 }
 
 /* Wrapper pour les champs avec icônes */
@@ -353,7 +363,6 @@ input[type="checkbox"]:checked + .register-client-toggle-label {
   }
 
   .register-client-container {
-   
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0);
   }
 
@@ -362,5 +371,4 @@ input[type="checkbox"]:checked + .register-client-toggle-label {
     max-width: 200px; /* Ajustez cette valeur selon vos besoins */
     height: auto;
   }
-  
 }
