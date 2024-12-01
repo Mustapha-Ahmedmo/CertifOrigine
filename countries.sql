@@ -1,0 +1,49 @@
+DO $$
+DECLARE
+    new_id INT;
+BEGIN
+    INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
+    VALUES ('REP. DE DJIBOUTI', 'REP. DE DJIBOUTI')
+    RETURNING ID_COUNTRY INTO new_id;
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Djibouti Ville', 'Djibouti City');
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Tadjourah','Tadjourah');
+END $$;
+
+DO $$
+DECLARE
+    new_id INT;
+BEGIN
+    INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
+    VALUES ('ETHIOPIE', 'ETHIOPIA')
+    RETURNING ID_COUNTRY INTO new_id;
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Addis-Abeba', 'Addis-Abeba');
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Dire Dawa', 'Dire Dawa');
+END $$;
+
+DO $$
+DECLARE
+    new_id INT;
+BEGIN
+    INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
+    VALUES ('Emirats arabes unis', 'United Arab Emirates')
+    RETURNING ID_COUNTRY INTO new_id;
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Dubai', 'Dubai');
+END $$;
+
+
+DO $$
+DECLARE
+    new_id INT;
+BEGIN
+    INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
+    VALUES ('Chine', 'China')
+    RETURNING ID_COUNTRY INTO new_id;
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Pekin', 'Pekin');
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Shanghai', 'Shanghai');

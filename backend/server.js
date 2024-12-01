@@ -3,6 +3,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const sequelize = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const countriesRoutes = require('./routes/countriesRoutes');
+const sectorsRoutes = require('./routes/sectorsRoutes');
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -15,6 +17,8 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/countries', countriesRoutes);
+app.use('/api/sectors', sectorsRoutes);
 
 // Synchroniser Sequelize avec la base de données
 sequelize.sync()

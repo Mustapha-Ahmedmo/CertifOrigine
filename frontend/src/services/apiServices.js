@@ -46,4 +46,42 @@ export const loginUser = async (username, password) => {
   }
 };
 
-// You can add more functions for signup, fetching data, etc.
+export const fetchSectors = async (idList = null) => {
+  try {
+    const url = idList
+      ? `${API_URL}/sectors?id_list=${idList}`
+      : `${API_URL}/sectors`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Fetching sectors failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
+  }
+};
+
+export const fetchCountries = async (idList = null) => {
+  try {
+    const url = idList
+      ? `${API_URL}/countries?id_list=${idList}`
+      : `${API_URL}/countries`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Fetching countries failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
+  }
+};

@@ -1,4 +1,4 @@
-import React, { useState, forwardRef } from 'react';
+import React, { useState, forwardRef, useEffect } from 'react';
 import './Register.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -15,7 +15,7 @@ import {
 import logo from '../assets/logo.jpg'; // Importation du logo
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom'; // Importer Link
-import { registerUser } from '../services/apiServices';
+import { registerUser, fetchSectors, fetchCountries } from '../services/apiServices';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 
@@ -55,6 +55,8 @@ const Register = () => {
 
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [sectors, setSectors] = useState([]);
+  const [countries, setCountries] = useState([]);
 
   // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -67,229 +69,25 @@ const Register = () => {
     }
     setSnackbarOpen(false);
   };
+  useEffect(() => {
+    // Fetch sectors and countries
+    const fetchData = async () => {
+      try {
+        const sectorData = await fetchSectors();
+        setSectors(sectorData);
+        const countryData = await fetchCountries();
+        setCountries(countryData);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Failed to load sectors or countries');
+        setSnackbarMessage('Failed to load sectors or countries');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      }
+    };
 
-  // Liste des pays
-  const countries = [
-    "Afghanistan",
-    "Afrique du Sud",
-    "Albanie",
-    "Algérie",
-    "Allemagne",
-    "Andorre",
-    "Angola",
-    "Antigua-et-Barbuda",
-    "Arabie saoudite",
-    "Argentine",
-    "Arménie",
-    "Australie",
-    "Autriche",
-    "Azerbaïdjan",
-    "Bahamas",
-    "Bahreïn",
-    "Bangladesh",
-    "Barbade",
-    "Belgique",
-    "Belize",
-    "Bénin",
-    "Bhoutan",
-    "Biélorussie",
-    "Birmanie",
-    "Bolivie",
-    "Bosnie-Herzégovine",
-    "Botswana",
-    "Brésil",
-    "Brunei",
-    "Bulgarie",
-    "Burkina Faso",
-    "Burundi",
-    "Cambodge",
-    "Cameroun",
-    "Canada",
-    "Cap-Vert",
-    "République centrafricaine",
-    "Chili",
-    "Chine",
-    "Chypre",
-    "Colombie",
-    "Comores",
-    "République du Congo",
-    "République démocratique du Congo",
-    "Corée du Nord",
-    "Corée du Sud",
-    "Costa Rica",
-    "Côte d'Ivoire",
-    "Croatie",
-    "Cuba",
-    "Danemark",
-    "Djibouti",
-    "Dominique",
-    "République dominicaine",
-    "Égypte",
-    "Émirats arabes unis",
-    "Équateur",
-    "Érythrée",
-    "Espagne",
-    "Estonie",
-    "Eswatini",
-    "États-Unis",
-    "Éthiopie",
-    "Fidji",
-    "Finlande",
-    "France",
-    "Gabon",
-    "Gambie",
-    "Géorgie",
-    "Ghana",
-    "Grèce",
-    "Grenade",
-    "Guatemala",
-    "Guinée",
-    "Guinée équatoriale",
-    "Guinée-Bissau",
-    "Guyana",
-    "Haïti",
-    "Honduras",
-    "Hongrie",
-    "Inde",
-    "Indonésie",
-    "Irak",
-    "Iran",
-    "Irlande",
-    "Islande",
-    "Israël",
-    "Italie",
-    "Jamaïque",
-    "Japon",
-    "Jordanie",
-    "Kazakhstan",
-    "Kenya",
-    "Kirghizistan",
-    "Kiribati",
-    "Koweït",
-    "Laos",
-    "Lesotho",
-    "Lettonie",
-    "Liban",
-    "Liberia",
-    "Libye",
-    "Liechtenstein",
-    "Lituanie",
-    "Luxembourg",
-    "Macédoine du Nord",
-    "Madagascar",
-    "Malaisie",
-    "Malawi",
-    "Maldives",
-    "Mali",
-    "Malte",
-    "Maroc",
-    "Marshall",
-    "Maurice",
-    "Mauritanie",
-    "Mexique",
-    "Micronésie",
-    "Moldavie",
-    "Monaco",
-    "Mongolie",
-    "Monténégro",
-    "Mozambique",
-    "Namibie",
-    "Nauru",
-    "Népal",
-    "Nicaragua",
-    "Niger",
-    "Nigeria",
-    "Norvège",
-    "Nouvelle-Zélande",
-    "Oman",
-    "Ouganda",
-    "Ouzbékistan",
-    "Pakistan",
-    "Palaos",
-    "Palestine",
-    "Panama",
-    "Papouasie-Nouvelle-Guinée",
-    "Paraguay",
-    "Pays-Bas",
-    "Pérou",
-    "Philippines",
-    "Pologne",
-    "Portugal",
-    "Qatar",
-    "Roumanie",
-    "Royaume-Uni",
-    "Russie",
-    "Rwanda",
-    "Saint-Kitts-et-Nevis",
-    "Saint-Marin",
-    "Saint-Vincent-et-les-Grenadines",
-    "Sainte-Lucie",
-    "Salomon",
-    "Salvador",
-    "Samoa",
-    "Sao Tomé-et-Principe",
-    "Sénégal",
-    "Serbie",
-    "Seychelles",
-    "Sierra Leone",
-    "Singapour",
-    "Slovaquie",
-    "Slovénie",
-    "Somalie",
-    "Soudan",
-    "Soudan du Sud",
-    "Sri Lanka",
-    "Suède",
-    "Suisse",
-    "Suriname",
-    "Syrie",
-    "Tadjikistan",
-    "Tanzanie",
-    "Tchad",
-    "République tchèque",
-    "Thaïlande",
-    "Timor oriental",
-    "Togo",
-    "Tonga",
-    "Trinité-et-Tobago",
-    "Tunisie",
-    "Turkménistan",
-    "Turquie",
-    "Tuvalu",
-    "Ukraine",
-    "Uruguay",
-    "Vanuatu",
-    "Vatican",
-    "Venezuela",
-    "Viêt Nam",
-    "Yémen",
-    "Zambie",
-    "Zimbabwe",
-  ];
-
-  // Liste des secteurs d'activité
-  const sectors = [
-    'Agriculture',
-    'Agroalimentaire',
-    'Automobile',
-    'Banque / Assurance',
-    'Bâtiment / Travaux publics',
-    'Chimie / Pharmacie',
-    'Commerce / Négoce / Distribution',
-    'Communication / Publicité / Média',
-    'Édition / Imprimerie / Reproduction',
-    'Électronique / Électricité',
-    'Études et conseils',
-    'Industrie',
-    'Informatique / Télécoms',
-    'Machines et équipements / Automobile',
-    'Métallurgie / Travail du métal',
-    'Plastique / Caoutchouc',
-    'Services aux entreprises',
-    'Textile / Habillement / Chaussure',
-    'Transports / Logistique',
-    'Autres',
-  ];
+    fetchData();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
@@ -408,9 +206,8 @@ const Register = () => {
                     value={formData.companyCategory}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${
-                      formData.companyCategory === '' ? 'placeholder' : ''
-                    }`}
+                    className={`register-client-input ${formData.companyCategory === '' ? 'placeholder' : ''
+                      }`}
                   >
                     <option value="" disabled hidden>
                       Catégorie
@@ -440,16 +237,15 @@ const Register = () => {
                     value={formData.sector}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${
-                      formData.sector === '' ? 'placeholder' : ''
-                    }`}
+                    className={`register-client-input ${formData.sector === '' ? 'placeholder' : ''
+                      }`}
                   >
                     <option value="" disabled hidden>
                       Secteur
                     </option>
-                    {sectors.map((sector, index) => (
-                      <option key={index} value={sector}>
-                        {sector}
+                    {sectors.map((sector) => (
+                      <option key={sector.id_sector} value={sector.symbol_fr}>
+                        {sector.symbol_fr}
                       </option>
                     ))}
                   </select>
@@ -458,7 +254,7 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Champ pour 'Autres' secteur */}
+            {/* Champ pour 'Autres' secteur 
             {formData.sector === 'Autres' && (
               <div className="register-client-form-row">
                 <div className="register-client-field register-client-full-width">
@@ -477,7 +273,7 @@ const Register = () => {
                   </div>
                 </div>
               </div>
-            )}
+            )}*/}
 
             {/* Raison sociale et autre champs */}
             <div className="register-client-form-row">
@@ -526,16 +322,15 @@ const Register = () => {
                     value={formData.country}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${
-                      formData.country === '' ? 'placeholder' : ''
-                    }`}
+                    className={`register-client-input ${formData.country === '' ? 'placeholder' : ''
+                      }`}
                   >
                     <option value="" disabled hidden>
                       Pays
                     </option>
-                    {countries.map((country, index) => (
-                      <option key={index} value={country}>
-                        {country}
+                    {countries.map((country) => (
+                      <option key={country.id_country} value={country.symbol_fr}>
+                        {country.symbol_fr}
                       </option>
                     ))}
                   </select>
