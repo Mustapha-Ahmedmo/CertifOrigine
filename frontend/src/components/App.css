@@ -21,14 +21,24 @@
 
 .content {
   flex: 1;
-  padding: 20px;
-  margin-left: 240px;  /* Ensure content is not under the menu */
+  padding: 20px 0 80px 0;
   overflow-y: auto;
+
+  @media (min-width: 1024px) {
+      .content {
+        margin-left: 240px;
+      }
+    }
 }
 
 .footer {
   position: fixed;
   bottom: 0;
-  width: calc(100% - 200px);  /* Adjusted to ensure it doesn't overlap with the menu */
-  left: 240px;  /* Align with the content area */
+  width:100vw;  
+z-index: 0;
+    @media (min-width: 1024px) {
+           width: calc(100% - 200px); 
+            left: 240px;
+      }
+    
 }

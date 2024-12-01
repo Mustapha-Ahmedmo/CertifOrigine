@@ -1,24 +1,26 @@
-/* Corps de la page (Assurez-vous que cette règle est appliquée globalement) */
+/* Footer.css */
+
+/* Réinitialisation des marges et paddings du body */
 body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: Arial, sans-serif;
 }
 
-/* Footer */
+/* Styles du footer */
 .footer {
   background-color: #ffffff; /* Fond blanc */
-  padding: 15px 0; /* Réduction du padding pour une apparence plus compacte */
+  padding: 15px 0; /* Padding compact */
   display: flex;
   justify-content: center;
   align-items: center;
   position: fixed;
-  width: 100%;
-  bottom: 0;
   left: 0;
+  right: 0; /* Assure que le footer s'étend à droite */
+  bottom: 0;
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Légère ombre pour la séparation */
-  z-index: 1000; /* Assure que le footer reste au-dessus des autres éléments */
+  z-index: 1000; /* Assure que le footer est au-dessus des autres éléments */
+  
 }
 
 /* Conteneur principal du footer */
@@ -27,7 +29,7 @@ body {
   flex-direction: row;
   align-items: center;
   justify-content: space-between; /* Espace entre le logo et les informations */
-  width: 100%;
+  width: 100vw;
   max-width: 1200px;
   padding: 0 20px;
   flex-wrap: wrap; /* Permet au contenu de se réorganiser sur les petits écrans */
@@ -36,7 +38,7 @@ body {
 /* Logo du footer */
 .footer-logo {
   font-weight: bold; /* Met en valeur le texte */
-  font-size: 12px; /* Réduction de la taille de la police */
+  font-size: 12px; /* Taille de la police réduite */
   color: #333333; /* Couleur sombre pour une meilleure lisibilité */
   margin-bottom: 10px; /* Espacement en bas pour les petits écrans */
 }
@@ -53,7 +55,7 @@ body {
 /* Paragraphes et liens dans le footer */
 .footer-info > p,
 .footer-info > a {
-  margin: 5px 10px; /* Réduction des marges pour une apparence plus compacte */
+  margin: 5px 10px; /* Marges compactes */
   font-size: 0.9rem; /* Taille de police réduite */
   color: #555555; /* Couleur légèrement plus claire pour une meilleure lisibilité */
 }
@@ -86,6 +88,8 @@ body {
   .footer-container {
     flex-direction: column;
     align-items: center;
+    max-width: 100%; /* Override max-width */
+    padding: 0 10px; /* Ajustement du padding */
   }
 
   .footer-info {

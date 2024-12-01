@@ -25,7 +25,7 @@
 }
 
 .highlight-text {
-    color: #007bff; /* Bleu correspondant à INDIGO TRADING FZCO */
+    color: #DCAF26; /* Bleu correspondant à INDIGO TRADING FZCO */
     font-size: 22px;
     font-weight: bold;
 }
@@ -50,8 +50,8 @@
 }
 
 .tab-item.active {
-    color: #007bff;
-    border-bottom: 3px solid #007bff;
+    color: #DCAF26;
+    border-bottom: 3px solid #DCAF26;
 }
 
 .dashboard-grid {

@@ -1,0 +1,48 @@
+/* MainLayout.css */
+
+/* Base styles pour le layout principal */
+.main-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  /* Main container to hold content */
+  .main-container {
+    display: flex;
+    flex: 1;
+    padding-top: 60px; /* Height of the header */
+    padding-bottom: 60px; /* Height of the footer */
+    transition: margin-left 0.3s ease-in-out;
+  }
+  
+  /* Content area */
+  .content {
+    flex: 1;
+    padding: 20px;
+  }
+  
+  /* Responsive adjustments for mobile devices */
+  @media (max-width: 768px) {
+    .main-container {
+      margin-left: 0;
+      padding-bottom: 60px; /* Ensure space for the fixed footer */
+    }
+  
+    /* When menu is open, push the content to the right */
+    .main-layout.menu-open .main-container {
+      margin-left: 250px;
+    }
+  
+    /* Overlay styling */
+    .menu-overlay {
+      position: fixed;
+      top: 60px; /* Height of the header */
+      left: 0;
+      width: 100%;
+      height: calc(100vh - 60px);
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 150; /* Below the menu but above other content */
+    }
+  }
+  

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import './Register.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -15,6 +15,12 @@ import logo from '../assets/logo.jpg'; // Importation du logo
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom'; // Importer Link
 import { registerUser } from '../services/apiServices';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+
+const Alert = forwardRef(function Alert(props, ref) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -46,6 +52,18 @@ const Register = () => {
 
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Snackbar state
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // 'success', 'error', 'warning', 'info'
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
@@ -89,6 +107,9 @@ const Register = () => {
     // Validate formData (example for password confirmation)
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
+      setSnackbarMessage('Passwords do not match');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
       return;
     }
 
@@ -119,12 +140,14 @@ const Register = () => {
 
       // Send the registration data to the backend
       const response = await registerUser(userData);
-      setSuccessMessage('User registered successfully');
-      setError('');
-      console.log('Registration success:', response);
+      setSnackbarMessage('Registration successful');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
     } catch (err) {
       setError(err.message);
-      setSuccessMessage('');
+      setSnackbarMessage(err.message);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
     }
   };
 
@@ -146,7 +169,7 @@ const Register = () => {
         <form onSubmit={handleSubmit} className="register-client-form">
           {/* Section Information Entreprise */}
           <div className="register-client-form-section">
-            <h3>Information Entreprise</h3>
+            <h3 className="primary">Information Entreprise</h3>
             <div className="register-client-form-row">
               {/* Catégorie */}
               <div className="register-client-field register-client-half-width">
@@ -370,7 +393,7 @@ const Register = () => {
 
           {/* Section Contact */}
           <div className="register-client-form-section">
-            <h3>Contact</h3>
+            <h3 className="primary">Contact</h3>
             <div className="register-client-form-row">
               {/* Civilité */}
               <div className="register-client-field register-client-half-width">
@@ -560,6 +583,21 @@ const Register = () => {
           <Link to="/login">Revenir à la page de connexion</Link>
         </div>
       </div>
+
+      {/* Snackbar Component */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

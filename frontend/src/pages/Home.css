@@ -1,45 +1,49 @@
+/* Home.css */
+
 .home-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  margin-top: 50px;
+  margin-top: 80px; /* Ajusté pour tenir compte du header fixe */
   text-align: center;
 }
 
 .home-welcome-message {
-  font-size: 18px;
+  font-size: 1.2rem; /* Utilisation de rem pour la réactivité */
   font-weight: bold;
   color: #333;
-  margin-bottom: 50px;
+  margin-bottom: 30px; /* Réduction du margin-bottom */
   text-align: left;
 }
 
 .home-highlight-text {
-  color: #007bff;
+  color: #DCAF26;
 }
 
 .home-tabs-container {
   display: flex;
   justify-content: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px; /* Réduction du margin-bottom */
   border-bottom: 2px solid #f0f0f0;
+  flex-wrap: wrap; /* Permet aux onglets de se réorganiser sur les petits écrans */
 }
 
 .home-tab-item {
   flex: 1;
+  min-width: 150px; /* Assure que les onglets ne deviennent pas trop petits */
   text-align: center;
   padding: 10px 15px;
   cursor: pointer;
   font-weight: bold;
   position: relative;
   color: #555;
-  transition: color 0.3s ease;
+  transition: color 0.3s ease, border-bottom 0.3s ease;
   border-bottom: 3px solid transparent;
 }
 
 .home-tab-item.home-active {
-  color: #007bff;
-  border-bottom: 3px solid #007bff;
+  color: #DCAF26;
+  border-bottom: 3px solid #DCAF26;
 }
 
 .home-tab-icon {
@@ -49,23 +53,27 @@
 .home-dashboard-grid {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 20px; /* Réduction du gap */
   width: 100%;
 }
 
 .home-dashboard-item {
   background-color: #ffffff;
-  padding: 25px;
+  padding: 20px; /* Réduction du padding */
   border-radius: 10px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   text-align: left;
   transition: box-shadow 0.3s ease;
 }
 
+.home-dashboard-table-container {
+  overflow-x: auto; /* Permet le défilement horizontal sur les petits écrans */
+}
+
 .home-dashboard-table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 20px;
+  margin-bottom: 10px; /* Réduction du margin-bottom */
 }
 
 .home-dashboard-table th,
@@ -73,6 +81,7 @@
   padding: 10px;
   border: 1px solid #ddd;
   text-align: left;
+  white-space: nowrap; /* Empêche le texte de se casser */
 }
 
 .home-dashboard-table th {
@@ -80,7 +89,7 @@
 }
 
 .home-icon-button {
-  padding: 4px;
+  padding: 6px;
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -113,7 +122,7 @@
 }
 
 .home-submit-button {
-  padding: 5px 10px;
+  padding: 6px 12px;
   background-color: transparent;
   color: green;
   border: 1px solid green;
@@ -129,7 +138,7 @@
 }
 
 .home-minimal-button {
-  padding: 4px;
+  padding: 6px;
   border-radius: 4px;
 }
 
@@ -140,5 +149,109 @@
 }
 
 .home-button-text:hover {
-  color: #007bff;
+  color: #DCAF26;
+}
+
+/* Dropdown Container */
+.home-dropdown-container {
+  display: none; /* Caché par défaut */
+  margin-bottom: 20px; /* Ajoute de l'espace */
+}
+
+/* Dropdown Styles */
+.home-dropdown {
+  width: 100%; /* Assure que la dropdown occupe toute la largeur de son conteneur */
+  padding: 10px 12px; /* Augmentation du padding pour une meilleure lisibilité */
+  font-size: 1em;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  appearance: none; /* Supprime le style par défaut de la dropdown */
+  background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="%23555" d="M6 9L1.5 3h9L6 9z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  cursor: pointer;
+  overflow: visible; /* Permet au texte de s'afficher complètement */
+  white-space: normal; /* Permet au texte de s'étendre sur plusieurs lignes si nécessaire */
+}
+
+/* Media Queries pour la Responsivité */
+@media (min-width: 769px) {
+  /* Sur desktop, afficher les onglets et masquer la dropdown */
+  .home-tabs-container {
+    display: flex;
+  }
+
+  .home-dropdown-container {
+    display: none; /* Assure que la dropdown est masquée */
+  }
+
+  .home-container {
+    margin-left: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Sur mobile, masquer les onglets et afficher la dropdown */
+  .home-tabs-container {
+    display: none;
+  }
+
+  .home-dropdown-container {
+    display: block;
+    width: 100%; /* S'assure que le conteneur de la dropdown occupe toute la largeur */
+  }
+
+  .home-container {
+    padding: 10px;
+    margin-top: 60px;
+  }
+
+  .home-welcome-message {
+    font-size: 1rem;
+    margin-bottom: 20px;
+    text-align: left;
+  }
+
+  /* Ajustements spécifiques à la dropdown */
+  .home-dropdown {
+    max-width: 100%; /* Permet à la dropdown de s'étendre autant que possible */
+    box-sizing: border-box; /* Inclut le padding et la bordure dans la largeur totale */
+  }
+
+  /* Styles pour les options de la dropdown */
+  .home-dropdown option {
+    white-space: normal; /* Permet au texte de s'afficher sur plusieurs lignes si nécessaire */
+    padding: 8px 12px; /* Ajoute du padding pour une meilleure lisibilité */
+  }
+}
+
+@media (max-width: 1024px) {
+  .home-container {
+    padding: 15px;
+    margin-top: 70px;
+  }
+
+  .home-welcome-message {
+    font-size: 1.1rem;
+    margin-bottom: 25px;
+  }
+
+  .home-tab-item {
+    min-width: 120px;
+    padding: 8px 12px;
+  }
+
+  .home-dashboard-item {
+    padding: 15px;
+  }
+
+  .home-dashboard-table th,
+  .home-dashboard-table td {
+    padding: 8px;
+  }
+
+  .home-submit-button {
+    padding: 5px 10px;
+  }
 }

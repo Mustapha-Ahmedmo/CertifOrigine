@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../slices/authSlice';
 import './Login.css';
 import logo from '../assets/logo.jpg';
 import { Helmet } from 'react-helmet';
-import '@fontsource/poppins'; // Import the Poppins font
 import { loginUser } from '../services/apiServices';
+import { useMediaQuery } from 'react-responsive';
 
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const isMobile = useMediaQuery({ query: '(max-width: 480px)' }); // Adjusted breakpoint for smaller devices
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -29,7 +31,7 @@ const Login = () => {
       // Navigate to the dashboard on success
       navigate('/dashboard');
     } catch (error) {
-      setErrorMessage(error.message || 'Nom d\'utilisateur ou mot de passe incorrect');
+      setErrorMessage(error.message || "Nom d'utilisateur ou mot de passe incorrect");
     }
   };
 
@@ -39,10 +41,10 @@ const Login = () => {
         <title>Connexion</title>
         <meta name="description" content="Connectez-vous à votre compte." />
       </Helmet>
-      <div className="login-page-card">
-        <img src={logo} alt="Logo" className="login-page-logo" />
-        <h2 className="login-page-title">Connexion</h2>
-        <form onSubmit={handleSubmit}>
+      <div className={`login-page-card ${isMobile ? 'mobile' : ''}`}>
+        <img src={logo} alt="Logo" className={`login-page-logo ${isMobile ? 'mobile' : ''}`} />
+        <h2 className={`login-page-title ${isMobile ? 'mobile' : ''}`}>Connexion</h2>
+        <form onSubmit={handleSubmit} className={`login-form ${isMobile ? 'mobile' : ''}`}>
           {errorMessage && <p className="login-page-error-message">{errorMessage}</p>}
           <input
             type="text"
@@ -50,7 +52,7 @@ const Login = () => {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
-            className="login-page-input-field"
+            className={`login-page-input-field ${isMobile ? 'mobile' : ''}`}
           />
           <input
             type="password"
@@ -58,16 +60,20 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="login-page-input-field"
+            className={`login-page-input-field ${isMobile ? 'mobile' : ''}`}
           />
-          <button type="submit" className="login-page-btn-login">Se connecter</button>
+          <button type="submit" className={`login-page-btn-login ${isMobile ? 'mobile' : ''}`}>
+            Se connecter
+          </button>
         </form>
-        <a href="/forgot-password" className="login-page-forgot-password">Mot de passe oublié ?</a>
-        <div className="login-page-no-account">
+        <Link to="/forgot-password" className={`login-page-forgot-password ${isMobile ? 'mobile' : ''}`}>
+          Mot de passe oublié ?
+        </Link>
+        <div className={`login-page-no-account ${isMobile ? 'mobile' : ''}`}>
           Vous n'avez pas de compte ?{' '}
-          <a href="register" className="login-page-create-account-link">
+          <Link to="/register" className={`primary login-page-create-account-link ${isMobile ? 'mobile' : ''}`}>
             Créer un compte
-          </a>
+          </Link>
         </div>
       </div>
     </div>

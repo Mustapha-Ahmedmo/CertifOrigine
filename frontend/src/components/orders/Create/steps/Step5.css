@@ -2,7 +2,6 @@
 .step-form {
   margin: 0 auto;
   padding: 20px;
-  font-family: Arial, sans-serif;
 }
 
 .step-form h3 {
@@ -42,11 +41,11 @@
 .designation-header h4 {
   margin: 0;
   font-weight: bold; /* Titre en gras */
-  color: #007bff; /* Couleur bleue */
+  color: #DCAF26; /* Couleur bleue */
 }
 
 .modifier-button {
-  background-color: #007bff;
+  background-color: #DCAF26;
   color: white;
   padding: 8px 15px;
   font-size: 14px;
@@ -61,7 +60,7 @@
 
 /* Style pour le Demandeur */
 .exporter-name-step5 {
-  color: #007bff; /* Couleur bleue */
+  color: #DCAF26; /* Couleur bleue */
   font-weight: bold;
 }
 
@@ -94,7 +93,7 @@
 .contenu-certificat h4 {
   margin-bottom: 20px;
   font-weight: bold; /* Titre en gras */
-  color: #007bff; /* Couleur bleue */
+  color: #DCAF26; /* Couleur bleue */
 }
 
 /* Styles pour les sous-sections dans le contenu du certificat */
@@ -173,7 +172,7 @@
 .pieces-justificatives h4 {
   margin-bottom: 20px;
   font-weight: bold;
-  color: #007bff;
+  color: #DCAF26;
 }
 
 /* Styles pour le tableau des pièces justificatives */
@@ -251,7 +250,7 @@
 
 /* Bouton "Légalisation des documents" */
 .legislation-button {
-  background-color: #007bff;
+  background-color: #DCAF26;
   color: white;
   padding: 12px 20px;
   font-size: 14px;
@@ -398,7 +397,7 @@
 
 .clickable {
   cursor: pointer;
-  color: #007bff; /* Couleur bleue pour indiquer un lien */
+  color: #DCAF26; /* Couleur bleue pour indiquer un lien */
   text-decoration: underline; /* Souligner le texte */
 }
 

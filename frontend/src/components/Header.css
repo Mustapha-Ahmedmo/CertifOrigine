@@ -1,69 +1,113 @@
+/* Header.css */
+
 .header {
   background-color: #ffffff;
-  padding: 0 20px; /* Réduire le padding */
+  padding: 0 20px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   display: flex;
-  justify-content: space-between; /* Distribuer les éléments de chaque côté */
-  align-items: center; /* Centrer verticalement les éléments */
-  width: 100%; /* Prendre toute la largeur de la page */
-  height: 60px; /* Fixer une hauteur constante pour le header */
-  position: fixed; /* Position fixe pour rester en haut */
+  align-items: center;
+  justify-content: space-between; /* Space between logo and icons */
+  width: 100%;
+  height: 60px;
+  position: fixed;
   top: 0;
   left: 0;
-  z-index: 1000; /* S'assurer que le header est toujours au-dessus du contenu */
-  overflow: hidden; /* Empêcher les éléments de dépasser */
+  z-index: 1000;
+  overflow: hidden;
 }
 
+/* Mobile menu button */
+.mobile-menu-button {
+  display: none; /* Hidden by default */
+  cursor: pointer;
+  font-size: 24px; /* Adjust icon size as needed */
+  color: #333;
+  margin-right: 15px;
+}
+
+/* Logo container */
 .logo-container {
   display: flex;
-  justify-content: flex-start; /* Alignement à gauche */
   align-items: center;
 }
 
+/* Logo image */
 .logo {
-  height: 40px; /* Taille réduite du logo */
+  height: 40px;
 }
 
+/* Header right section */
 .header-right {
   display: flex;
-  margin-right: 25px;
   align-items: center;
-  gap: 30px; /* Augmenter l'espacement entre les icônes */
+  gap: 30px; /* Space between icons */
 }
 
+/* Header icon containers */
 .header-icon-container {
   display: flex;
-  flex-direction: column; /* Aligner les icônes et les labels verticalement */
-  align-items: center; /* Centrer les éléments */
+  flex-direction: column; /* Align icon and label vertically */
+  align-items: center;
   position: relative;
 }
 
+/* Header icons */
 .header-icon {
-  width: 16px; /* Taille réduite des icônes */
-  height: 16px; /* Taille réduite des icônes */
+  width: 20px; /* Increased size for better visibility */
+  height: 20px;
   cursor: pointer;
-  /* border: 2px solid #111111; */ /* Retirer le contour */
-  /* border-radius: 50%; */ /* Retirer l'arrondi si nécessaire */
 }
 
+/* Icon labels */
 .icon-label {
-  font-size: 12px; /* Ajuste la taille du texte */
-  color: #111111; /* Couleur du texte */
-  margin-top: 4px; /* Espacement entre l'icône et le titre */
+  font-size: 12px;
+  color: #111111;
+  margin-top: 4px;
 }
 
+/* Badges */
 .badge {
   position: absolute;
   background-color: red;
   color: white;
   padding: 2px 5px;
   border-radius: 50%;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: bold;
-  top: -5px; /* Positionnement au-dessus de l'icône */
-  right: -5px; /* Positionnement à droite de l'icône */
+  top: -5px;
+  right: -5px;
 }
 
+/* Dropdown menu */
+.dropdown {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  background-color: #ffffff;
+  color: #333333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 150px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+}
+
+.dropdown.show {
+  display: block;
+}
+
+.dropdown a {
+  display: block;
+  padding: 10px;
+  text-decoration: none;
+  color: #333333;
+}
+
+.dropdown a:hover {
+  background-color: #f0f0f0;
+}
+
+/* Language dropdown */
 .language-container {
   position: relative;
 }
@@ -75,4 +119,67 @@
   cursor: pointer;
   color: #333;
   padding: 5px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.language-button:hover {
+  background-color: rgb(240, 240, 240);
+}
+
+.language-dropdown {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  background-color: #ffffff;
+  color: #333333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 120px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+}
+
+.language-dropdown button {
+  width: 100%;
+  padding: 10px;
+  background-color: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.language-dropdown button:hover {
+  background-color: #f0f0f0;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  /* Show the mobile menu button */
+  .mobile-menu-button {
+    display: block;
+  }
+
+  /* Adjust logo positioning */
+  .logo-container {
+    margin-left: 10px;
+  }
+
+  /* Optionally hide header-right icons on mobile */
+  /* If you want to keep them, comment out the following */
+  /* .header-right {
+    display: none;
+  } */
+
+  /* Increase icon sizes for better touch targets */
+  .header-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Adjust badge sizes */
+  .badge {
+    font-size: 12px;
+    padding: 3px 6px;
+  }
 }

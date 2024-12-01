@@ -133,9 +133,9 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
       {/* Nouveau champ pour le libellé de la commande */}
       <div className="form-group">
-        <label htmlFor="orderLabel">
+        <div className='section-title' htmlFor="orderdiv">
           Libellé de la commande <span className="required">*</span>
-        </label>
+        </div>
         <input
           id="orderLabel"
           type="text"

@@ -49,6 +49,7 @@
     "companyName2": "Raison sociale 2",
     "transportModes": "4/9 MODES DE TRANSPORT",
     "selectTransportMode": "Modes de transport",
+    "postalCode": "Code postal",
     "air": "Air",
     "sea": "Mer",
     "land": "Terre",

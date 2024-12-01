@@ -1,3 +1,5 @@
+/* Base styles */
+
 /* Conteneur principal de la page */
 .register-page-container {
   display: flex;
@@ -89,17 +91,6 @@
 
 .register-client-input {
   padding-left: 35px; /* Ajustement pour laisser de la place à l'icône */
-}
-
-/* Pour les selects */
-.register-client-input-wrapper select.register-client-input {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20...%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 35px;
 }
 
 /* Champs avec taille 50% */
@@ -245,4 +236,131 @@ input[type="checkbox"]:checked + .register-client-toggle-label {
 
 .register-client-file-input {
   margin-top: 5px;
+}
+
+/* Lien vers la page de connexion */
+.register-client-login-link {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.register-client-login-link a {
+  color: #0056b3;
+  text-decoration: none;
+}
+
+.register-client-login-link a:hover {
+  text-decoration: underline;
+}
+
+/* Messages d'erreur et de succès */
+.error-message {
+  color: red;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.success-message {
+  color: green;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Responsive styles for mobile devices */
+@media (max-width: 768px) {
+  .register-client-container {
+    padding: 15px;
+    margin: 0 10px;
+    max-width: 80%;
+  }
+
+  .register-client-form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .register-client-half-width,
+  .register-client-full-width {
+    flex: 1 1 100%;
+  }
+
+  .register-client-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+  }
+
+  .register-client-input {
+    font-size: 0.95em;
+    padding: 8px;
+  }
+
+  .register-client-form-section h3 {
+    font-size: 1.25em;
+  }
+
+  .register-client-container h2 {
+    font-size: 1.5em;
+    margin-bottom: 30px;
+  }
+
+  .input-icon {
+    left: 8px;
+  }
+
+  .register-client-input {
+    padding-left: 32px;
+  }
+
+  .register-logo {
+    max-width: 150px;
+  }
+
+  .register-client-toggle-label {
+    width: 40px;
+    height: 20px;
+  }
+
+  .register-client-toggle-slider {
+    width: 16px;
+    height: 16px;
+    top: 2px;
+    left: 2px;
+  }
+
+  input[type="checkbox"]:checked + .register-client-toggle-label .register-client-toggle-slider {
+    transform: translateX(20px);
+  }
+
+  .register-client-checkbox-label {
+    font-size: 0.9em;
+  }
+
+  .register-client-gender-label {
+    font-size: 1em;
+  }
+
+  .register-client-login-link a {
+    font-size: 0.95em;
+  }
+
+  .register-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 0px;
+    background-color: white;
+  }
+
+  .register-client-container {
+   
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0);
+  }
+
+  .register-logo {
+    padding-top: 40px;
+    max-width: 200px; /* Ajustez cette valeur selon vos besoins */
+    height: auto;
+  }
+  
 }

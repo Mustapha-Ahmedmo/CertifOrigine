@@ -7,7 +7,6 @@
 .returned-orders-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: 'Arial', sans-serif;
   font-size: 14px;
   color: #333;
 }
@@ -51,7 +50,7 @@
 
 .edit-button {
   padding: 5px 10px; /* Espacement interne */
-  background-color: #007bff; /* Couleur du bouton */
+  background-color: #DCAF26; /* Couleur du bouton */
   color: white; /* Couleur du texte */
   border: none; /* Pas de bordure */
   border-radius: 4px; /* Coins arrondis */

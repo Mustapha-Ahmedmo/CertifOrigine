@@ -1,6 +1,5 @@
 .client-profile {
     padding: 20px;
-    font-family: Arial, sans-serif;
   }
   
   .client-profile h3 {
@@ -42,7 +41,7 @@
   }
   
   .close-button {
-    background-color: #007bff;
+    background-color: #DCAF26;
     color: white;
     padding: 12px 25px;
     font-size: 16px;
