@@ -83,23 +83,11 @@ body {
   text-decoration: underline;
 }
 
-/* Responsivité */
+
+
+/* Masquer le Footer sur les écrans de 768px ou moins */
 @media (max-width: 768px) {
-  .footer-container {
-    flex-direction: column;
-    align-items: center;
-    max-width: 100%; /* Override max-width */
-    padding: 0 10px; /* Ajustement du padding */
-  }
-
-  .footer-info {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .footer-info > p,
-  .footer-info > a {
-    margin: 5px 0;
-    text-align: center;
+  .footer {
+    display: none;
   }
 }
