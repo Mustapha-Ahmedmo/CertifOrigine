@@ -1,3 +1,4 @@
+
 DO $$
 DECLARE
     new_id INT;
@@ -34,16 +35,3 @@ BEGIN
     INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
     VALUES (new_id, 'Dubai', 'Dubai');
 END $$;
-
-
-DO $$
-DECLARE
-    new_id INT;
-BEGIN
-    INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
-    VALUES ('Chine', 'China')
-    RETURNING ID_COUNTRY INTO new_id;
-    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
-    VALUES (new_id, 'Pekin', 'Pekin');
-    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
-    VALUES (new_id, 'Shanghai', 'Shanghai');

@@ -10,11 +10,11 @@ import {
   faMobileAlt,
   faEnvelope,
   faLock,
-  faIndustry, // Import de l'icône pour le secteur
+  faIndustry,
 } from '@fortawesome/free-solid-svg-icons';
-import logo from '../assets/logo.jpg'; // Importation du logo
+import logo from '../assets/logo.jpg';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom'; // Importer Link
+import { Link } from 'react-router-dom';
 import { registerUser, fetchSectors, fetchCountries } from '../services/apiServices';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
@@ -25,7 +25,6 @@ const Alert = forwardRef(function Alert(props, ref) {
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    // États du formulaire
     gender: 'Mr',
     name: '',
     position: '',
@@ -39,8 +38,8 @@ const Register = () => {
     city: '',
     country: '',
     companyCategory: '',
-    sector: '', // Ajout de la propriété 'sector'
-    otherSector: '', // Ajout de la propriété 'otherSector' pour le secteur personnalisé
+    sector: '',
+    otherSector: '',
     isFreeZoneCompany: false,
     isOtherCompany: false,
     licenseNumber: '',
@@ -61,7 +60,7 @@ const Register = () => {
   // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // 'success', 'error', 'warning', 'info'
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
   const handleSnackbarClose = (event, reason) => {
     if (reason === 'clickaway') {
@@ -69,6 +68,7 @@ const Register = () => {
     }
     setSnackbarOpen(false);
   };
+
   useEffect(() => {
     // Fetch sectors and countries
     const fetchData = async () => {
@@ -79,8 +79,8 @@ const Register = () => {
         setCountries(countryData);
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError('Failed to load sectors or countries');
-        setSnackbarMessage('Failed to load sectors or countries');
+        setError('Échec du chargement des secteurs ou des pays');
+        setSnackbarMessage('Échec du chargement des secteurs ou des pays');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
@@ -206,8 +206,9 @@ const Register = () => {
                     value={formData.companyCategory}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${formData.companyCategory === '' ? 'placeholder' : ''
-                      }`}
+                    className={`register-client-input ${
+                      formData.companyCategory === '' ? 'placeholder' : ''
+                    }`}
                   >
                     <option value="" disabled hidden>
                       Catégorie
@@ -237,15 +238,17 @@ const Register = () => {
                     value={formData.sector}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${formData.sector === '' ? 'placeholder' : ''
-                      }`}
+                    className={`register-client-input ${
+                      formData.sector === '' ? 'placeholder' : ''
+                    }`}
                   >
                     <option value="" disabled hidden>
                       Secteur
                     </option>
                     {sectors.map((sector) => (
                       <option key={sector.id_sector} value={sector.symbol_fr}>
-                        {sector.symbol_fr}
+                        {sector.symbol_fr.charAt(0).toUpperCase() +
+                          sector.symbol_fr.slice(1).toLowerCase()}
                       </option>
                     ))}
                   </select>
@@ -254,7 +257,7 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Champ pour 'Autres' secteur 
+            {/* Champ pour 'Autres' secteur */}
             {formData.sector === 'Autres' && (
               <div className="register-client-form-row">
                 <div className="register-client-field register-client-full-width">
@@ -273,7 +276,7 @@ const Register = () => {
                   </div>
                 </div>
               </div>
-            )}*/}
+            )}
 
             {/* Raison sociale et autre champs */}
             <div className="register-client-form-row">
@@ -322,15 +325,17 @@ const Register = () => {
                     value={formData.country}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${formData.country === '' ? 'placeholder' : ''
-                      }`}
+                    className={`register-client-input ${
+                      formData.country === '' ? 'placeholder' : ''
+                    }`}
                   >
                     <option value="" disabled hidden>
                       Pays
                     </option>
                     {countries.map((country) => (
                       <option key={country.id_country} value={country.symbol_fr}>
-                        {country.symbol_fr}
+                        {country.symbol_fr.charAt(0).toUpperCase() +
+                          country.symbol_fr.slice(1).toLowerCase()}
                       </option>
                     ))}
                   </select>
@@ -439,7 +444,7 @@ const Register = () => {
                 </div>
 
                 <div className="register-client-form-row">
-                  {/* Numéro d'immatriculation RCH */}
+                  {/* Numéro d'immatriculation RCS */}
                   <div className="register-client-field register-client-half-width">
                     <div className="register-client-input-wrapper">
                       <FontAwesomeIcon icon={faAddressCard} className="input-icon" />
@@ -451,11 +456,10 @@ const Register = () => {
                         className="register-client-input"
                         placeholder="Numéro d'immatriculation RCS"
                       />
-                      {/* Pas d'astérisque car le champ n'est plus obligatoire */}
                     </div>
                   </div>
 
-                  {/* Télécharger le numéro d'immatriculation RCH */}
+                  {/* Télécharger le numéro d'immatriculation RCS */}
                   <div className="register-client-field register-client-half-width">
                     <label className="register-client-file-label">
                       Télécharger le numéro d'immatriculation RCS
@@ -466,7 +470,6 @@ const Register = () => {
                         className="register-client-file-input"
                       />
                     </label>
-                    {/* Pas d'astérisque car le champ n'est plus obligatoire */}
                   </div>
                 </div>
               </>
