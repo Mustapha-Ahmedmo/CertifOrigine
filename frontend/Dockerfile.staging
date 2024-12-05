@@ -1,0 +1,22 @@
+# Stage 1: Build the frontend for staging
+FROM node:18-alpine3.19 AS build
+WORKDIR /app
+
+# Install dependencies using npm
+COPY package.json package-lock.json ./
+RUN npm install
+
+# Copy the rest of the source code
+COPY . .
+
+# Define build arguments
+ARG VITE_API_URL
+
+# Set environment variables for the build
+ENV VITE_API_URL=${VITE_API_URL}
+
+# Build the frontend (this creates the dist folder)
+RUN npm run build
+
+# Verify that the dist folder exists and list its contents
+RUN ls -la /app/dist
