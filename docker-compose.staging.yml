@@ -1,0 +1,78 @@
+version: '3'
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.staging  # Optionnel, si vous voulez un Dockerfile spécifique
+    ports:
+      - "5002:5001"  # Différencie le port de staging
+    environment:
+      - JWT_SECRET=staging_jwt_secret
+      - POSTGRES_USER=staging_user
+      - POSTGRES_PASSWORD=staging_password
+      - POSTGRES_DB=staging_djiboutiport
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.staging  # Optionnel
+      args:
+        VITE_API_URL: "http://staging.example.com/api"
+    environment:
+      - VITE_API_URL=http://staging.example.com/api
+    networks:
+      - app-network
+    command: ["npm", "run", "build"]
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "81:80"  # Différencie le port de staging
+    volumes:
+      - ./nginx/nginx.staging.conf:/etc/nginx/nginx.conf  # Fichier Nginx spécifique à staging
+      - ./frontend/dist:/usr/share/nginx/html
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app-network
+
+  db:
+    image: postgres:13
+    container_name: postgres-staging-container
+    environment:
+      POSTGRES_USER: staging_user
+      POSTGRES_PASSWORD: staging_password
+      POSTGRES_DB: staging_djiboutiport
+    volumes:
+      - postgres-staging-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - app-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin-staging-container
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@staging.com
+      PGADMIN_DEFAULT_PASSWORD: stagingpassword
+    ports:
+      - "8082:80"
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-staging-data:
