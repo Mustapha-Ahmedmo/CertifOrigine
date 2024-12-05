@@ -4,11 +4,10 @@ import './Step1.css';
 
 const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
   const { t } = useTranslation();
-  const [isNewExporter, setIsNewExporter] = useState(true); // Pour gérer exportateur
-  const [isNewDestinataire, setIsNewDestinataire] = useState(true); // Pour gérer destinataire
+  const [isNewDestinataire, setIsNewDestinataire] = useState(true); 
   const [errorMessage, setErrorMessage] = useState('');
   const [saveRecipient, setSaveRecipient] = useState(false);
-  const [selectedFakeCompany, setSelectedFakeCompany] = useState(''); // Nouvel état pour l'entreprise fictive
+  const [selectedFakeCompany, setSelectedFakeCompany] = useState('');
 
   // Données fictives pour les entreprises
   const fakeCompanies = {
@@ -82,12 +81,11 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       return;
     }
 
-    setErrorMessage(''); // Réinitialiser le message d'erreur
+    setErrorMessage('');
     nextStep();
   };
 
   const addMerchandise = () => {
-    // Vérification que tous les champs sont remplis
     if (!values.designation || !values.quantity || !values.boxReference) return;
 
     const newMerchandise = {
@@ -98,11 +96,11 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
     };
 
     handleMerchandiseChange(newMerchandise);
-    // Réinitialiser les champs dans values
+
     handleChange('designation', '');
     handleChange('quantity', '');
     handleChange('boxReference', '');
-    handleChange('unit', 'kg poids brut - gros');
+    handleChange('unit', 'kg');
   };
 
   const removeMerchandise = (index) => {
@@ -115,7 +113,6 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
     setSelectedFakeCompany(selectedCompany);
     const companyData = fakeCompanies[selectedCompany];
     if (companyData) {
-      // Mettre à jour tous les champs pertinents dans values
       handleChange('receiverName', companyData.receiverName);
       handleChange('receiverAddress', companyData.receiverAddress);
       handleChange('receiverAddress2', companyData.receiverAddress2);
@@ -130,8 +127,6 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
     <form onSubmit={handleSubmit} className="step-form">
       <h3>{t('step1.title')}</h3>
 
-
-      {/* Nouveau champ pour le libellé de la commande */}
       <div className="form-group">
         <div className='section-title' htmlFor="orderdiv">
           Libellé de la commande <span className="required">*</span>
@@ -145,17 +140,11 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         />
       </div>
 
-      {/* Section 1/8 Demandeur */}
       <div className="section-title">{t('step1.exporterTitle')}</div>
-
-      {/* Affichage du nom de l'entreprise demandeur en bleu */}
       <p className="exporter-name">INDIGO TRADING FZCO</p>
-
       <hr />
 
-      {/* Section 2/8 Destinataire */}
       <div className="section-title">{t('step1.receiverTitle')}</div>
-
       <div className="form-group">
         <label>
           <input
@@ -279,7 +268,6 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
             </div>
           </div>
 
-          {/* Numéro de téléphone */}
           <div className="form-group">
             <label>Numéro de téléphone *</label>
             <input
@@ -293,8 +281,6 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       )}
 
       <hr />
-
-      {/* Section 3/8 Origine de la marchandise */}
       <div className="section-title">3/8 Origine de la marchandise</div>
       <div className="form-group">
         <label>Pays d'origine de la marchandise *</label>
@@ -325,8 +311,6 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       </div>
 
       <hr />
-
-      {/* Section 4/8 Modes de transport */}
       <div className="section-title">4/8 Modes de transport</div>
       <div className="form-group">
         <label>Modes de transport</label>
@@ -362,22 +346,19 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         </div>
       </div>
 
-      {/* Remarques sur le transport */}
       <div className="form-group">
         <label>Remarques sur le transport</label>
         <textarea
           value={values.transportRemarks}
           onChange={(e) => handleChange('transportRemarks', e.target.value)}
-          
         />
       </div>
-      <hr />
 
-      {/* Section 5/8 Déscription des marchandises */}
+      <hr />
       <div className="section-title">5/8 Déscription des marchandises</div>
       <div className="form-group-row">
         <div className="form-group">
-          <label>Référence / HSCODE</label> {/* Nouveau champ pour la référence */}
+          <label>Référence / HSCODE</label>
           <input
             type="text"
             value={values.boxReference}
@@ -431,37 +412,36 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         </div>
       </div>
 
-      {/* Render list of added merchandises */}
       {values.merchandises.length > 0 && (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Désignation</th>
-              <th>Référence</th>
-              <th>Quantité</th>
-              <th>Unité</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {values.merchandises.map((merchandise, index) => (
-              <tr key={index}>
-                <td>{merchandise.designation}</td>
-                <td>{merchandise.boxReference}</td>
-                <td>{merchandise.quantity}</td>
-                <td>{merchandise.unit}</td>
-                <td>
-                  <button type="button" onClick={() => removeMerchandise(index)}>❌</button>
-                </td>
+        <div className="dashboard-table-container">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Désignation</th>
+                <th>Référence</th>
+                <th>Quantité</th>
+                <th>Unité</th>
+                <th>Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {values.merchandises.map((merchandise, index) => (
+                <tr key={index}>
+                  <td>{merchandise.designation}</td>
+                  <td>{merchandise.boxReference}</td>
+                  <td>{merchandise.quantity}</td>
+                  <td>{merchandise.unit}</td>
+                  <td>
+                    <button type="button" onClick={() => removeMerchandise(index)}>❌</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       <hr />
-
-      {/* Section 6/8 Nb d'exemplaires */}
       <div className="section-title">6/8 Nombre de copie certifié</div>
       <div className="form-group">
         <input
@@ -474,8 +454,6 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       </div>
 
       <hr />
-
-      {/* Section 7/8 Engagement */}
       <div className="section-title">7/8 Engagement</div>
       <p>
         En validant ces conditions générales d'utilisation vous demandez la délivrance du certificat d'origine
@@ -488,7 +466,6 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         conditions prévues par la réglementation relative à la définition de la notion d'origine des marchandises.
       </p>
       <div className="form-group">
-        {/* Placement du label à côté de la checkbox */}
         <label>
           <input
             type="checkbox"
@@ -499,8 +476,6 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       </div>
 
       <hr/>
-
-      {/* Section 8/8 Remarques */}
       <div className="section-title">8/8 REMARQUES</div>
       <div className="form-group">
         <label>Remarques</label>

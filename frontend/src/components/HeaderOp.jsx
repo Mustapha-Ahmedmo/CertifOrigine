@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faUser, faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
 import logo from '../assets/logo.jpg';
 import { useTranslation } from 'react-i18next';
 import './HeaderOP.css';
 
-const Header = () => {
+const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
   const { t, i18n } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [mailNotificationCount, setMailNotificationCount] = useState(7);
+  const [mailNotificationCount] = useState(7);
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
-  const [selectedPerson, setSelectedPerson] = useState('M. Abdourhaman Abdi Ali');
 
   const changeLanguage = (language) => {
     i18n.changeLanguage(language);
@@ -27,6 +26,20 @@ const Header = () => {
 
   return (
     <header className="header">
+      {/* Bouton menu mobile */}
+      <div
+        className="mobile-menu-button"
+        onClick={toggleMenu}
+        aria-label="Toggle menu"
+        role="button"
+        tabIndex="0"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') toggleMenu();
+        }}
+      >
+        <FontAwesomeIcon icon={isMenuOpen ? faTimes : faBars} />
+      </div>
+      
       <div className="header-left">
         <div className="logo-container">
           <img src={logo} alt="Chambre de Commerce de Djibouti" className="logo" />
@@ -69,4 +82,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default HeaderOP;

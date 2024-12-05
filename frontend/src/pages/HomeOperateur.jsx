@@ -5,7 +5,6 @@ import {
   faDollarSign,
   faCheckCircle,
   faPen,
-  faTimes,
   faPlus,
   faEye,
 } from '@fortawesome/free-solid-svg-icons';
@@ -14,19 +13,13 @@ import './HomeOperateur.css';
 import Step5 from '../components/orders/Create/steps/Step5';
 import ClientProfile from '../pages/ClientProfile';
 
-
-
-
-
-
 const HomeOperateur = () => {
   const [activeTab, setActiveTab] = useState('visa');
   const [activeInscriptionsTab, setActiveInscriptionsTab] = useState('newRegistrations');
-  const [showModal, setShowModal] = useState(false); // Gestion du modal principal
-  const [modalValues, setModalValues] = useState(null); // Contient les données dynamiques pour Step5
-  const [showSecondModal, setShowSecondModal] = useState(false); // Gestion du modal secondaire
-  const [secondModalContent, setSecondModalContent] = useState(null); // Données du modal secondaire
-
+  const [showModal, setShowModal] = useState(false);
+  const [modalValues, setModalValues] = useState(null);
+  const [showSecondModal, setShowSecondModal] = useState(false);
+  const [secondModalContent, setSecondModalContent] = useState(null);
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -37,29 +30,27 @@ const HomeOperateur = () => {
   };
 
   const openModal = (values) => {
-    setModalValues(values); // Passe les données dynamiques au modal
+    setModalValues(values);
     setShowModal(true);
   };
 
   const closeModal = () => {
-    setModalValues(null); // Réinitialise les données du modal
+    setModalValues(null);
     setShowModal(false);
   };
 
-  // Gère l'ouverture du modal secondaire
   const openSecondModal = (clientData) => {
     setSecondModalContent(clientData);
-    setShowModal(false); // Ferme le modal principal
-    setShowSecondModal(true); // Ouvre le modal secondaire
+    setShowModal(false);
+    setShowSecondModal(true);
   };
 
-  // Gère la fermeture du modal secondaire
   const closeSecondModal = () => {
     setSecondModalContent(null);
     setShowSecondModal(false);
   };
 
-  // Données d'exemple
+  // Données exemple
   const ordersVisa = [
     {
       id: 1,
@@ -133,153 +124,215 @@ const HomeOperateur = () => {
     },
   ];
 
+  // Options dropdown COMMANDES (mobile)
+  const commandsOptions = [
+    {
+      value: 'visa',
+      label: `Mes commandes à soumettre (${ordersVisa.length})`,
+    },
+    {
+      value: 'validation',
+      label: `Mes commandes en attente de la CCD (${ordersValidation.length})`,
+    },
+    {
+      value: 'payment',
+      label: `Mes commandes en attente de paiement (${ordersPayment.length})`,
+    },
+  ];
+
+  // Options dropdown INSCRIPTIONS (mobile)
+  const inscriptionsOptions = [
+    {
+      value: 'newRegistrations',
+      label: 'Nouvelles Inscriptions',
+    },
+    {
+      value: 'additionalRequest',
+      label: 'Demande de complément',
+    },
+  ];
+
+  const handleCommandsDropdownChange = (e) => {
+    setActiveTab(e.target.value);
+  };
+
+  const handleInscriptionsDropdownChange = (e) => {
+    setActiveInscriptionsTab(e.target.value);
+  };
+
   return (
     <div className="home-operator-container">
       <Helmet>
         <title>Dashboard Opérateur</title>
       </Helmet>
 
-      {/* Message de bienvenue */}
       <div className="welcome-message">Bienvenue M. Abdourhaman Abdi Ali</div>
 
       {/* Section COMMANDES */}
       <div className="commands-title highlight-text">COMMANDES</div>
-      <div className="tabs-container">
+
+      {/* Dropdown mobile pour COMMANDES */}
+      <div className="commands-dropdown-container">
+        <select className="commands-dropdown" value={activeTab} onChange={handleCommandsDropdownChange}>
+          {commandsOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Tabs desktop pour COMMANDES */}
+      <div className="tabs-container commands-tabs-container">
         <div
           className={`tab-item ${activeTab === 'visa' ? 'active' : ''}`}
           onClick={() => handleTabClick('visa')}
         >
-          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" /> Nouvelles commandes
-          {ordersVisa.length > 0 ? ` (${ordersVisa.length})` : ''}
+          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" /> 
+          Mes commandes à soumettre ({ordersVisa.length})
         </div>
         <div
           className={`tab-item ${activeTab === 'validation' ? 'active' : ''}`}
           onClick={() => handleTabClick('validation')}
         >
-          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" /> En cours de traitement
-          {ordersValidation.length > 0 ? ` (${ordersValidation.length})` : ''}
+          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" /> 
+          Mes commandes en attente de la CCD ({ordersValidation.length})
         </div>
         <div
           className={`tab-item ${activeTab === 'payment' ? 'active' : ''}`}
           onClick={() => handleTabClick('payment')}
         >
-          <FontAwesomeIcon icon={faDollarSign} className="tab-icon" /> En attente de paiement
-          {ordersPayment.length > 0 ? ` (${ordersPayment.length})` : ''}
+          <FontAwesomeIcon icon={faDollarSign} className="tab-icon" /> 
+          Mes commandes en attente de paiement ({ordersPayment.length})
         </div>
       </div>
 
       <div className="dashboard-grid">
-        {/* Commandes en attente de Visa */}
         {activeTab === 'visa' && (
           <div className="dashboard-item">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>N° de Commande</th>
-                  <th>Client</th>
-                  <th>Désignation</th>
-                  <th>Date soumission</th>
-                  <th>Certificat d'Origine</th>
-                  <th>Facture Commerciale</th>
-                  <th>Légalisations</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {ordersVisa.map((order) => (
-                  <tr key={order.id}>
-                    <td>{order.date}</td>
-                    <td>{order.orderNumber}</td>
-                    <td>{order.client}</td>
-                    <td>{order.designation}</td>
-                    <td>{order.submissionDate}</td>
-                    <td>
-                      <button
-                        className="icon-button minimal-button"
-                        onClick={() => openModal(order.values)}
-                      >
-                        <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                        <span className="button-text">Vérifier</span>
-                      </button>
-                    </td>
-                    <td></td>
-                    <td>
-                      <button className="icon-button minimal-button">
-                        <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                        <span className="button-text">Vérifier</span>
-                      </button>
-                    </td>
-                    <td>
-                      <button className="submit-button minimal-button">Facturer</button>
-                    </td>
+            <div className="dashboard-table-container">
+              <table className="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>N° de Commande</th>
+                    <th>Client</th>
+                    <th>Désignation</th>
+                    <th>Date soumission</th>
+                    <th>Certificat d'Origine</th>
+                    <th>Facture Commerciale</th>
+                    <th>Légalisations</th>
+                    <th></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {ordersVisa.map((order) => (
+                    <tr key={order.id}>
+                      <td>{order.date}</td>
+                      <td>{order.orderNumber}</td>
+                      <td>{order.client}</td>
+                      <td>{order.designation}</td>
+                      <td>{order.submissionDate}</td>
+                      <td>
+                        <button
+                          className="icon-button minimal-button"
+                          onClick={() => openModal(order.values)}
+                        >
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
+                          <span className="button-text">Vérifier</span>
+                        </button>
+                      </td>
+                      <td></td>
+                      <td>
+                        <button className="icon-button minimal-button">
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
+                          <span className="button-text">Vérifier</span>
+                        </button>
+                      </td>
+                      <td>
+                        <button className="submit-button minimal-button">Facturer</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
-        {/* Commandes en attente de validation */}
         {activeTab === 'validation' && ordersValidation.length > 0 && (
           <div className="dashboard-item">
-            {/* Contenu du tableau pour les commandes en cours de traitement */}
+            {/* Exemple si vous aviez un tableau ici, vous le mettriez dans une dashboard-table-container */}
           </div>
         )}
 
-        {/* Commandes en attente de paiement */}
         {activeTab === 'payment' && (
           <div className="dashboard-item">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>N° de commande</th>
-                  <th>Client</th>
-                  <th>N° de facture</th>
-                  <th>Désignation</th>
-                  <th>Date de validation</th>
-                  <th>Certificat d'origine</th>
-                  <th>Facture Commerciale</th>
-                  <th>Légalisation</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ordersPayment.map((order) => (
-                  <tr key={order.id}>
-                    <td>{order.date}</td>
-                    <td>{order.orderNumber}</td>
-                    <td>{order.client}</td>
-                    <td>{order.invoiceNumber}</td>
-                    <td>{order.designation}</td>
-                    <td>{order.validationDate}</td>
-                    <td>
-                      <button
-                        className="icon-button minimal-button"
-                        onClick={() => openModal(order.details)}
-                      >
-                        <FontAwesomeIcon icon={faEye} title="Voir" />
-                        <span className="button-text">Détails</span>
-                      </button>
-                    </td>
-                    <td></td>
-                    <td>
-                      <button className="icon-button minimal-button">
-                        <FontAwesomeIcon icon={faEye} title="Voir" />
-                        <span className="button-text">Détails</span>
-                      </button>
-                    </td>
+            <div className="dashboard-table-container">
+              <table className="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>N° de commande</th>
+                    <th>Client</th>
+                    <th>N° de facture</th>
+                    <th>Désignation</th>
+                    <th>Date de validation</th>
+                    <th>Certificat d'origine</th>
+                    <th>Facture Commerciale</th>
+                    <th>Légalisation</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {ordersPayment.map((order) => (
+                    <tr key={order.id}>
+                      <td>{order.date}</td>
+                      <td>{order.orderNumber}</td>
+                      <td>{order.client}</td>
+                      <td>{order.invoiceNumber}</td>
+                      <td>{order.designation}</td>
+                      <td>{order.validationDate}</td>
+                      <td>
+                        <button
+                          className="icon-button minimal-button"
+                          onClick={() => openModal(order.details)}
+                        >
+                          <FontAwesomeIcon icon={faEye} title="Voir" />
+                          <span className="button-text">Détails</span>
+                        </button>
+                      </td>
+                      <td></td>
+                      <td>
+                        <button className="icon-button minimal-button">
+                          <FontAwesomeIcon icon={faEye} title="Voir" />
+                          <span className="button-text">Détails</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
 
       {/* Section INSCRIPTIONS */}
       <div className="inscriptions-title highlight-text">INSCRIPTIONS</div>
-      <div className="tabs-container">
+
+      {/* Dropdown mobile pour INSCRIPTIONS */}
+      <div className="inscriptions-dropdown-container">
+        <select className="inscriptions-dropdown" value={activeInscriptionsTab} onChange={handleInscriptionsDropdownChange}>
+          {inscriptionsOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Tabs desktop pour INSCRIPTIONS */}
+      <div className="tabs-container inscriptions-tabs-container">
         <div
           className={`tab-item ${activeInscriptionsTab === 'newRegistrations' ? 'active' : ''}`}
           onClick={() => handleInscriptionsTabClick('newRegistrations')}
@@ -297,73 +350,72 @@ const HomeOperateur = () => {
       <div className="dashboard-grid">
         {activeInscriptionsTab === 'newRegistrations' && (
           <div className="dashboard-item">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Catégorie</th>
-                  <th>Client</th>
-                  <th>Licence ZF</th>
-                  <th>Autres</th>
-                  <th>Contact Principal</th>
-                  <th>Fonction</th>
-                  <th>E-mail</th>
-                  <th>Num. tel</th>
-                  <th>N° portable</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {newRegistrations.map((registration) => (
-                  <tr key={registration.id}>
-                    <td>{registration.date}</td>
-                    <td>{registration.category}</td>
-                    <td>{registration.client}</td>
-                    <td>
-                      <button className="icon-button minimal-button">
-                        <FontAwesomeIcon icon={faEye} title="Ouvrir" />
-                        <span className="button-text">Ouvrir</span>
-                      </button>
-                    </td>
-                    <td>
-                      {registration.documents.map((doc, index) => (
-                        <div key={index}>
-                          <a href={doc.link} download>
-                            {doc.name}
-                          </a>
-                        </div>
-                      ))}
-                    </td>
-                    <td>{registration.contactPrincipal}</td>
-                    <td>{registration.fonction}</td>
-                    <td>{registration.email}</td>
-                    <td>{registration.numTel}</td>
-                    <td>{registration.numPortable}</td>
-                    <td>
-                      <button className="validate-button">Valider</button>
-                      <button className="reject-button">Rejeter</button>
-                    </td>
-
+            <div className="dashboard-table-container">
+              <table className="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Catégorie</th>
+                    <th>Client</th>
+                    <th>Licence ZF</th>
+                    <th>Autres</th>
+                    <th>Contact Principal</th>
+                    <th>Fonction</th>
+                    <th>E-mail</th>
+                    <th>Num. tel</th>
+                    <th>N° portable</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {newRegistrations.map((registration) => (
+                    <tr key={registration.id}>
+                      <td>{registration.date}</td>
+                      <td>{registration.category}</td>
+                      <td>{registration.client}</td>
+                      <td>
+                        <button className="icon-button minimal-button">
+                          <FontAwesomeIcon icon={faEye} title="Ouvrir" />
+                          <span className="button-text">Ouvrir</span>
+                        </button>
+                      </td>
+                      <td>
+                        {registration.documents.map((doc, index) => (
+                          <div key={index}>
+                            <a href={doc.link} download>
+                              {doc.name}
+                            </a>
+                          </div>
+                        ))}
+                      </td>
+                      <td>{registration.contactPrincipal}</td>
+                      <td>{registration.fonction}</td>
+                      <td>{registration.email}</td>
+                      <td>{registration.numTel}</td>
+                      <td>{registration.numPortable}</td>
+                      <td>
+                        <button className="validate-button">Valider</button>
+                        <button className="reject-button">Rejeter</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
-
-      
 
       {/* Modal principal */}
       {showModal && modalValues && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <Step5
-            values={modalValues}
-            isModal={true}
-            handleSubmit={() => console.log('Soumis')}
-            openSecondModal={openSecondModal}
-          />
+            <Step5
+              values={modalValues}
+              isModal={true}
+              handleSubmit={() => console.log('Soumis')}
+              openSecondModal={openSecondModal}
+            />
 
             <div className="modal-actions">
               <button onClick={() => console.log('Rejeté')} className="reject-button">
@@ -385,12 +437,7 @@ const HomeOperateur = () => {
           </div>
         </div>
       )}
-
-
-     
-
     </div>
-    
   );
 };
 

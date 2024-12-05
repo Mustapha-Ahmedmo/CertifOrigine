@@ -17,13 +17,13 @@ import {
   faMoneyBillWave,
 } from '@fortawesome/free-solid-svg-icons';
 import './Menu.css';
-import '@fontsource/poppins'; // Cela importe la police Poppins
+import '@fontsource/poppins';
 
-const Menu = () => {
+const MenuOP = ({ isMenuOpen, toggleMenu }) => {
   const [openMenu, setOpenMenu] = useState({});
   const [activeLink, setActiveLink] = useState('');
 
-  const toggleMenu = (menu) => {
+  const toggleSubMenu = (menu) => {
     setOpenMenu((prevState) => ({
       ...prevState,
       [menu]: !prevState[menu],
@@ -34,58 +34,92 @@ const Menu = () => {
     setActiveLink(link);
     setOpenMenu((prevState) => ({
       ...prevState,
-      [menu]: true, // Garde le menu ouvert
+      [menu]: true,
     }));
+    // Ferme le menu sur mobile
+    if (window.innerWidth <= 768) {
+      toggleMenu();
+    }
   };
 
   const currentYear = new Date().getFullYear();
   const previousYear = currentYear - 1;
 
   return (
-    <nav className="menu">
+    <nav className={`menu ${isMenuOpen ? 'menu-open' : ''}`}>
       <ul>
         {/* Accueil */}
         <li>
-          <Link to="/home" className={`menu-title ${activeLink === 'home' ? 'active' : ''}`} data-main-title onClick={() => handleLinkClick('home', 'home')}>
+          <Link
+            to="/home"
+            className={`menu-title ${activeLink === 'home' ? 'active' : ''}`}
+            data-main-title
+            onClick={() => handleLinkClick('home', 'home')}
+          >
             <FontAwesomeIcon icon={faHome} className="icon" /> Accueil
           </Link>
         </li>
 
         {/* Commandes & Factures */}
         <li>
-          <span className={`menu-title ${openMenu.orders ? 'open' : ''}`} data-main-title onClick={() => toggleMenu('orders')}>
+          <span
+            className={`menu-title ${openMenu.orders ? 'open' : ''}`}
+            data-main-title
+            onClick={() => toggleSubMenu('orders')}
+          >
             <FontAwesomeIcon icon={faClipboardList} className="icon" /> Commandes & Factures
           </span>
           {openMenu.orders && (
             <ul className="submenu">
               <li>
-                <span className={`menu-title ${openMenu.currentOrders ? 'open' : ''}`} onClick={() => toggleMenu('currentOrders')}>
+                <span
+                  className={`menu-title ${openMenu.currentOrders ? 'open' : ''}`}
+                  onClick={() => toggleSubMenu('currentOrders')}
+                >
                   <FontAwesomeIcon icon={faShoppingCart} className="icon" /> Commandes en cours
                 </span>
               </li>
               <li>
-                <span className={`menu-title ${openMenu.searchOrders ? 'open' : ''}`} onClick={() => toggleMenu('searchOrders')}>
+                <span
+                  className={`menu-title ${openMenu.searchOrders ? 'open' : ''}`}
+                  onClick={() => toggleSubMenu('searchOrders')}
+                >
                   <FontAwesomeIcon icon={faClipboardList} className="icon" /> Recherches de commande
                 </span>
               </li>
               <li>
-                <span className={`menu-title ${openMenu.orderHistory ? 'open' : ''}`} onClick={() => toggleMenu('orderHistory')}>
+                <span
+                  className={`menu-title ${openMenu.orderHistory ? 'open' : ''}`}
+                  onClick={() => toggleSubMenu('orderHistory')}
+                >
                   <FontAwesomeIcon icon={faHistory} className="icon" /> Historiques de commandes
                 </span>
                 {openMenu.orderHistory && (
                   <ul className="submenu">
                     <li>
-                      <Link to="/orders/history/current-year" className={activeLink === 'historyCurrentYear' ? 'active' : ''} onClick={() => handleLinkClick('orderHistory', 'historyCurrentYear')}>
+                      <Link
+                        to="/orders/history/current-year"
+                        className={activeLink === 'historyCurrentYear' ? 'active' : ''}
+                        onClick={() => handleLinkClick('orderHistory', 'historyCurrentYear')}
+                      >
                         {currentYear}
                       </Link>
                     </li>
                     <li>
-                      <Link to="/orders/history/previous-year" className={activeLink === 'historyPreviousYear' ? 'active' : ''} onClick={() => handleLinkClick('orderHistory', 'historyPreviousYear')}>
+                      <Link
+                        to="/orders/history/previous-year"
+                        className={activeLink === 'historyPreviousYear' ? 'active' : ''}
+                        onClick={() => handleLinkClick('orderHistory', 'historyPreviousYear')}
+                      >
                         {previousYear}
                       </Link>
                     </li>
                     <li>
-                      <Link to="/orders/history/before-previous-year" className={activeLink === 'historyBeforePreviousYear' ? 'active' : ''} onClick={() => handleLinkClick('orderHistory', 'historyBeforePreviousYear')}>
+                      <Link
+                        to="/orders/history/before-previous-year"
+                        className={activeLink === 'historyBeforePreviousYear' ? 'active' : ''}
+                        onClick={() => handleLinkClick('orderHistory', 'historyBeforePreviousYear')}
+                      >
                         Avant {previousYear}
                       </Link>
                     </li>
@@ -93,23 +127,38 @@ const Menu = () => {
                 )}
               </li>
               <li>
-                <span className={`menu-title ${openMenu.invoiceHistory ? 'open' : ''}`} onClick={() => toggleMenu('invoiceHistory')}>
+                <span
+                  className={`menu-title ${openMenu.invoiceHistory ? 'open' : ''}`}
+                  onClick={() => toggleSubMenu('invoiceHistory')}
+                >
                   <FontAwesomeIcon icon={faFileInvoiceDollar} className="icon" /> Historiques des factures
                 </span>
                 {openMenu.invoiceHistory && (
                   <ul className="submenu">
                     <li>
-                      <Link to="/invoices/history/2024" className={activeLink === 'invoiceHistory2024' ? 'active' : ''} onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistory2024')}>
+                      <Link
+                        to="/invoices/history/2024"
+                        className={activeLink === 'invoiceHistory2024' ? 'active' : ''}
+                        onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistory2024')}
+                      >
                         2024
                       </Link>
                     </li>
                     <li>
-                      <Link to="/invoices/history/2023" className={activeLink === 'invoiceHistory2023' ? 'active' : ''} onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistory2023')}>
+                      <Link
+                        to="/invoices/history/2023"
+                        className={activeLink === 'invoiceHistory2023' ? 'active' : ''}
+                        onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistory2023')}
+                      >
                         2023
                       </Link>
                     </li>
                     <li>
-                      <Link to="/invoices/history/before-2023" className={activeLink === 'invoiceHistoryBefore2023' ? 'active' : ''} onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistoryBefore2023')}>
+                      <Link
+                        to="/invoices/history/before-2023"
+                        className={activeLink === 'invoiceHistoryBefore2023' ? 'active' : ''}
+                        onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistoryBefore2023')}
+                      >
                         Avant 2023
                       </Link>
                     </li>
@@ -117,7 +166,10 @@ const Menu = () => {
                 )}
               </li>
               <li>
-                <span className={`menu-title ${openMenu.exportEntries ? 'open' : ''}`} onClick={() => toggleMenu('exportEntries')}>
+                <span
+                  className={`menu-title ${openMenu.exportEntries ? 'open' : ''}`}
+                  onClick={() => toggleSubMenu('exportEntries')}
+                >
                   <FontAwesomeIcon icon={faDownload} className="icon" /> Export des écritures
                 </span>
               </li>
@@ -127,23 +179,36 @@ const Menu = () => {
 
         {/* Administration */}
         <li>
-          <span className={`menu-title ${openMenu.administration ? 'open' : ''}`} data-main-title onClick={() => toggleMenu('administration')}>
+          <span
+            className={`menu-title ${openMenu.administration ? 'open' : ''}`}
+            data-main-title
+            onClick={() => toggleSubMenu('administration')}
+          >
             <FontAwesomeIcon icon={faCog} className="icon" /> Administration
           </span>
           {openMenu.administration && (
             <ul className="submenu">
               <li>
-                <span className={`menu-title ${openMenu.clients ? 'open' : ''}`} onClick={() => toggleMenu('clients')}>
+                <span
+                  className={`menu-title ${openMenu.clients ? 'open' : ''}`}
+                  onClick={() => toggleSubMenu('clients')}
+                >
                   <FontAwesomeIcon icon={faUsers} className="icon" /> Clients
                 </span>
               </li>
               <li>
-                <span className={`menu-title ${openMenu.operators ? 'open' : ''}`} onClick={() => toggleMenu('operators')}>
+                <span
+                  className={`menu-title ${openMenu.operators ? 'open' : ''}`}
+                  onClick={() => toggleSubMenu('operators')}
+                >
                   <FontAwesomeIcon icon={faUserTie} className="icon" /> Opérateurs
                 </span>
               </li>
               <li>
-                <span className={`menu-title ${openMenu.services ? 'open' : ''}`} onClick={() => toggleMenu('services')}>
+                <span
+                  className={`menu-title ${openMenu.services ? 'open' : ''}`}
+                  onClick={() => toggleSubMenu('services')}
+                >
                   <FontAwesomeIcon icon={faHandshake} className="icon" /> Prestations de services
                 </span>
               </li>
@@ -153,18 +218,30 @@ const Menu = () => {
 
         {/* Ma CCD */}
         <li>
-          <span className={`menu-title ${openMenu.myCCD ? 'open' : ''}`} data-main-title onClick={() => toggleMenu('myCCD')}>
+          <span
+            className={`menu-title ${openMenu.myCCD ? 'open' : ''}`}
+            data-main-title
+            onClick={() => toggleSubMenu('myCCD')}
+          >
             <FontAwesomeIcon icon={faBuilding} className="icon" /> Ma CCD
           </span>
           {openMenu.myCCD && (
             <ul className="submenu">
               <li>
-                <Link to="/my-ccd/cgv" className={activeLink === 'cgv' ? 'active' : ''} onClick={() => handleLinkClick('myCCD', 'cgv')}>
+                <Link
+                  to="/my-ccd/cgv"
+                  className={activeLink === 'cgv' ? 'active' : ''}
+                  onClick={() => handleLinkClick('myCCD', 'cgv')}
+                >
                   <FontAwesomeIcon icon={faFileContract} className="icon" /> Les C.G.V
                 </Link>
               </li>
               <li>
-                <Link to="/my-ccd/tarifs" className={activeLink === 'tarifs' ? 'active' : ''} onClick={() => handleLinkClick('myCCD', 'tarifs')}>
+                <Link
+                  to="/my-ccd/tarifs"
+                  className={activeLink === 'tarifs' ? 'active' : ''}
+                  onClick={() => handleLinkClick('myCCD', 'tarifs')}
+                >
                   <FontAwesomeIcon icon={faMoneyBillWave} className="icon" /> Tarifs des prestations
                 </Link>
               </li>
@@ -176,4 +253,4 @@ const Menu = () => {
   );
 };
 
-export default Menu;
+export default MenuOP;

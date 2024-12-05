@@ -4,6 +4,7 @@
     padding: 20px;
     margin-top: 50px;
     text-align: center;
+    margin-left: 250px;
 }
 
 .welcome-message {
@@ -14,18 +15,8 @@
     text-align: left;
 }
 
-#person-select {
-    font-size: 16px;
-    padding: 5px;
-    margin-left: 10px;
-}
-
-.commands-title {
-    margin-bottom: 30px;
-}
-
 .highlight-text {
-    color: #DCAF26; /* Bleu correspondant à INDIGO TRADING FZCO */
+    color: #DCAF26;
     font-size: 22px;
     font-weight: bold;
 }
@@ -68,6 +59,12 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     text-align: left;
     transition: box-shadow 0.3s ease;
+    margin-bottom: 50px;
+}
+
+.dashboard-table-container {
+    overflow-x: auto; /* Ajout pour rendre le tableau scrollable horizontalement */
+    width: 100%;
 }
 
 .dashboard-table {
@@ -76,16 +73,12 @@
     margin-bottom: 20px;
 }
 
-.inscriptions-title {
-    margin-top: 100px;
-    margin-bottom: 30px;
-}
-
 .dashboard-table th,
 .dashboard-table td {
     padding: 10px;
     border: 1px solid #ddd;
     text-align: left;
+    white-space: nowrap; /* Empêche le texte de se casser, rendant le scroll horizontal possible */
 }
 
 .dashboard-table th {
@@ -108,23 +101,6 @@
     background-color: #f0f0f0;
 }
 
-.icon-button.delete-button {
-    color: red;
-}
-
-.icon-button.delete-button:hover {
-    background-color: #ffe5e5;
-}
-
-.icon-button-group {
-    display: flex;
-    align-items: center;
-}
-
-.icon-button-group .icon-button {
-    margin-right: 5px;
-}
-
 .submit-button {
     padding: 5px 10px;
     background-color: green !important;
@@ -133,7 +109,6 @@
     border-radius: 4px;
     cursor: pointer;
     margin-top: 5px;
-    transition: background-color 0.2s, color 0.2s;
 }
 
 .reject-button {
@@ -144,7 +119,16 @@
     border-radius: 4px;
     cursor: pointer;
     margin-top: 5px;
-    transition: background-color 0.2s, color 0.2s;
+}
+
+.validate-button {
+    padding: 5px 10px;
+    background-color: #52c41a !important;
+    color: white !important;
+    border: 1px solid #52c41a;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 5px;
 }
 
 .minimal-button {
@@ -163,70 +147,76 @@
     justify-content: center;
     align-items: center;
     z-index: 9999;
-  }
-  
-  .modal-content {
+}
+
+.modal-content {
     background-color: white;
     padding: 20px;
     border-radius: 8px;
-    max-width: 50%; /* Utiliser 80% de la largeur de l'écran */
+    max-width: 50%;
     width: 100%;
-    max-height: 90vh; /* Limiter la hauteur maximale à 90% de la hauteur de la fenêtre */
-    overflow-y: auto; /* Activer le défilement vertical si nécessaire */
+    max-height: 90vh;
+    overflow-y: auto;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    text-align: left; /* Aligner le texte à gauche pour une meilleure lisibilité */
-  }
-  
-  .close-modal-button {
-    background-color: red;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 20px;
-  }
-  
-  .close-modal-button:hover {
-    background-color: darkred;
-  }
+    text-align: left;
+}
 
-  
-  /* Conteneur des boutons d'actions dans le modal */
 .modal-actions {
-    display: flex; /* Aligne les boutons sur une ligne */
-    justify-content: space-between; /* Espacement entre les boutons */
-    margin-top: 20px; /* Espacement avec le contenu du modal */
-  }
-  
-  /* Bouton Rejeter */
-  .reject-button {
-    background-color: #ff4d4f; /* Rouge */
-    color: #fff; /* Texte blanc */
-    border: none; /* Pas de bordure */
-    padding: 10px 20px; /* Espace interne */
-    border-radius: 5px; /* Coins arrondis */
-    cursor: pointer; /* Curseur pointeur */
-    font-size: 14px; /* Taille du texte */
-  }
-  
-  .reject-button:hover {
-    background-color: #ff7875; /* Rouge clair au survol */
-  }
-  
-  /* Bouton Valider */
-  .validate-button {
-    background-color: #52c41a; /* Vert */
-    color: #fff; /* Texte blanc */
-    border: none; /* Pas de bordure */
-    padding: 10px 20px; /* Espace interne */
-    border-radius: 5px; /* Coins arrondis */
-    cursor: pointer; /* Curseur pointeur */
-    font-size: 14px; /* Taille du texte */
-  }
-  
-  .validate-button:hover {
-    background-color: #73d13d; /* Vert clair au survol */
-  }
-  
- 
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+/* Dropdown containers */
+.commands-dropdown-container,
+.inscriptions-dropdown-container {
+    display: none;
+    margin-bottom: 20px;
+}
+
+.commands-dropdown,
+.inscriptions-dropdown {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 1em;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    appearance: none;
+    cursor: pointer;
+    background: #fff url('data:image/svg+xml;utf8,<svg fill="%23555" height="12" viewBox="0 0 12 12" width="12" xmlns="http://www.w3.org/2000/svg"><path d="M2 4l4 4 4-4z"/></svg>') no-repeat right 10px center;
+    background-size: 12px;
+}
+
+/* Media queries pour le responsive */
+@media (max-width: 768px) {
+    .home-operator-container {
+        margin-left: 0;
+        padding: 10px;
+        margin-top: 60px;
+    }
+
+    .tabs-container {
+        display: none; /* On cache les onglets sur mobile */
+    }
+
+    .commands-dropdown-container,
+    .inscriptions-dropdown-container {
+        display: block; /* On affiche les dropdown sur mobile */
+        width: 100%;
+    }
+
+    .dashboard-table th,
+    .dashboard-table td {
+        white-space: nowrap;
+    }
+
+    .welcome-message {
+        font-size: 1rem;
+        margin-bottom: 20px;
+    }
+
+    .commands-title,
+    .inscriptions-title {
+        margin-bottom: 20px;
+    }
+}
