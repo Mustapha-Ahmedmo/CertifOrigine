@@ -46,7 +46,7 @@ services:
       - app-network
 
   db:
-    image: postgres:13
+    image: postgres:16.4
     container_name: postgres-container
     environment:
       POSTGRES_USER: exampleuser
@@ -65,6 +65,8 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: adminpassword
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
     ports:
       - "8081:80"  # Expose pgAdmin on port 8081
     depends_on:
@@ -78,3 +80,4 @@ networks:
 
 volumes:
   postgres-data:
+  pgadmin-data:

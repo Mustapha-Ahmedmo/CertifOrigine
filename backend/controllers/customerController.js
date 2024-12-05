@@ -82,7 +82,6 @@ const executeSetCustAccount = async (req, res) => {
   }
 };
 
-// Controller to handle set_cust_user
 const executeSetCustUser = async (req, res) => {
   try {
     const {
