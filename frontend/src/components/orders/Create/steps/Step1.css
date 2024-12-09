@@ -12,8 +12,7 @@ html, body {
   margin: 0 auto;
   padding: 20px;
   background-color: #ffffff;
-  border-radius: 8px;
-  
+  border-radius: 8px; 
 }
 
 h3 {
@@ -72,7 +71,26 @@ h3 {
 .form-group input[type="radio"],
 .form-group input[type="checkbox"] {
   width: auto;
-  margin-right: 10px;
+  margin-right: 5px;
+}
+
+/* Radios alignés horizontalement */
+.form-group-radio {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+}
+
+.form-group-radio label {
+  display: flex;
+  align-items: center;
+}
+
+/* Checkbox pour sauvegarder destinataire */
+.form-group-checkbox label {
+  display: flex;
+  align-items: center;
 }
 
 .transport-options {
@@ -257,7 +275,6 @@ textarea {
   .form-group input,
   .form-group select,
   .form-group textarea {
-    width: 100% !important;
     max-width: 100% !important;
   }
 
