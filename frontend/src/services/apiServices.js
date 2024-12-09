@@ -24,28 +24,6 @@ export const registerUser = async (userData) => {
   }
 };
 
-export const loginUser = async (username, password) => {
-  try {
-    const response = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Login failed');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API call error:', error);
-    throw error;
-  }
-};
-
 export const fetchSectors = async (idList = null) => {
   try {
     const url = idList
@@ -122,6 +100,28 @@ export const setCustUser = async (userData) => {
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Setting customer user failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
+  }
+};
+
+export const loginUser = async (email, password) => {
+  try {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }), // Use email instead of username
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Login failed');
     }
 
     return await response.json();

@@ -1,60 +1,66 @@
-const bcrypt = require('bcryptjs');
+const sequelize = require('../config/db');
 const jwt = require('jsonwebtoken');
-const LoginUser = require('../models/LoginUser');
+const { QueryTypes } = require('sequelize');
 
-exports.signup = async (req, res) => {
-    const { username, password } = req.body;
+const login = async (req, res) => {
+  const { email, password } = req.body;
 
-    try {
-        // Vérifier si l'utilisateur existe déjà
-        const existingUser = await LoginUser.findOne({ where: { USERNAME: username } });
-        if (existingUser) {
-            return res.status(400).json({ message: 'Username already taken' });
-        }
+  try {
+    // Directly assign the result to rows; no destructuring needed
+    const rows = await sequelize.query(
+      `SELECT * FROM spSel_Credentials(:email, :password, :loginStat)`,
+      {
+        replacements: { email, password, loginStat: true },
+        type: QueryTypes.SELECT,
+      }
+    );
 
-        // Hasher le mot de passe
-        const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("Rows =>", rows);
 
-        // Créer un nouvel utilisateur
-        const newUser = await LoginUser.create({ USERNAME: username, PWD: hashedPassword });
+    // Destructure the first element from the rows array
+    const [user] = rows;
 
-        res.status(201).json({ message: 'User registered successfully', user: newUser });
-    } catch (err) {
-        res.status(500).json({ message: 'Error registering user', error: err.message });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
+
+    console.log("User =>", user);
+
+    // Create a payload for the JWT from the user claims
+    const payload = {
+      id: user.id_login_user,
+      username: user.username,
+      role: user.role_user,
+      custAccountId: user.id_cust_account,
+    };
+
+    // Sign the JWT with your secret
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
+
+    return res.status(200).json({
+      message: 'Login successful',
+      token,
+      user,
+    });
+  } catch (error) {
+    console.error('Error during login:', error);
+
+    if (error.message && error.message.includes('LOGIN NOT IDENTIFIED')) {
+      return res.status(404).json({
+        message: 'LOGIN NOT IDENTIFIED',
+        error: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      message: 'An error occurred during login',
+      error: error.message,
+    });
+  }
 };
 
-// Connexion
-exports.login = async (req, res) => {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-        return res.status(400).json({ message: 'Username and password are required' });
-    }
-
-
-    try {
-        // Trouver l'utilisateur dans la base de données
-        const user = await LoginUser.findOne({ where: { USERNAME: username } });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        // Vérifier le mot de passe
-        const isPasswordValid = await bcrypt.compare(password, user.PWD);
-        if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        // Mettre à jour le dernier login
-        user.LASTLOGIN_TIME = new Date();
-        await user.save();
-
-        // Générer un token
-        const token = jwt.sign({ userId: user.ID_LOGIN_USER }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-        res.json({ token, user: { id: user.ID_LOGIN_USER, username: user.USERNAME, isAdmin: user.IsADMIN_LOGIN } });
-    } catch (err) {
-        res.status(500).json({ message: 'Error logging in', error: err.message });
-    }
+module.exports = {
+  login,
 };
