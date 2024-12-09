@@ -588,6 +588,83 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
+DROP FUNCTION IF EXISTS get_custaccount_info;
+CREATE OR REPLACE FUNCTION get_custaccount_info(
+    p_id_list TEXT,
+    p_statutflag INT,
+    p_isactive BOOLEAN
+)
+RETURNS TABLE(
+    id_cust_account INT,
+    legal_form VARCHAR(32),
+    cust_name VARCHAR(96),
+    trade_registration_num VARCHAR(32),
+    in_free_zone BOOLEAN,
+    identification_number VARCHAR(32),
+    register_number VARCHAR(32),        -- Colonne 7
+    full_address VARCHAR(160),           -- Colonne 8
+    id_sector INT,
+    other_sector VARCHAR(64),
+    id_country INT,
+    statut_flag INT,
+    insertdate TIMESTAMP,
+    activation_date TIMESTAMP,
+    deactivation_date TIMESTAMP,
+    idlogin_insert INT,
+    lastmodified TIMESTAMP,
+    idlogin_modify INT,
+    billed_cust_name VARCHAR(96),
+    bill_full_address VARCHAR(160),
+    co_symbol_fr VARCHAR(64),
+    co_symbol_eng VARCHAR(64),
+    co_deactivation_date TIMESTAMP      -- Colonne 23
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        ca."id_cust_account",
+        ca."legal_form",
+        ca."cust_name",
+        ca."trade_registration_num",
+        ca."in_free_zone",
+        ca."identification_number",
+        ca."register_number",                -- Ajouté
+        ca."full_address",
+        ca."id_sector",
+        ca."other_sector",
+        ca."id_country",
+        ca."statut_flag",
+        ca."insertdate",
+        ca."activation_date",
+        ca."deactivation_date",
+        ca."idlogin_insert",
+        ca."lastmodified",
+        ca."idlogin_modify",
+        ca."billed_cust_name",
+        ca."bill_full_address",
+        co."symbol_fr" as co_symbol_fr,
+        co."symbol_eng" as co_symbol_eng,
+        co."deactivation_date" as co_deactivation_date  -- Ajouté
+    FROM
+        cust_account ca
+    JOIN 
+        country co ON ca."id_country" = co."id_country"
+    WHERE 
+        (p_id_list IS NULL OR ca."id_cust_account" = ANY (string_to_array(p_id_list, ',')::INT[]))
+    AND 
+        (p_statutflag IS NULL OR ca."statut_flag" = p_statutflag)
+    AND (
+         p_isactive IS NULL
+        OR (p_isactive IS NOT TRUE AND ca."deactivation_date" <= CURRENT_DATE)
+        OR (p_isactive IS TRUE AND ca."deactivation_date" > CURRENT_DATE)
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+
+
 DROP FUNCTION IF EXISTS get_country_info;
 CREATE OR REPLACE FUNCTION get_country_info(id_list TEXT)
 RETURNS TABLE(id_country INT, symbol_fr VARCHAR, symbol_eng VARCHAR, deactivation_date TIMESTAMP) AS

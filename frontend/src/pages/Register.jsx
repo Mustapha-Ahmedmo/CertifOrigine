@@ -187,7 +187,7 @@ const Register = () => {
         id_sector: selectedSector ? selectedSector.id_sector : null,
         other_sector: formData.otherSector || null,
         id_country: selectedCountry ? selectedCountry.id_country : null,
-        statut_flag: 1, // Example value; set accordingly
+        statut_flag: 0, // Example value; set accordingly
         idlogin: 1, // Assuming registerUser returns userId
         billed_cust_name: formData.billed_cust_name || 'ABC Billing', // Collect from form or set default
         bill_full_address: formData.bill_full_address || '456 Billing St', // Collect from form or set default

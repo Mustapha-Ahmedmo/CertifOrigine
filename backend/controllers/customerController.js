@@ -151,4 +151,41 @@ const executeSetCustUser = async (req, res) => {
   }
 };
 
-module.exports = { executeSetCustAccount, executeSetCustUser };
+const executeGetCustAccountInfo = async (req, res) => {
+  try {
+    const { id_list, statutflag, isactive } = req.query; // Utilisez req.body si les paramètres sont dans le corps de la requête
+
+    // Debugging: Log the incoming parameters
+    console.log('Received get_custaccount_info parameters:', { id_list, statutflag, isactive });
+
+    // Execute the function stored procedure using SELECT
+    const result = await sequelize.query(
+      `SELECT * FROM get_custaccount_info(:id_list, :statutflag, :isactive)`,
+      {
+        replacements: {
+          id_list: id_list || null,
+          statutflag: statutflag !== undefined ? parseInt(statutflag, 10) : null,
+          isactive: isactive !== undefined ? (isactive === 'true' || isactive === '1') : null,
+        },
+        type: sequelize.QueryTypes.SELECT, // Use SELECT since the function returns a table
+      }
+    );
+
+    // Debugging: Log the result
+    console.log('get_custaccount_info result:', result);
+
+    res.status(200).json({
+      message: 'Customer account information retrieved successfully',
+      data: result,
+    });
+  } catch (error) {
+    console.error('Error executing get_custaccount_info:', error);
+    res.status(500).json({
+      message: 'Error executing get_custaccount_info',
+      error: error.message || 'Unknown error occurred',
+      details: error.original || error, // Log the original Sequelize error
+    });
+  }
+};
+
+module.exports = { executeGetCustAccountInfo, executeSetCustAccount, executeSetCustUser };

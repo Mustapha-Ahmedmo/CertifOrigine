@@ -12,6 +12,7 @@ import { Helmet } from 'react-helmet';
 import './HomeOperateur.css';
 import Step5 from '../components/orders/Create/steps/Step5';
 import ClientProfile from '../pages/ClientProfile';
+import { useSelector } from 'react-redux';
 
 const HomeOperateur = () => {
   const [activeTab, setActiveTab] = useState('visa');
@@ -20,6 +21,8 @@ const HomeOperateur = () => {
   const [modalValues, setModalValues] = useState(null);
   const [showSecondModal, setShowSecondModal] = useState(false);
   const [secondModalContent, setSecondModalContent] = useState(null);
+
+  const user = useSelector((state) => state.auth.user);
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -166,7 +169,9 @@ const HomeOperateur = () => {
         <title>Dashboard Opérateur</title>
       </Helmet>
 
-      <div className="welcome-message">Bienvenue M. Abdourhaman Abdi Ali</div>
+      <div className="welcome-message">
+        Bienvenue {user?.full_name || 'Utilisateur'}
+      </div>
 
       {/* Section COMMANDES */}
       <div className="commands-title highlight-text">COMMANDES</div>
