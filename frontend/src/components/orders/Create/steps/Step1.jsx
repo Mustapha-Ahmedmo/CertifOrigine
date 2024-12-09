@@ -145,7 +145,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       <hr />
 
       <div className="section-title">{t('step1.receiverTitle')}</div>
-      <div className="form-group">
+      <div className="form-group form-group-radio">
         <label>
           <input
             type="radio"
@@ -184,7 +184,7 @@ const Step1 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
       )}
 
       {isNewDestinataire && (
-        <div className="form-group">
+        <div className="form-group form-group-checkbox">
           <label>
             <input
               type="checkbox"
