@@ -15,7 +15,7 @@ import {
 import logo from '../assets/logo.jpg';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
-import { registerUser, fetchSectors, fetchCountries, setCustAccount } from '../services/apiServices';
+import { registerUser, fetchSectors, fetchCountries, setCustAccount, setCustUser } from '../services/apiServices';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 
@@ -165,15 +165,15 @@ const Register = () => {
       };
 
       // Send the registration data to the backend
-     // const response = await registerUser(userData);
+      // const response = await registerUser(userData);
 
-     const selectedSector = sectors.find(
-      (sector) => sector.symbol_fr === formData.sector
-    );
+      const selectedSector = sectors.find(
+        (sector) => sector.symbol_fr === formData.sector
+      );
 
-    const selectedCountry = countries.find(
-      (country) => country.symbol_fr === formData.country
-    );    
+      const selectedCountry = countries.find(
+        (country) => country.symbol_fr === formData.country
+      );
 
       // Prepare customer account data (if needed)
       const custAccountData = {
@@ -188,7 +188,7 @@ const Register = () => {
         other_sector: formData.otherSector || null,
         id_country: selectedCountry ? selectedCountry.id_country : null,
         statut_flag: 1, // Example value; set accordingly
-        idlogin:  1, // Assuming registerUser returns userId
+        idlogin: 1, // Assuming registerUser returns userId
         billed_cust_name: formData.billed_cust_name || 'ABC Billing', // Collect from form or set default
         bill_full_address: formData.bill_full_address || '456 Billing St', // Collect from form or set default
         id_cust_account: null, // INOUT parameter; will be set by the procedure
@@ -197,6 +197,33 @@ const Register = () => {
       // Set Customer Account
       const accountResponse = await setCustAccount(custAccountData);
       console.log('Set Cust Account response:', accountResponse);
+
+      const id_cust_account =
+        accountResponse.result &&
+        accountResponse.result[0] &&
+        accountResponse.result[0][0] &&
+        accountResponse.result[0][0].p_id_cust_account;
+
+      if (!id_cust_account) {
+        throw new Error('Failed to retrieve id_cust_account from Set Cust Account response');
+      }
+
+      const custUserData = {
+        id_cust_user: 0, // 0 for new user
+        id_cust_account: id_cust_account, // Use the returned account ID
+        gender: formData.gender === 'Mr' ? 0 : 1,
+        full_name: formData.name,
+        ismain_user: true, // Assuming this is the main user
+        email: formData.email,
+        password: formData.password,
+        phone_number: formData.phoneFixed,
+        mobile_number: formData.phoneMobile,
+        idlogin: 1, // Replace with actual admin ID
+        position: formData.position,
+      };
+
+      const userResponse = await setCustUser(custUserData);
+      console.log('Set Cust User response:', userResponse);
 
       setSnackbarMessage('Inscription réussie');
       setSnackbarSeverity('success');
@@ -238,9 +265,8 @@ const Register = () => {
                     value={formData.companyCategory}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${
-                      formData.companyCategory === '' ? 'placeholder' : ''
-                    }`}
+                    className={`register-client-input ${formData.companyCategory === '' ? 'placeholder' : ''
+                      }`}
                   >
                     <option value="" disabled hidden>
                       Catégorie
@@ -270,9 +296,8 @@ const Register = () => {
                     value={formData.sector}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${
-                      formData.sector === '' ? 'placeholder' : ''
-                    }`}
+                    className={`register-client-input ${formData.sector === '' ? 'placeholder' : ''
+                      }`}
                   >
                     <option value="" disabled hidden>
                       Secteur
@@ -357,9 +382,8 @@ const Register = () => {
                     value={formData.country}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${
-                      formData.country === '' ? 'placeholder' : ''
-                    }`}
+                    className={`register-client-input ${formData.country === '' ? 'placeholder' : ''
+                      }`}
                   >
                     <option value="" disabled hidden>
                       Pays

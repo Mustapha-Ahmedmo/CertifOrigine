@@ -620,3 +620,54 @@ BEGIN
     WHERE p_id_list is null OR s."id_sector" = ANY (string_to_array(p_id_list, ',')::INT[]);
 END;
 $$ LANGUAGE plpgsql;
+
+
+CALL set_sector(0, 'ALIMENTAIRE','FOODS');
+
+CALL set_sector(0, 'INDUSTRIE','INDUSTRY');
+
+CALL set_sector(0, 'AUTRES','OTHERS');
+
+
+DO $$
+DECLARE
+    new_id INT;
+BEGIN
+    INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
+    VALUES ('REP. DE DJIBOUTI', 'REP. DE DJIBOUTI')
+    RETURNING ID_COUNTRY INTO new_id;
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Djibouti Ville', 'Djibouti City');
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Tadjourah','Tadjourah');
+END $$;
+
+DO $$
+DECLARE
+    new_id INT;
+BEGIN
+    INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
+    VALUES ('ETHIOPIE', 'ETHIOPIA')
+    RETURNING ID_COUNTRY INTO new_id;
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Addis-Abeba', 'Addis-Abeba');
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Dire Dawa', 'Dire Dawa');
+END $$;
+
+DO $$
+DECLARE
+    new_id INT;
+BEGIN
+    INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
+    VALUES ('Emirats arabes unis', 'United Arab Emirates')
+    RETURNING ID_COUNTRY INTO new_id;
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Dubai', 'Dubai');
+END $$;
+
+call set_op_user(0, 0, 'M. Admin', 1, TRUE,
+'admin@cdd.dj','password',
+'253355445', '25377340000',
+0);
+
