@@ -11,7 +11,7 @@ import { useMediaQuery } from 'react-responsive';
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const isMobile = useMediaQuery({ query: '(max-width: 480px)' }); // Adjusted breakpoint for smaller devices
+  const isMobile = useMediaQuery({ query: '(max-width: 480px)' });
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +22,6 @@ const Login = () => {
 
     try {
       const response = await loginUser(username, password);
-
       dispatch(
         login({
           user: {
@@ -30,17 +29,14 @@ const Login = () => {
             full_name: response.user.full_name,
             email: response.user.email,
             role: response.user.role_user,
+            isadmin_login: response.user.isadmin_login
           },
           token: response.token,
         })
       );
 
-    // Navigate based on isAdmin check
-    if (response.user.isadmin_login) {
-      navigate('/home-operateur'); // Admin route
-    } else {
-      navigate('/dashboard'); // Regular user route
-    }
+      // Plus de /redirect, on va directement vers /dashboard
+      navigate('/dashboard');
     } catch (error) {
       setErrorMessage(error.message || "Nom d'utilisateur ou mot de passe incorrect");
     }

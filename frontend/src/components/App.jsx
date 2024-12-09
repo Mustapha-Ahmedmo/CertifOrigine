@@ -1,46 +1,52 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import MainLayout from '../components/MainLayout';
-import SimpleLayout from '../components/SimpleLayout';
-import OperateurLayout from '../components/OperateurLayout'; // Importer le nouveau layout
-import Home from '../pages/Home';
-import HomeOperateur from '../pages/HomeOperateur'; // Import de la nouvelle page
 import Login from '../pages/Login';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
-import ProtectedRoute from './ProtectedRoute';
-import './App.css';
-import ToComplete from './orders/ToComplete';
-import ToValidateOP from './orders/ToValidateOP';
-import ToPay from './orders/ToPay';
-import ReturnedOrders from './orders/ReturnedOrders';
-import CompletedOrdersThisYear from './orders/CompletedOrdersThisYear';
 import Register from '../pages/Register';
 import RegisterOP from '../pages/RegisterOP';
-import CreateOrder from './orders/Create/CreateOrder';
+import SimpleLayout from '../components/SimpleLayout';
+import ProtectedRoute from './ProtectedRoute';
+import DashboardWrapper from '../pages/DashboardWrapper';
 
+// Import de vos pages du dashboard
+import Home from '../pages/Home';
+import HomeOperateur from '../pages/HomeOperateur';
+import ToComplete from '../components/orders/ToComplete';
+import ToValidateOP from '../components/orders/ToValidateOP';
+import ToPay from '../components/orders/ToPay';
+import ReturnedOrders from '../components/orders/ReturnedOrders';
+import CompletedOrdersThisYear from '../components/orders/CompletedOrdersThisYear';
+import CreateOrder from '../components/orders/Create/CreateOrder';
 
 const App = () => (
   <Routes>
+    {/* Page de login */}
     <Route path="/" index element={<Login />} />
-    {/* Routes avec MainLayout */}
-    <Route path="/dashboard" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+
+    {/* Dashboard protégé par ProtectedRoute */}
+    <Route
+      path="/dashboard"
+      element={
+        <ProtectedRoute>
+          <DashboardWrapper />
+        </ProtectedRoute>
+      }
+    >
+      {/* Routes pour les clients (index = Home) */}
       <Route index element={<Home />} />
       <Route path="to-complete" element={<ToComplete />} />
       <Route path="to-pay" element={<ToPay />} />
       <Route path="returned-orders" element={<ReturnedOrders />} />
       <Route path="completed-orders-this-year" element={<CompletedOrdersThisYear />} />
       <Route path="create-order" element={<CreateOrder />} />
-    </Route>
 
-    {/* Routes pour l'opérateur avec OperateurLayout */}
-    <Route path="/home-operateur" element={<OperateurLayout />}>
-      <Route index element={<HomeOperateur />} />
+      {/* Routes pour les opérateurs */}
+      <Route path="operator" element={<HomeOperateur />} />
       <Route path="to-validateOP" element={<ToValidateOP />} />
-      
     </Route>
 
-    {/* Routes avec SimpleLayout */}
+    {/* Routes simples avec SimpleLayout */}
     <Route path="/login" element={<SimpleLayout />}>
       <Route index element={<Login />} />
     </Route>
