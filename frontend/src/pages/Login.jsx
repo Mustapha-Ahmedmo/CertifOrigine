@@ -21,15 +21,26 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      // Call the login API
       const response = await loginUser(username, password);
 
-      // Dispatch the login action with user details
-      const user = { id: response.user.id, username: response.user.username, token: response.token };
-      dispatch(login(user));
+      dispatch(
+        login({
+          user: {
+            id: response.user.id,
+            full_name: response.user.full_name,
+            email: response.user.email,
+            role: response.user.role_user,
+          },
+          token: response.token,
+        })
+      );
 
-      // Navigate to the dashboard on success
-      navigate('/dashboard');
+    // Navigate based on isAdmin check
+    if (response.user.isadmin_login) {
+      navigate('/home-operateur'); // Admin route
+    } else {
+      navigate('/dashboard'); // Regular user route
+    }
     } catch (error) {
       setErrorMessage(error.message || "Nom d'utilisateur ou mot de passe incorrect");
     }
