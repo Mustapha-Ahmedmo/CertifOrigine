@@ -6,18 +6,22 @@ const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Directly assign the result to rows; no destructuring needed
+    // Utilisez les noms de paramètres qui correspondent à ceux de la fonction PostgreSQL
     const rows = await sequelize.query(
-      `SELECT * FROM spSel_Credentials(:email, :password, :loginStat)`,
+      `SELECT * FROM spSel_Credentials(:p_username, :p_pwd, :p_login_stat_FLAG)`,
       {
-        replacements: { email, password, loginStat: true },
+        replacements: { 
+          p_username: email, 
+          p_pwd: password, 
+          p_login_stat_FLAG: true 
+        },
         type: QueryTypes.SELECT,
       }
     );
 
     console.log("Rows =>", rows);
 
-    // Destructure the first element from the rows array
+    // Destructure le premier élément du tableau rows
     const [user] = rows;
 
     if (!user) {
@@ -26,7 +30,7 @@ const login = async (req, res) => {
 
     console.log("User =>", user);
 
-    // Create a payload for the JWT from the user claims
+    // Créez une charge utile pour le JWT à partir des informations de l'utilisateur
     const payload = {
       id: user.id_login_user,
       username: user.username,
@@ -34,7 +38,7 @@ const login = async (req, res) => {
       custAccountId: user.id_cust_account,
     };
 
-    // Sign the JWT with your secret
+    // Signez le JWT avec votre secret
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: '1h',
     });
@@ -50,6 +54,13 @@ const login = async (req, res) => {
     if (error.message && error.message.includes('LOGIN NOT IDENTIFIED')) {
       return res.status(404).json({
         message: 'LOGIN NOT IDENTIFIED',
+        error: error.message,
+      });
+    }
+
+    if (error.message && error.message.includes('Account waiting for validation')) {
+      return res.status(403).json({
+        message: 'Account waiting for validation',
         error: error.message,
       });
     }
