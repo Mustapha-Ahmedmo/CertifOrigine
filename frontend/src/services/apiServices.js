@@ -130,3 +130,53 @@ export const loginUser = async (email, password) => {
     throw error;
   }
 };
+
+export const updateCustAccountStatus = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/update-status/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Inclure le token JWT si nécessaire
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Mise à jour du statut échouée.');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du statut du compte client:', error);
+    throw error;
+  }
+};
+
+export const getCustAccountInfo = async (idList = null, statutflag = null, isactive = null) => {
+  try {
+    // Construire l'URL avec les paramètres de query
+    const params = new URLSearchParams();
+    if (idList) params.append('id_list', idList);
+    if (statutflag !== null) params.append('statutflag', statutflag);
+    if (isactive !== null) params.append('isactive', isactive);
+
+    const response = await fetch(`${API_URL}/customer/getCustAccountinfo?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Assurez-vous que le token est stocké dans localStorage
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Fetching customer account info failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
+  }
+};

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboardList,
@@ -13,6 +13,8 @@ import './HomeOperateur.css';
 import Step5 from '../components/orders/Create/steps/Step5';
 import ClientProfile from '../pages/ClientProfile';
 import { useSelector } from 'react-redux';
+import { getCustAccountInfo, updateCustAccountStatus } from '../services/apiServices';
+import { formatDate } from '../utils/dateUtils';
 
 const HomeOperateur = () => {
   const [activeTab, setActiveTab] = useState('visa');
@@ -21,6 +23,50 @@ const HomeOperateur = () => {
   const [modalValues, setModalValues] = useState(null);
   const [showSecondModal, setShowSecondModal] = useState(false);
   const [secondModalContent, setSecondModalContent] = useState(null);
+
+  const [custAccounts, setCustAccounts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+
+  useEffect(() => {
+    const fetchCustAccounts = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await getCustAccountInfo(null, 0, true); // statutflag = 0, isactive = true
+        setCustAccounts(response.data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustAccounts();
+  }, []);
+
+  const handleValidate = async (id) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir valider cette inscription ?')) {
+      return;
+    }
+
+    try {
+      await updateCustAccountStatus(id);
+      alert('Le statut du compte client a été mis à jour avec succès.');
+
+      // Mettre à jour le statut dans l'état local sans recharger toutes les données
+      setCustAccounts(prevAccounts =>
+        prevAccounts.map(account =>
+          account.id_cust_account === id
+            ? { ...account, statut_flag: 1 }
+            : account
+        )
+      );
+    } catch (err) {
+      alert(`Erreur lors de la mise à jour du statut : ${err.message}`);
+    }
+  };
 
   const user = useSelector((state) => state.auth.user);
 
@@ -108,25 +154,6 @@ const HomeOperateur = () => {
     },
   ];
 
-  const newRegistrations = [
-    {
-      id: 1,
-      date: '14/10/2024',
-      category: 'SAS',
-      client: 'INDIGO TRADING FZCO',
-      licenceZF: 'ZF-00123',
-      documents: [
-        { name: 'Document1.pdf', link: '#' },
-        { name: 'Document2.pdf', link: '#' },
-      ],
-      contactPrincipal: 'Yusuf Daher',
-      fonction: 'Directeur Général',
-      email: 'indiotr@gmail.com',
-      numTel: '0123456789',
-      numPortable: '0698765432',
-    },
-  ];
-
   // Options dropdown COMMANDES (mobile)
   const commandsOptions = [
     {
@@ -193,21 +220,21 @@ const HomeOperateur = () => {
           className={`tab-item ${activeTab === 'visa' ? 'active' : ''}`}
           onClick={() => handleTabClick('visa')}
         >
-          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" /> 
+          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" />
           Mes commandes à soumettre ({ordersVisa.length})
         </div>
         <div
           className={`tab-item ${activeTab === 'validation' ? 'active' : ''}`}
           onClick={() => handleTabClick('validation')}
         >
-          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" /> 
+          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" />
           Mes commandes en attente de la CCD ({ordersValidation.length})
         </div>
         <div
           className={`tab-item ${activeTab === 'payment' ? 'active' : ''}`}
           onClick={() => handleTabClick('payment')}
         >
-          <FontAwesomeIcon icon={faDollarSign} className="tab-icon" /> 
+          <FontAwesomeIcon icon={faDollarSign} className="tab-icon" />
           Mes commandes en attente de paiement ({ordersPayment.length})
         </div>
       </div>
@@ -373,33 +400,31 @@ const HomeOperateur = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {newRegistrations.map((registration) => (
-                    <tr key={registration.id}>
-                      <td>{registration.date}</td>
-                      <td>{registration.category}</td>
-                      <td>{registration.client}</td>
+                  {custAccounts.map((registration) => (
+                    <tr key={registration.id_cust_account}>
+                      <td>{formatDate(registration.insertdate)}</td>
+                      <td>{registration.legal_form}</td>
+                      <td>{registration.cust_name}</td>
                       <td>
                         <button className="icon-button minimal-button">
                           <FontAwesomeIcon icon={faEye} title="Ouvrir" />
                           <span className="button-text">Ouvrir</span>
                         </button>
                       </td>
-                      <td>
-                        {registration.documents.map((doc, index) => (
-                          <div key={index}>
-                            <a href={doc.link} download>
-                              {doc.name}
-                            </a>
-                          </div>
-                        ))}
+                      <td>ss
                       </td>
-                      <td>{registration.contactPrincipal}</td>
-                      <td>{registration.fonction}</td>
-                      <td>{registration.email}</td>
-                      <td>{registration.numTel}</td>
-                      <td>{registration.numPortable}</td>
+                      <td>{registration.main_contact.full_name}</td>
+                      <td>{registration.main_contact.position}</td>
+                      <td>{registration.main_contact.email}</td>
+                      <td>{registration.main_contact.phone_number}</td>
+                      <td>{registration.main_contact.mobile_number}</td>
                       <td>
-                        <button className="validate-button">Valider</button>
+                        <button
+                          className="submit-button minimal-button"
+                          onClick={() => handleValidate(registration.id_cust_account)}
+                        >
+                          Valider
+                        </button>
                         <button className="reject-button">Rejeter</button>
                       </td>
                     </tr>

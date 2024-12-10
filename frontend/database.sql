@@ -187,7 +187,6 @@ END $$ LANGUAGE plpgsql;
 
 
 -- Create the stored procedure
-
 DROP FUNCTION IF EXISTS spSel_Credentials;
 CREATE FUNCTION spSel_Credentials(
     p_username VARCHAR(40),
@@ -195,65 +194,68 @@ CREATE FUNCTION spSel_Credentials(
     p_login_stat_FLAG BOOLEAN DEFAULT FALSE
 )
 RETURNS TABLE (
-id_login_user INT,
-idforeign INT,
-full_name VARCHAR(96),
-email VARCHAR(32),
-companyname VARCHAR(96),
-username VARCHAR(32),
-isadmin_login BOOLEAN,
-role_user INT,
-isopuser BOOLEAN,
-id_cust_account INT,
-isavailable_user INT,
-isavailable_login INT,
-lastlogin_time TIMESTAMP
+    id_login_user INT,
+    idforeign INT,
+    full_name VARCHAR(96),
+    email VARCHAR(32),
+    companyname VARCHAR(96),
+    username VARCHAR(32),
+    isadmin_login BOOLEAN,
+    role_user INT,
+    isopuser BOOLEAN,
+    id_cust_account INT,
+    isavailable_user INT,
+    isavailable_login INT,
+    lastlogin_time TIMESTAMP
 )
 AS $$
 DECLARE
     rows_found INT;
 BEGIN
-RETURN QUERY
-	SELECT 
-	vl."id_login_user", 
-	vl."idforeign", 
-	vl."full_name", 
-	vl."email", 
-	vl."companyname", 
-	vl."username", 
-    vl."isadmin_login", 
-	vl."role_user", 
-	vl."isopuser", 
-	vl."id_cust_account", 
-	vl."isavailable_user", 
-	vl."isavailable_login", 
-	vl."lastlogin_time"
-    FROM view_login vl
-    WHERE vl."username" = p_username
-      AND pwd = p_pwd
-      AND vl."isavailable_user" = 1
-      AND vl."isavailable_login" = 1;
-    
+    RETURN QUERY
+        SELECT 
+            vl."id_login_user", 
+            vl."idforeign", 
+            vl."full_name", 
+            vl."email", 
+            vl."companyname", 
+            vl."username", 
+            vl."isadmin_login", 
+            vl."role_user", 
+            vl."isopuser", 
+            vl."id_cust_account", 
+            vl."isavailable_user", 
+            vl."isavailable_login", 
+            vl."lastlogin_time"
+        FROM view_login vl
+        LEFT JOIN cust_account ca ON vl."id_cust_account" = ca."id_cust_account"
+        WHERE vl."username" = p_username
+          AND vl."pwd" = p_pwd
+          AND vl."isavailable_user" = 1
+          AND vl."isavailable_login" = 1
+          AND (vl."isadmin_login" = TRUE OR ca."statut_flag" = 1);
+
     GET DIAGNOSTICS rows_found = ROW_COUNT;
+
     IF rows_found = 1 THEN
         UPDATE login_user lu
         SET lastlogin_time = CURRENT_TIMESTAMP
         WHERE lu."username" = p_username
-          AND pwd = pwd;
-	  
+          AND lu."pwd" = p_pwd;
+
         IF p_login_stat_FLAG THEN
             INSERT INTO login_stats (idlogin, login_time)
             SELECT lu."id_login_user", CURRENT_TIMESTAMP 
             FROM login_user lu
             WHERE lu."username" = p_username
-              AND pwd = pwd;
+              AND lu."pwd" = p_pwd;
         END IF;
     ELSE
         RAISE EXCEPTION 'LOGIN NOT IDENTIFIED';
     END IF;
-END ;
-$$ LANGUAGE plpgsql;
 
+END;
+$$ LANGUAGE plpgsql;
 
 DROP PROCEDURE IF EXISTS set_cust_account;
 CREATE OR REPLACE PROCEDURE set_cust_account(
@@ -663,6 +665,86 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP FUNCTION IF EXISTS get_custuser_info;
+CREATE OR REPLACE FUNCTION get_custuser_info(
+    p_id_listCA TEXT,
+    p_statutflag INT,
+    p_isactiveCA BOOLEAN,
+    p_isactiveCU BOOLEAN,
+    p_id_listCU TEXT,
+    p_ismain_user BOOLEAN  -- Remplacement de p_isAdmin par p_ismain_user
+)
+RETURNS TABLE(
+    id_cust_user INT,
+    id_cust_account INT,
+    id_login_user INT,
+    gender INT,
+    full_name VARCHAR(96),
+    ismain_user BOOLEAN,
+    email VARCHAR(32),
+    phone_number VARCHAR(32),
+    mobile_number VARCHAR(12),
+    "position" VARCHAR(64),
+    idlogin_insert INT,
+    insertdate TIMESTAMP,
+    deactivation_date TIMESTAMP,
+    username VARCHAR(32),
+    lastlogin_time TIMESTAMP
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        cu."id_cust_user",
+        cu."id_cust_account",
+        cu."id_login_user",
+        cu."gender",
+        cu."full_name",
+        cu."ismain_user",
+        cu."email",
+        cu."phone_number",
+        cu."mobile_number",
+        cu."user_position" AS "position", -- Utilisation de l'alias "position"
+        cu."idlogin_insert",
+        cu."insertdate",
+        cu."deactivation_date",
+        lu."username",
+        lu."lastlogin_time"
+    FROM 
+        cust_user cu
+    JOIN 
+        login_user lu ON cu."id_login_user" = lu."id_login_user"
+    JOIN 
+        cust_account ca ON cu."id_cust_account" = ca."id_cust_account"
+    WHERE 
+        (p_id_listCA IS NULL OR ca."id_cust_account"::TEXT = ANY(STRING_TO_ARRAY(p_id_listCA, ',')))
+        AND (p_id_listCU IS NULL OR cu."id_cust_user"::TEXT = ANY(STRING_TO_ARRAY(p_id_listCU, ',')))
+        AND (p_statutflag IS NULL OR ca."statut_flag" = p_statutflag)
+        AND (p_ismain_user IS NULL OR cu."ismain_user" = p_ismain_user)  -- Utilisation de ismain_user
+        AND (
+            p_isactiveCA IS NULL
+            OR (p_isactiveCA IS NOT TRUE AND (
+                ca."deactivation_date" <= CURRENT_DATE 
+                OR lu."deactivation_date" <= CURRENT_DATE
+            ))
+            OR (p_isactiveCA IS TRUE AND (
+                ca."deactivation_date" > CURRENT_DATE 
+                AND lu."deactivation_date" > CURRENT_DATE
+            ))
+        )
+        AND (
+            p_isactiveCU IS NULL
+            OR (p_isactiveCU IS NOT TRUE AND (
+                cu."deactivation_date" <= CURRENT_DATE 
+                OR lu."deactivation_date" <= CURRENT_DATE
+            ))
+            OR (p_isactiveCU IS TRUE AND (
+                cu."deactivation_date" > CURRENT_DATE 
+                AND lu."deactivation_date" > CURRENT_DATE
+            ))
+        );
+END;
+$$ LANGUAGE plpgsql;
 
 
 DROP FUNCTION IF EXISTS get_country_info;

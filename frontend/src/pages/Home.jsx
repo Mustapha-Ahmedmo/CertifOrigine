@@ -13,8 +13,13 @@ import {
 import { Helmet } from 'react-helmet';
 import './Home.css';
 
+import { useSelector } from 'react-redux';
+
 const Home = () => {
   const [activeTab, setActiveTab] = useState('visa');
+
+
+  const user = useSelector((state) => state.auth.user);
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
