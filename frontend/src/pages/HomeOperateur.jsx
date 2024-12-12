@@ -413,11 +413,11 @@ const HomeOperateur = () => {
                       </td>
                       <td>ss
                       </td>
-                      <td>{registration.main_contact.full_name}</td>
-                      <td>{registration.main_contact.position}</td>
-                      <td>{registration.main_contact.email}</td>
-                      <td>{registration.main_contact.phone_number}</td>
-                      <td>{registration.main_contact.mobile_number}</td>
+                   <td>{registration?.main_contact?.full_name}</td>
+                      <td>{registration?.main_contact?.position}</td>
+                      <td>{registration?.main_contact?.email}</td>
+                      <td>{registration?.main_contact?.phone_number}</td>
+                  <td>{registration?.main_contact?.mobile_number}</td>
                       <td>
                         <button
                           className="submit-button minimal-button"

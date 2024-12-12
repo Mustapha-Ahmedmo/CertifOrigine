@@ -1,4 +1,31 @@
 const sequelize = require('../config/db'); // Correctly import sequelize
+const nodemailer = require('nodemailer');
+const transporter = nodemailer.createTransport({
+  host: 'smtp.mailersend.net',
+  port: 587,
+  secure: false, // TLS requires secure to be false
+  auth: {
+    user: 'MS_FOHidR@trial-jpzkmgqj65ml059v.mlsender.net', // SMTP username
+    pass: '19pD5tCb2JIGSYBf', // SMTP password
+  },
+  tls: {
+    rejectUnauthorized: false, // Avoid issues with self-signed certificates
+  },
+});
+
+const sendEmail = async (to, subject, text) => {
+  try {
+    await transporter.sendMail({
+      from: '"Chambre de commerce de Djibouti" <Test@trial-jpzkmgqj65ml059v.mlsender.net>', // L'expéditeur
+      to, // Le destinataire
+      subject, // Sujet
+      text, // Corps du message
+    });
+    console.log(`Email envoyé à ${to}`);
+  } catch (error) {
+    console.error(`Erreur lors de l'envoi de l'email à ${to}:`, error);
+  }
+};
 
 // Controller to handle set_cust_account
 const executeSetCustAccount = async (req, res) => {
@@ -136,6 +163,12 @@ const executeSetCustUser = async (req, res) => {
 
     // Debugging: Log the result
     console.log('set_cust_user result:', result);
+
+    await sendEmail(
+      email,
+      'Votre compte est en attente de validation',
+      `Bonjour ${full_name},\n\nVotre compte est en attente de validation par un opérateur.\n\nCordialement,\nL'équipe.`
+    );
 
     res.status(200).json({
       message: 'Customer user processed successfully',
@@ -278,6 +311,25 @@ const updateCustAccountStatus = async (req, res) => {
       }
     );
 
+    // Obtenir les informations de l'utilisateur principal
+    const mainContact = await sequelize.query(
+      `SELECT * FROM cust_user WHERE id_cust_account = :id AND ismain_user = TRUE`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (mainContact.length > 0) {
+      const { email, full_name } = mainContact[0];
+
+      // Envoi de l'email pour informer de la validation
+      await sendEmail(
+        email,
+        'Votre compte a été validé',
+        `Bonjour ${full_name},\n\nVotre compte a été validé par un opérateur.\n\nCordialement,\nL'équipe.`
+      );
+    }
     res.status(200).json({
       message: `Statut du compte client avec ID ${id} mis à jour à 1.`,
     });
