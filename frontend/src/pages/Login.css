@@ -145,3 +145,10 @@ body {
     background-color: white;
   }
 }
+
+.login-page-error-message {
+  color: red;
+  font-size: 0.9rem; /* Ajustez la taille selon vos préférences */
+  margin-top: -1rem; /* Ajustement optionnel pour rapprocher le message du champ de mot de passe */
+  margin-bottom: 1rem; /* Espace entre le message et le bouton */
+}

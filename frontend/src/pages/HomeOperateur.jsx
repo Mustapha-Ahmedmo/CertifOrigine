@@ -28,6 +28,7 @@ const HomeOperateur = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const [removingAccounts, setRemovingAccounts] = useState([]); // Nouveau state pour gérer la suppression
 
   useEffect(() => {
     const fetchCustAccounts = async () => {
@@ -55,14 +56,16 @@ const HomeOperateur = () => {
       await updateCustAccountStatus(id);
       alert('Le statut du compte client a été mis à jour avec succès.');
 
-      // Mettre à jour le statut dans l'état local sans recharger toutes les données
-      setCustAccounts(prevAccounts =>
-        prevAccounts.map(account =>
-          account.id_cust_account === id
-            ? { ...account, statut_flag: 1 }
-            : account
-        )
-      );
+      // Ajout de l'id à removingAccounts pour jouer l'animation de disparition
+      setRemovingAccounts((prev) => [...prev, id]);
+
+      // Retrait de la ligne après la durée de la transition (300ms)
+      setTimeout(() => {
+        setCustAccounts((prevAccounts) =>
+          prevAccounts.filter((account) => account.id_cust_account !== id)
+        );
+        setRemovingAccounts((prev) => prev.filter((accountId) => accountId !== id));
+      }, 300);
     } catch (err) {
       alert(`Erreur lors de la mise à jour du statut : ${err.message}`);
     }
@@ -294,7 +297,7 @@ const HomeOperateur = () => {
 
         {activeTab === 'validation' && ordersValidation.length > 0 && (
           <div className="dashboard-item">
-            {/* Exemple si vous aviez un tableau ici, vous le mettriez dans une dashboard-table-container */}
+            {/* S'il y avait des commandes en validation, les afficher ici */}
           </div>
         )}
 
@@ -400,35 +403,40 @@ const HomeOperateur = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {custAccounts.map((registration) => (
-                    <tr key={registration.id_cust_account}>
-                      <td>{formatDate(registration.insertdate)}</td>
-                      <td>{registration.legal_form}</td>
-                      <td>{registration.cust_name}</td>
-                      <td>
-                        <button className="icon-button minimal-button">
-                          <FontAwesomeIcon icon={faEye} title="Ouvrir" />
-                          <span className="button-text">Ouvrir</span>
-                        </button>
-                      </td>
-                      <td>ss
-                      </td>
-                   <td>{registration?.main_contact?.full_name}</td>
-                      <td>{registration?.main_contact?.position}</td>
-                      <td>{registration?.main_contact?.email}</td>
-                      <td>{registration?.main_contact?.phone_number}</td>
-                  <td>{registration?.main_contact?.mobile_number}</td>
-                      <td>
-                        <button
-                          className="submit-button minimal-button"
-                          onClick={() => handleValidate(registration.id_cust_account)}
-                        >
-                          Valider
-                        </button>
-                        <button className="reject-button">Rejeter</button>
-                      </td>
-                    </tr>
-                  ))}
+                  {custAccounts.map((registration) => {
+                    const isRemoving = removingAccounts.includes(registration.id_cust_account);
+                    return (
+                      <tr
+                        key={registration.id_cust_account}
+                        className={isRemoving ? 'fade-out' : ''}
+                      >
+                        <td>{formatDate(registration.insertdate)}</td>
+                        <td>{registration.legal_form}</td>
+                        <td>{registration.cust_name}</td>
+                        <td>
+                          <button className="icon-button minimal-button">
+                            <FontAwesomeIcon icon={faEye} title="Ouvrir" />
+                            <span className="button-text">Ouvrir</span>
+                          </button>
+                        </td>
+                        <td>ss</td>
+                        <td>{registration?.main_contact?.full_name}</td>
+                        <td>{registration?.main_contact?.position}</td>
+                        <td>{registration?.main_contact?.email}</td>
+                        <td>{registration?.main_contact?.phone_number}</td>
+                        <td>{registration?.main_contact?.mobile_number}</td>
+                        <td>
+                          <button
+                            className="submit-button minimal-button"
+                            onClick={() => handleValidate(registration.id_cust_account)}
+                          >
+                            Valider
+                          </button>
+                          <button className="reject-button">Rejeter</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

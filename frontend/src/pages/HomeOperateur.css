@@ -187,6 +187,12 @@
     background-size: 12px;
 }
 
+/* Fade out transition for rows */
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
 /* Media queries pour le responsive */
 @media (max-width: 768px) {
     .home-operator-container {

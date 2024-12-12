@@ -29,16 +29,14 @@ const Login = () => {
             full_name: response.user.full_name,
             email: response.user.email,
             role: response.user.role_user,
-            isadmin_login: response.user.isadmin_login
+            isadmin_login: response.user.isadmin_login,
           },
           token: response.token,
         })
       );
-
-      // Plus de /redirect, on va directement vers /dashboard
       navigate('/dashboard');
     } catch (error) {
-      setErrorMessage(error.message || "Nom d'utilisateur ou mot de passe incorrect");
+      setErrorMessage("Certaines de vos informations sont incorrectes. Réessayez.");
     }
   };
 
@@ -52,10 +50,9 @@ const Login = () => {
         <img src={logo} alt="Logo" className={`login-page-logo ${isMobile ? 'mobile' : ''}`} />
         <h2 className={`login-page-title ${isMobile ? 'mobile' : ''}`}>Connexion</h2>
         <form onSubmit={handleSubmit} className={`login-form ${isMobile ? 'mobile' : ''}`}>
-          {errorMessage && <p className="login-page-error-message">{errorMessage}</p>}
           <input
             type="text"
-            placeholder="Nom d'utilisateur"
+            placeholder="E-mail"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
@@ -69,6 +66,8 @@ const Login = () => {
             required
             className={`login-page-input-field ${isMobile ? 'mobile' : ''}`}
           />
+          {/* Affichage du message d'erreur sous le champ de mot de passe */}
+          {errorMessage && <p className="login-page-error-message">{errorMessage}</p>}
           <button type="submit" className={`login-page-btn-login ${isMobile ? 'mobile' : ''}`}>
             Se connecter
           </button>
