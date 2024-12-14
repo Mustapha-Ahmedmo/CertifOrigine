@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faUser, faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faUser, faBars, faTimes, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import logo from '../assets/logo.jpg';
 import { useTranslation } from 'react-i18next';
 import './HeaderOP.css';
@@ -54,6 +54,16 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
           )}
           <div className="icon-label">Notifications</div>
         </div>
+
+        {/* Nouveau bouton Inscriptions */}
+        <div className="header-icon-container">
+          <Link to="/inscriptions" className="icon-link">
+            <FontAwesomeIcon icon={faUserPlus} className="header-icon" />
+            {/* Vous pouvez ajouter un badge dynamique selon le nombre d'inscriptions non traitées */}
+            <div className="icon-label">Inscriptions</div>
+          </Link>
+        </div>
+
         <div className="header-icon-container">
           <FontAwesomeIcon icon={faUser} className="header-icon" onClick={toggleDropdown} />
           {dropdownOpen && (

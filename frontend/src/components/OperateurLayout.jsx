@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Header from './HeaderOp'; // Assurez-vous que ce nom correspond à votre composant
+import HeaderOP from './HeaderOP'; 
 import Menu from './MenuOp';
 import Footer from './Footer';
 import { Outlet } from 'react-router-dom';
@@ -11,7 +11,6 @@ const OperateurLayout = () => {
     setIsMenuOpen((prev) => !prev);
   };
 
-  // Empêche le scroll du body quand le menu est ouvert sur mobile, si souhaité
   useEffect(() => {
     if (isMenuOpen && window.innerWidth <= 768) {
       document.body.classList.add('menu-open');
@@ -22,10 +21,9 @@ const OperateurLayout = () => {
 
   return (
     <>
-      <Header toggleMenu={toggleMenu} isMenuOpen={isMenuOpen} />
+      <HeaderOP toggleMenu={toggleMenu} isMenuOpen={isMenuOpen} />
       <Menu toggleMenu={toggleMenu} isMenuOpen={isMenuOpen} />
       
-      {/* Overlay pour fermer le menu sur mobile en cliquant à côté, similaire au premier layout */}
       {isMenuOpen && window.innerWidth <= 768 && (
         <div className="menu-overlay" onClick={toggleMenu} aria-hidden="true"></div>
       )}

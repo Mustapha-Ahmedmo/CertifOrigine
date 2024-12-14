@@ -13,72 +13,18 @@ import './HomeOperateur.css';
 import Step5 from '../components/orders/Create/steps/Step5';
 import ClientProfile from '../pages/ClientProfile';
 import { useSelector } from 'react-redux';
-import { getCustAccountInfo, updateCustAccountStatus } from '../services/apiServices';
-import { formatDate } from '../utils/dateUtils';
 
 const HomeOperateur = () => {
   const [activeTab, setActiveTab] = useState('visa');
-  const [activeInscriptionsTab, setActiveInscriptionsTab] = useState('newRegistrations');
   const [showModal, setShowModal] = useState(false);
   const [modalValues, setModalValues] = useState(null);
   const [showSecondModal, setShowSecondModal] = useState(false);
   const [secondModalContent, setSecondModalContent] = useState(null);
 
-  const [custAccounts, setCustAccounts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const [removingAccounts, setRemovingAccounts] = useState([]); // Nouveau state pour gérer la suppression
-
-  useEffect(() => {
-    const fetchCustAccounts = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await getCustAccountInfo(null, 0, true); // statutflag = 0, isactive = true
-        setCustAccounts(response.data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCustAccounts();
-  }, []);
-
-  const handleValidate = async (id) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir valider cette inscription ?')) {
-      return;
-    }
-
-    try {
-      await updateCustAccountStatus(id);
-      alert('Le statut du compte client a été mis à jour avec succès.');
-
-      // Ajout de l'id à removingAccounts pour jouer l'animation de disparition
-      setRemovingAccounts((prev) => [...prev, id]);
-
-      // Retrait de la ligne après la durée de la transition (300ms)
-      setTimeout(() => {
-        setCustAccounts((prevAccounts) =>
-          prevAccounts.filter((account) => account.id_cust_account !== id)
-        );
-        setRemovingAccounts((prev) => prev.filter((accountId) => accountId !== id));
-      }, 300);
-    } catch (err) {
-      alert(`Erreur lors de la mise à jour du statut : ${err.message}`);
-    }
-  };
-
   const user = useSelector((state) => state.auth.user);
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
-  };
-
-  const handleInscriptionsTabClick = (tab) => {
-    setActiveInscriptionsTab(tab);
   };
 
   const openModal = (values) => {
@@ -102,7 +48,7 @@ const HomeOperateur = () => {
     setShowSecondModal(false);
   };
 
-  // Données exemple
+  // Données d'exemple
   const ordersVisa = [
     {
       id: 1,
@@ -144,7 +90,6 @@ const HomeOperateur = () => {
   ];
 
   const ordersValidation = [];
-
   const ordersPayment = [
     {
       id: 1,
@@ -173,24 +118,8 @@ const HomeOperateur = () => {
     },
   ];
 
-  // Options dropdown INSCRIPTIONS (mobile)
-  const inscriptionsOptions = [
-    {
-      value: 'newRegistrations',
-      label: 'Nouvelles Inscriptions',
-    },
-    {
-      value: 'additionalRequest',
-      label: 'Demande de complément',
-    },
-  ];
-
   const handleCommandsDropdownChange = (e) => {
     setActiveTab(e.target.value);
-  };
-
-  const handleInscriptionsDropdownChange = (e) => {
-    setActiveInscriptionsTab(e.target.value);
   };
 
   return (
@@ -297,7 +226,7 @@ const HomeOperateur = () => {
 
         {activeTab === 'validation' && ordersValidation.length > 0 && (
           <div className="dashboard-item">
-            {/* S'il y avait des commandes en validation, les afficher ici */}
+            {/* Afficher les commandes en validation si nécessaire */}
           </div>
         )}
 
@@ -345,98 +274,6 @@ const HomeOperateur = () => {
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Section INSCRIPTIONS */}
-      <div className="inscriptions-title highlight-text">INSCRIPTIONS</div>
-
-      {/* Dropdown mobile pour INSCRIPTIONS */}
-      <div className="inscriptions-dropdown-container">
-        <select className="inscriptions-dropdown" value={activeInscriptionsTab} onChange={handleInscriptionsDropdownChange}>
-          {inscriptionsOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Tabs desktop pour INSCRIPTIONS */}
-      <div className="tabs-container inscriptions-tabs-container">
-        <div
-          className={`tab-item ${activeInscriptionsTab === 'newRegistrations' ? 'active' : ''}`}
-          onClick={() => handleInscriptionsTabClick('newRegistrations')}
-        >
-          <FontAwesomeIcon icon={faPlus} className="tab-icon" /> Nouvelles Inscriptions
-        </div>
-        <div
-          className={`tab-item ${activeInscriptionsTab === 'additionalRequest' ? 'active' : ''}`}
-          onClick={() => handleInscriptionsTabClick('additionalRequest')}
-        >
-          <FontAwesomeIcon icon={faPen} className="tab-icon" /> Demande de complément
-        </div>
-      </div>
-
-      <div className="dashboard-grid">
-        {activeInscriptionsTab === 'newRegistrations' && (
-          <div className="dashboard-item">
-            <div className="dashboard-table-container">
-              <table className="dashboard-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Catégorie</th>
-                    <th>Client</th>
-                    <th>Licence ZF</th>
-                    <th>Autres</th>
-                    <th>Contact Principal</th>
-                    <th>Fonction</th>
-                    <th>E-mail</th>
-                    <th>Num. tel</th>
-                    <th>N° portable</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {custAccounts.map((registration) => {
-                    const isRemoving = removingAccounts.includes(registration.id_cust_account);
-                    return (
-                      <tr
-                        key={registration.id_cust_account}
-                        className={isRemoving ? 'fade-out' : ''}
-                      >
-                        <td>{formatDate(registration.insertdate)}</td>
-                        <td>{registration.legal_form}</td>
-                        <td>{registration.cust_name}</td>
-                        <td>
-                          <button className="icon-button minimal-button">
-                            <FontAwesomeIcon icon={faEye} title="Ouvrir" />
-                            <span className="button-text">Ouvrir</span>
-                          </button>
-                        </td>
-                        <td>ss</td>
-                        <td>{registration?.main_contact?.full_name}</td>
-                        <td>{registration?.main_contact?.position}</td>
-                        <td>{registration?.main_contact?.email}</td>
-                        <td>{registration?.main_contact?.phone_number}</td>
-                        <td>{registration?.main_contact?.mobile_number}</td>
-                        <td>
-                          <button
-                            className="submit-button minimal-button"
-                            onClick={() => handleValidate(registration.id_cust_account)}
-                          >
-                            Valider
-                          </button>
-                          <button className="reject-button">Rejeter</button>
-                        </td>
-                      </tr>
-                    );
-                  })}
                 </tbody>
               </table>
             </div>

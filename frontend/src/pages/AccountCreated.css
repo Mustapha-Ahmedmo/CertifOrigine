@@ -1,0 +1,77 @@
+/* Page AccountCreated */
+
+/* Conteneur principal */
+.account-created-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh; /* Prend toute la hauteur de l'écran */
+    background-color: #f9f9f9; /* Fond légèrement gris */
+    padding: 20px;
+  }
+  
+  /* Boîte de contenu */
+  .account-created-box {
+    max-width: 600px;
+    width: 100%;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px; /* Arrondir les coins */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  /* Titre principal */
+  .account-created-box h1 {
+    font-size: 2em;
+    color: #004080; /* Bleu comme les titres de Register */
+    margin-bottom: 20px;
+  }
+  
+  /* Message */
+  .account-created-box p {
+    font-size: 1.2em;
+    color: #555; /* Texte gris pour le message */
+    line-height: 1.6;
+    margin-bottom: 30px;
+  }
+  
+  /* Bouton pour rediriger */
+  .account-created-button {
+    display: inline-block;
+    padding: 12px 30px;
+    background-color: #004080; /* Même couleur que le bouton Créer */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+  }
+  
+  .account-created-button:hover {
+    background-color: #003366; /* Variation plus foncée */
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .account-created-box {
+      padding: 20px;
+    }
+  
+    .account-created-box h1 {
+      font-size: 1.8em;
+    }
+  
+    .account-created-box p {
+      font-size: 1em;
+    }
+  
+    .account-created-button {
+      padding: 10px 20px;
+      font-size: 0.95em;
+    }
+  }
+  

@@ -233,7 +233,7 @@ const Register = () => {
 
       // Redirection vers la page de login après 1.5 secondes
       setTimeout(() => {
-        navigate('/login');
+        navigate('/account-created');
       }, 1500);
 
     } catch (err) {

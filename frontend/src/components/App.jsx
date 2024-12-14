@@ -8,6 +8,8 @@ import RegisterOP from '../pages/RegisterOP';
 import SimpleLayout from '../components/SimpleLayout';
 import ProtectedRoute from './ProtectedRoute';
 import DashboardWrapper from '../pages/DashboardWrapper';
+import AccountCreated from '../pages/AccountCreated';
+import Inscriptions from '../pages/Inscriptions';
 
 // Import de vos pages du dashboard
 import Home from '../pages/Home';
@@ -18,6 +20,7 @@ import ToPay from '../components/orders/ToPay';
 import ReturnedOrders from '../components/orders/ReturnedOrders';
 import CompletedOrdersThisYear from '../components/orders/CompletedOrdersThisYear';
 import CreateOrder from '../components/orders/Create/CreateOrder';
+
 
 const App = () => (
   <Routes>
@@ -62,6 +65,13 @@ const App = () => (
     <Route path="/reset-password" element={<SimpleLayout />}>
       <Route index element={<ResetPassword />} />
     </Route>
+    <Route path="/account-created" element={<SimpleLayout />}>
+      <Route index element={<AccountCreated />} />
+    </Route>
+    <Route path="/inscriptions" element={<SimpleLayout />}>
+      <Route index element={<Inscriptions />} />
+    </Route>
+    
   </Routes>
 );
 

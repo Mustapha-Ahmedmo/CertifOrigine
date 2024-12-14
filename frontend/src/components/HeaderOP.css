@@ -1,102 +1,149 @@
 .header {
-    background-color: #ffffff;
-    padding: 0 20px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    height: 60px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1000;
-    overflow: hidden;
+  background-color: #ffffff;
+  padding: 0 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 60px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 40px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  margin-right: 25px;
+  gap: 30px;
+}
+
+.header-icon-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.header-icon {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.icon-label {
+  font-size: 12px;
+  color: #111111;
+  margin-top: 4px;
+}
+
+.badge {
+  position: absolute;
+  background-color: red;
+  color: white;
+  padding: 2px 5px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  top: -5px;
+  right: -5px;
+}
+
+.language-container {
+  position: relative;
+}
+
+.language-button {
+  background-color: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #333;
+  padding: 5px;
+}
+
+.icon-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.dropdown {
+  position: absolute;
+  top: 40px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-align: left;
+  padding: 10px;
+}
+
+.dropdown a {
+  display: block;
+  text-decoration: none;
+  color: #333;
+  margin: 5px 0;
+}
+
+.dropdown a:hover {
+  background-color: #f0f0f0;
+}
+
+.language-dropdown {
+  position: absolute;
+  top: 35px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.language-dropdown button {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 5px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.language-dropdown button:hover {
+  background-color: #f0f0f0;
+}
+
+.mobile-menu-button {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-button {
+    display: block;
+    cursor: pointer;
   }
-  
-  .header-left {
-    display: flex;
-    align-items: center;
-  }
-  
-  .logo-container {
-    display: flex;
-    align-items: center;
-  }
-  
-  .logo {
-    height: 40px;
-  }
-  
+
   .header-right {
-    display: flex;
-    align-items: center;
-    margin-right: 25px;
-    gap: 30px;
+    gap: 10px;
+    margin-right: 10px;
   }
-  
-  .welcome-message {
-    display: flex;
-    align-items: center;
-  }
-
-  .welcome-message select {
-    margin-top: 50px;
-  }
-  
-  .welcome-message label {
-    margin-right: 5px;
-    font-weight: bold;
-    margin-top: 50px;
-  }
-
-  
-  
-  .header-icon-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-  }
-  
-  .header-icon {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-  }
-  
-  .icon-label {
-    font-size: 12px;
-    color: #111111;
-    margin-top: 4px;
-  }
-  
-  .badge {
-    position: absolute;
-    background-color: red;
-    color: white;
-    padding: 2px 5px;
-    border-radius: 50%;
-    font-size: 12px;
-    font-weight: bold;
-    top: -5px;
-    right: -5px;
-  }
-  
-  .language-container {
-    position: relative;
-  }
-  
-  .language-button {
-    background-color: transparent;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    color: #333;
-    padding: 5px;
-  }
-  
-  .header-right > .welcome-message {
-    margin-right: 20px;
-  }
-  
+}
