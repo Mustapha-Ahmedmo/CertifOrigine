@@ -14,11 +14,10 @@ const DashboardWrapper = () => {
 
   // Si l'utilisateur est un opérateur, on le redirige vers /dashboard/operator
   useEffect(() => {
-    if (user.isadmin_login) {
+    if (user.isadmin_login && location.pathname === '/dashboard') {
       navigate('/dashboard/operator', { replace: true });
     }
-  }, [user, navigate]);
-
+  }, [user, location.pathname, navigate]);
   if (user.isadmin_login) {
     // Layout opérateur avec Outlet
     return (

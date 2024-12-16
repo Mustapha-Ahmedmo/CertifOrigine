@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { getCustAccountInfo, updateCustAccountStatus } from '../services/apiServices';
+import {
+  getCustAccountInfo,
+  updateCustAccountStatus,
+  rejectCustAccount,
+} from '../services/apiServices';
 import { formatDate } from '../utils/dateUtils';
 import './Inscriptions.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
 const Inscriptions = () => {
   const [custAccounts, setCustAccounts] = useState([]);
   const [removingAccounts, setRemovingAccounts] = useState([]);
+  const [expandedContacts, setExpandedContacts] = useState({});
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [rejectingAccountId, setRejectingAccountId] = useState(null);
 
   useEffect(() => {
     const fetchCustAccounts = async () => {
@@ -39,6 +49,48 @@ const Inscriptions = () => {
     }
   };
 
+  const handleReject = (id) => {
+    setRejectingAccountId(id);
+    setShowRejectModal(true);
+  };
+
+  const submitRejection = async () => {
+    if (!rejectionReason.trim()) {
+      alert('Veuillez entrer une raison de rejet.');
+      return;
+    }
+
+    try {
+      // Replace with the current operator ID, e.g., from Redux or localStorage
+      const idlogin = 1; 
+
+      await rejectCustAccount(rejectingAccountId, rejectionReason, idlogin);
+
+      alert('Le compte client a été rejeté avec succès.');
+      setRemovingAccounts((prev) => [...prev, rejectingAccountId]);
+      setTimeout(() => {
+        setCustAccounts((prevAccounts) =>
+          prevAccounts.filter((account) => account.id_cust_account !== rejectingAccountId)
+        );
+        setRemovingAccounts((prev) => prev.filter((accountId) => accountId !== rejectingAccountId));
+      }, 300);
+
+      // Close modal and reset rejection state
+      setShowRejectModal(false);
+      setRejectingAccountId(null);
+      setRejectionReason('');
+    } catch (err) {
+      alert(`Erreur lors du rejet : ${err.message}`);
+    }
+  };
+
+  const toggleContactDetails = (id) => {
+    setExpandedContacts((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
   return (
     <div className="inscriptions-page-container">
       <h1>Inscriptions à valider</h1>
@@ -49,53 +101,88 @@ const Inscriptions = () => {
               <th>Date</th>
               <th>Catégorie</th>
               <th>Client</th>
-              <th>Licence ZF</th>
-              <th>Autres</th>
+              <th>Zone Franche</th>
+              <th>Fichier Justificatifs</th>
               <th>Contact Principal</th>
-              <th>Fonction</th>
-              <th>E-mail</th>
-              <th>Num. tel</th>
-              <th>N° portable</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {custAccounts.map((registration) => {
               const isRemoving = removingAccounts.includes(registration.id_cust_account);
+              const isExpanded = expandedContacts[registration.id_cust_account];
               return (
-                <tr
-                  key={registration.id_cust_account}
-                  className={isRemoving ? 'fade-out' : ''}
-                >
-                  <td>{formatDate(registration.insertdate)}</td>
-                  <td>{registration.legal_form}</td>
-                  <td>{registration.cust_name}</td>
-                  <td>
-                    <button className="icon-button minimal-button">
-                      Ouvrir
-                    </button>
-                  </td>
-                  <td>ss</td>
-                  <td>{registration?.main_contact?.full_name}</td>
-                  <td>{registration?.main_contact?.position}</td>
-                  <td>{registration?.main_contact?.email}</td>
-                  <td>{registration?.main_contact?.phone_number}</td>
-                  <td>{registration?.main_contact?.mobile_number}</td>
-                  <td>
-                    <button
-                      className="submit-button minimal-button"
-                      onClick={() => handleValidate(registration.id_cust_account)}
-                    >
-                      Valider
-                    </button>
-                    <button className="reject-button">Rejeter</button>
-                  </td>
-                </tr>
+                <React.Fragment key={registration.id_cust_account}>
+                  <tr className={isRemoving ? 'fade-out' : ''}>
+                    <td>{formatDate(registration.insertdate)}</td>
+                    <td>{registration.legal_form}</td>
+                    <td>{registration.cust_name}</td>
+                    <td>{registration.in_free_zone ? 'Oui' : 'Non'}</td>
+                    <td>ss</td>
+                    <td>
+                      <button
+                        className="minimal-button toggle-contact-button"
+                        onClick={() => toggleContactDetails(registration.id_cust_account)}
+                      >
+                        <FontAwesomeIcon icon={isExpanded ? faEyeSlash : faEye} />
+                        <span className="button-text">{isExpanded ? 'Fermer' : 'Ouvrir'}</span>
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        className="submit-button minimal-button"
+                        onClick={() => handleValidate(registration.id_cust_account)}
+                      >
+                        Valider
+                      </button>
+                      <button
+                        className="reject-button minimal-button"
+                        onClick={() => handleReject(registration.id_cust_account)}
+                      >
+                        Rejeter
+                      </button>
+                    </td>
+                  </tr>
+                  {isExpanded && (
+                    <tr className="contact-details-row">
+                      <td colSpan="7">
+                        <div className="contact-details">
+                          <p><strong>Nom: </strong>{registration?.main_contact?.full_name || 'N/A'}</p>
+                          <p><strong>Fonction: </strong>{registration?.main_contact?.position || 'N/A'}</p>
+                          <p><strong>Email: </strong>{registration?.main_contact?.email || 'N/A'}</p>
+                          <p><strong>Tel: </strong>{registration?.main_contact?.phone_number || 'N/A'}</p>
+                          <p><strong>Portable: </strong>{registration?.main_contact?.mobile_number || 'N/A'}</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               );
             })}
           </tbody>
         </table>
       </div>
+
+      {showRejectModal && (
+        <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Raison du rejet</h2>
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="Entrez la raison du rejet..."
+            ></textarea>
+            <div className="modal-actions">
+              <button onClick={submitRejection} className="reject-button">
+                Confirmer le rejet
+              </button>
+              <button onClick={() => setShowRejectModal(false)} className="cancel-button">
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

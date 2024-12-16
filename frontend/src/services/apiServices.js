@@ -180,3 +180,26 @@ export const getCustAccountInfo = async (idList = null, statutflag = null, isact
     throw error;
   }
 };
+
+export const rejectCustAccount = async (id, reason, idlogin) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/rejectCustAccount/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include JWT token if needed
+      },
+      body: JSON.stringify({ reason, idlogin }), // Include reason and operator ID
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Rejection of customer account failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error during customer account rejection:', error);
+    throw error;
+  }
+};

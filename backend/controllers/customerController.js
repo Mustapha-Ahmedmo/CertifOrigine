@@ -1,12 +1,12 @@
 const sequelize = require('../config/db'); // Correctly import sequelize
 const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
-  host: 'smtp.mailersend.net',
+  host: 'mail.gandi.net',
   port: 587,
   secure: false, // TLS requires secure to be false
   auth: {
-    user: 'MS_FOHidR@trial-jpzkmgqj65ml059v.mlsender.net', // SMTP username
-    pass: '19pD5tCb2JIGSYBf', // SMTP password
+    user: 'myfolioreport@maesys.fr', // SMTP username
+    pass: 'MyFolioReport@123', // SMTP password
   },
   tls: {
     rejectUnauthorized: false, // Avoid issues with self-signed certificates
@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
 const sendEmail = async (to, subject, text) => {
   try {
     await transporter.sendMail({
-      from: '"Chambre de commerce de Djibouti" <Test@trial-jpzkmgqj65ml059v.mlsender.net>', // L'expéditeur
+      from: '"Chambre de commerce de Djibouti" <myfolioreport@maesys.fr>', // L'expéditeur
       to, // Le destinataire
       subject, // Sujet
       text, // Corps du message
@@ -342,5 +342,112 @@ const updateCustAccountStatus = async (req, res) => {
   }
 };
 
+const rejectCustAccount = async (req, res) => {
+  try {
+    const { id } = req.params; // ID of the customer account to reject
+    const { reason, idlogin } = req.body; // Rejection reason and operator ID
 
-module.exports = { executeGetCustAccountInfo, executeSetCustAccount, executeSetCustUser, updateCustAccountStatus };
+    // Validate inputs
+    if (!id) {
+      return res.status(400).json({
+        message: 'ID du compte client requis.',
+      });
+    }
+
+    if (!reason || reason.trim() === '') {
+      return res.status(400).json({
+        message: 'La raison du rejet est requise.',
+      });
+    }
+
+    // Fetch the current details of the customer account
+    const account = await sequelize.query(
+      `SELECT * FROM cust_account WHERE id_cust_account = :id`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (account.length === 0) {
+      return res.status(404).json({
+        message: `Compte client avec ID ${id} non trouvé.`,
+      });
+    }
+
+    const accountDetails = account[0];
+
+    // Call the stored procedure to update the account
+    await sequelize.query(
+      `CALL set_cust_account(
+        :legal_form, 
+        :cust_name, 
+        :trade_registration_num, 
+        :in_free_zone, 
+        :identification_number, 
+        :register_number, 
+        :full_address, 
+        :id_sector, 
+        :other_sector, 
+        :id_country, 
+        :statut_flag, 
+        :idlogin, 
+        :billed_cust_name, 
+        :bill_full_address, 
+        :id_cust_account
+      )`,
+      {
+        replacements: {
+          legal_form: accountDetails.legal_form,
+          cust_name: accountDetails.cust_name,
+          trade_registration_num: accountDetails.trade_registration_num,
+          in_free_zone: accountDetails.in_free_zone,
+          identification_number: accountDetails.identification_number,
+          register_number: accountDetails.register_number,
+          full_address: accountDetails.full_address,
+          id_sector: accountDetails.id_sector,
+          other_sector: accountDetails.other_sector,
+          id_country: accountDetails.id_country,
+          statut_flag: 4, // Set to rejected
+          idlogin, // Operator ID
+          billed_cust_name: accountDetails.billed_cust_name,
+          bill_full_address: accountDetails.bill_full_address,
+          id_cust_account: id,
+        },
+        type: sequelize.QueryTypes.RAW,
+      }
+    );
+
+    // Fetch the main contact for the account
+    const mainContact = await sequelize.query(
+      `SELECT * FROM cust_user WHERE id_cust_account = :id AND ismain_user = TRUE`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (mainContact.length > 0) {
+      const { email, full_name } = mainContact[0];
+
+      // Send an email to notify the rejection
+      await sendEmail(
+        email,
+        'Votre compte a été rejeté',
+        `Bonjour ${full_name},\n\nVotre compte a été rejeté par un opérateur.\n\nRaison du rejet : ${reason}\n\nCordialement,\nL'équipe.`
+      );
+    }
+
+    res.status(200).json({
+      message: `Compte client avec ID ${id} a été rejeté.`,
+    });
+  } catch (error) {
+    console.error('Erreur lors du rejet du compte client:', error);
+    res.status(500).json({
+      message: 'Erreur lors du rejet du compte client.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
+
+module.exports = { rejectCustAccount, executeGetCustAccountInfo, executeSetCustAccount, executeSetCustUser, updateCustAccountStatus };

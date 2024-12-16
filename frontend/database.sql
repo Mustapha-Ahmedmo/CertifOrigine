@@ -114,7 +114,6 @@ CREATE TABLE CUST_USER (
 );
 
 
-
 DO $$ 
 BEGIN 
     IF EXISTS (SELECT 1 FROM pg_views WHERE viewname = 'view_login') THEN
@@ -122,73 +121,72 @@ BEGIN
     END IF;
 END $$ LANGUAGE plpgsql;
 
-    CREATE VIEW view_login AS
+CREATE VIEW view_login AS
+SELECT 
+    lu.id_login_user,
+    uv.idforeign, 
+    lu.username AS username, 
+    lu.pwd, 
+    CASE
+     WHEN uv.isopuser = TRUE THEN lu.isadmin_login 
+    ELSE FALSE 
+    END AS isadmin_login, 
+    uv.role_user,
+    uv.isopuser,
+    uv.isavailable_user,
+    CASE 
+        WHEN lu.deactivation_date >= CURRENT_DATE THEN 1
+        ELSE 0 
+    END AS isavailable_login,
+    lu.lastlogin_time,
+    uv.full_name AS full_name,
+    uv.companyname AS companyname,
+    uv.id_cust_account AS id_cust_account,
+    uv.email AS email
+FROM 
+    login_user lu
+INNER JOIN (
     SELECT 
-        lu.id_login_user,
-        uv.idforeign, 
-        lu.username AS username, 
-        lu.pwd, 
-        CASE
-        WHEN uv.isopuser = TRUE THEN lu.isadmin_login 
-        ELSE FALSE 
-        END AS isadmin_login, 
-        uv.role_user,
-        uv.isopuser,
-        uv.isavailable_user,
+        opu.id_login_user, 
+        opu.id_op_user AS idforeign, 
+        1 AS type_login, 
+        'CCI' AS companyname, 
+        opu.full_name AS full_name, 
+        opu.phone_number AS tel, 
+        opu.email AS email, 
+        opu.roles AS role_user,
+        TRUE AS isopuser,
         CASE 
-            WHEN lu.deactivation_date >= CURRENT_DATE THEN 1
+            WHEN opu.deactivation_date >= CURRENT_DATE THEN 1
             ELSE 0 
-        END AS isavailable_login,
-        lu.lastlogin_time,
-        uv.full_name AS full_name,
-        uv.companyname AS companyname,
-        uv.id_cust_account AS id_cust_account,
-        uv.email AS email
+        END AS isavailable_user,
+        0 AS id_cust_account
     FROM 
-        login_user lu
-    INNER JOIN (
-        SELECT 
-            opu.id_login_user, 
-            opu.id_op_user AS idforeign, 
-            1 AS type_login, 
-            'CCI' AS companyname, 
-            opu.full_name AS full_name, 
-            opu.phone_number AS tel, 
-            opu.email AS email, 
-            opu.roles AS role_user,
-            TRUE AS isopuser,
-            CASE 
-                WHEN opu.deactivation_date >= CURRENT_DATE THEN 1
-                ELSE 0 
-            END AS isavailable_user,
-            0 AS id_cust_account
-        FROM 
-            op_user opu
-        UNION ALL
-        SELECT 
-            cu.id_login_user, 
-            cu.id_cust_user AS idforeign, 
-            2 AS type_login, 
-            ca.cust_name AS companyname, 
-            cu.full_name AS full_name, 
-            cu.phone_number AS tel, 
-            cu.email AS email, 
-            cu.ismain_user::integer AS role_user,
-            FALSE AS isopuser,
-            CASE 
-                WHEN cu.deactivation_date >= CURRENT_DATE THEN 1
-                ELSE 0 
-            END AS isavailable_user,
-            cu.id_cust_account AS id_cust_account
-        FROM 
-            cust_user cu
-        INNER JOIN 
-            cust_account ca ON ca.id_cust_account = cu.id_cust_account
-    ) AS uv
-    ON lu.id_login_user = uv.id_login_user;
+        op_user opu
+    UNION ALL
+    SELECT 
+        cu.id_login_user, 
+        cu.id_cust_user AS idforeign, 
+        2 AS type_login, 
+        ca.cust_name AS companyname, 
+        cu.full_name AS full_name, 
+        cu.phone_number AS tel, 
+        cu.email AS email, 
+        cu.ismain_user::integer AS role_user,
+        FALSE AS isopuser,
+        CASE 
+            WHEN cu.deactivation_date >= CURRENT_DATE AND ca.statut_flag=2 THEN 1
+            ELSE 0 
+        END AS isavailable_user,
+        cu.id_cust_account AS id_cust_account
+    FROM 
+        cust_user cu
+    INNER JOIN 
+        cust_account ca ON ca.id_cust_account = cu.id_cust_account
+) AS uv
+ON lu.id_login_user = uv.id_login_user;
 
 
--- Create the stored procedure
 DROP FUNCTION IF EXISTS spSel_Credentials;
 CREATE FUNCTION spSel_Credentials(
     p_username VARCHAR(40),
@@ -196,67 +194,63 @@ CREATE FUNCTION spSel_Credentials(
     p_login_stat_FLAG BOOLEAN DEFAULT FALSE
 )
 RETURNS TABLE (
-    id_login_user INT,
-    idforeign INT,
-    full_name VARCHAR(96),
-    email VARCHAR(32),
-    companyname VARCHAR(96),
-    username VARCHAR(32),
-    isadmin_login BOOLEAN,
-    role_user INT,
-    isopuser BOOLEAN,
-    id_cust_account INT,
-    isavailable_user INT,
-    isavailable_login INT,
-    lastlogin_time TIMESTAMP
+id_login_user INT,
+idforeign INT,
+full_name VARCHAR(96),
+email VARCHAR(32),
+companyname VARCHAR(96),
+username VARCHAR(32),
+isadmin_login BOOLEAN,
+role_user INT,
+isopuser BOOLEAN,
+id_cust_account INT,
+isavailable_user INT,
+isavailable_login INT,
+lastlogin_time TIMESTAMP
 )
 AS $$
 DECLARE
     rows_found INT;
 BEGIN
-    RETURN QUERY
-        SELECT 
-            vl."id_login_user", 
-            vl."idforeign", 
-            vl."full_name", 
-            vl."email", 
-            vl."companyname", 
-            vl."username", 
-            vl."isadmin_login", 
-            vl."role_user", 
-            vl."isopuser", 
-            vl."id_cust_account", 
-            vl."isavailable_user", 
-            vl."isavailable_login", 
-            vl."lastlogin_time"
-        FROM view_login vl
-        LEFT JOIN cust_account ca ON vl."id_cust_account" = ca."id_cust_account"
-        WHERE vl."username" = p_username
-          AND vl."pwd" = p_pwd
-          AND vl."isavailable_user" = 1
-          AND vl."isavailable_login" = 1
-          AND (vl."isadmin_login" = TRUE OR ca."statut_flag" = 1);
-
+RETURN QUERY
+	SELECT 
+	vl."id_login_user", 
+	vl."idforeign", 
+	vl."full_name", 
+	vl."email", 
+	vl."companyname", 
+	vl."username", 
+    vl."isadmin_login", 
+	vl."role_user", 
+	vl."isopuser", 
+	vl."id_cust_account", 
+	vl."isavailable_user", 
+	vl."isavailable_login", 
+	vl."lastlogin_time"
+    FROM view_login vl
+    WHERE vl."username" = p_username
+      AND pwd = p_pwd
+      AND vl."isavailable_user" = 1
+      AND vl."isavailable_login" = 1;
+    
     GET DIAGNOSTICS rows_found = ROW_COUNT;
-
     IF rows_found = 1 THEN
         UPDATE login_user lu
         SET lastlogin_time = CURRENT_TIMESTAMP
         WHERE lu."username" = p_username
-          AND lu."pwd" = p_pwd;
-
+          AND pwd = pwd;
+	  
         IF p_login_stat_FLAG THEN
             INSERT INTO login_stats (idlogin, login_time)
             SELECT lu."id_login_user", CURRENT_TIMESTAMP 
             FROM login_user lu
             WHERE lu."username" = p_username
-              AND lu."pwd" = p_pwd;
+              AND pwd = pwd;
         END IF;
     ELSE
         RAISE EXCEPTION 'LOGIN NOT IDENTIFIED';
     END IF;
-
-END;
+END ;
 $$ LANGUAGE plpgsql;
 
 DROP PROCEDURE IF EXISTS set_cust_account;

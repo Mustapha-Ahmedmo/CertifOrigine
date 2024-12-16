@@ -20,6 +20,7 @@ import ToPay from '../components/orders/ToPay';
 import ReturnedOrders from '../components/orders/ReturnedOrders';
 import CompletedOrdersThisYear from '../components/orders/CompletedOrdersThisYear';
 import CreateOrder from '../components/orders/Create/CreateOrder';
+import OperateurLayout from './OperateurLayout';
 
 
 const App = () => (
@@ -45,8 +46,11 @@ const App = () => (
       <Route path="create-order" element={<CreateOrder />} />
 
       {/* Routes pour les opérateurs */}
-      <Route path="operator" element={<HomeOperateur />} />
-      <Route path="to-validateOP" element={<ToValidateOP />} />
+      <Route path="operator" element={<OperateurLayout />}>
+        <Route index element={<HomeOperateur />} />
+        <Route path="to-validateOP" element={<ToValidateOP />} />
+        <Route path="inscriptions" element={<Inscriptions />} />
+      </Route>
     </Route>
 
     {/* Routes simples avec SimpleLayout */}
@@ -68,9 +72,7 @@ const App = () => (
     <Route path="/account-created" element={<SimpleLayout />}>
       <Route index element={<AccountCreated />} />
     </Route>
-    <Route path="/inscriptions" element={<SimpleLayout />}>
-      <Route index element={<Inscriptions />} />
-    </Route>
+   
     
   </Routes>
 );

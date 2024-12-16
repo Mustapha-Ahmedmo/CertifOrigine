@@ -57,7 +57,7 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
 
         {/* Nouveau bouton Inscriptions */}
         <div className="header-icon-container">
-          <Link to="/inscriptions" className="icon-link">
+          <Link to="/dashboard/operator/inscriptions" className="icon-link">
             <FontAwesomeIcon icon={faUserPlus} className="header-icon" />
             {/* Vous pouvez ajouter un badge dynamique selon le nombre d'inscriptions non traitées */}
             <div className="icon-label">Inscriptions</div>
