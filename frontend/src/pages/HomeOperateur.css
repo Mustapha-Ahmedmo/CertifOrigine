@@ -226,3 +226,44 @@
         margin-bottom: 20px;
     }
 }
+
+.payment-modal-header {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 20px;
+  }
+  
+  .payment-modal-client-section {
+    margin-bottom: 20px;
+  }
+  
+  .payment-modal-client {
+    margin-bottom: 20px;
+    font-size: 0.9em;
+    line-height: 1.4em;
+  }
+  
+  .payment-modal-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  
+  .payment-modal-fields > div {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .payment-modal-fields label {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .payment-modal-reglement {
+    margin-top: 20px;
+  }
+  
+  .payment-modal-checkbox {
+    margin-top: 10px;
+  }
+  

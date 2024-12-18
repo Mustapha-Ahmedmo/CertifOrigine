@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboardList,
   faDollarSign,
   faCheckCircle,
-  faPen,
-  faPlus,
   faEye,
 } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
@@ -20,6 +18,10 @@ const HomeOperateur = () => {
   const [modalValues, setModalValues] = useState(null);
   const [showSecondModal, setShowSecondModal] = useState(false);
   const [secondModalContent, setSecondModalContent] = useState(null);
+
+  // Nouveaux états pour la modal de paiement
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentOrder, setPaymentOrder] = useState(null);
 
   const user = useSelector((state) => state.auth.user);
 
@@ -46,6 +48,17 @@ const HomeOperateur = () => {
   const closeSecondModal = () => {
     setSecondModalContent(null);
     setShowSecondModal(false);
+  };
+
+  // Fonction pour ouvrir la modal de paiement
+  const openPaymentModal = (order) => {
+    setPaymentOrder(order);
+    setShowPaymentModal(true);
+  };
+
+  const closePaymentModal = () => {
+    setPaymentOrder(null);
+    setShowPaymentModal(false);
   };
 
   // Données d'exemple
@@ -96,9 +109,10 @@ const HomeOperateur = () => {
       date: '14/10/2024',
       orderNumber: 'O-06789/24',
       client: 'INDIGO TRADING FZCO',
-      invoiceNumber: 'F-3993/24',
+      invoiceNumber: 'F2024/123',
       designation: 'Produit G',
       validationDate: '16/10/2024',
+      amount: '53 000 FDJ'
     },
   ];
 
@@ -245,6 +259,7 @@ const HomeOperateur = () => {
                     <th>Certificat d'origine</th>
                     <th>Facture Commerciale</th>
                     <th>Légalisation</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -270,6 +285,14 @@ const HomeOperateur = () => {
                         <button className="icon-button minimal-button">
                           <FontAwesomeIcon icon={faEye} title="Voir" />
                           <span className="button-text">Détails</span>
+                        </button>
+                      </td>
+                      <td>
+                        <button
+                          className="submit-button minimal-button"
+                          onClick={() => openPaymentModal(order)}
+                        >
+                          Payer
                         </button>
                       </td>
                     </tr>
@@ -309,6 +332,74 @@ const HomeOperateur = () => {
         <div className="modal-overlay" onClick={closeSecondModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <ClientProfile clientData={secondModalContent} closeModal={closeSecondModal} />
+          </div>
+        </div>
+      )}
+
+      {/* Modal de paiement avec le même style que Certificat d'origine */}
+      {showPaymentModal && paymentOrder && (
+        <div className="modal-overlay" onClick={closePaymentModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="payment-modal-header">
+              PAIEMENT DE LA COMMANDE N° {paymentOrder.orderNumber}
+            </div>
+            <div className="payment-modal-client-section">
+              <div className="payment-modal-client">
+                <div className="client-name">{paymentOrder.client}</div>
+                <div>DJIBOUTI FREE ZONE Po Box 2520</div>
+                <div>REP. DE DJIBOUTI</div>
+              </div>
+
+              <div className="payment-modal-fields">
+                <div>
+                  <label>Date de facture</label>
+                  <input type="date" defaultValue="2024-11-25" />
+                </div>
+                <div>
+                  <label>N° Facture</label>
+                  <input type="text" defaultValue={paymentOrder.invoiceNumber} />
+                </div>
+                <div>
+                  <label>Montant</label>
+                  <input type="text" defaultValue={paymentOrder.amount} />
+                </div>
+              </div>
+            </div>
+
+            <hr />
+
+            <div className="payment-modal-reglement">
+              <h4>Règlement de la facture</h4>
+              <div className="payment-modal-fields">
+                <div>
+                  <label>Date de paiement</label>
+                  <input type="date" defaultValue="2024-11-25" />
+                </div>
+                <div>
+                  <label>Moyen de paiement</label>
+                  <select defaultValue="Cash">
+                    <option value="Cash">Cash</option>
+                    <option value="Virement">Virement</option>
+                    <option value="Chèque">Chèque</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Information concernant le paiement</label>
+                  <input type="text" defaultValue="4*10K + 2*5K + 3*1K" />
+                </div>
+                <div className="payment-modal-checkbox">
+                  <label>
+                    <input type="checkbox" defaultChecked={true} />
+                    Générer le certificat d'origine et les copies conformes
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button onClick={closePaymentModal} className="reject-button">FERMER</button>
+              <button onClick={() => alert('Paiement enregistré')} className="validate-button">ENREGISTRER LE PAIEMENT</button>
+            </div>
           </div>
         </div>
       )}
