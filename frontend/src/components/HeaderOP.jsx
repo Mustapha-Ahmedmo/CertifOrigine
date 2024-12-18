@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell, faUser, faBars, faTimes, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import logo from '../assets/logo.jpg';
 import { useTranslation } from 'react-i18next';
 import './HeaderOP.css';
+import { getCustAccountInfo } from '../services/apiServices';
 
 const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
   const { t, i18n } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mailNotificationCount] = useState(7);
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
+  const [inscriptionNotificationCount, setInscriptionNotificationCount] = useState(1);
 
   const changeLanguage = (language) => {
     i18n.changeLanguage(language);
@@ -23,6 +25,21 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
   const toggleLanguageDropdown = () => {
     setLanguageDropdownOpen(!languageDropdownOpen);
   };
+
+  useEffect(() => {
+    const fetchInscriptionCount = async () => {
+      try {
+        const response = await getCustAccountInfo(null, 0, true); // Fetch accounts with statut_flag = 0
+        const pendingCount = response.data.filter((account) => account.statut_flag === 0).length;
+        console.log(pendingCount);
+        setInscriptionNotificationCount(pendingCount);
+      } catch (err) {
+        console.error('Failed to fetch inscription count:', err);
+      }
+    };
+
+    fetchInscriptionCount();
+  }, []);
 
   return (
     <header className="header">
@@ -55,11 +72,15 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
           <div className="icon-label">Notifications</div>
         </div>
 
-        {/* Nouveau bouton Inscriptions */}
+        {/* Nouveau bouton Inscriptions avec badge */}
         <div className="header-icon-container">
           <Link to="/dashboard/operator/inscriptions" className="icon-link">
             <FontAwesomeIcon icon={faUserPlus} className="header-icon" />
-            {/* Vous pouvez ajouter un badge dynamique selon le nombre d'inscriptions non traitées */}
+            {inscriptionNotificationCount > 0 && (
+              <span className="badge inscription-badge">
+                {inscriptionNotificationCount}
+              </span>
+            )}
             <div className="icon-label">Inscriptions</div>
           </Link>
         </div>

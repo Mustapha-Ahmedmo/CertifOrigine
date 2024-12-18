@@ -8,6 +8,45 @@ DROP TABLE IF EXISTS COUNTRY CASCADE;
 DROP TABLE IF EXISTS LOGIN_USER CASCADE;
 DROP TABLE IF EXISTS CITY CASCADE;
 DROP TABLE IF EXISTS LOGIN_STATS CASCADE;
+DROP TABLE IF EXISTS FILES_REPO_TYPEoF CASCADE;
+DROP TABLE IF EXISTS FILES_REPO CASCADE;
+DROP TABLE IF EXISTS CUST_ACCOUNT_FILES CASCADE;
+
+
+CREATE TABLE FILES_REPO_TYPEoF (
+    ID_FILES_REPO_TYPEoF INT PRIMARY KEY /*GENERATED ALWAYS AS IDENTITY*/,
+    TXT_DESCRIPTION_FR VARCHAR(64) NOT NULL,       -- Non nullable
+    TXT_DESCRIPTION_ENG VARCHAR(64) NOT NULL,       -- Non nullable
+    IsMANDATORY BOOLEAN DEFAULT FALSE NOT NULL  
+);
+
+
+CREATE TABLE FILES_REPO (
+    ID_FILES_REPO INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    IDFILES_REPO_TYPEoF INT NOT NULL,             -- Non nullable
+    FILE_ORIGIN_NAME VARCHAR(160) NOT NULL,       -- Non nullable
+    FILE_GUID VARCHAR(64) NOT NULL,               -- Non nullable
+    FILE_PATH VARCHAR(256) NOT NULL,              -- Non nullable
+    INSERTDATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Non nullable avec valeur par défaut
+    IDLOGIN_INSERT INT NOT NULL,                  -- Non nullable
+    LASTMODIFIED TIMESTAMP NULL,                  -- Nullable
+    IDLOGIN_MODIFY INT NULL,                      -- Nullable
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
+    FOREIGN KEY (IDFILES_REPO_TYPEoF) REFERENCES FILES_REPO_TYPEoF(ID_FILES_REPO_TYPEoF),
+    FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER)
+);
+
+
+CREATE TABLE CUST_ACCOUNT_FILES (
+    ID_CUST_ACCOUNT_FILES INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_FILES_REPO INT NOT NULL,                   -- Non nullable
+    ID_CUST_ACCOUNT INT NOT NULL,                 -- Non nullable
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
+    FOREIGN KEY (ID_FILES_REPO) REFERENCES FILES_REPO(ID_FILES_REPO),
+    FOREIGN KEY (ID_CUST_ACCOUNT) REFERENCES CUST_ACCOUNT(ID_CUST_ACCOUNT)
+);
+
 
 -- Create SECTOR table
 CREATE TABLE SECTOR (
@@ -253,8 +292,9 @@ RETURN QUERY
 END ;
 $$ LANGUAGE plpgsql;
 
-DROP PROCEDURE IF EXISTS set_cust_account;
-CREATE OR REPLACE PROCEDURE set_cust_account(
+
+DROP PROCEDURE IF EXISTS add_Subscription; 
+CREATE OR REPLACE PROCEDURE add_Subscription(
     p_legal_form VARCHAR(32),
     p_cust_name VARCHAR(96),
     p_trade_registration_num VARCHAR(32),
@@ -269,45 +309,108 @@ CREATE OR REPLACE PROCEDURE set_cust_account(
     p_idlogin INT,
     p_billed_cust_name VARCHAR(96),
     p_bill_full_address VARCHAR(160),
+
+    p_gender INT,
+    p_full_name VARCHAR(96),
+    p_ismain_user BOOLEAN,
+    p_email VARCHAR(32),
+    p_password VARCHAR(128),
+    p_phone_number VARCHAR(32),
+    p_mobile_number VARCHAR(12),
+    p_position VARCHAR(64),
+
     INOUT p_id_cust_account INT
 )
 AS
 $$
 BEGIN
+
+
+    IF EXISTS ( SELECT 1 FROM "login_user" WHERE username = p_email) THEN
+        RAISE EXCEPTION 'Email non valide (risque de doublon) / Invalid email (duplication)';
+    END IF;
+
+	/*faut-il contrôler p_trade_registration_num   et p_identification_number  et  p_register_number*/
+    --IF EXISTS ( SELECT 1 FROM "login_user" WHERE username = p_email) THEN
+    --    RAISE EXCEPTION 'Email non valide (risque de doublon) / Invalid email (duplication)';
+    --END IF;
+
+
+	INSERT INTO cust_account (
+		"legal_form",
+		"cust_name",
+		"trade_registration_num",
+		"in_free_zone", 
+		"identification_number",
+		"register_number",
+		"full_address",
+		"id_sector",
+		"other_sector",
+		"id_country",
+		"statut_flag",
+		"insertdate",
+		"idlogin_insert",
+		"billed_cust_name",
+		"bill_full_address"
+		) VALUES (
+		p_legal_form,
+		p_cust_name,
+		p_trade_registration_num,
+		p_in_free_zone, 
+		p_identification_number,
+		p_register_number,
+		p_full_address,
+		p_id_sector,
+		p_other_sector,
+		p_id_country,
+		p_statut_flag,
+		CURRENT_TIMESTAMP,
+		p_idlogin,
+		p_billed_cust_name,
+		p_bill_full_address
+	)
+	RETURNING id_cust_account INTO p_id_cust_account;
+
+
+     CALL  set_cust_user(
+		0/*p_id_cust_user*/,
+		p_id_cust_account,
+		p_gender,
+		p_full_name,
+		p_ismain_user,
+		p_email,
+		p_password,
+		p_phone_number,
+		p_mobile_number,
+		p_idlogin,
+		p_position
+	);
+END;
+$$ LANGUAGE plpgsql;
+
+DROP PROCEDURE IF EXISTS upd_cust_account;
+CREATE OR REPLACE PROCEDURE upd_cust_account(
+    p_id_cust_account INT,
+    p_legal_form VARCHAR(32),
+    p_cust_name VARCHAR(96),
+    p_trade_registration_num VARCHAR(32),
+    p_in_free_zone BOOLEAN,
+    p_identification_number VARCHAR(32),
+    p_register_number VARCHAR(32),
+    p_full_address VARCHAR(160),
+    p_id_sector INT,
+    p_other_sector VARCHAR(64),
+    p_id_country INT,
+    p_statut_flag INT,
+    p_idlogin INT,
+    p_billed_cust_name VARCHAR(96),
+    p_bill_full_address VARCHAR(160)
+)
+AS
+$$
+BEGIN
     IF p_id_cust_account IS NULL OR p_id_cust_account = 0 THEN
-        INSERT INTO cust_account (
-            "legal_form",
-            "cust_name",
-            "trade_registration_num",
-            "in_free_zone", 
-            "identification_number",
-	        "register_number",
-            "full_address",
-	        "id_sector",
-	        "other_sector",
-            "id_country",
-            "statut_flag",
-            "insertdate",
-            "idlogin_insert",
-            "billed_cust_name",
-            "bill_full_address"
-        ) VALUES (
-            p_legal_form,
-            p_cust_name,
-            p_trade_registration_num,
-            p_in_free_zone, 
-            p_identification_number,
-	        p_register_number,
-            p_full_address,
-            p_id_sector,
-	        p_other_sector,
-            p_id_country,
-            p_statut_flag,
-            CURRENT_TIMESTAMP,
-            p_idlogin,
-            p_billed_cust_name,
-            p_bill_full_address
-        ) RETURNING id_cust_account INTO p_id_cust_account;
+        RAISE EXCEPTION 'identifiant incorrect / incorrect identifier ';
     ELSE
         UPDATE cust_account
         SET
@@ -316,11 +419,11 @@ BEGIN
             "trade_registration_num" = p_trade_registration_num,
             "in_free_zone" = p_in_free_zone,  
             "identification_number" = p_identification_number,
-	        "register_number" = p_register_number,
+	    "register_number" = p_register_number,
             "full_address" = p_full_address,
             "id_sector" = p_id_sector,
-	        "other_sector" = p_other_sector,
-	        "id_country" = p_id_country,
+	    "other_sector" = p_other_sector,
+	    "id_country" = p_id_country,
             "statut_flag" = p_statut_flag,
             "idlogin_modify" = p_idlogin,
             "lastmodified" = NOW(),
@@ -328,6 +431,150 @@ BEGIN
             "bill_full_address" = p_bill_full_address
         WHERE "id_cust_account" = p_id_cust_account;
     END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+DROP PROCEDURE IF EXISTS upd_cust_account_statut;
+CREATE OR REPLACE PROCEDURE upd_cust_account_statut(
+    p_id_cust_account INT,
+    p_statut_flag INT,
+    p_idlogin INT
+)
+AS
+$$
+BEGIN
+    IF p_id_cust_account IS NULL OR p_id_cust_account = 0 THEN
+        RAISE EXCEPTION 'identifiant incorrect / incorrect identifier ';
+    ELSE
+        UPDATE cust_account
+        SET
+            "statut_flag" = p_statut_flag,
+            "idlogin_modify" = p_idlogin,
+            "lastmodified" = NOW()
+        WHERE "id_cust_account" = p_id_cust_account;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+DROP FUNCTION IF EXISTS get_files_repo_typeof_info;
+CREATE OR REPLACE FUNCTION get_files_repo_typeof_info(
+    p_id_files_repo_typeof_list TEXT,
+    p_id_files_repo_typeof_first int,
+    p_id_files_repo_typeof_last int,
+	p_ismandatory BOOLEAN
+)
+RETURNS TABLE(
+    id_files_repo_typeof INT,
+    txt_description_fr VARCHAR(64),
+    txt_description_eng VARCHAR(64),
+	ismandatory BOOLEAN
+
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT
+        ft."idfiles_repo_typeof",
+        ft."txt_description_fr",
+        ft."txt_description_eng",
+		ft."ismandatory"
+    FROM
+        files_repo_typeof ft
+    WHERE 
+        (p_id_files_repo_typeof_list IS NULL OR ft."idfiles_repo_typeof" = ANY (string_to_array(p_id_files_repo_typeof_list, ',')::INT[]))
+    AND 
+        (p_ismandatory IS NULL OR ft."ismandatory" = p_ismandatory)
+    AND 
+        (p_id_files_repo_typeof_first IS NULL OR ft."idfiles_repo_typeof" >= p_id_files_repo_typeof_first)
+    AND 
+        ( p_id_files_repo_typeof_last IS NULL OR ft."idfiles_repo_typeof" <=  p_id_files_repo_typeof_last)
+    ;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+DROP FUNCTION IF EXISTS get_cust_account_files;
+CREATE OR REPLACE FUNCTION get_cust_account_files(
+    p_id_cust_account_files_list TEXT,
+    p_id_cust_account_list TEXT,
+	p_id_files_repo_list TEXT,
+    p_id_files_repo_typeof_list TEXT,
+    p_id_files_repo_typeof_first int,
+    p_id_files_repo_typeof_last int,
+    p_isactive BOOLEAN
+)
+RETURNS TABLE(
+    id_cust_account_files INT,
+    id_cust_account INT,
+	cust_name VARCHAR(32),
+	id_files_repo INT,
+	id_files_repo_typeof INT,
+	file_origin_name VARCHAR(160),
+	file_guid VARCHAR(64),
+	file_path VARCHAR(256),
+	insertdate TIMESTAMP,
+	idlogin_insert INT,
+	lastmodified TIMESTAMP,
+	idlogin_modify INT,
+	deactivation_date TIMESTAMP,
+    txt_description_fr VARCHAR(64),
+    txt_description_eng VARCHAR(64),
+	ismandatory BOOLEAN
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT
+		caf."id_cust_account_files",
+	    caf."id_cust_account",
+		ca."cust_name",
+		caf."id_files_repo",
+		fr."idfiles_repo_typeof",
+		fr."file_origin_name",
+		fr."file_guid",
+		fr."file_path",
+		fr."insertdate",
+		fr."idlogin_insert",
+		fr."lastmodified",
+		fr."idlogin_modify",
+		fr."deactivation_date",
+		ft."txt_description_fr",
+		ft."txt_description_eng",
+		ft."ismandatory" 
+	FROM
+        cust_account_files caf
+	JOIN 
+		cust_account ca ON caf."id_cust_account" = ca."id_cust_account"
+	JOIN 
+		files_repo fr ON caf."id_files_repo" = fr."id_files_repo" 
+		JOIN
+			files_repo_typeof ft ON fr."idfiles_repo_typeof" = ft."id_files_repo_typeof"
+    WHERE 
+        (p_id_cust_account_files_list IS NULL OR caf."id_cust_account_files" = ANY (string_to_array(p_id_cust_account_files_list, ',')::INT[]))
+    AND 
+		(p_id_cust_account_list IS NULL OR caf."id_cust_account" = ANY(string_to_array(p_id_cust_account_list, ',')::INT[]))
+	AND 
+        (p_id_files_repo_list IS NULL OR caf."id_files_repo" = ANY(string_to_array(p_id_files_repo_list, ',')::INT[]))
+    AND 
+		(p_id_files_repo_typeof_list IS NULL OR ft."idfiles_repo_typeof" = ANY (string_to_array(p_id_files_repo_typeof_list, ',')::INT[]))
+    AND 
+        (p_id_files_repo_typeof_first IS NULL OR ft."idfiles_repo_typeof" >= p_id_files_repo_typeof_first)
+    AND 
+        ( p_id_files_repo_typeof_last IS NULL OR ft."idfiles_repo_typeof" <=  p_id_files_repo_typeof_last)
+	AND (
+	     p_isactive IS NULL
+        -- Si p_isactive = 0, je verifie si une des deux dates de désactivation est avant la date du jour
+        OR(p_isactive IS NOT TRUE AND caf."deactivation_date" <= CURRENT_DATE 
+            
+        )
+        -- Si p_isactive = 1, je verifie que les deux dates de désactivation sont après la date du jour
+        OR (p_isactive IS TRUE AND caf."deactivation_date" > CURRENT_DATE
+            
+        )
+    );
 END;
 $$ LANGUAGE plpgsql;
 
@@ -775,6 +1022,201 @@ BEGIN
     WHERE p_id_list is null OR s."id_sector" = ANY (string_to_array(p_id_list, ',')::INT[]);
 END;
 $$ LANGUAGE plpgsql;
+
+
+
+
+DROP PROCEDURE IF EXISTS add_files_repo_typeof;
+CREATE OR REPLACE PROCEDURE add_files_repo_typeof(
+    p_id_files_repo_typeof INT,
+    p_txt_description_fr VARCHAR(64),
+    p_txt_description_eng VARCHAR(64),
+	p_ismandatory BOOLEAN
+)
+AS
+$$
+BEGIN
+    IF p_id_files_repo_typeof IS NULL OR p_id_files_repo_typeof = 0 THEN
+		RAISE EXCEPTION 'typeOf invalide';
+	ELSE
+        INSERT INTO files_repo_typeof (
+	    "id_files_repo_typeof",
+        "txt_description_fr",
+		"txt_description_eng",
+		"ismandatory"
+        ) VALUES (
+			p_id_files_repo_typeof,
+            p_txt_description_fr,
+			p_txt_description_eng,
+			p_ismandatory
+        );
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+DROP PROCEDURE IF EXISTS upd_files_repo_typeof;
+CREATE OR REPLACE PROCEDURE upd_files_repo_typeof(
+    p_id_files_repo_typeof INT,
+    p_txt_description_fr VARCHAR(64),
+    p_txt_description_eng VARCHAR(64),
+	p_ismandatory BOOLEAN
+)
+AS
+$$
+BEGIN
+    IF p_id_files_repo_typeof IS NULL OR p_id_files_repo_typeof = 0 THEN
+		RAISE EXCEPTION 'typeOf invalide';
+	ELSE
+        UPDATE files_repo_typeof
+        SET
+         "txt_description_fr" = p_txt_description_fr,
+         "txt_description_eng" = p_txt_description_eng,
+		 "ismandatory" = p_ismandatory
+        WHERE "idfiles_repo_typeof" = p_id_files_repo_typeof;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+DROP PROCEDURE IF EXISTS set_files_repo;
+CREATE OR REPLACE PROCEDURE set_files_repo(
+    p_idfiles_repo_typeof INT,
+    p_file_origin_name VARCHAR(160),
+    p_file_guid VARCHAR(64),
+    p_file_path VARCHAR(256),
+    --p_insertdate TIMESTAMP,
+    p_idlogin_insert INT,
+    --p_lastmodified TIMESTAMP,
+    --p_idlogin_modify INT,
+    --p_deactivation_date TIMESTAMP,
+    INOUT p_id INT
+)
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    INSERT INTO files_repo(
+            idfiles_repo_typeof,
+            file_origin_name,
+            file_guid,
+            file_path,
+            --insertdate,
+            idlogin_insert
+            --lastmodified,
+            --idlogin_modify,
+            --deactivation_date
+        ) VALUES (
+            p_idfiles_repo_typeof,
+            p_file_origin_name,
+            p_file_guid,
+            p_file_path,
+            --p_insertdate,
+            p_idlogin_insert
+            --p_lastmodified,
+            --p_idlogin_modify,
+            --p_deactivation_date 
+        ) 
+	RETURNING id_files_repo INTO p_id;
+END;
+$$;
+
+
+DROP PROCEDURE IF EXISTS del_files_repo;
+CREATE OR REPLACE PROCEDURE del_files_repo(
+    p_id_files_repo INT,
+    p_mode INT
+)
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    IF p_mode IS NULL OR p_mode = 0 THEN
+        UPDATE files_repo
+        SET
+            deactivation_date = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE id_files_repo = p_id_files_repo;
+    ELSE
+        DELETE FROM files_repo
+        WHERE id_files_repo = p_id_files_repo;
+    END IF;
+END;
+$$;
+
+
+DROP PROCEDURE IF EXISTS set_cust_account_files;
+CREATE OR REPLACE PROCEDURE set_cust_account_files(
+    p_id_cust_account INT,
+    p_idfiles_repo_typeof INT,
+    p_file_origin_name VARCHAR(160),
+    p_file_guid VARCHAR(64),
+    p_file_path VARCHAR(256),
+    --p_insertdate TIMESTAMP,
+    p_idlogin_insert INT,
+    --p_lastmodified TIMESTAMP,
+    --p_idlogin_modify INT,
+    --p_deactivation_date TIMESTAMP,
+	INOUT p_id INT
+)
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    CALL set_files_repo(
+        p_idfiles_repo_typeof,
+        p_file_origin_name,
+        p_file_guid,
+        p_file_path,
+        --p_insertdate,
+        p_idlogin_insert,
+        --p_lastmodified,
+        --p_idlogin_modify,
+        --p_deactivation_date,
+        p_id
+    );
+
+    
+    INSERT INTO CUST_ACCOUNT_FILES (ID_FILES_REPO, ID_CUST_ACCOUNT/*, DEACTIVATION_DATE*/)
+    VALUES (p_id, p_id_cust_account/*, p_deactivation_date*/);
+
+END;
+$$;
+
+
+DROP PROCEDURE IF EXISTS del_cust_account_files;
+CREATE OR REPLACE PROCEDURE del_cust_account_files(
+    p_id_cust_account_files INT,
+    p_mode INT
+)
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    v_id_files_repo INT;
+BEGIN
+    
+    SELECT id_files_repo
+    INTO v_id_files_repo
+    FROM cust_account_files
+    WHERE id_cust_account_files = p_id_cust_account_files;
+
+    
+    CALL del_files_repo(v_id_files_repo, p_mode);
+
+    
+    IF p_mode IS NULL OR p_mode = 0 THEN
+        UPDATE cust_account_files
+        SET
+            deactivation_date = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE id_cust_account_files = p_id_cust_account_files;
+    ELSE
+        DELETE FROM cust_account_files
+        WHERE id_cust_account_files = p_id_cust_account_files;
+    END IF;
+END;
+$$;
+
 
 
 CALL set_sector(0, 'ALIMENTAIRE','FOODS');
