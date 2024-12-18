@@ -450,4 +450,141 @@ const rejectCustAccount = async (req, res) => {
   }
 };
 
-module.exports = { rejectCustAccount, executeGetCustAccountInfo, executeSetCustAccount, executeSetCustUser, updateCustAccountStatus };
+const executeAddSubscription = async (req, res) => {
+  try {
+    const {
+      legal_form,
+      cust_name,
+      trade_registration_num,
+      in_free_zone,
+      identification_number,
+      register_number,
+      full_address,
+      id_sector,
+      other_sector,
+      id_country,
+      statut_flag,
+      idlogin,
+      billed_cust_name,
+      bill_full_address,
+      gender,
+      full_name,
+      ismain_user,
+      email,
+      pwd, // Assuming 'pwd' is the password
+      phone_number,
+      mobile_number,
+      position,
+    } = req.body;
+
+    // Validate required fields
+    if (
+      !legal_form ||
+      !cust_name ||
+      !trade_registration_num ||
+      in_free_zone === undefined ||
+      !identification_number ||
+      !register_number ||
+      !full_address ||
+      !id_sector ||
+      !id_country ||
+      statut_flag === undefined ||
+      !idlogin ||
+      !billed_cust_name ||
+      !bill_full_address ||
+      gender === undefined ||
+      !full_name ||
+      ismain_user === undefined ||
+      !email ||
+      !pwd ||
+      !phone_number ||
+      !mobile_number ||
+      !position
+    ) {
+      return res.status(400).json({
+        message: 'Tous les champs requis doivent être fournis.',
+      });
+    }
+
+    // Execute the stored procedure
+    const result = await sequelize.query(
+      `CALL add_Subscription(
+        :legal_form, 
+        :cust_name, 
+        :trade_registration_num, 
+        :in_free_zone, 
+        :identification_number, 
+        :register_number, 
+        :full_address, 
+        :id_sector, 
+        :other_sector, 
+        :id_country, 
+        :statut_flag, 
+        :idlogin, 
+        :billed_cust_name, 
+        :bill_full_address, 
+        :gender, 
+        :full_name, 
+        :ismain_user, 
+        :email, 
+        :pwd, 
+        :phone_number, 
+        :mobile_number, 
+        :position, 
+        :id_cust_account
+      )`,
+      {
+        replacements: {
+          legal_form,
+          cust_name,
+          trade_registration_num,
+          in_free_zone,
+          identification_number,
+          register_number,
+          full_address,
+          id_sector,
+          other_sector,
+          id_country,
+          statut_flag,
+          idlogin,
+          billed_cust_name,
+          bill_full_address,
+          gender,
+          full_name,
+          ismain_user,
+          email,
+          pwd,
+          phone_number,
+          mobile_number,
+          position,
+          id_cust_account: null, // INOUT parameter, initially null
+        },
+        type: sequelize.QueryTypes.RAW,
+        raw: true,
+      }
+    );
+
+    // Assuming the stored procedure returns the new id_cust_account
+    const newAccountId = result[0][0].p_id_cust_account;
+
+    // Send confirmation email
+    await sendEmail(
+      email,
+      'Votre compte est en attente de validation',
+      `Bonjour ${full_name},\n\nVotre compte est en attente de validation par un opérateur.\n\nCordialement,\nL'équipe.`
+    );
+
+    res.status(201).json({
+      message: 'Inscription réussie. Votre compte est en attente de validation.',
+      id_cust_account: newAccountId,
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'exécution de add_Subscription:', error);
+    res.status(500).json({
+      message: 'Erreur lors de l\'inscription.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
+
+module.exports = { executeAddSubscription, rejectCustAccount, executeGetCustAccountInfo, executeSetCustAccount, executeSetCustUser, updateCustAccountStatus };

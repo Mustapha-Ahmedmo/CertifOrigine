@@ -203,3 +203,26 @@ export const rejectCustAccount = async (id, reason, idlogin) => {
     throw error;
   }
 };
+
+export const addSubscription = async (subscriptionData) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/add-subscription`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include if authenticated
+      },
+      body: JSON.stringify(subscriptionData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Inscription échouée');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Erreur lors de l\'inscription:', error);
+    throw error;
+  }
+};

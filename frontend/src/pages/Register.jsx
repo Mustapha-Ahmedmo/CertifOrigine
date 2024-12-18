@@ -14,8 +14,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../assets/logo.jpg';
 import { Helmet } from 'react-helmet';
-import { Link, useNavigate } from 'react-router-dom'; // Import du hook useNavigate
-import { registerUser, fetchSectors, fetchCountries, setCustAccount, setCustUser } from '../services/apiServices';
+import { Link } from 'react-router-dom';
+import { registerUser, fetchSectors, fetchCountries, setCustAccount, setCustUser, addSubscription } from '../services/apiServices';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 
@@ -68,8 +68,6 @@ const Register = () => {
     }
     setSnackbarOpen(false);
   };
-
-  const navigate = useNavigate(); // Hook pour la navigation
 
   useEffect(() => {
     // Fetch sectors and countries
@@ -140,7 +138,7 @@ const Register = () => {
     }
 
     try {
-      // Préparation des données utilisateur
+      // Prepare the data to send
       const userData = {
         username: formData.email,
         gender: formData.gender,
@@ -155,7 +153,8 @@ const Register = () => {
         city: formData.city,
         country: formData.country,
         companyCategory: formData.companyCategory,
-        sector: formData.sector === 'Autres' ? formData.otherSector : formData.sector,
+        sector:
+          formData.sector === 'Autres' ? formData.otherSector : formData.sector,
         isFreeZoneCompany: formData.isFreeZoneCompany,
         isOtherCompany: formData.isOtherCompany,
         licenseNumber: formData.licenseNumber,
@@ -165,7 +164,7 @@ const Register = () => {
         acceptsDataProcessing: formData.acceptsDataProcessing,
       };
 
-      // Vous pouvez décommenter la ligne ci-dessous si vous avez une fonction d'inscription
+      // Send the registration data to the backend
       // const response = await registerUser(userData);
 
       const selectedSector = sectors.find(
@@ -176,26 +175,26 @@ const Register = () => {
         (country) => country.symbol_fr === formData.country
       );
 
-      // Préparation des données du compte client
-      const custAccountData = {
-        legal_form: formData.companyCategory,
+      // Prepare customer account data (if needed)
+    /*  const custAccountData = {
+        legal_form: formData.companyCategory, // This will be mapped to legal_form in controller
         cust_name: formData.companyName,
-        trade_registration_num: formData.trade_registration_num || '12345',
+        trade_registration_num: formData.trade_registration_num || '12345', // Ensure trade_registration_num is collected
         in_free_zone: formData.isFreeZoneCompany,
-        identification_number: formData.identification_number || 'ID123',
-        register_number: formData.register_number || 'RN456',
+        identification_number: formData.identification_number || 'ID123', // Ensure identification_number is collected
+        register_number: formData.register_number || 'RN456', // Ensure register_number is collected
         full_address: formData.address,
         id_sector: selectedSector ? selectedSector.id_sector : null,
         other_sector: formData.otherSector || null,
         id_country: selectedCountry ? selectedCountry.id_country : null,
-        statut_flag: 0,
-        idlogin: 1, 
-        billed_cust_name: formData.billed_cust_name || 'ABC Billing',
-        bill_full_address: formData.bill_full_address || '456 Billing St',
-        id_cust_account: null, 
+        statut_flag: 1, // Example value; set accordingly
+        idlogin: 1, // Assuming registerUser returns userId
+        billed_cust_name: formData.billed_cust_name || 'ABC Billing', // Collect from form or set default
+        bill_full_address: formData.bill_full_address || '456 Billing St', // Collect from form or set default
+        id_cust_account: null, // INOUT parameter; will be set by the procedure
       };
 
-      // Appel à l'API pour créer le compte client
+      // Set Customer Account
       const accountResponse = await setCustAccount(custAccountData);
       console.log('Set Cust Account response:', accountResponse);
 
@@ -209,33 +208,55 @@ const Register = () => {
         throw new Error('Failed to retrieve id_cust_account from Set Cust Account response');
       }
 
-      // Création du user client
       const custUserData = {
-        id_cust_user: 0,
-        id_cust_account: id_cust_account,
+        id_cust_user: 0, // 0 for new user
+        id_cust_account: id_cust_account, // Use the returned account ID
         gender: formData.gender === 'Mr' ? 0 : 1,
         full_name: formData.name,
-        ismain_user: true,
+        ismain_user: true, // Assuming this is the main user
         email: formData.email,
         password: formData.password,
         phone_number: formData.phoneFixed,
         mobile_number: formData.phoneMobile,
-        idlogin: 1, 
+        idlogin: 1, // Replace with actual admin ID
         position: formData.position,
       };
 
       const userResponse = await setCustUser(custUserData);
-      console.log('Set Cust User response:', userResponse);
+      console.log('Set Cust User response:', userResponse);*/
+
+      const subscriptionData = {
+        legal_form: formData.companyCategory,
+        cust_name: formData.companyName,
+        trade_registration_num: formData.trade_registration_num || '12345', // Ensure trade_registration_num is collected or set default
+        in_free_zone: formData.isFreeZoneCompany,
+        identification_number: formData.identification_number || 'ID123', // Ensure identification_number is collected or set default
+        register_number: formData.register_number || 'RN456', // Ensure register_number is collected or set default
+        full_address: formData.address,
+        id_sector: selectedSector ? selectedSector.id_sector : null,
+        other_sector: formData.otherSector || null,
+        id_country: selectedCountry ? selectedCountry.id_country : null,
+        statut_flag: 0, // Initial status; adjust as needed
+        idlogin: 1, // Replace with actual operator ID from AuthContext
+        billed_cust_name: formData.billed_cust_name || 'ABC Billing', // Collect from form or set default
+        bill_full_address: formData.bill_full_address || '456 Billing St', // Collect from form or set default
+        gender: formData.gender === 'Mr' ? 0 : 1, // Assuming 0 for Mr, 1 for Mme
+        full_name: formData.name,
+        ismain_user: true,
+        email: formData.email,
+        pwd: formData.password, // Ensure backend hashes the password
+        phone_number: formData.phoneFixed,
+        mobile_number: formData.phoneMobile,
+        position: formData.position,
+      };
+
+      // Call the addSubscription API
+      const response = await addSubscription(subscriptionData);
+      console.log('Add Subscription response:', response);
 
       setSnackbarMessage('Inscription réussie');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
-
-      // Redirection vers la page de login après 1.5 secondes
-      setTimeout(() => {
-        navigate('/account-created');
-      }, 1500);
-
     } catch (err) {
       setError(err.message);
       setSnackbarMessage(err.message);
@@ -250,7 +271,7 @@ const Register = () => {
         <title>Créer un Compte</title>
         <meta name="description" content="Inscrivez-vous pour créer un compte." />
       </Helmet>
-      {/* Logo */}
+      {/* Logo en dehors du formulaire */}
       <div className="register-logo-container">
         <img src={logo} alt="Logo" className="register-logo" />
       </div>
@@ -343,6 +364,7 @@ const Register = () => {
               </div>
             )}
 
+            {/* Raison sociale et autre champs */}
             <div className="register-client-form-row">
               {/* Raison sociale */}
               <div className="register-client-field register-client-half-width">
