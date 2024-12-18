@@ -9,6 +9,9 @@ const AccountCreated = () => {
         <p>
           Veuillez attendre la validation d'un opérateur pour pouvoir vous connecter.
         </p>
+        <p>
+          Si vous n'avez pas reçu de mail de confirmation, veuillez vous rapporcher de la Chambre de Commerce.
+        </p>
         <a href="/" className="account-created-button">Retour à l'accueil</a>
       </div>
     </div>

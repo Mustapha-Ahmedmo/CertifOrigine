@@ -15,6 +15,7 @@ import {
   faHandshake,
   faFileContract,
   faMoneyBillWave,
+  faUserPlus, // Import de la nouvelle icône
 } from '@fortawesome/free-solid-svg-icons';
 import './Menu.css';
 import '@fontsource/poppins';
@@ -51,7 +52,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
         {/* Accueil */}
         <li>
           <Link
-            to="/home"
+            to="/dashboard/operator"
             className={`menu-title ${activeLink === 'home' ? 'active' : ''}`}
             data-main-title
             onClick={() => handleLinkClick('home', 'home')}
@@ -203,6 +204,19 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                 >
                   <FontAwesomeIcon icon={faUserTie} className="icon" /> Opérateurs
                 </span>
+                {openMenu.operators && (
+                  <ul className="submenu">
+                    <li>
+                      <Link
+                        to="/dashboard/operator/inscriptions"
+                        className={activeLink === 'operatorInscriptions' ? 'active' : ''}
+                        onClick={() => handleLinkClick('operators', 'operatorInscriptions')}
+                      >
+                        <FontAwesomeIcon icon={faUserPlus} className="icon" /> Nouvelles inscriptions
+                      </Link>
+                    </li>
+                  </ul>
+                )}
               </li>
               <li>
                 <span
