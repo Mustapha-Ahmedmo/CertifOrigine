@@ -1,4 +1,4 @@
-services:
+yarservices:
   backend:
     build:
       context: ./backend
@@ -12,6 +12,8 @@ services:
       - POSTGRES_DB=djiboutiport
       - POSTGRES_HOST=db  # Reference the db service name
       - POSTGRES_PORT=5432
+    volumes:
+      - ./backend/data:/usr/src/app/data
     depends_on:
       - db
     networks:
