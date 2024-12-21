@@ -15,9 +15,10 @@ import {
 import logo from '../assets/logo.jpg';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
-import { registerUser, fetchSectors, fetchCountries, setCustAccount, setCustUser, addSubscription } from '../services/apiServices';
+import { registerUser, fetchSectors, fetchCountries, setCustAccount, setCustUser, addSubscription, addSubscriptionWithFile } from '../services/apiServices';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
+
 
 const Alert = forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -226,6 +227,7 @@ const Register = () => {
       console.log('Set Cust User response:', userResponse);*/
 
       const subscriptionData = {
+        uploadType: 'inscriptions',
         legal_form: formData.companyCategory,
         cust_name: formData.companyName,
         trade_registration_num: formData.trade_registration_num || '12345', // Ensure trade_registration_num is collected or set default
@@ -248,12 +250,18 @@ const Register = () => {
         phone_number: formData.phoneFixed,
         mobile_number: formData.phoneMobile,
         position: formData.position,
+        // File fields
+        licenseFile: formData.isFreeZoneCompany ? formData.licenseFile : null,
+        patenteFile: formData.isOtherCompany ? formData.patenteFile : null,
+        rchFile: formData.isOtherCompany ? formData.rchFile : null,
       };
 
       // Call the addSubscription API
-      const response = await addSubscription(subscriptionData);
-      console.log('Add Subscription response:', response);
-
+     // const response = await addSubscription(subscriptionData);
+     // console.log('Add Subscription response:', response);
+      // Call the addSubscriptionWithFile API
+      const response = await addSubscriptionWithFile(subscriptionData);
+      console.log('Add Subscription with File response:', response);
       setSnackbarMessage('Inscription réussie');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);

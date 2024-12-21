@@ -21,6 +21,7 @@ services:
     volumes:
       - ./backend:/usr/src/app  # Recharger les fichiers locaux
       - /usr/src/app/node_modules
+      - ./backend/data:/usr/src/app/data
     environment:
       - JWT_SECRET=your_jwt_secret
     networks:

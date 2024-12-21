@@ -9,6 +9,8 @@ import './Inscriptions.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Inscriptions = () => {
   const [custAccounts, setCustAccounts] = useState([]);
   const [removingAccounts, setRemovingAccounts] = useState([]);
@@ -28,6 +30,12 @@ const Inscriptions = () => {
     };
     fetchCustAccounts();
   }, []);
+
+
+  const handleFileClick = (file) => {
+    const fileUrl = `${API_URL}/files/inscriptions/${new Date().getFullYear()}/${file.file_guid}`;
+    window.open(fileUrl, '_blank');
+  };
 
   const handleValidate = async (id) => {
     if (!window.confirm('Êtes-vous sûr de vouloir valider cette inscription ?')) {
@@ -118,7 +126,21 @@ const Inscriptions = () => {
                     <td>{registration.legal_form}</td>
                     <td>{registration.cust_name}</td>
                     <td>{registration.in_free_zone ? 'Oui' : 'Non'}</td>
-                    <td>ss</td>
+                    <td>
+                      {registration.files && registration.files.length > 0 ? (
+                        registration.files.map((file) => (
+                          <button
+                            key={file.id_files_repo}
+                            className="file-button minimal-button"
+                            onClick={() => handleFileClick(file)}
+                          >
+                            {file.file_origin_name}
+                          </button>
+                        ))
+                      ) : (
+                        <span>Aucun fichier</span>
+                      )}
+                    </td>
                     <td>
                       <button
                         className="minimal-button toggle-contact-button"

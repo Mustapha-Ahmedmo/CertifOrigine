@@ -186,7 +186,7 @@ const executeSetCustUser = async (req, res) => {
 
 const executeGetCustAccountInfo = async (req, res) => {
   try {
-    const { id_list, statutflag, isactive } = req.query; // Utilisez req.body si les paramètres sont dans le corps de la requête
+    const { id_list, statutflag, isactive } = req.query;
 
     // Debugging: Log the incoming parameters
     console.log('Received get_custaccount_info parameters:', { id_list, statutflag, isactive });
@@ -200,7 +200,7 @@ const executeGetCustAccountInfo = async (req, res) => {
           statutflag: statutflag !== undefined ? parseInt(statutflag, 10) : null,
           isactive: isactive !== undefined ? (isactive === 'true' || isactive === '1') : null,
         },
-        type: sequelize.QueryTypes.SELECT, // Use SELECT since the function returns a table
+        type: sequelize.QueryTypes.SELECT,
       }
     );
 
@@ -217,7 +217,7 @@ const executeGetCustAccountInfo = async (req, res) => {
     // Extract the list of customer account IDs
     const accountIds = accounts.map(account => account.id_cust_account).join(',');
 
-    console.log('Extracted account IDs for main contacts:', accountIds);
+    console.log('Extracted account IDs for main contacts and files:', accountIds);
 
     // Execute the get_custuser_info function to retrieve main contacts for the accounts
     const mainContacts = await sequelize.query(
@@ -232,11 +232,11 @@ const executeGetCustAccountInfo = async (req, res) => {
       {
         replacements: {
           id_listCA: accountIds || null,
-          statutflag: statutflag !== undefined ? parseInt(statutflag, 10) : null, // **Corrigé ici**
+          statutflag: statutflag !== undefined ? parseInt(statutflag, 10) : null,
           isactiveCA: true,
           isactiveCU: true,
-          id_listCU: null, // Include all customer users
-          ismain_user: true, // Only main contacts
+          id_listCU: null,
+          ismain_user: true,
         },
         type: sequelize.QueryTypes.SELECT,
       }
@@ -245,25 +245,58 @@ const executeGetCustAccountInfo = async (req, res) => {
     // Debugging: Log the main contacts retrieved
     console.log('get_custuser_info result (main contacts):', mainContacts);
 
-    // Create a mapping of customer account ID to main contact
+    // Execute the get_cust_account_files function to retrieve files for the accounts
+    const files = await sequelize.query(
+      `SELECT * FROM get_cust_account_files(
+        NULL,
+        :id_listCA,
+        NULL,
+        NULL,
+        1,
+        449,
+        :isactive
+      )`,
+      {
+        replacements: {
+          id_listCA: accountIds || null,
+          isactive: isactive !== undefined ? (isactive === 'true' || isactive === '1') : null,
+        },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    // Debugging: Log the files retrieved
+    console.log('get_cust_account_files result:', files);
+
+    // Create mappings for main contacts and files
     const contactMap = {};
     mainContacts.forEach(contact => {
       contactMap[contact.id_cust_account] = contact;
     });
 
-    console.log('Contact Map:', contactMap);
+    const fileMap = {};
+    files.forEach(file => {
+      if (!fileMap[file.id_cust_account]) {
+        fileMap[file.id_cust_account] = [];
+      }
+      fileMap[file.id_cust_account].push(file);
+    });
 
-    // Enrich each account with its main contact
+    console.log('Contact Map:', contactMap);
+    console.log('File Map:', fileMap);
+
+    // Enrich each account with its main contact and files
     const enrichedAccounts = accounts.map(account => ({
       ...account,
       main_contact: contactMap[account.id_cust_account] || null, // Add null if no main contact found
+      files: fileMap[account.id_cust_account] || [], // Add empty array if no files found
     }));
 
     console.log('Enriched Accounts:', enrichedAccounts);
 
     // Send the enriched data in the response
     res.status(200).json({
-      message: 'Customer account information with main contacts retrieved successfully',
+      message: 'Customer account information with main contacts and files retrieved successfully',
       data: enrichedAccounts,
     });
   } catch (error) {
@@ -271,7 +304,7 @@ const executeGetCustAccountInfo = async (req, res) => {
     res.status(500).json({
       message: 'Error executing get_custaccount_info',
       error: error.message || 'Unknown error occurred',
-      details: error.original || error, // Log the original Sequelize error
+      details: error.original || error,
     });
   }
 };
@@ -587,4 +620,294 @@ const executeAddSubscription = async (req, res) => {
   }
 };
 
-module.exports = { executeAddSubscription, rejectCustAccount, executeGetCustAccountInfo, executeSetCustAccount, executeSetCustUser, updateCustAccountStatus };
+const executeCreateSubscriptionWithFile = async (req, res) => {
+  try {
+    const {
+      uploadType, // 'inscriptions' or 'commandes'
+      legal_form,
+      cust_name,
+      trade_registration_num,
+      in_free_zone,
+      identification_number,
+      register_number,
+      full_address,
+      id_sector,
+      other_sector,
+      id_country,
+      statut_flag,
+      idlogin,
+      billed_cust_name,
+      bill_full_address,
+      gender,
+      full_name,
+      ismain_user,
+      email,
+      pwd,
+      phone_number,
+      mobile_number,
+      position,
+    } = req.body;
+
+    // Validate required fields for the subscription
+    if (
+      !uploadType ||
+      !legal_form ||
+      !cust_name ||
+      !trade_registration_num ||
+      in_free_zone === undefined ||
+      !identification_number ||
+      !register_number ||
+      !full_address ||
+      !id_sector ||
+      !id_country ||
+      statut_flag === undefined ||
+      !idlogin ||
+      !billed_cust_name ||
+      !bill_full_address ||
+      gender === undefined ||
+      !full_name ||
+      ismain_user === undefined ||
+      !email ||
+      !pwd ||
+      !phone_number ||
+      !mobile_number ||
+      !position
+    ) {
+      return res.status(400).json({
+        message: 'All required fields must be provided for creating subscription with file.',
+      });
+    }
+
+    // Start a transaction
+    const transaction = await sequelize.transaction();
+
+    try {
+      // Call add_Subscription stored procedure
+      const subscriptionResult = await sequelize.query(
+        `CALL add_Subscription(
+          :legal_form, 
+          :cust_name, 
+          :trade_registration_num, 
+          :in_free_zone, 
+          :identification_number, 
+          :register_number, 
+          :full_address, 
+          :id_sector, 
+          :other_sector, 
+          :id_country, 
+          :statut_flag, 
+          :idlogin, 
+          :billed_cust_name, 
+          :bill_full_address, 
+          :gender, 
+          :full_name, 
+          :ismain_user, 
+          :email, 
+          :pwd, 
+          :phone_number, 
+          :mobile_number, 
+          :position, 
+          :id_cust_account
+        )`,
+        {
+          replacements: {
+            legal_form,
+            cust_name,
+            trade_registration_num,
+            in_free_zone,
+            identification_number,
+            register_number,
+            full_address,
+            id_sector,
+            other_sector: other_sector || null,
+            id_country,
+            statut_flag,
+            idlogin,
+            billed_cust_name,
+            bill_full_address,
+            gender,
+            full_name,
+            ismain_user,
+            email,
+            pwd,
+            phone_number,
+            mobile_number,
+            position,
+            id_cust_account: null, // INOUT parameter; initially null
+          },
+          type: sequelize.QueryTypes.RAW,
+          transaction,
+        }
+      );
+
+      // Assuming the stored procedure returns the new id_cust_account
+      const newAccountId =
+        subscriptionResult[0][0].p_id_cust_account;
+
+      if (!newAccountId) {
+        throw new Error('Failed to retrieve id_cust_account from add_Subscription.');
+      }
+
+      // Handle file uploads
+      if (req.files) {
+        const files = req.files;
+
+        // Determine which files to process based on uploadType and company type
+        const fileMappings = [];
+
+        if (uploadType === 'inscriptions' && in_free_zone === 'true') {
+          if (files.licenseFile && files.licenseFile.length > 0) {
+            fileMappings.push({
+              type: 'inscriptions', // For folder structure
+              idfiles_repo_typeof: 1, // Licence zone franche
+              file: files.licenseFile[0],
+            });
+          }
+        }
+
+        if (uploadType === 'commandes' && in_free_zone !== 'true') {
+          if (files.patenteFile && files.patenteFile.length > 0) {
+            fileMappings.push({
+              type: 'commandes',
+              idfiles_repo_typeof: 50, // Numéro Identification Fiscale (NIF)
+              file: files.patenteFile[0],
+            });
+          }
+          if (files.rchFile && files.rchFile.length > 0) {
+            fileMappings.push({
+              type: 'commandes',
+              idfiles_repo_typeof: 51, // Numéro Immatriculation RCS
+              file: files.rchFile[0],
+            });
+          }
+        }
+
+        // Iterate over the file mappings and call the stored procedure for each file
+        for (const mapping of fileMappings) {
+          const { idfiles_repo_typeof, file } = mapping;
+
+          if (!idfiles_repo_typeof || !file) {
+            continue; // Skip if type or file is missing
+          }
+
+          // Call set_cust_account_files stored procedure
+          await sequelize.query(
+            `CALL set_cust_account_files(
+              :p_id_cust_account, 
+              :p_idfiles_repo_typeof,
+              :p_file_origin_name, 
+              :p_file_guid, 
+              :p_file_path, 
+              :p_idlogin_insert, 
+              0
+            )`,
+            {
+              replacements: {
+                p_id_cust_account: newAccountId,
+                p_idfiles_repo_typeof: idfiles_repo_typeof,
+                p_file_origin_name: file.originalname,
+                p_file_guid: file.filename,
+                p_file_path: file.path,
+                p_idlogin_insert: idlogin,
+              },
+              type: sequelize.QueryTypes.RAW,
+              transaction,
+            }
+          );
+        }
+      }
+
+      // Commit the transaction
+      await transaction.commit();
+
+      // Send confirmation email
+      await sendEmail(
+        email,
+        'Votre compte est en attente de validation',
+        `Bonjour ${full_name},\n\nVotre compte est en attente de validation par un opérateur.\n\nCordialement,\nL'équipe.`
+      );
+
+      res.status(201).json({
+        message: 'Inscription réussie avec fichier. Votre compte est en attente de validation.',
+        id_cust_account: newAccountId,
+      });
+    } catch (err) {
+      // Rollback the transaction in case of error
+      await transaction.rollback();
+      throw err;
+    }
+  } catch (error) {
+    console.error('Error executing create subscription with file:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la création de l\'inscription avec fichier.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
+
+const executeGetCustAccountFiles = async (req, res) => {
+  try {
+    // Extract query parameters
+    const {
+      idCustAccountFilesList,
+      idCustAccountList,
+      idFilesRepoList,
+      idFilesRepoTypeofList,
+      idFilesRepoTypeofFirst = 1,
+      idFilesRepoTypeofLast = 449,
+      isActive,
+    } = req.query;
+
+    // Convert boolean-like strings to actual booleans
+    const p_isactive = isActive === 'true' ? true : isActive === 'false' ? false : null;
+
+    // Call the stored procedure
+    const [results, metadata] = await sequelize.query(
+      `SELECT * FROM get_cust_account_files(
+        :p_id_cust_account_files_list,
+        :p_id_cust_account_list,
+        :p_id_files_repo_list,
+        :p_id_files_repo_typeof_list,
+        :p_id_files_repo_typeof_first,
+        :p_id_files_repo_typeof_last,
+        :p_isactive
+      );`,
+      {
+        replacements: {
+          p_id_cust_account_files_list: idCustAccountFilesList || null,
+          p_id_cust_account_list: idCustAccountList || null,
+          p_id_files_repo_list: idFilesRepoList || null,
+          p_id_files_repo_typeof_list: idFilesRepoTypeofList || null,
+          p_id_files_repo_typeof_first: parseInt(idFilesRepoTypeofFirst, 10),
+          p_id_files_repo_typeof_last: parseInt(idFilesRepoTypeofLast, 10),
+          p_isactive,
+        },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    res.status(200).json({
+      message: 'Fichiers récupérés avec succès.',
+      data: results,
+    });
+  } catch (error) {
+    console.error('Error fetching customer account files:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la récupération des fichiers du compte client.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
+
+
+// Export the new function along with the existing ones
+module.exports = {
+  executeSetCustAccount,
+  executeSetCustUser,
+  executeGetCustAccountInfo,
+  updateCustAccountStatus,
+  rejectCustAccount,
+  executeAddSubscription,
+  executeCreateSubscriptionWithFile,
+  executeGetCustAccountFiles,
+};

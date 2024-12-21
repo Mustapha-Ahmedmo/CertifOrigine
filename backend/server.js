@@ -7,6 +7,8 @@ const countriesRoutes = require('./routes/countriesRoutes');
 const sectorsRoutes = require('./routes/sectorsRoutes');
 const customerRoutes = require('./routes/customerRoutes'); 
 
+const path = require('path');
+
 // Charger les variables d'environnement
 dotenv.config();
 
@@ -21,6 +23,26 @@ app.use('/api/auth', authRoutes);
 app.use('/api/countries', countriesRoutes);
 app.use('/api/sectors', sectorsRoutes);
 app.use('/api/customer', customerRoutes);
+
+
+const fs = require('fs');
+
+app.get('/api/files/:type/:year/:file', (req, res) => {
+  const { type, year, file } = req.params;
+
+  // Construct the file path
+  const filePath = path.join(__dirname, 'data', type, year, file);
+
+  console.log('Serving file from:', filePath);
+
+  // Check if the file exists
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('File not found');
+  }
+
+  // Send the file
+  res.sendFile(filePath);
+});
 
 // Synchroniser Sequelize avec la base de données
 sequelize.sync()

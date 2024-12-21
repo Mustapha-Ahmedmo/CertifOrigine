@@ -500,80 +500,74 @@ DROP FUNCTION IF EXISTS get_cust_account_files;
 CREATE OR REPLACE FUNCTION get_cust_account_files(
     p_id_cust_account_files_list TEXT,
     p_id_cust_account_list TEXT,
-	p_id_files_repo_list TEXT,
+    p_id_files_repo_list TEXT,
     p_id_files_repo_typeof_list TEXT,
-    p_id_files_repo_typeof_first int,
-    p_id_files_repo_typeof_last int,
+    p_id_files_repo_typeof_first INT,
+    p_id_files_repo_typeof_last INT,
     p_isactive BOOLEAN
 )
 RETURNS TABLE(
     id_cust_account_files INT,
     id_cust_account INT,
-	cust_name VARCHAR(32),
-	id_files_repo INT,
-	id_files_repo_typeof INT,
-	file_origin_name VARCHAR(160),
-	file_guid VARCHAR(64),
-	file_path VARCHAR(256),
-	insertdate TIMESTAMP,
-	idlogin_insert INT,
-	lastmodified TIMESTAMP,
-	idlogin_modify INT,
-	deactivation_date TIMESTAMP,
+    cust_name VARCHAR(32),
+    id_files_repo INT,
+    id_files_repo_typeof INT,
+    file_origin_name VARCHAR(160),
+    file_guid VARCHAR(64),
+    file_path VARCHAR(256),
+    insertdate TIMESTAMP,
+    idlogin_insert INT,
+    lastmodified TIMESTAMP,
+    idlogin_modify INT,
+    deactivation_date TIMESTAMP,
     txt_description_fr VARCHAR(64),
     txt_description_eng VARCHAR(64),
-	ismandatory BOOLEAN
+    ismandatory BOOLEAN
 ) AS
 $$
 BEGIN
     RETURN QUERY
     SELECT
-		caf."id_cust_account_files",
-	    caf."id_cust_account",
-		ca."cust_name",
-		caf."id_files_repo",
-		fr."idfiles_repo_typeof",
-		fr."file_origin_name",
-		fr."file_guid",
-		fr."file_path",
-		fr."insertdate",
-		fr."idlogin_insert",
-		fr."lastmodified",
-		fr."idlogin_modify",
-		fr."deactivation_date",
-		ft."txt_description_fr",
-		ft."txt_description_eng",
-		ft."ismandatory" 
-	FROM
+        caf."id_cust_account_files",
+        caf."id_cust_account",
+        ca."cust_name",
+        caf."id_files_repo",
+        fr."idfiles_repo_typeof",
+        fr."file_origin_name",
+        fr."file_guid",
+        fr."file_path",
+        fr."insertdate",
+        fr."idlogin_insert",
+        fr."lastmodified",
+        fr."idlogin_modify",
+        fr."deactivation_date",
+        ft."txt_description_fr",
+        ft."txt_description_eng",
+        ft."ismandatory" 
+    FROM
         cust_account_files caf
-	JOIN 
-		cust_account ca ON caf."id_cust_account" = ca."id_cust_account"
-	JOIN 
-		files_repo fr ON caf."id_files_repo" = fr."id_files_repo" 
-		JOIN
-			files_repo_typeof ft ON fr."idfiles_repo_typeof" = ft."id_files_repo_typeof"
+    JOIN 
+        cust_account ca ON caf."id_cust_account" = ca."id_cust_account"
+    JOIN 
+        files_repo fr ON caf."id_files_repo" = fr."id_files_repo" 
+    JOIN
+        files_repo_typeof ft ON fr."idfiles_repo_typeof" = ft."id_files_repo_typeof"  -- Corrected column name
     WHERE 
         (p_id_cust_account_files_list IS NULL OR caf."id_cust_account_files" = ANY (string_to_array(p_id_cust_account_files_list, ',')::INT[]))
     AND 
-		(p_id_cust_account_list IS NULL OR caf."id_cust_account" = ANY(string_to_array(p_id_cust_account_list, ',')::INT[]))
-	AND 
+        (p_id_cust_account_list IS NULL OR caf."id_cust_account" = ANY(string_to_array(p_id_cust_account_list, ',')::INT[]))
+    AND 
         (p_id_files_repo_list IS NULL OR caf."id_files_repo" = ANY(string_to_array(p_id_files_repo_list, ',')::INT[]))
     AND 
-		(p_id_files_repo_typeof_list IS NULL OR ft."idfiles_repo_typeof" = ANY (string_to_array(p_id_files_repo_typeof_list, ',')::INT[]))
+        (p_id_files_repo_typeof_list IS NULL OR ft."id_files_repo_typeof" = ANY (string_to_array(p_id_files_repo_typeof_list, ',')::INT[]))  -- Corrected column name
     AND 
-        (p_id_files_repo_typeof_first IS NULL OR ft."idfiles_repo_typeof" >= p_id_files_repo_typeof_first)
+        (p_id_files_repo_typeof_first IS NULL OR ft."id_files_repo_typeof" >= p_id_files_repo_typeof_first)  -- Corrected column name
     AND 
-        ( p_id_files_repo_typeof_last IS NULL OR ft."idfiles_repo_typeof" <=  p_id_files_repo_typeof_last)
-	AND (
-	     p_isactive IS NULL
-        -- Si p_isactive = 0, je verifie si une des deux dates de désactivation est avant la date du jour
-        OR(p_isactive IS NOT TRUE AND caf."deactivation_date" <= CURRENT_DATE 
-            
-        )
-        -- Si p_isactive = 1, je verifie que les deux dates de désactivation sont après la date du jour
-        OR (p_isactive IS TRUE AND caf."deactivation_date" > CURRENT_DATE
-            
-        )
+        (p_id_files_repo_typeof_last IS NULL OR ft."id_files_repo_typeof" <= p_id_files_repo_typeof_last)  -- Corrected column name
+    AND (
+         p_isactive IS NULL
+         OR (p_isactive IS NOT TRUE AND caf."deactivation_date" <= CURRENT_DATE)
+         OR (p_isactive IS TRUE AND caf."deactivation_date" > CURRENT_DATE)
     );
 END;
 $$ LANGUAGE plpgsql;

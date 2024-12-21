@@ -226,3 +226,45 @@ export const addSubscription = async (subscriptionData) => {
     throw error;
   }
 };
+
+export const addSubscriptionWithFile = async (subscriptionData) => {
+  try {
+    const formData = new FormData();
+
+    // Append all fields to the FormData object
+    for (const key in subscriptionData) {
+      if (subscriptionData.hasOwnProperty(key)) {
+        if (
+          key === 'licenseFile' ||
+          key === 'patenteFile' ||
+          key === 'rchFile'
+        ) {
+          if (subscriptionData[key]) {
+            formData.append(key, subscriptionData[key]);
+          }
+        } else {
+          formData.append(key, subscriptionData[key]);
+        }
+      }
+    }
+
+    const response = await fetch(`${API_URL}/customer/add-subscription-with-file`, {
+      method: 'POST',
+      headers: {
+        // 'Content-Type': 'multipart/form-data', // Do NOT set Content-Type manually when using FormData
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include JWT token if required
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Adding subscription with file failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error adding subscription with file:', error);
+    throw error;
+  }
+};
