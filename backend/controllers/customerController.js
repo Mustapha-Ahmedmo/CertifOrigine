@@ -335,6 +335,7 @@ const executeGetCustAccountInfo = async (req, res) => {
 const updateCustAccountStatus = async (req, res) => {
   try {
     const { id } = req.params; // ID du compte client à mettre à jour
+    const { idlogin } = req.body; // The operator ID (or admin ID) performing the validation
 
     // Vérifier si l'ID est fourni
     if (!id) {
