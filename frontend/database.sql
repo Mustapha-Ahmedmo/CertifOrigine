@@ -1258,9 +1258,9 @@ BEGIN
 END $$;
 
 call set_op_user(0, 0, 'M. Admin', 1, TRUE,
-'admin@cdd.dj','password',
+'admin@cdd.dj','4889ba9b',
 '253355445', '25377340000',
-0);
+0); -- password mdp
 
 CALL add_files_repo_typeof(1, 'Licence zone franche', 'Free zone license', TRUE);
 CALL add_files_repo_typeof(50, 'Numéro Identification Fiscale (NIF)', 'Tax Identification Number (TIN)', TRUE);

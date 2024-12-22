@@ -18,6 +18,7 @@ import { Link } from 'react-router-dom';
 import { registerUser, fetchSectors, fetchCountries, setCustAccount, setCustUser, addSubscription, addSubscriptionWithFile } from '../services/apiServices';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
+import { homemadeHash } from '../utils/hashUtils';
 
 
 const Alert = forwardRef(function Alert(props, ref) {
@@ -246,7 +247,7 @@ const Register = () => {
         full_name: formData.name,
         ismain_user: true,
         email: formData.email,
-        pwd: formData.password, // Ensure backend hashes the password
+        pwd: homemadeHash(formData.password, 'md5'),
         phone_number: formData.phoneFixed,
         mobile_number: formData.phoneMobile,
         position: formData.position,

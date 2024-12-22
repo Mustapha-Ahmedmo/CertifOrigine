@@ -188,7 +188,6 @@ const executeGetCustAccountInfo = async (req, res) => {
   try {
     const { id_list, statutflag, isactive } = req.query;
 
-    // Debugging: Log the incoming parameters
     console.log('Received get_custaccount_info parameters:', { id_list, statutflag, isactive });
 
     // Execute the get_custaccount_info function to retrieve customer accounts
@@ -204,7 +203,6 @@ const executeGetCustAccountInfo = async (req, res) => {
       }
     );
 
-    // Debugging: Log the accounts retrieved
     console.log('get_custaccount_info result:', accounts);
 
     if (accounts.length === 0) {
@@ -214,12 +212,39 @@ const executeGetCustAccountInfo = async (req, res) => {
       });
     }
 
+    // Extract unique sector IDs
+    const sectorIds = Array.from(new Set(accounts.map(account => account.id_sector).filter(Boolean))).join(',');
+
+    console.log('Sector IDs to retrieve:', sectorIds);
+
+    // Retrieve sector information
+    const sectors = await sequelize.query(
+      `SELECT * FROM get_sector_info(:p_id_list)`,
+      {
+        replacements: { p_id_list: sectorIds },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    console.log('Sector info retrieved:', sectors);
+
+    // Create a mapping of sector ID to sector details
+    const sectorMap = {};
+    sectors.forEach(sector => {
+      sectorMap[sector.id_sector] = {
+        symbol_fr: sector.symbol_fr,
+        symbol_eng: sector.symbol_eng,
+      };
+    });
+
+    console.log('Sector map:', sectorMap);
+
     // Extract the list of customer account IDs
     const accountIds = accounts.map(account => account.id_cust_account).join(',');
 
     console.log('Extracted account IDs for main contacts and files:', accountIds);
 
-    // Execute the get_custuser_info function to retrieve main contacts for the accounts
+    // Retrieve main contacts
     const mainContacts = await sequelize.query(
       `SELECT * FROM get_custuser_info(
         :id_listCA, 
@@ -242,10 +267,9 @@ const executeGetCustAccountInfo = async (req, res) => {
       }
     );
 
-    // Debugging: Log the main contacts retrieved
     console.log('get_custuser_info result (main contacts):', mainContacts);
 
-    // Execute the get_cust_account_files function to retrieve files for the accounts
+    // Retrieve files
     const files = await sequelize.query(
       `SELECT * FROM get_cust_account_files(
         NULL,
@@ -265,7 +289,6 @@ const executeGetCustAccountInfo = async (req, res) => {
       }
     );
 
-    // Debugging: Log the files retrieved
     console.log('get_cust_account_files result:', files);
 
     // Create mappings for main contacts and files
@@ -285,9 +308,10 @@ const executeGetCustAccountInfo = async (req, res) => {
     console.log('Contact Map:', contactMap);
     console.log('File Map:', fileMap);
 
-    // Enrich each account with its main contact and files
+    // Enrich each account with sector name, main contact, and files
     const enrichedAccounts = accounts.map(account => ({
       ...account,
+      sectorName: sectorMap[account.id_sector] || null, // Add sector info
       main_contact: contactMap[account.id_cust_account] || null, // Add null if no main contact found
       files: fileMap[account.id_cust_account] || [], // Add empty array if no files found
     }));
@@ -296,7 +320,7 @@ const executeGetCustAccountInfo = async (req, res) => {
 
     // Send the enriched data in the response
     res.status(200).json({
-      message: 'Customer account information with main contacts and files retrieved successfully',
+      message: 'Customer account information with main contacts, sectors, and files retrieved successfully',
       data: enrichedAccounts,
     });
   } catch (error) {
@@ -308,7 +332,6 @@ const executeGetCustAccountInfo = async (req, res) => {
     });
   }
 };
-
 const updateCustAccountStatus = async (req, res) => {
   try {
     const { id } = req.params; // ID du compte client à mettre à jour
@@ -335,6 +358,8 @@ const updateCustAccountStatus = async (req, res) => {
       });
     }
 
+    const accountDetails = account[0];
+
     // Mettre à jour le statut_flag à 1
     await sequelize.query(
       `UPDATE cust_account SET statut_flag = 1, lastmodified = NOW() WHERE id_cust_account = :id`,
@@ -354,15 +379,41 @@ const updateCustAccountStatus = async (req, res) => {
     );
 
     if (mainContact.length > 0) {
-      const { email, full_name } = mainContact[0];
+      const { email, full_name, username } = mainContact[0];
+      const formattedDate = new Date().toLocaleString('fr-FR', {
+        timeZone: 'Africa/Djibouti',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
 
       // Envoi de l'email pour informer de la validation
       await sendEmail(
         email,
-        'Votre compte a été validé',
-        `Bonjour ${full_name},\n\nVotre compte a été validé par un opérateur.\n\nCordialement,\nL'équipe.`
+        'Votre inscription a été validée',
+        `Bonjour ${full_name},
+
+Votre demande d’inscription du ${formattedDate} a été validée avec succès.
+
+Vous pouvez désormais vous connecter à votre compte en cliquant sur le lien suivant :
+[Portail Chambre de Commerce de Djibouti](https://portal.ccd.dj)
+
+Identifiants de connexion :
+- **Nom d'utilisateur** : ${username}
+- **Mot de passe** : celui que vous avez défini lors de votre inscription.
+
+⚠️ Si vous n'êtes pas à l'origine de cette demande, nous vous invitons à nous signaler immédiatement cet e-mail à l'adresse : abuse@ccd.dj.
+
+Nous restons à votre disposition pour toute question.
+
+Bien cordialement,
+**L'équipe du portail de la Chambre de Commerce de Djibouti**`
       );
     }
+
     res.status(200).json({
       message: `Statut du compte client avec ID ${id} mis à jour à 1.`,
     });
@@ -374,7 +425,6 @@ const updateCustAccountStatus = async (req, res) => {
     });
   }
 };
-
 const rejectCustAccount = async (req, res) => {
   try {
     const { id } = req.params; // ID of the customer account to reject
@@ -648,35 +698,43 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
       position,
     } = req.body;
 
-    // Validate required fields for the subscription
-    if (
-      !uploadType ||
-      !legal_form ||
-      !cust_name ||
-      !trade_registration_num ||
-      in_free_zone === undefined ||
-      !identification_number ||
-      !register_number ||
-      !full_address ||
-      !id_sector ||
-      !id_country ||
-      statut_flag === undefined ||
-      !idlogin ||
-      !billed_cust_name ||
-      !bill_full_address ||
-      gender === undefined ||
-      !full_name ||
-      ismain_user === undefined ||
-      !email ||
-      !pwd ||
-      !phone_number ||
-      !mobile_number ||
-      !position
-    ) {
-      return res.status(400).json({
-        message: 'All required fields must be provided for creating subscription with file.',
-      });
-    }
+        // Create a map of required fields and their current values
+        const requiredFields = {
+          uploadType,
+          legal_form,
+          cust_name,
+          trade_registration_num,
+          in_free_zone,
+          identification_number,
+          register_number,
+          full_address,
+          id_sector,
+          id_country,
+          statut_flag,
+          idlogin,
+          billed_cust_name,
+          bill_full_address,
+          gender,
+          full_name,
+          ismain_user,
+          email,
+          pwd,
+          phone_number,
+          mobile_number,
+          position,
+        };
+    
+        // Find missing fields
+        const missingFields = Object.entries(requiredFields)
+          .filter(([key, value]) => value === undefined || value === null || value === '')
+          .map(([key]) => key);
+    
+        if (missingFields.length > 0) {
+          return res.status(400).json({
+            message: 'The following fields are missing:',
+            missingFields,
+          });
+        }
 
     // Start a transaction
     const transaction = await sequelize.transaction();

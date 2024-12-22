@@ -31,7 +31,6 @@ const Inscriptions = () => {
     fetchCustAccounts();
   }, []);
 
-
   const handleFileClick = (file) => {
     const fileUrl = `${API_URL}/files/inscriptions/${new Date().getFullYear()}/${file.file_guid}`;
     window.open(fileUrl, '_blank');
@@ -69,8 +68,7 @@ const Inscriptions = () => {
     }
 
     try {
-      // Replace with the current operator ID, e.g., from Redux or localStorage
-      const idlogin = 1; 
+      const idlogin = 1; // Replace with actual operator ID from AuthContext
 
       await rejectCustAccount(rejectingAccountId, rejectionReason, idlogin);
 
@@ -83,7 +81,6 @@ const Inscriptions = () => {
         setRemovingAccounts((prev) => prev.filter((accountId) => accountId !== rejectingAccountId));
       }, 300);
 
-      // Close modal and reset rejection state
       setShowRejectModal(false);
       setRejectingAccountId(null);
       setRejectionReason('');
@@ -101,7 +98,7 @@ const Inscriptions = () => {
 
   return (
     <div className="inscriptions-page-container">
-      <h1>Inscriptions à valider</h1>
+      <h1>Inscriptions à valider ({custAccounts.length})</h1>
       <div className="dashboard-table-container">
         <table className="dashboard-table">
           <thead>
@@ -109,6 +106,7 @@ const Inscriptions = () => {
               <th>Date</th>
               <th>Catégorie</th>
               <th>Client</th>
+              <th>Secteur</th>
               <th>Zone Franche</th>
               <th>Fichier Justificatifs</th>
               <th>Contact Principal</th>
@@ -125,6 +123,7 @@ const Inscriptions = () => {
                     <td>{formatDate(registration.insertdate)}</td>
                     <td>{registration.legal_form}</td>
                     <td>{registration.cust_name}</td>
+                    <td>{registration.sectorName.symbol_fr}</td>
                     <td>{registration.in_free_zone ? 'Oui' : 'Non'}</td>
                     <td>
                       {registration.files && registration.files.length > 0 ? (
@@ -165,15 +164,18 @@ const Inscriptions = () => {
                       </button>
                     </td>
                   </tr>
-                  {isExpanded && (
+                  {isExpanded && registration.main_contact && (
                     <tr className="contact-details-row">
                       <td colSpan="7">
                         <div className="contact-details">
-                          <p><strong>Nom: </strong>{registration?.main_contact?.full_name || 'N/A'}</p>
-                          <p><strong>Fonction: </strong>{registration?.main_contact?.position || 'N/A'}</p>
-                          <p><strong>Email: </strong>{registration?.main_contact?.email || 'N/A'}</p>
-                          <p><strong>Tel: </strong>{registration?.main_contact?.phone_number || 'N/A'}</p>
-                          <p><strong>Portable: </strong>{registration?.main_contact?.mobile_number || 'N/A'}</p>
+                          <p><strong>Nom: </strong>{registration.main_contact.full_name}</p>
+                          <p><strong>Genre: </strong>{registration.main_contact.gender === 0 ? 'Mr' : 'Mme'}</p>
+                          <p><strong>Fonction: </strong>{registration.main_contact.position || 'N/A'}</p>
+                          <p><strong>Email: </strong>{registration.main_contact.email}</p>
+                          <p><strong>Tel: </strong>{registration.main_contact.phone_number || 'N/A'}</p>
+                          <p><strong>Portable: </strong>{registration.main_contact.mobile_number || 'N/A'}</p>
+                          <p><strong>Adresse Complète: </strong>{registration.full_address}</p>
+                          <p><strong>Pays: </strong>{registration.co_symbol_fr}</p>
                         </div>
                       </td>
                     </tr>

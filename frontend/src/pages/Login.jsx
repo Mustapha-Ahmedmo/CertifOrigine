@@ -7,6 +7,7 @@ import logo from '../assets/logo.jpg';
 import { Helmet } from 'react-helmet';
 import { loginUser } from '../services/apiServices';
 import { useMediaQuery } from 'react-responsive';
+import { homemadeHash } from '../utils/hashUtils';
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -21,17 +22,11 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await loginUser(username, password);
+      const response = await loginUser(username, homemadeHash(password));
       dispatch(
         login({
-          user: {
-            id: response.user.id,
-            full_name: response.user.full_name,
-            email: response.user.email,
-            role: response.user.role_user,
-            isadmin_login: response.user.isadmin_login,
-          },
-          token: response.token,
+          user: response.user, // Store the entire user object
+          token: response.token, // Store the token
         })
       );
       navigate('/dashboard');

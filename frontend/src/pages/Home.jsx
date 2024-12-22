@@ -98,13 +98,15 @@ const Home = () => {
     },
   ];
 
+  console.log(user);
+
   return (
     <div className="home-container">
       <Helmet>
         <title>Dashboard</title>
       </Helmet>
       <div className="home-welcome-message">
-        Bienvenue <span className="home-highlight-text">INDIGO TRADING FZCO</span>
+        Bienvenue <span className="home-highlight-text">{user?.companyname}</span>
       </div>
 
       {/* Dropdown visible uniquement sur mobile */}
