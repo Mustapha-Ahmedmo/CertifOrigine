@@ -1,8 +1,5 @@
 .inscriptions-page-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    margin-top: 100px; /* pour laisser la place au header fixe */
+    margin-left: 240px; 
     text-align: center;
   }
   
