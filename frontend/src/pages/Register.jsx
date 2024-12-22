@@ -1,3 +1,5 @@
+// Register.jsx
+
 import React, { useState, forwardRef, useEffect } from 'react';
 import './Register.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -27,8 +29,6 @@ const isValidPhoneNumber = (number) => {
   const phoneRegex = /^(?:\+33|0)[1-9](?:[ .-]?\d{2}){4}$/;
   return phoneRegex.test(number);
 };
-
-
 
 const Alert = forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -64,6 +64,8 @@ const Register = () => {
     rchFile: null,
     acceptsConditions: false,
     acceptsDataProcessing: false,
+    // Nouveau champ pour la liste déroulante
+    companyType: '',
   });
 
   const [error, setError] = useState('');
@@ -106,23 +108,22 @@ const Register = () => {
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
     if (type === 'checkbox') {
-      if (name === 'isFreeZoneCompany' || name === 'isOtherCompany') {
-        // S'assurer qu'une seule case est cochée à la fois
-        setFormData({
-          ...formData,
-          isFreeZoneCompany: name === 'isFreeZoneCompany' ? checked : false,
-          isOtherCompany: name === 'isOtherCompany' ? checked : false,
-        });
-      } else {
-        setFormData({
-          ...formData,
-          [name]: checked,
-        });
-      }
+      setFormData({
+        ...formData,
+        [name]: checked,
+      });
     } else if (type === 'file') {
       setFormData({
         ...formData,
         [name]: files[0],
+      });
+    } else if (name === 'companyType') {
+      // Mise à jour de isFreeZoneCompany et isOtherCompany en fonction du choix de la liste
+      setFormData({
+        ...formData,
+        companyType: value,
+        isFreeZoneCompany: value === 'zoneFranche',
+        isOtherCompany: value === 'autre',
       });
     } else {
       if (name === 'phoneFixed' || name === 'phoneMobile') {
@@ -149,20 +150,20 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-     // Validation des numéros de téléphone
-  if (!isValidPhoneNumber(formData.phoneFixed)) {
-    setSnackbarMessage('Le numéro de téléphone fixe est invalide.');
-    setSnackbarSeverity('error');
-    setSnackbarOpen(true);
-    return;
-  }
+    // Validation des numéros de téléphone
+    if (!isValidPhoneNumber(formData.phoneFixed)) {
+      setSnackbarMessage('Le numéro de téléphone fixe est invalide.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
 
-  if (!isValidPhoneNumber(formData.phoneMobile)) {
-    setSnackbarMessage('Le numéro de téléphone portable est invalide.');
-    setSnackbarSeverity('error');
-    setSnackbarOpen(true);
-    return;
-  }
+    if (!isValidPhoneNumber(formData.phoneMobile)) {
+      setSnackbarMessage('Le numéro de téléphone portable est invalide.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
 
     // Validate formData (example for password confirmation)
     if (formData.password !== formData.confirmPassword) {
@@ -200,7 +201,7 @@ const Register = () => {
         acceptsDataProcessing: formData.acceptsDataProcessing,
       };
 
-      // Send the registration data to the backend
+      // Exemple d'utilisation (commenté) :
       // const response = await registerUser(userData);
 
       const selectedSector = sectors.find(
@@ -211,26 +212,27 @@ const Register = () => {
         (country) => country.symbol_fr === formData.country
       );
 
-      // Prepare customer account data (if needed)
-    /*  const custAccountData = {
-        legal_form: formData.companyCategory, // This will be mapped to legal_form in controller
+      // Exemple d'autres appels (commentés) :
+
+      /*
+      const custAccountData = {
+        legal_form: formData.companyCategory,
         cust_name: formData.companyName,
-        trade_registration_num: formData.trade_registration_num || '12345', // Ensure trade_registration_num is collected
+        trade_registration_num: formData.trade_registration_num || '12345',
         in_free_zone: formData.isFreeZoneCompany,
-        identification_number: formData.identification_number || 'ID123', // Ensure identification_number is collected
-        register_number: formData.register_number || 'RN456', // Ensure register_number is collected
+        identification_number: formData.identification_number || 'ID123',
+        register_number: formData.register_number || 'RN456',
         full_address: formData.address,
         id_sector: selectedSector ? selectedSector.id_sector : null,
         other_sector: formData.otherSector || null,
         id_country: selectedCountry ? selectedCountry.id_country : null,
-        statut_flag: 1, // Example value; set accordingly
-        idlogin: 1, // Assuming registerUser returns userId
-        billed_cust_name: formData.billed_cust_name || 'ABC Billing', // Collect from form or set default
-        bill_full_address: formData.bill_full_address || '456 Billing St', // Collect from form or set default
-        id_cust_account: null, // INOUT parameter; will be set by the procedure
+        statut_flag: 1,
+        idlogin: 1,
+        billed_cust_name: formData.billed_cust_name || 'ABC Billing',
+        bill_full_address: formData.bill_full_address || '456 Billing St',
+        id_cust_account: null,
       };
 
-      // Set Customer Account
       const accountResponse = await setCustAccount(custAccountData);
       console.log('Set Cust Account response:', accountResponse);
 
@@ -241,43 +243,44 @@ const Register = () => {
         accountResponse.result[0][0].p_id_cust_account;
 
       if (!id_cust_account) {
-        throw new Error('Failed to retrieve id_cust_account from Set Cust Account response');
+        throw new Error('Failed to retrieve id_cust_account');
       }
 
       const custUserData = {
-        id_cust_user: 0, // 0 for new user
-        id_cust_account: id_cust_account, // Use the returned account ID
+        id_cust_user: 0,
+        id_cust_account: id_cust_account,
         gender: formData.gender === 'Mr' ? 0 : 1,
         full_name: formData.name,
-        ismain_user: true, // Assuming this is the main user
+        ismain_user: true,
         email: formData.email,
         password: formData.password,
         phone_number: formData.phoneFixed,
         mobile_number: formData.phoneMobile,
-        idlogin: 1, // Replace with actual admin ID
+        idlogin: 1,
         position: formData.position,
       };
 
       const userResponse = await setCustUser(custUserData);
-      console.log('Set Cust User response:', userResponse);*/
+      console.log('Set Cust User response:', userResponse);
+      */
 
       const subscriptionData = {
         uploadType: 'inscriptions',
         legal_form: formData.companyCategory,
         cust_name: formData.companyName,
-        trade_registration_num: formData.trade_registration_num || '12345', // Ensure trade_registration_num is collected or set default
+        trade_registration_num: formData.trade_registration_num || '12345',
         in_free_zone: formData.isFreeZoneCompany,
-        identification_number: formData.identification_number || 'ID123', // Ensure identification_number is collected or set default
-        register_number: formData.register_number || 'RN456', // Ensure register_number is collected or set default
+        identification_number: formData.identification_number || 'ID123',
+        register_number: formData.register_number || 'RN456',
         full_address: formData.address,
         id_sector: selectedSector ? selectedSector.id_sector : null,
         other_sector: formData.otherSector || null,
         id_country: selectedCountry ? selectedCountry.id_country : null,
-        statut_flag: 1, // Initial status
-        idlogin: 1, // Replace with actual operator ID from AuthContext
-        billed_cust_name: formData.billed_cust_name || 'ABC Billing', // Collect from form or set default
-        bill_full_address: formData.bill_full_address || '456 Billing St', // Collect from form or set default
-        gender: formData.gender === 'Mr' ? 0 : 1, // Assuming 0 for Mr, 1 for Mme
+        statut_flag: 1,
+        idlogin: 1,
+        billed_cust_name: formData.billed_cust_name || 'ABC Billing',
+        bill_full_address: formData.bill_full_address || '456 Billing St',
+        gender: formData.gender === 'Mr' ? 0 : 1,
         full_name: formData.name,
         ismain_user: true,
         email: formData.email,
@@ -291,10 +294,10 @@ const Register = () => {
         rchFile: formData.isOtherCompany ? formData.rchFile : null,
       };
 
-      // Call the addSubscription API
-     // const response = await addSubscription(subscriptionData);
-     // console.log('Add Subscription response:', response);
-      // Call the addSubscriptionWithFile API
+      // Exemple d'appel sans fichier :
+      // const response = await addSubscription(subscriptionData);
+
+      // Appel avec upload de fichiers
       const response = await addSubscriptionWithFile(subscriptionData);
       console.log('Add Subscription with File response:', response);
       setSnackbarMessage('Inscription réussie');
@@ -310,9 +313,7 @@ const Register = () => {
       // Ajouter un délai avant la redirection
       setTimeout(() => {
         navigate('/account-created'); // Redirection après un délai
-      }, 2000); // 2000 ms = 2 secondes
-
-
+      }, 2000);
     }
   };
 
@@ -480,29 +481,28 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Cases à cocher pour le type d'entreprise */}
+            {/* Liste déroulante pour le type d'entreprise */}
             <div className="register-client-form-row">
               <div className="register-client-field register-client-half-width">
-                <label className="register-client-checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="isFreeZoneCompany"
-                    checked={formData.isFreeZoneCompany}
+                <div className="register-client-input-wrapper">
+                  <FontAwesomeIcon icon={faBuilding} className="input-icon" />
+                  <select
+                    name="companyType"
+                    value={formData.companyType}
                     onChange={handleChange}
-                  />
-                  Entreprise en zone franche
-                </label>
-              </div>
-              <div className="register-client-field register-client-half-width">
-                <label className="register-client-checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="isOtherCompany"
-                    checked={formData.isOtherCompany}
-                    onChange={handleChange}
-                  />
-                  Autre Entreprise
-                </label>
+                    required
+                    className={`register-client-input ${
+                      formData.companyType === '' ? 'placeholder' : ''
+                    }`}
+                  >
+                    <option value="" disabled hidden>
+                      Type d'entreprise
+                    </option>
+                    <option value="zoneFranche">Entreprise en zone franche</option>
+                    <option value="autre">Autre Entreprise</option>
+                  </select>
+                  <span className="register-client-required-asterisk">*</span>
+                </div>
               </div>
             </div>
 
