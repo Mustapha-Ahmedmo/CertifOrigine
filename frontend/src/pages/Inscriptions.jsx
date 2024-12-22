@@ -22,7 +22,7 @@ const Inscriptions = () => {
   useEffect(() => {
     const fetchCustAccounts = async () => {
       try {
-        const response = await getCustAccountInfo(null, 0, true);
+        const response = await getCustAccountInfo(null, 1, true);
         setCustAccounts(response.data);
       } catch (err) {
         console.error(err);

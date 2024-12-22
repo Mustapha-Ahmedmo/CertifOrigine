@@ -360,12 +360,16 @@ const updateCustAccountStatus = async (req, res) => {
 
     const accountDetails = account[0];
 
-    // Mettre à jour le statut_flag à 1
+    // --► NEW: Call the procedure instead of direct UPDATE ◄--
     await sequelize.query(
-      `UPDATE cust_account SET statut_flag = 1, lastmodified = NOW() WHERE id_cust_account = :id`,
+      `CALL upd_cust_account_statut(:p_id_cust_account, :p_statut_flag, :p_idlogin)`,
       {
-        replacements: { id },
-        type: sequelize.QueryTypes.UPDATE,
+        replacements: {
+          p_id_cust_account: id,
+          p_statut_flag: 2, // 2 => inscription validée
+          p_idlogin: idlogin || 1, // Fallback if not provided
+        },
+        type: sequelize.QueryTypes.RAW,
       }
     );
 
@@ -458,44 +462,14 @@ const rejectCustAccount = async (req, res) => {
       });
     }
 
-    const accountDetails = account[0];
-
-    // Call the stored procedure to update the account
+    // --► NEW: Call the procedure with p_statut_flag = 4 ◄--
     await sequelize.query(
-      `CALL set_cust_account(
-        :legal_form, 
-        :cust_name, 
-        :trade_registration_num, 
-        :in_free_zone, 
-        :identification_number, 
-        :register_number, 
-        :full_address, 
-        :id_sector, 
-        :other_sector, 
-        :id_country, 
-        :statut_flag, 
-        :idlogin, 
-        :billed_cust_name, 
-        :bill_full_address, 
-        :id_cust_account
-      )`,
+      `CALL upd_cust_account_statut(:p_id_cust_account, :p_statut_flag, :p_idlogin)`,
       {
         replacements: {
-          legal_form: accountDetails.legal_form,
-          cust_name: accountDetails.cust_name,
-          trade_registration_num: accountDetails.trade_registration_num,
-          in_free_zone: accountDetails.in_free_zone,
-          identification_number: accountDetails.identification_number,
-          register_number: accountDetails.register_number,
-          full_address: accountDetails.full_address,
-          id_sector: accountDetails.id_sector,
-          other_sector: accountDetails.other_sector,
-          id_country: accountDetails.id_country,
-          statut_flag: 4, // Set to rejected
-          idlogin, // Operator ID
-          billed_cust_name: accountDetails.billed_cust_name,
-          bill_full_address: accountDetails.bill_full_address,
-          id_cust_account: id,
+          p_id_cust_account: id,
+          p_statut_flag: 4, // 4 => inscription rejetée
+          p_idlogin: idlogin || 1, // Fallback if not provided
         },
         type: sequelize.QueryTypes.RAW,
       }
@@ -517,12 +491,19 @@ const rejectCustAccount = async (req, res) => {
       await sendEmail(
         email,
         'Votre compte a été rejeté',
-        `Bonjour ${full_name},\n\nVotre compte a été rejeté par un opérateur.\n\nRaison du rejet : ${reason}\n\nCordialement,\nL'équipe.`
+        `Bonjour ${full_name},
+
+Votre compte a été rejeté par un opérateur.
+
+Raison du rejet : ${reason}
+
+Cordialement,
+L'équipe.`
       );
     }
 
     res.status(200).json({
-      message: `Compte client avec ID ${id} a été rejeté.`,
+      message: `Compte client avec ID ${id} a été rejeté (statut_flag = 4).`,
     });
   } catch (error) {
     console.error('Erreur lors du rejet du compte client:', error);

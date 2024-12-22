@@ -29,7 +29,7 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
   useEffect(() => {
     const fetchInscriptionCount = async () => {
       try {
-        const response = await getCustAccountInfo(null, 0, true); // Fetch accounts with statut_flag = 0
+        const response = await getCustAccountInfo(null, 1, true);
         const pendingCount = response.data.filter((account) => account.statut_flag === 0).length;
         console.log(pendingCount);
         setInscriptionNotificationCount(pendingCount);
