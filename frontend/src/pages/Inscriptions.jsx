@@ -107,6 +107,8 @@ const Inscriptions = () => {
               <th>Catégorie</th>
               <th>Client</th>
               <th>Secteur</th>
+              <th>Adresse Complète</th>
+              <th>Pays</th>
               <th>Zone Franche</th>
               <th>Fichier Justificatifs</th>
               <th>Contact Principal</th>
@@ -123,7 +125,9 @@ const Inscriptions = () => {
                     <td>{formatDate(registration.insertdate)}</td>
                     <td>{registration.legal_form}</td>
                     <td>{registration.cust_name}</td>
-                    <td>{registration.sectorName.symbol_fr}</td>
+                    <td>{registration.sectorName?.symbol_fr || 'N/A'}</td>
+                    <td>{registration.full_address}</td>
+                    <td>{registration.co_symbol_fr}</td>
                     <td>{registration.in_free_zone ? 'Oui' : 'Non'}</td>
                     <td>
                       {registration.files && registration.files.length > 0 ? (
@@ -166,7 +170,7 @@ const Inscriptions = () => {
                   </tr>
                   {isExpanded && registration.main_contact && (
                     <tr className="contact-details-row">
-                      <td colSpan="7">
+                      <td colSpan="10">
                         <div className="contact-details">
                           <p><strong>Nom: </strong>{registration.main_contact.full_name}</p>
                           <p><strong>Genre: </strong>{registration.main_contact.gender === 0 ? 'Mr' : 'Mme'}</p>
@@ -174,8 +178,6 @@ const Inscriptions = () => {
                           <p><strong>Email: </strong>{registration.main_contact.email}</p>
                           <p><strong>Tel: </strong>{registration.main_contact.phone_number || 'N/A'}</p>
                           <p><strong>Portable: </strong>{registration.main_contact.mobile_number || 'N/A'}</p>
-                          <p><strong>Adresse Complète: </strong>{registration.full_address}</p>
-                          <p><strong>Pays: </strong>{registration.co_symbol_fr}</p>
                         </div>
                       </td>
                     </tr>
