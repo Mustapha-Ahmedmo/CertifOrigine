@@ -30,11 +30,15 @@ const isValidPhoneNumber = (number) => {
   return phoneRegex.test(number);
 };
 
+
+
 const Alert = forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
 const Register = () => {
+
+  const allowedFileTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
 
   const navigate = useNavigate();
 
@@ -106,6 +110,8 @@ const Register = () => {
   }, []);
 
   const handleChange = (e) => {
+
+    
     const { name, value, type, checked, files } = e.target;
     if (type === 'checkbox') {
       setFormData({
@@ -133,10 +139,37 @@ const Register = () => {
           setError('');
         }
       }
+
+      if (type === 'file') {
+        const file = files[0];
+        if (file && !validateFileType(file)) {
+          setSnackbarMessage(`Seulement les fichiers JPEG, JPG, PNG et PDF sont autorisés pour ${name}.`);
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
+          return; // Arrêter la mise à jour du formulaire si le fichier est invalide
+        }
+    
+        setFormData({
+          ...formData,
+          [name]: file,
+        });
+      } else if (type === 'checkbox') {
+        setFormData({
+          ...formData,
+          [name]: checked,
+        });
+      } else {
+        setFormData({
+          ...formData,
+          [name]: value,
+        });
+      }
       setFormData({
         ...formData,
         [name]: value,
       });
+
+
     }
   };
 
@@ -147,41 +180,13 @@ const Register = () => {
     }));
   };
 
-  const allowedFileTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+  
 
 const validateFileType = (file) => {
   if (!file) return true; // Aucun fichier n'est sélectionné, donc valide par défaut
   return allowedFileTypes.includes(file.type);
 };
 
-const handleChange = (e) => {
-  const { name, value, type, checked, files } = e.target;
-
-  if (type === 'file') {
-    const file = files[0];
-    if (file && !validateFileType(file)) {
-      setSnackbarMessage(`Seulement les fichiers JPEG, JPG, PNG et PDF sont autorisés pour ${name}.`);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      return; // Arrêter la mise à jour du formulaire si le fichier est invalide
-    }
-
-    setFormData({
-      ...formData,
-      [name]: file,
-    });
-  } else if (type === 'checkbox') {
-    setFormData({
-      ...formData,
-      [name]: checked,
-    });
-  } else {
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  }
-};
 
 
 
