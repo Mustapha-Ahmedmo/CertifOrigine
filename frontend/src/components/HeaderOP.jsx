@@ -30,7 +30,7 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
     const fetchInscriptionCount = async () => {
       try {
         const response = await getCustAccountInfo(null, 1, true);
-        const pendingCount = response.data.filter((account) => account.statut_flag === 0).length;
+        const pendingCount = response.data.filter((account) => account.statut_flag === 1).length;
         console.log(pendingCount);
         setInscriptionNotificationCount(pendingCount);
       } catch (err) {
