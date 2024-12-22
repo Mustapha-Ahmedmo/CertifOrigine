@@ -147,8 +147,62 @@ const Register = () => {
     }));
   };
 
+  const allowedFileTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+
+const validateFileType = (file) => {
+  if (!file) return true; // Aucun fichier n'est sélectionné, donc valide par défaut
+  return allowedFileTypes.includes(file.type);
+};
+
+const handleChange = (e) => {
+  const { name, value, type, checked, files } = e.target;
+
+  if (type === 'file') {
+    const file = files[0];
+    if (file && !validateFileType(file)) {
+      setSnackbarMessage(`Seulement les fichiers JPEG, JPG, PNG et PDF sont autorisés pour ${name}.`);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return; // Arrêter la mise à jour du formulaire si le fichier est invalide
+    }
+
+    setFormData({
+      ...formData,
+      [name]: file,
+    });
+  } else if (type === 'checkbox') {
+    setFormData({
+      ...formData,
+      [name]: checked,
+    });
+  } else {
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  }
+};
+
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+     // Vérifiez les types de fichiers avant de continuer
+  const filesToValidate = [
+    { name: 'licenseFile', file: formData.licenseFile },
+    { name: 'patenteFile', file: formData.patenteFile },
+    { name: 'rchFile', file: formData.rchFile },
+  ];
+
+  for (const { name, file } of filesToValidate) {
+    if (file && !validateFileType(file)) {
+      setSnackbarMessage(`Seulement les fichiers JPEG, JPG, PNG et PDF sont autorisés pour ${name}.`);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return; // Arrêter la soumission du formulaire
+    }
+  }
 
     // Validation des numéros de téléphone
     if (!isValidPhoneNumber(formData.phoneFixed)) {
