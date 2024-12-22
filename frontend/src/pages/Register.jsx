@@ -19,6 +19,15 @@ import { registerUser, fetchSectors, fetchCountries, setCustAccount, setCustUser
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 import { homemadeHash } from '../utils/hashUtils';
+import { useNavigate } from 'react-router-dom';
+
+// Fonction pour valider un numéro de téléphone (international ou français)
+const isValidPhoneNumber = (number) => {
+  // Regex pour un numéro français ou international (ex : +33, 06, 07)
+  const phoneRegex = /^(?:\+33|0)[1-9](?:[ .-]?\d{2}){4}$/;
+  return phoneRegex.test(number);
+};
+
 
 
 const Alert = forwardRef(function Alert(props, ref) {
@@ -26,6 +35,9 @@ const Alert = forwardRef(function Alert(props, ref) {
 });
 
 const Register = () => {
+
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     gender: 'Mr',
     name: '',
@@ -113,6 +125,13 @@ const Register = () => {
         [name]: files[0],
       });
     } else {
+      if (name === 'phoneFixed' || name === 'phoneMobile') {
+        if (!isValidPhoneNumber(value) && value !== '') {
+          setError(`Le champ ${name === 'phoneFixed' ? 'Téléphone' : 'Téléphone portable'} est invalide.`);
+        } else {
+          setError('');
+        }
+      }
       setFormData({
         ...formData,
         [name]: value,
@@ -129,6 +148,21 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+     // Validation des numéros de téléphone
+  if (!isValidPhoneNumber(formData.phoneFixed)) {
+    setSnackbarMessage('Le numéro de téléphone fixe est invalide.');
+    setSnackbarSeverity('error');
+    setSnackbarOpen(true);
+    return;
+  }
+
+  if (!isValidPhoneNumber(formData.phoneMobile)) {
+    setSnackbarMessage('Le numéro de téléphone portable est invalide.');
+    setSnackbarSeverity('error');
+    setSnackbarOpen(true);
+    return;
+  }
 
     // Validate formData (example for password confirmation)
     if (formData.password !== formData.confirmPassword) {
@@ -266,11 +300,19 @@ const Register = () => {
       setSnackbarMessage('Inscription réussie');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
+      navigate('/account-created');
+
     } catch (err) {
       setError(err.message);
       setSnackbarMessage(err.message);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
+      // Ajouter un délai avant la redirection
+      setTimeout(() => {
+        navigate('/account-created'); // Redirection après un délai
+      }, 2000); // 2000 ms = 2 secondes
+
+
     }
   };
 
