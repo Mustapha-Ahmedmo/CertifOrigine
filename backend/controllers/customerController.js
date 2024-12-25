@@ -680,43 +680,43 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
       position,
     } = req.body;
 
-        // Create a map of required fields and their current values
-        const requiredFields = {
-          uploadType,
-          legal_form,
-          cust_name,
-          trade_registration_num,
-          in_free_zone,
-          identification_number,
-          register_number,
-          full_address,
-          id_sector,
-          id_country,
-          statut_flag,
-          idlogin,
-          billed_cust_name,
-          bill_full_address,
-          gender,
-          full_name,
-          ismain_user,
-          email,
-          pwd,
-          phone_number,
-          mobile_number,
-          position,
-        };
-    
-        // Find missing fields
-        const missingFields = Object.entries(requiredFields)
-          .filter(([key, value]) => value === undefined || value === null || value === '')
-          .map(([key]) => key);
-    
-        if (missingFields.length > 0) {
-          return res.status(400).json({
-            message: 'The following fields are missing:',
-            missingFields,
-          });
-        }
+    // Create a map of required fields and their current values
+    const requiredFields = {
+      uploadType,
+      legal_form,
+      cust_name,
+      trade_registration_num,
+      in_free_zone,
+      identification_number,
+      register_number,
+      full_address,
+      id_sector,
+      id_country,
+      statut_flag,
+      idlogin,
+      billed_cust_name,
+      bill_full_address,
+      gender,
+      full_name,
+      ismain_user,
+      email,
+      pwd,
+      phone_number,
+      mobile_number,
+      position,
+    };
+
+    // Find missing fields
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key, value]) => value === undefined || value === null || value === '')
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        message: 'The following fields are missing:',
+        missingFields,
+      });
+    }
 
     // Start a transaction
     const transaction = await sequelize.transaction();
@@ -795,70 +795,98 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
         // Determine which files to process based on uploadType and company type
         const fileMappings = [];
 
-        if (uploadType === 'inscriptions' && in_free_zone === 'true') {
-          if (files.licenseFile && files.licenseFile.length > 0) {
-            fileMappings.push({
-              type: 'inscriptions', // For folder structure
-              idfiles_repo_typeof: 1, // Licence zone franche
-              file: files.licenseFile[0],
-            });
+        if (uploadType === 'inscriptions') {
+          if (in_free_zone === 'true' || in_free_zone === true) {
+            // Process licenseFile
+            if (files.licenseFile && files.licenseFile.length > 0) {
+              console.log('Processing licenseFile:', files.licenseFile);
+              fileMappings.push({
+                type: 'inscriptions', // For folder structure
+                idfiles_repo_typeof: 1, // Licence zone franche
+                file: files.licenseFile[0],
+              });
+            } else {
+              console.warn('No licenseFile found for inscriptions in free zone.');
+            }
+          } else {
+            // Process patenteFile and rchFile
+            if (files.patenteFile && files.patenteFile.length > 0) {
+              console.log('Processing patenteFile:', files.patenteFile);
+              fileMappings.push({
+                type: 'inscriptions', // Or another appropriate type
+                idfiles_repo_typeof: 50, // Numéro Identification Fiscale (NIF)
+                file: files.patenteFile[0],
+              });
+            } else {
+              console.warn('No patenteFile found for inscriptions not in free zone.');
+            }
+
+            if (files.rchFile && files.rchFile.length > 0) {
+              console.log('Processing rchFile:', files.rchFile);
+              fileMappings.push({
+                type: 'inscriptions', // Or another appropriate type
+                idfiles_repo_typeof: 51, // Numéro Immatriculation RCS
+                file: files.rchFile[0],
+              });
+            } else {
+              console.warn('No rchFile found for inscriptions not in free zone.');
+            }
           }
         }
 
-        if (uploadType === 'commandes' && in_free_zone !== 'true') {
-          if (files.patenteFile && files.patenteFile.length > 0) {
-            fileMappings.push({
-              type: 'commandes',
-              idfiles_repo_typeof: 50, // Numéro Identification Fiscale (NIF)
-              file: files.patenteFile[0],
-            });
-          }
-          if (files.rchFile && files.rchFile.length > 0) {
-            fileMappings.push({
-              type: 'commandes',
-              idfiles_repo_typeof: 51, // Numéro Immatriculation RCS
-              file: files.rchFile[0],
-            });
-          }
-        }
+
+        console.log('File mappings to process:', fileMappings);
 
         // Iterate over the file mappings and call the stored procedure for each file
         for (const mapping of fileMappings) {
           const { idfiles_repo_typeof, file } = mapping;
 
           if (!idfiles_repo_typeof || !file) {
+            console.warn('Skipping file due to missing type or file:', mapping);
             continue; // Skip if type or file is missing
           }
 
+          console.log(`Uploading file: ${file.originalname}, Type: ${idfiles_repo_typeof}`);
+
+
           // Call set_cust_account_files stored procedure
-          await sequelize.query(
-            `CALL set_cust_account_files(
-              :p_id_cust_account, 
-              :p_idfiles_repo_typeof,
-              :p_file_origin_name, 
-              :p_file_guid, 
-              :p_file_path, 
-              :p_idlogin_insert, 
-              0
-            )`,
-            {
-              replacements: {
-                p_id_cust_account: newAccountId,
-                p_idfiles_repo_typeof: idfiles_repo_typeof,
-                p_file_origin_name: file.originalname,
-                p_file_guid: file.filename,
-                p_file_path: file.path,
-                p_idlogin_insert: idlogin,
-              },
-              type: sequelize.QueryTypes.RAW,
-              transaction,
-            }
-          );
+          try {
+            await sequelize.query(
+              `CALL set_cust_account_files(
+                      :p_id_cust_account, 
+                      :p_idfiles_repo_typeof,
+                      :p_file_origin_name, 
+                      :p_file_guid, 
+                      :p_file_path, 
+                      :p_idlogin_insert, 
+                      0
+                    )`,
+              {
+                replacements: {
+                  p_id_cust_account: newAccountId,
+                  p_idfiles_repo_typeof: idfiles_repo_typeof,
+                  p_file_origin_name: file.originalname,
+                  p_file_guid: file.filename,
+                  p_file_path: file.path,
+                  p_idlogin_insert: idlogin,
+                },
+                type: sequelize.QueryTypes.RAW,
+                transaction,
+              }
+            );
+            console.log(`File ${file.originalname} uploaded successfully.`);
+          } catch (fileUploadError) {
+            console.error(`Error uploading file ${file.originalname}:`, fileUploadError);
+            throw new Error(`Failed to upload file ${file.originalname}.`);
+          }
         }
+      } else {
+        console.log('No files to process.');
       }
 
       // Commit the transaction
       await transaction.commit();
+      console.log('Transaction committed successfully.');
 
       // Send confirmation email
       await sendEmail(

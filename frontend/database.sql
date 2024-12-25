@@ -476,7 +476,7 @@ $$
 BEGIN
     RETURN QUERY
     SELECT
-        ft."idfiles_repo_typeof",
+        ft."id_files_repo_typeof",
         ft."txt_description_fr",
         ft."txt_description_eng",
 		ft."ismandatory"
