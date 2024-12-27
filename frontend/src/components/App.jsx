@@ -22,59 +22,64 @@ import CompletedOrdersThisYear from '../components/orders/CompletedOrdersThisYea
 import CreateOrder from '../components/orders/Create/CreateOrder';
 import OperateurLayout from './OperateurLayout';
 
+// Import du gestionnaire d'inactivité
+import InactivityHandler from './InactivityHandler';
 
 const App = () => (
-  <Routes>
-    {/* Page de login */}
-    <Route path="/" index element={<Login />} />
-
-    {/* Dashboard protégé par ProtectedRoute */}
-    <Route
-      path="/dashboard"
-      element={
-        <ProtectedRoute>
-          <DashboardWrapper />
-        </ProtectedRoute>
-      }
-    >
-      {/* Routes pour les clients (index = Home) */}
-      <Route index element={<Home />} />
-      <Route path="to-complete" element={<ToComplete />} />
-      <Route path="to-pay" element={<ToPay />} />
-      <Route path="returned-orders" element={<ReturnedOrders />} />
-      <Route path="completed-orders-this-year" element={<CompletedOrdersThisYear />} />
-      <Route path="create-order" element={<CreateOrder />} />
-
-      {/* Routes pour les opérateurs */}
-      <Route path="operator" element={<OperateurLayout />}>
-        <Route index element={<HomeOperateur />} />
-        <Route path="to-validateOP" element={<ToValidateOP />} />
-        <Route path="inscriptions" element={<Inscriptions />} />
-      </Route>
-    </Route>
-
-    {/* Routes simples avec SimpleLayout */}
-    <Route path="/login" element={<SimpleLayout />}>
-      <Route index element={<Login />} />
-    </Route>
-    <Route path="/register" element={<Register />}>
-      <Route index element={<Login />} />
-    </Route>
-    <Route path="/registerop" element={<RegisterOP />}>
-      <Route index element={<Login />} />
-    </Route>
-    <Route path="/forgot-password" element={<SimpleLayout />}>
-      <Route index element={<ForgotPassword />} />
-    </Route>
-    <Route path="/reset-password" element={<SimpleLayout />}>
-      <Route index element={<ResetPassword />} />
-    </Route>
-    <Route path="/account-created" element={<SimpleLayout />}>
-      <Route index element={<AccountCreated />} />
-    </Route>
-   
+  <>
+    {/* Gestion de l'inactivité (5 minutes par défaut) */}
+    <InactivityHandler timeout={300000} />
     
-  </Routes>
+    <Routes>
+      {/* Page de login */}
+      <Route path="/" index element={<Login />} />
+
+      {/* Dashboard protégé par ProtectedRoute */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardWrapper />
+          </ProtectedRoute>
+        }
+      >
+        {/* Routes pour les clients (index = Home) */}
+        <Route index element={<Home />} />
+        <Route path="to-complete" element={<ToComplete />} />
+        <Route path="to-pay" element={<ToPay />} />
+        <Route path="returned-orders" element={<ReturnedOrders />} />
+        <Route path="completed-orders-this-year" element={<CompletedOrdersThisYear />} />
+        <Route path="create-order" element={<CreateOrder />} />
+
+        {/* Routes pour les opérateurs */}
+        <Route path="operator" element={<OperateurLayout />}>
+          <Route index element={<HomeOperateur />} />
+          <Route path="to-validateOP" element={<ToValidateOP />} />
+          <Route path="inscriptions" element={<Inscriptions />} />
+        </Route>
+      </Route>
+
+      {/* Routes simples avec SimpleLayout */}
+      <Route path="/login" element={<SimpleLayout />}>
+        <Route index element={<Login />} />
+      </Route>
+      <Route path="/register" element={<Register />}>
+        <Route index element={<Login />} />
+      </Route>
+      <Route path="/registerop" element={<RegisterOP />}>
+        <Route index element={<Login />} />
+      </Route>
+      <Route path="/forgot-password" element={<SimpleLayout />}>
+        <Route index element={<ForgotPassword />} />
+      </Route>
+      <Route path="/reset-password" element={<SimpleLayout />}>
+        <Route index element={<ResetPassword />} />
+      </Route>
+      <Route path="/account-created" element={<SimpleLayout />}>
+        <Route index element={<AccountCreated />} />
+      </Route>
+    </Routes>
+  </>
 );
 
 export default App;
