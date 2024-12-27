@@ -98,7 +98,7 @@ const Inscriptions = () => {
 
   return (
     <div className="inscriptions-page-container">
-      <h1>Inscriptions à valider ({custAccounts.length})</h1>
+      <h1>INSCRIPTION A VALIDER ({custAccounts.length})</h1>
       <div className="dashboard-table-container">
         <table className="dashboard-table">
           <thead>

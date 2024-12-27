@@ -1,6 +1,6 @@
 // Menu.jsx
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faTachometerAlt,
@@ -15,13 +15,18 @@ import {
   faCertificate,
   faGavel,
   faFileInvoice,
+  faSignOutAlt, // Icone pour la déconnexion
 } from '@fortawesome/free-solid-svg-icons';
 import './Menu.css';
 import '@fontsource/poppins'; // Import Poppins font
+import { useDispatch } from 'react-redux';
+import { logout } from '../slices/authSlice';
 
 const Menu = ({ isMenuOpen, toggleMenu }) => {
   const [openSubmenus, setOpenSubmenus] = useState({});
   const [activeLink, setActiveLink] = useState('');
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const toggleSubMenu = (menu) => {
     setOpenSubmenus((prev) => ({
@@ -39,6 +44,11 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
     if (window.innerWidth <= 768) {
       toggleMenu(); // Close menu on mobile after link click
     }
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login');
   };
 
   const currentYear = new Date().getFullYear();
@@ -202,6 +212,13 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               </li>
             </ul>
           )}
+        </li>
+
+        {/* Déconnexion */}
+        <li>
+          <button className="menu-title logout-button" onClick={handleLogout}>
+            <FontAwesomeIcon icon={faSignOutAlt} className="icon" /> Déconnexion
+          </button>
         </li>
       </ul>
     </nav>
