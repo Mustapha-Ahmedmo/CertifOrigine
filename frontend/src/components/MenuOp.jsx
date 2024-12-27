@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faHome,
@@ -9,6 +10,7 @@ import {
   faCog,
   faBuilding,
   faShoppingCart,
+  faSignOutAlt,
   faDownload,
   faUsers,
   faUserTie,
@@ -19,10 +21,15 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import './Menu.css';
 import '@fontsource/poppins';
+import { useDispatch } from 'react-redux';
+import { logout } from '../slices/authSlice';
+
 
 const MenuOP = ({ isMenuOpen, toggleMenu }) => {
   const [openMenu, setOpenMenu] = useState({});
   const [activeLink, setActiveLink] = useState('');
+  const dispatch = useDispatch(); // Définit dispatch
+  const navigate = useNavigate(); // Définit navigate
 
   const toggleSubMenu = (menu) => {
     setOpenMenu((prevState) => ({
@@ -42,6 +49,14 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
       toggleMenu();
     }
   };
+
+  const handleLogout = () => {
+    // Dispatch Redux logout action
+    dispatch(logout());
+    // Redirige l'utilisateur vers la page de connexion
+    navigate('/login');
+  };
+  
 
   const currentYear = new Date().getFullYear();
   const previousYear = currentYear - 1;
@@ -262,6 +277,18 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
             </ul>
           )}
         </li>
+
+     
+        {/* Bouton de déconnexion */}
+        <li>
+          <button
+            className="menu-title logout-button"
+            onClick={handleLogout}
+          >
+            <FontAwesomeIcon icon={faSignOutAlt} className="icon" /> Se déconnecter
+          </button>
+        </li>    
+
       </ul>
     </nav>
   );
