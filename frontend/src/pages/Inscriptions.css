@@ -4,7 +4,7 @@
   }
   
   .inscriptions-page-container h1 {
-    margin-bottom: 30px;
+    margin-bottom: 35px;
     color: #DCAF26;
   }
   
@@ -56,6 +56,7 @@
     border-radius: 4px;
     cursor: pointer;
     margin-top: 5px;
+    margin-right: 5px;
   }
   
   .reject-button {
@@ -73,3 +74,10 @@
     transition: opacity 0.3s ease-out;
   }
   
+  .dashboard-table tbody tr {
+    background-color: white; /* Appliquer un fond blanc à toutes les lignes du tableau sauf le header */
+  }
+  
+  .dashboard-table thead tr {
+    background-color: #f4f4f4; /* Fond du header */
+  }
