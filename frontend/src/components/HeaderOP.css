@@ -10,8 +10,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 1000;
-  overflow: hidden;
+  z-index: 10001;
+  overflow: visible;
 }
 
 .header-left {
@@ -88,25 +88,53 @@
   position: relative;
 }
 
-.dropdown {
+..dropdown {
   position: absolute;
-  top: 40px;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  text-align: left;
-  padding: 10px;
+  top: 40px; /* Ajuste la hauteur selon tes besoins */
+  right: 0;
+  background-color: #fff; /* Fond blanc */
+  border: 1px solid #ddd; /* Bordure subtile */
+  border-radius: 8px; /* Coins arrondis pour un design moderne */
+  padding: 10px 0; /* Espacement interne vertical */
+  z-index: 10002; /* Assure que la liste est au-dessus des autres éléments */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ombre douce pour effet flottant */
+  min-width: 200px; /* Largeur minimale pour uniformité */
 }
 
-.dropdown a {
+/* Liens ou boutons dans la liste */
+.dropdown a,
+.dropdown button {
   display: block;
   text-decoration: none;
-  color: #333;
-  margin: 5px 0;
+  color: #333; /* Couleur du texte */
+  padding: 10px 20px; /* Espacement interne pour chaque élément */
+  font-size: 14px; /* Taille de police */
+  font-family: 'Poppins', sans-serif; /* Police moderne et élégante */
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-align: left; /* Alignement du texte à gauche */
+  transition: background-color 0.2s ease; /* Animation sur le survol */
 }
 
-.dropdown a:hover {
-  background-color: #f0f0f0;
+/* Couleur de fond au survol */
+.dropdown a:hover,
+.dropdown button:hover {
+  background-color: #f5f5f5; /* Couleur de survol subtile */
+  color: #111; /* Couleur du texte au survol */
+  border-radius: 4px; /* Coins arrondis */
+}
+
+/* Séparation entre les éléments */
+.dropdown a:not(:last-child),
+.dropdown button:not(:last-child) {
+  border-bottom: 1px solid #eee; /* Ligne fine pour séparer les éléments */
+}
+
+
+/* Parent pour s'assurer que le dropdown est bien positionné */
+.header-icon-container {
+  position: relative;
 }
 
 .language-dropdown {

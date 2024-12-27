@@ -91,7 +91,6 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
             <div className={`dropdown ${dropdownOpen ? 'show' : ''}`}>
               <Link to="/profile">{t('header.profile')}</Link>
               <Link to="/settings">{t('header.settings')}</Link>
-              <Link to="/login">{t('header.logout')}</Link>
             </div>
           )}
           <div className="icon-label">Profil</div>
