@@ -137,7 +137,7 @@ const Inscriptions = () => {
                             className="file-button minimal-button"
                             onClick={() => handleFileClick(file)}
                           >
-                            {file.file_origin_name}
+                             {file.txt_description_fr || 'Type inconnu'}
                           </button>
                         ))
                       ) : (
