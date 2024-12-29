@@ -1,42 +1,47 @@
-version: '3'
+version: '3.8'
+
 services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.staging  # Optionnel, si vous voulez un Dockerfile spécifique
+      dockerfile: Dockerfile.prod  # Use a production Dockerfile
     ports:
-      - "5002:5001"  # Différencie le port de staging
+      - "5001:5001"
     environment:
-      - JWT_SECRET=staging_jwt_secret
-      - POSTGRES_USER=staging_user
-      - POSTGRES_PASSWORD=staging_password
-      - POSTGRES_DB=staging_djiboutiport
-      - POSTGRES_HOST=db
+      - JWT_SECRET=your_jwt_secret
+      - POSTGRES_USER=exampleuser
+      - POSTGRES_PASSWORD=exampleuserpassword
+      - POSTGRES_DB=djiboutiport
+      - POSTGRES_HOST=db  # Reference the db service name
       - POSTGRES_PORT=5432
     depends_on:
       - db
     networks:
       - app-network
+    volumes:
+      - ./backend/data:/usr/src/app/data  # Persist data folder
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.staging  # Optionnel
+      dockerfile: Dockerfile.prod  # Use the updated production Dockerfile
       args:
-        VITE_API_URL: "http://staging.example.com/api"
+        VITE_API_URL: "http://51.195.203.178/api"  # Pass the build argument
     environment:
-      - VITE_API_URL=http://staging.example.com/api
+      - VITE_API_URL=http://51.195.203.178/api  # Optional, for runtime use
     networks:
       - app-network
-    command: ["npm", "run", "build"]
+    volumes:
+      - ./frontend/dist:/app/dist  # Mount the host's dist directory to store built frontend
+    command: ["npm", "run", "build"]  # Run the build command
 
   nginx:
     image: nginx:alpine
     ports:
-      - "81:80"  # Différencie le port de staging
+      - "80:80"  # Expose port 80 for the reverse proxy and frontend
     volumes:
-      - ./nginx/nginx.staging.conf:/etc/nginx/nginx.conf  # Fichier Nginx spécifique à staging
-      - ./frontend/dist:/usr/share/nginx/html
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf  # Use your custom Nginx config
+      - ./frontend/dist:/usr/share/nginx/html  # Mount the built dist directory from host
     depends_on:
       - backend
       - frontend
@@ -44,27 +49,29 @@ services:
       - app-network
 
   db:
-    image: postgres:13
-    container_name: postgres-staging-container
+    image: postgres:16.4
+    container_name: postgres-container
     environment:
-      POSTGRES_USER: staging_user
-      POSTGRES_PASSWORD: staging_password
-      POSTGRES_DB: staging_djiboutiport
+      POSTGRES_USER: exampleuser
+      POSTGRES_PASSWORD: exampleuserpassword
+      POSTGRES_DB: djiboutiport
     volumes:
-      - postgres-staging-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data  # Persist PostgreSQL data
     ports:
-      - "5433:5432"
+      - "5432:5432"  # Expose PostgreSQL port for external connections (optional)
     networks:
       - app-network
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: pgadmin-staging-container
+    container_name: pgadmin-container
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@staging.com
-      PGADMIN_DEFAULT_PASSWORD: stagingpassword
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: adminpassword
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
     ports:
-      - "8082:80"
+      - "8081:80"  # Expose pgAdmin on port 8081
     depends_on:
       - db
     networks:
@@ -75,4 +82,5 @@ networks:
     driver: bridge
 
 volumes:
-  postgres-staging-data:
+  postgres-data:
+  pgadmin-data:
