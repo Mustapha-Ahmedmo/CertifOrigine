@@ -13,38 +13,13 @@ DROP TABLE IF EXISTS FILES_REPO CASCADE;
 DROP TABLE IF EXISTS CUST_ACCOUNT_FILES CASCADE;
 
 
-CREATE TABLE FILES_REPO_TYPEoF (
-    ID_FILES_REPO_TYPEoF INT PRIMARY KEY /*GENERATED ALWAYS AS IDENTITY*/,
-    TXT_DESCRIPTION_FR VARCHAR(64) NOT NULL,       -- Non nullable
-    TXT_DESCRIPTION_ENG VARCHAR(64) NOT NULL,       -- Non nullable
-    IsMANDATORY BOOLEAN DEFAULT FALSE NOT NULL  
-);
-
-
-CREATE TABLE FILES_REPO (
-    ID_FILES_REPO INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    IDFILES_REPO_TYPEoF INT NOT NULL,             -- Non nullable
-    FILE_ORIGIN_NAME VARCHAR(160) NOT NULL,       -- Non nullable
-    FILE_GUID VARCHAR(64) NOT NULL,               -- Non nullable
-    FILE_PATH VARCHAR(256) NOT NULL,              -- Non nullable
-    INSERTDATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Non nullable avec valeur par défaut
-    IDLOGIN_INSERT INT NOT NULL,                  -- Non nullable
-    LASTMODIFIED TIMESTAMP NULL,                  -- Nullable
-    IDLOGIN_MODIFY INT NULL,                      -- Nullable
-    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
-    FOREIGN KEY (IDFILES_REPO_TYPEoF) REFERENCES FILES_REPO_TYPEoF(ID_FILES_REPO_TYPEoF),
-    FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
-    FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER)
-);
-
-
-CREATE TABLE CUST_ACCOUNT_FILES (
-    ID_CUST_ACCOUNT_FILES INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    ID_FILES_REPO INT NOT NULL,                   -- Non nullable
-    ID_CUST_ACCOUNT INT NOT NULL,                 -- Non nullable
-    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
-    FOREIGN KEY (ID_FILES_REPO) REFERENCES FILES_REPO(ID_FILES_REPO),
-    FOREIGN KEY (ID_CUST_ACCOUNT) REFERENCES CUST_ACCOUNT(ID_CUST_ACCOUNT)
+CREATE TABLE LOGIN_USER (
+    ID_LOGIN_USER INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    USERNAME VARCHAR(32) NOT NULL UNIQUE,              -- Non nullable
+    PWD VARCHAR(128) NOT NULL,                  -- Non nullable
+    IsADMIN_LOGIN BOOLEAN DEFAULT FALSE NOT NULL, -- Non nullable avec valeur par défaut
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL,  -- Non nullable avec valeur par défaut
+    LASTLOGIN_TIME TIMESTAMP NULL               -- Nullable
 );
 
 
@@ -71,15 +46,6 @@ CREATE TABLE CITY (
     SYMBOL_ENG VARCHAR(64) NOT NULL,            -- Non nullable
     DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
     FOREIGN KEY (ID_COUNTRY) REFERENCES COUNTRY(ID_COUNTRY)
-);
-
-CREATE TABLE LOGIN_USER (
-    ID_LOGIN_USER INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    USERNAME VARCHAR(32) NOT NULL UNIQUE,              -- Non nullable
-    PWD VARCHAR(128) NOT NULL,                  -- Non nullable
-    IsADMIN_LOGIN BOOLEAN DEFAULT FALSE NOT NULL, -- Non nullable avec valeur par défaut
-    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL,  -- Non nullable avec valeur par défaut
-    LASTLOGIN_TIME TIMESTAMP NULL               -- Nullable
 );
 
 CREATE TABLE LOGIN_STATS (
@@ -150,6 +116,43 @@ CREATE TABLE CUST_USER (
     FOREIGN KEY (ID_CUST_ACCOUNT) REFERENCES CUST_ACCOUNT(ID_CUST_ACCOUNT),
     FOREIGN KEY (ID_LOGIN_USER) REFERENCES LOGIN_USER(ID_LOGIN_USER),
     FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER)
+);
+
+
+
+
+CREATE TABLE FILES_REPO_TYPEoF (
+    ID_FILES_REPO_TYPEoF INT PRIMARY KEY /*GENERATED ALWAYS AS IDENTITY*/,
+    TXT_DESCRIPTION_FR VARCHAR(64) NOT NULL,       -- Non nullable
+    TXT_DESCRIPTION_ENG VARCHAR(64) NOT NULL,       -- Non nullable
+    IsMANDATORY BOOLEAN DEFAULT FALSE NOT NULL  
+);
+
+
+CREATE TABLE FILES_REPO (
+    ID_FILES_REPO INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    IDFILES_REPO_TYPEoF INT NOT NULL,             -- Non nullable
+    FILE_ORIGIN_NAME VARCHAR(160) NOT NULL,       -- Non nullable
+    FILE_GUID VARCHAR(64) NOT NULL,               -- Non nullable
+    FILE_PATH VARCHAR(256) NOT NULL,              -- Non nullable
+    INSERTDATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Non nullable avec valeur par défaut
+    IDLOGIN_INSERT INT NOT NULL,                  -- Non nullable
+    LASTMODIFIED TIMESTAMP NULL,                  -- Nullable
+    IDLOGIN_MODIFY INT NULL,                      -- Nullable
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
+    FOREIGN KEY (IDFILES_REPO_TYPEoF) REFERENCES FILES_REPO_TYPEoF(ID_FILES_REPO_TYPEoF),
+    FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER)
+);
+
+
+CREATE TABLE CUST_ACCOUNT_FILES (
+    ID_CUST_ACCOUNT_FILES INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_FILES_REPO INT NOT NULL,                   -- Non nullable
+    ID_CUST_ACCOUNT INT NOT NULL,                 -- Non nullable
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
+    FOREIGN KEY (ID_FILES_REPO) REFERENCES FILES_REPO(ID_FILES_REPO),
+    FOREIGN KEY (ID_CUST_ACCOUNT) REFERENCES CUST_ACCOUNT(ID_CUST_ACCOUNT)
 );
 
 
@@ -483,13 +486,13 @@ BEGIN
     FROM
         files_repo_typeof ft
     WHERE 
-        (p_id_files_repo_typeof_list IS NULL OR ft."idfiles_repo_typeof" = ANY (string_to_array(p_id_files_repo_typeof_list, ',')::INT[]))
+        (p_id_files_repo_typeof_list IS NULL OR ft."id_files_repo_typeof" = ANY (string_to_array(p_id_files_repo_typeof_list, ',')::INT[]))
     AND 
         (p_ismandatory IS NULL OR ft."ismandatory" = p_ismandatory)
     AND 
-        (p_id_files_repo_typeof_first IS NULL OR ft."idfiles_repo_typeof" >= p_id_files_repo_typeof_first)
+        (p_id_files_repo_typeof_first IS NULL OR ft."id_files_repo_typeof" >= p_id_files_repo_typeof_first)
     AND 
-        ( p_id_files_repo_typeof_last IS NULL OR ft."idfiles_repo_typeof" <=  p_id_files_repo_typeof_last)
+        ( p_id_files_repo_typeof_last IS NULL OR ft."id_files_repo_typeof" <=  p_id_files_repo_typeof_last)
     ;
 END;
 $$ LANGUAGE plpgsql;
