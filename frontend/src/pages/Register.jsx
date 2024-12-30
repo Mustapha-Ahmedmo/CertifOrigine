@@ -16,38 +16,51 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../assets/logo.jpg';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
-import { registerUser, fetchSectors, fetchCountries, setCustAccount, setCustUser, addSubscription, addSubscriptionWithFile } from '../services/apiServices';
+import { Link, useNavigate } from 'react-router-dom';
+
+// IMPORT DU FICHIER DES INDICATIFS
+import countryCodes from '../components/countryCodes';
+
+// Import des services et utilitaires
+import {
+  registerUser,
+  fetchSectors,
+  fetchCountries,
+  setCustAccount,
+  setCustUser,
+  addSubscription,
+  addSubscriptionWithFile,
+} from '../services/apiServices';
+
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 import { homemadeHash } from '../utils/hashUtils';
-import { useNavigate } from 'react-router-dom';
 
-// Fonction pour valider un numéro de téléphone (international ou français)
-const isValidPhoneNumber = (number) => {
-  // Regex pour un numéro français ou international (ex : +33, 06, 07)
-  const phoneRegex = /^(?:\+33|0)[1-9](?:[ .-]?\d{2}){4}$/;
-  return phoneRegex.test(number);
+// ↓↓↓ NOUVELLE FONCTION DE VALIDATION SIMPLIFIÉE ↓↓↓
+const isValidLocalNumber = (number) => {
+  // Vérifie que le numéro contient entre 6 et 15 chiffres
+  return /^[0-9]{6,15}$/.test(number);
 };
-
-
 
 const Alert = forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
 const Register = () => {
-
   const allowedFileTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     gender: 'Mr',
     name: '',
     position: '',
-    phoneFixed: '',
-    phoneMobile: '',
+    // On remplace phoneFixed et phoneMobile par :
+    phoneFixedCountryCode: '+33',
+    phoneFixedNumber: '',
+
+    phoneMobileCountryCode: '+33',
+    phoneMobileNumber: '',
+
     email: '',
     password: '',
     confirmPassword: '',
@@ -68,7 +81,6 @@ const Register = () => {
     rchFile: null,
     acceptsConditions: false,
     acceptsDataProcessing: false,
-    // Nouveau champ pour la liste déroulante
     companyType: '',
   });
 
@@ -109,122 +121,103 @@ const Register = () => {
     fetchData();
   }, []);
 
-  const handleChange = (e) => {
+  // Validation du type de fichier
+  const validateFileType = (file) => {
+    if (!file) return true; // Aucun fichier sélectionné => OK
+    return allowedFileTypes.includes(file.type);
+  };
 
-    
+  // Gère le changement des champs du formulaire
+  const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
+
+    // Checkbox
     if (type === 'checkbox') {
-      setFormData({
-        ...formData,
-        [name]: checked,
-      });
-    } else if (type === 'file') {
-      setFormData({
-        ...formData,
-        [name]: files[0],
-      });
-    } else if (name === 'companyType') {
-      // Mise à jour de isFreeZoneCompany et isOtherCompany en fonction du choix de la liste
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+      return;
+    }
+
+    // Fichier
+    if (type === 'file') {
+      const file = files[0];
+      if (file && !validateFileType(file)) {
+        setSnackbarMessage(`Seulement les fichiers JPEG, JPG, PNG et PDF sont autorisés pour ${name}.`);
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+        return;
+      }
+      setFormData((prev) => ({ ...prev, [name]: file }));
+      return;
+    }
+
+    // Sélection du type d'entreprise (zoneFranche / autre)
+    if (name === 'companyType') {
+      setFormData((prev) => ({
+        ...prev,
         companyType: value,
         isFreeZoneCompany: value === 'zoneFranche',
         isOtherCompany: value === 'autre',
-      });
-    } else {
-      if (name === 'phoneFixed' || name === 'phoneMobile') {
-        if (!isValidPhoneNumber(value) && value !== '') {
-          setError(`Le champ ${name === 'phoneFixed' ? 'Téléphone' : 'Téléphone portable'} est invalide.`);
-        } else {
-          setError('');
-        }
-      }
-
-      if (type === 'file') {
-        const file = files[0];
-        if (file && !validateFileType(file)) {
-          setSnackbarMessage(`Seulement les fichiers JPEG, JPG, PNG et PDF sont autorisés pour ${name}.`);
-          setSnackbarSeverity('error');
-          setSnackbarOpen(true);
-          return; // Arrêter la mise à jour du formulaire si le fichier est invalide
-        }
-    
-        setFormData({
-          ...formData,
-          [name]: file,
-        });
-      } else if (type === 'checkbox') {
-        setFormData({
-          ...formData,
-          [name]: checked,
-        });
-      } else {
-        setFormData({
-          ...formData,
-          [name]: value,
-        });
-      }
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
-
-
+      }));
+      return;
     }
+
+    // Pour les champs "phoneFixedNumber" ou "phoneMobileNumber"
+    if (name === 'phoneFixedNumber' || name === 'phoneMobileNumber') {
+      if (!isValidLocalNumber(value) && value !== '') {
+        setError(`Le champ ${name === 'phoneFixedNumber' ? 'téléphone fixe' : 'téléphone portable'} est invalide (6 à 15 chiffres).`);
+      } else {
+        setError('');
+      }
+    }
+
+    // MàJ générique
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Toggle entre Mr / Mme
   const toggleGender = () => {
-    setFormData((prevState) => ({
-      ...prevState,
-      gender: prevState.gender === 'Mr' ? 'Mme' : 'Mr',
+    setFormData((prev) => ({
+      ...prev,
+      gender: prev.gender === 'Mr' ? 'Mme' : 'Mr',
     }));
   };
 
-  
-
-const validateFileType = (file) => {
-  if (!file) return true; // Aucun fichier n'est sélectionné, donc valide par défaut
-  return allowedFileTypes.includes(file.type);
-};
-
-
-
-
+  // Soumission du formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-     // Vérifiez les types de fichiers avant de continuer
-  const filesToValidate = [
-    { name: 'licenseFile', file: formData.licenseFile },
-    { name: 'patenteFile', file: formData.patenteFile },
-    { name: 'rchFile', file: formData.rchFile },
-  ];
-
-  for (const { name, file } of filesToValidate) {
-    if (file && !validateFileType(file)) {
-      setSnackbarMessage(`Seulement les fichiers JPEG, JPG, PNG et PDF sont autorisés pour ${name}.`);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      return; // Arrêter la soumission du formulaire
-    }
-  }
-
-    // Validation des numéros de téléphone
-    if (!isValidPhoneNumber(formData.phoneFixed)) {
-      setSnackbarMessage('Le numéro de téléphone fixe est invalide.');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      return;
+    // Vérif des fichiers
+    const filesToValidate = [
+      { name: 'licenseFile', file: formData.licenseFile },
+      { name: 'patenteFile', file: formData.patenteFile },
+      { name: 'rchFile', file: formData.rchFile },
+    ];
+    for (const { name, file } of filesToValidate) {
+      if (file && !validateFileType(file)) {
+        setSnackbarMessage(`Seulement les fichiers JPEG, JPG, PNG et PDF sont autorisés pour ${name}.`);
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+        return;
+      }
     }
 
-    if (!isValidPhoneNumber(formData.phoneMobile)) {
-      setSnackbarMessage('Le numéro de téléphone portable est invalide.');
+    // Vérification du numéro fixe
+    if (!isValidLocalNumber(formData.phoneFixedNumber)) {
+      setSnackbarMessage('Le numéro de téléphone fixe est invalide (6 à 15 chiffres).');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
 
-    // Validate formData (example for password confirmation)
+    // Vérification du numéro mobile
+    if (!isValidLocalNumber(formData.phoneMobileNumber)) {
+      setSnackbarMessage('Le numéro de téléphone portable est invalide (6 à 15 chiffres).');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // Vérification de la correspondance des mots de passe
     if (formData.password !== formData.confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       setSnackbarMessage('Les mots de passe ne correspondent pas');
@@ -234,14 +227,18 @@ const validateFileType = (file) => {
     }
 
     try {
-      // Prepare the data to send
+      // Concatène l’indicatif et le numéro saisi
+      const fullPhoneFixed = formData.phoneFixedCountryCode + formData.phoneFixedNumber;
+      const fullPhoneMobile = formData.phoneMobileCountryCode + formData.phoneMobileNumber;
+
+      // Prépare les données pour l'inscription
       const userData = {
         username: formData.email,
         gender: formData.gender,
         name: formData.name,
         position: formData.position,
-        phoneFixed: formData.phoneFixed,
-        phoneMobile: formData.phoneMobile,
+        phoneFixed: fullPhoneFixed,
+        phoneMobile: fullPhoneMobile,
         email: formData.email,
         password: formData.password,
         companyName: formData.companyName,
@@ -249,8 +246,7 @@ const validateFileType = (file) => {
         city: formData.city,
         country: formData.country,
         companyCategory: formData.companyCategory,
-        sector:
-          formData.sector === 'Autres' ? formData.otherSector : formData.sector,
+        sector: formData.sector === 'Autres' ? formData.otherSector : formData.sector,
         isFreeZoneCompany: formData.isFreeZoneCompany,
         isOtherCompany: formData.isOtherCompany,
         licenseNumber: formData.licenseNumber,
@@ -260,69 +256,11 @@ const validateFileType = (file) => {
         acceptsDataProcessing: formData.acceptsDataProcessing,
       };
 
-      // Exemple d'utilisation (commenté) :
-      // const response = await registerUser(userData);
+      // Sélection du secteur et pays (pour usage dans l’API)
+      const selectedSector = sectors.find((s) => s.symbol_fr === formData.sector);
+      const selectedCountry = countries.find((c) => c.symbol_fr === formData.country);
 
-      const selectedSector = sectors.find(
-        (sector) => sector.symbol_fr === formData.sector
-      );
-
-      const selectedCountry = countries.find(
-        (country) => country.symbol_fr === formData.country
-      );
-
-      // Exemple d'autres appels (commentés) :
-
-      /*
-      const custAccountData = {
-        legal_form: formData.companyCategory,
-        cust_name: formData.companyName,
-        trade_registration_num: formData.trade_registration_num || '12345',
-        in_free_zone: formData.isFreeZoneCompany,
-        identification_number: formData.identification_number || 'ID123',
-        register_number: formData.register_number || 'RN456',
-        full_address: formData.address,
-        id_sector: selectedSector ? selectedSector.id_sector : null,
-        other_sector: formData.otherSector || null,
-        id_country: selectedCountry ? selectedCountry.id_country : null,
-        statut_flag: 1,
-        idlogin: 1,
-        billed_cust_name: formData.billed_cust_name || 'ABC Billing',
-        bill_full_address: formData.bill_full_address || '456 Billing St',
-        id_cust_account: null,
-      };
-
-      const accountResponse = await setCustAccount(custAccountData);
-      console.log('Set Cust Account response:', accountResponse);
-
-      const id_cust_account =
-        accountResponse.result &&
-        accountResponse.result[0] &&
-        accountResponse.result[0][0] &&
-        accountResponse.result[0][0].p_id_cust_account;
-
-      if (!id_cust_account) {
-        throw new Error('Failed to retrieve id_cust_account');
-      }
-
-      const custUserData = {
-        id_cust_user: 0,
-        id_cust_account: id_cust_account,
-        gender: formData.gender === 'Mr' ? 0 : 1,
-        full_name: formData.name,
-        ismain_user: true,
-        email: formData.email,
-        password: formData.password,
-        phone_number: formData.phoneFixed,
-        mobile_number: formData.phoneMobile,
-        idlogin: 1,
-        position: formData.position,
-      };
-
-      const userResponse = await setCustUser(custUserData);
-      console.log('Set Cust User response:', userResponse);
-      */
-
+      // Prépare les données pour l'abonnement
       const subscriptionData = {
         uploadType: 'inscriptions',
         legal_form: formData.companyCategory,
@@ -339,31 +277,29 @@ const validateFileType = (file) => {
         idlogin: 1,
         billed_cust_name: formData.billed_cust_name || 'ABC Billing',
         bill_full_address: formData.bill_full_address || '456 Billing St',
+        // Données utilisateur
         gender: formData.gender === 'Mr' ? 0 : 1,
         full_name: formData.name,
         ismain_user: true,
         email: formData.email,
         pwd: homemadeHash(formData.password, 'md5'),
-        phone_number: formData.phoneFixed,
-        mobile_number: formData.phoneMobile,
+        phone_number: fullPhoneFixed,
+        mobile_number: fullPhoneMobile,
         position: formData.position,
-        // File fields
+        // Fichiers
         licenseFile: formData.isFreeZoneCompany ? formData.licenseFile : null,
         patenteFile: formData.isOtherCompany ? formData.patenteFile : null,
         rchFile: formData.isOtherCompany ? formData.rchFile : null,
       };
 
-      // Exemple d'appel sans fichier :
-      // const response = await addSubscription(subscriptionData);
-
-      // Appel avec upload de fichiers
+      // Appel API avec envoi de fichiers
       const response = await addSubscriptionWithFile(subscriptionData);
       console.log('Add Subscription with File response:', response);
+
       setSnackbarMessage('Inscription réussie');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
       navigate('/account-created');
-
     } catch (err) {
       setError(err.message);
       setSnackbarMessage(err.message);
@@ -391,6 +327,7 @@ const validateFileType = (file) => {
         <h2>Créer un Compte</h2>
         {error && <p className="error-message">{error}</p>}
         {successMessage && <p className="success-message">{successMessage}</p>}
+
         <form onSubmit={handleSubmit} className="register-client-form">
           {/* Section Information Entreprise */}
           <div className="register-client-form-section">
@@ -405,8 +342,9 @@ const validateFileType = (file) => {
                     value={formData.companyCategory}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${formData.companyCategory === '' ? 'placeholder' : ''
-                      }`}
+                    className={`register-client-input ${
+                      formData.companyCategory === '' ? 'placeholder' : ''
+                    }`}
                   >
                     <option value="" disabled hidden>
                       Catégorie
@@ -436,8 +374,9 @@ const validateFileType = (file) => {
                     value={formData.sector}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${formData.sector === '' ? 'placeholder' : ''
-                      }`}
+                    className={`register-client-input ${
+                      formData.sector === '' ? 'placeholder' : ''
+                    }`}
                   >
                     <option value="" disabled hidden>
                       Secteur
@@ -522,8 +461,9 @@ const validateFileType = (file) => {
                     value={formData.country}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${formData.country === '' ? 'placeholder' : ''
-                      }`}
+                    className={`register-client-input ${
+                      formData.country === '' ? 'placeholder' : ''
+                    }`}
                   >
                     <option value="" disabled hidden>
                       Pays
@@ -732,44 +672,70 @@ const validateFileType = (file) => {
               </div>
             </div>
 
+            {/* Téléphone fixe + indicatif */}
             <div className="register-client-form-row">
-              {/* Téléphone (fixe) */}
               <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
+                <label className="register-client-label">Téléphone (fixe)</label>
+                <div className="register-client-input-wrapper phone-wrapper">
                   <FontAwesomeIcon icon={faPhone} className="input-icon" />
+                  <select
+                    name="phoneFixedCountryCode"
+                    value={formData.phoneFixedCountryCode}
+                    onChange={handleChange}
+                    className="register-client-input country-code-select"
+                  >
+                    {countryCodes.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.flag} {country.name} ({country.code})
+                      </option>
+                    ))}
+                  </select>
                   <input
                     type="text"
-                    name="phoneFixed"
-                    value={formData.phoneFixed}
+                    name="phoneFixedNumber"
+                    value={formData.phoneFixedNumber}
                     onChange={handleChange}
                     required
-                    className="register-client-input"
-                    placeholder="Téléphone (fixe)"
+                    className="register-client-input phone-number-input"
+                    placeholder="612345678"
                   />
                   <span className="register-client-required-asterisk">*</span>
                 </div>
               </div>
 
-              {/* Téléphone (portable) */}
+              {/* Téléphone portable + indicatif */}
               <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
+                <label className="register-client-label">Téléphone (portable)</label>
+                <div className="register-client-input-wrapper phone-wrapper">
                   <FontAwesomeIcon icon={faMobileAlt} className="input-icon" />
+                  <select
+                    name="phoneMobileCountryCode"
+                    value={formData.phoneMobileCountryCode}
+                    onChange={handleChange}
+                    className="register-client-input country-code-select"
+                  >
+                    {countryCodes.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.flag} {country.name} ({country.code})
+                      </option>
+                    ))}
+                  </select>
                   <input
                     type="text"
-                    name="phoneMobile"
-                    value={formData.phoneMobile}
+                    name="phoneMobileNumber"
+                    value={formData.phoneMobileNumber}
                     onChange={handleChange}
                     required
-                    className="register-client-input"
-                    placeholder="Téléphone (portable)"
+                    className="register-client-input phone-number-input"
+                    placeholder="712345678"
                   />
                   <span className="register-client-required-asterisk">*</span>
                 </div>
               </div>
             </div>
 
+            {/* Email */}
             <div className="register-client-form-row">
-              {/* Email */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
                   <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
@@ -787,8 +753,8 @@ const validateFileType = (file) => {
               </div>
             </div>
 
+            {/* Mot de passe + confirmation */}
             <div className="register-client-form-row">
-              {/* Mot de passe */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
                   <FontAwesomeIcon icon={faLock} className="input-icon" />
@@ -805,7 +771,6 @@ const validateFileType = (file) => {
                 </div>
               </div>
 
-              {/* Confirmer le mot de passe */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
                   <FontAwesomeIcon icon={faLock} className="input-icon" />

@@ -373,3 +373,33 @@ input[type="checkbox"]:checked + .register-client-toggle-label {
     height: auto;
   }
 }
+
+
+/* Wrapper pour l’indicatif + le numéro */
+.phone-wrapper {
+  display: flex;       /* Pour aligner sélecteur et input sur la même ligne */
+  align-items: center; /* Centrer verticalement */
+  gap: 8px;            /* Espacement entre le select et l’input */
+}
+
+/* Style du select d’indicatifs */
+.country-code-select {
+  width: auto;         /* Laisse le sélecteur s’adapter au contenu */
+  min-width: 90px;     /* Largeur minimale pour ne pas être trop petit */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff; 
+  cursor: pointer;
+  
+}
+
+/* Style du champ de numéro local */
+.phone-number-input {
+  flex: 1;             /* Pour prendre tout l’espace restant */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1em;
+  background-color: #fff;
+  box-sizing: border-box;
+}
