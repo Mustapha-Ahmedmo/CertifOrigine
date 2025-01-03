@@ -82,3 +82,70 @@
   .dashboard-table thead tr {
     background-color: #f4f4f4; /* Fond du header */
   }
+
+  /* Modal d'arrière-plan (overlay) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Contenu de la modale contact */
+.contacts-modal {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 4px;
+  width: 80%;
+  max-width: 800px;
+  text-align: left;
+}
+
+/* Titre de la modale */
+.contacts-modal h2 {
+  background-color: #f0f0f0;
+  padding: 10px;
+  margin: 0 0 15px 0;
+  font-size: 15px;
+}
+
+/* Tableau dans la modale */
+.contacts-modal-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Ligne d’en-tête du tableau dans la modale */
+.contacts-modal-table thead tr {
+  background-color: #f0f0f0;
+}
+
+.contacts-modal-table thead th {
+  color: #DCAF26;
+  font-weight: normal;
+  text-align: left;
+  padding: 8px;
+  border: 1px solid #ccc;
+}
+
+/* Corps du tableau dans la modale */
+.contacts-modal-table tbody td {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+
+/* Bouton pour fermer la modale */
+.cancel-button {
+  padding: 6px 15px;
+  background-color: #ccc;
+  color: #333;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  cursor: pointer;
+}
