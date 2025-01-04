@@ -1,24 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import {
-  getCustAccountInfo,
-  updateCustAccountStatus,
-  rejectCustAccount,
+  getCustAccountInfo
 } from '../services/apiServices';
 import { formatDate } from '../utils/dateUtils';
-import './Inscriptions.css';
+import './Inscriptions.css';  // Vous pouvez utiliser le même CSS que la page Inscriptions
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const Inscriptions = () => {
+const ClientsValides = () => {
   const [custAccounts, setCustAccounts] = useState([]);
-  const [removingAccounts, setRemovingAccounts] = useState([]);
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState('');
-  const [rejectingAccountId, setRejectingAccountId] = useState(null);
-
-  // État pour la modal de contacts
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
 
@@ -27,84 +19,26 @@ const Inscriptions = () => {
   const [selectedClient, setSelectedClient] = useState('');
 
   useEffect(() => {
-    const fetchCustAccounts = async () => {
+    const fetchValidatedAccounts = async () => {
       try {
+        // Récupère tous les comptes via l'API
         const response = await getCustAccountInfo(null, 1, true);
         const data = response.data || [];
 
-        setCustAccounts(data);
+        // Filtre pour ne garder que les comptes validés
+        const onlyValidated = data.filter((account) => account.statut_flag === 2);
 
-        // Extraire la liste (unique) des clients
-        const uniqueClients = [...new Set(data.map((item) => item.cust_name))];
+        setCustAccounts(onlyValidated);
+
+        // Construire la liste (unique) des noms de clients validés
+        const uniqueClients = [...new Set(onlyValidated.map((item) => item.cust_name))];
         setClientsList(uniqueClients);
       } catch (err) {
         console.error(err);
       }
     };
-    fetchCustAccounts();
+    fetchValidatedAccounts();
   }, []);
-
-  const handleFileClick = (file) => {
-    const fileUrl = `${API_URL}/files/inscriptions/${new Date().getFullYear()}/${file.file_guid}`;
-    window.open(fileUrl, '_blank');
-  };
-
-  const handleValidate = async (id) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir valider cette inscription ?')) {
-      return;
-    }
-
-    try {
-      await updateCustAccountStatus(id);
-      alert('Le statut du compte client a été mis à jour avec succès.');
-      setRemovingAccounts((prev) => [...prev, id]);
-      setTimeout(() => {
-        setCustAccounts((prevAccounts) =>
-          prevAccounts.filter((account) => account.id_cust_account !== id)
-        );
-        setRemovingAccounts((prev) => prev.filter((accountId) => accountId !== id));
-      }, 300);
-    } catch (err) {
-      alert(`Erreur lors de la mise à jour du statut : ${err.message}`);
-    }
-  };
-
-  const handleReject = (id) => {
-    setRejectingAccountId(id);
-    setShowRejectModal(true);
-  };
-
-  const submitRejection = async () => {
-    if (!rejectionReason.trim()) {
-      alert('Veuillez entrer une raison de rejet.');
-      return;
-    }
-
-    try {
-      const idlogin = 1; // Replace with actual operator ID from AuthContext
-      await rejectCustAccount(rejectingAccountId, rejectionReason, idlogin);
-
-      alert('Le compte client a été rejeté avec succès.');
-      setRemovingAccounts((prev) => [...prev, rejectingAccountId]);
-      setTimeout(() => {
-        setCustAccounts((prevAccounts) =>
-          prevAccounts.filter((account) => account.id_cust_account !== rejectingAccountId)
-        );
-        setRemovingAccounts((prev) => prev.filter((accountId) => accountId !== rejectingAccountId));
-      }, 300);
-
-      setShowRejectModal(false);
-      setRejectingAccountId(null);
-      setRejectionReason('');
-    } catch (err) {
-      alert(`Erreur lors du rejet : ${err.message}`);
-    }
-  };
-
-  // Filtrage par client sélectionné dans la liste déroulante
-  const handleSelectClient = (e) => {
-    setSelectedClient(e.target.value);
-  };
 
   // Ouvrir la modal de contacts pour l'inscription cliquée
   const handleOpenContactsModal = (account) => {
@@ -118,14 +52,25 @@ const Inscriptions = () => {
     setShowContactModal(false);
   };
 
-  // Filtrer les inscriptions selon le client sélectionné (si selectedClient est vide, on affiche tout)
+  // Filtrage par client
+  const handleSelectClient = (e) => {
+    setSelectedClient(e.target.value);
+  };
+
+  // Filtre local pour afficher uniquement les comptes validés DU client sélectionné
   const filteredAccounts = selectedClient
     ? custAccounts.filter((acc) => acc.cust_name === selectedClient)
     : custAccounts;
 
+  // Ouverture du fichier justificatif dans un nouvel onglet
+  const handleFileClick = (file) => {
+    const fileUrl = `${API_URL}/files/inscriptions/${new Date().getFullYear()}/${file.file_guid}`;
+    window.open(fileUrl, '_blank');
+  };
+
   return (
     <div className="inscriptions-page-container">
-      <h1>INSCRIPTION A VALIDER ({custAccounts.length})</h1>
+      <h1>CLIENTS VALIDÉS ({custAccounts.length})</h1>
 
       {/* Conteneur liste déroulante pour filtrer par client */}
       <div className="client-filter-container">
@@ -136,7 +81,7 @@ const Inscriptions = () => {
           value={selectedClient}
           onChange={handleSelectClient}
         >
-          <option value="">-- Tous les clients --</option>
+          <option value="">-- Tous les clients validés --</option>
           {clientsList.map((client) => (
             <option key={client} value={client}>
               {client}
@@ -157,15 +102,12 @@ const Inscriptions = () => {
               <th>Implantation</th>
               <th>Fichier Justificatifs</th>
               <th>Contact Principal</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredAccounts.map((registration) => {
-              const isRemoving = removingAccounts.includes(registration.id_cust_account);
-
               return (
-                <tr key={registration.id_cust_account} className={isRemoving ? 'fade-out' : ''}>
+                <tr key={registration.id_cust_account}>
                   <td>{formatDate(registration.insertdate)}</td>
                   <td>
                     {registration.legal_form} {registration.cust_name}
@@ -225,20 +167,6 @@ const Inscriptions = () => {
                       <span className="button-text"> Ouvrir</span>
                     </button>
                   </td>
-                  <td>
-                    <button
-                      className="submit-button minimal-button"
-                      onClick={() => handleValidate(registration.id_cust_account)}
-                    >
-                      Valider
-                    </button>
-                    <button
-                      className="reject-button minimal-button"
-                      onClick={() => handleReject(registration.id_cust_account)}
-                    >
-                      Rejeter
-                    </button>
-                  </td>
                 </tr>
               );
             })}
@@ -290,32 +218,8 @@ const Inscriptions = () => {
           </div>
         </div>
       )}
-
-      {showRejectModal && (
-        <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Raison du rejet</h2>
-            <textarea
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Entrez la raison du rejet..."
-            ></textarea>
-            <div className="modal-actions">
-              <button onClick={submitRejection} className="reject-button">
-                Confirmer le rejet
-              </button>
-              <button
-                onClick={() => setShowRejectModal(false)}
-                className="cancel-button"
-              >
-                Annuler
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default Inscriptions;
+export default ClientsValides;

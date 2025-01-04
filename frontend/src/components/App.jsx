@@ -10,6 +10,8 @@ import ProtectedRoute from './ProtectedRoute';
 import DashboardWrapper from '../pages/DashboardWrapper';
 import AccountCreated from '../pages/AccountCreated';
 import Inscriptions from '../pages/Inscriptions';
+import ClientsValides from '../pages/ClientsValides';
+import OperatorsList from '../pages/OperatorsList';
 
 // Import de vos pages du dashboard
 import Home from '../pages/Home';
@@ -49,7 +51,7 @@ const App = () => {
   return (
     <>
       {/* Gestion de l'inactivité (5 minutes par défaut) */}
-      <InactivityHandler timeout={300000} />
+      <InactivityHandler timeout={600000} />
 
       <Routes>
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />} />
@@ -76,6 +78,8 @@ const App = () => {
             <Route index element={<HomeOperateur />} />
             <Route path="to-validateOP" element={<ToValidateOP />} />
             <Route path="inscriptions" element={<Inscriptions />} />
+            <Route path="clientvalides" element={<ClientsValides />} />
+            <Route path="operatorslist" element={<OperatorsList />} />
           </Route>
         </Route>
 

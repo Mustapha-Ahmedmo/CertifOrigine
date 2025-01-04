@@ -1,0 +1,110 @@
+/* Conteneur principal de la page */
+.operators-page-container {
+    /* Ajuste si tu as un sidebar fixe */
+    margin-left: 240px; 
+    text-align: center;
+    padding: 20px 20px 40px; /* Optionnel : ajout de padding */
+    background-color: #f9f9f9; /* Légère couleur de fond */
+  }
+  
+  /* Titre principal de la page */
+  .operators-page-container h1 {
+    margin-bottom: 35px;
+    color: #DCAF26;  /* Couleur dorée */
+    font-size: 22px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  
+  /* Conteneur du tableau (scroll horizontal) */
+  .dashboard-table-container {
+    overflow-x: auto; /* Permet le défilement horizontal si le tableau est trop large */
+    width: 100%;
+    margin-top: 20px;
+    /* Ajout possible d'une bordure ou d'un fond si tu le souhaites */
+  }
+  
+  /* Tableau principal */
+  .dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    text-align: left;   
+    white-space: nowrap; /* Pour forcer le défilement horizontal si le contenu est large */
+  }
+  
+  /* En-tête du tableau */
+  .dashboard-table thead tr {
+    background-color: #f4f4f4;
+  }
+  
+  /* Cellules */
+  .dashboard-table th,
+  .dashboard-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  
+  /* Lignes impaires/paire si besoin (striped) 
+  .dashboard-table tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+  }
+  */
+  
+  /* Boutons d’action : Ajouter, Modifier, Supprimer */
+  .action-button {
+    border: none;
+    background-color: transparent;
+    color: #007bff;          /* Couleur bleue, style lien */
+    text-decoration: underline;
+    margin-right: 10px;      
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .action-button:hover {
+    color: #0056b3;
+    text-decoration: none;   /* Ote le souligné au survol */
+  }
+  
+  /* Ajustement si tu utilises .minimal-button 
+     ou d’autres classes pour un look uniforme 
+  .minimal-button {
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+  }
+  .minimal-button:hover {
+    background-color: #f0f0f0;
+  }
+  */
+  
+  /* Responsive : adapter l’affichage sur mobile */
+  @media (max-width: 768px) {
+    .operators-page-container {
+      margin-left: 0;    /* Si tu souhaites enlever la marge sur mobile */
+      padding: 10px;
+    }
+    
+    .operators-page-container h1 {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+  
+    /* Réduire la taille de table/cellules si besoin */
+    .dashboard-table th,
+    .dashboard-table td {
+      padding: 8px;
+    }
+  
+    .action-button {
+      margin-right: 5px;
+      font-size: 0.85rem;
+    }
+  }
+  

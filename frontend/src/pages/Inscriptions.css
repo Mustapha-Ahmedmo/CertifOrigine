@@ -149,3 +149,44 @@
   border-radius: 4px;
   cursor: pointer;
 }
+
+/* Conteneur du filtre client, aligné à gauche */
+.client-filter-container {
+  text-align: left;        /* Aligner le contenu à gauche */
+  margin-bottom: 20px;     /* Espacement sous le conteneur */
+  display: flex;           /* Permet d'aligner label + select */
+  align-items: center;     /* Centrer verticalement */
+}
+
+/* Label du filtre client (ex: "Filtrer par client :") */
+.client-filter-container label {
+  margin-right: 10px;
+  font-size: 14px;
+  font-weight: 500;        /* Semi-bold pour un look plus moderne */
+  color: #333;
+}
+
+/* Style de la liste déroulante */
+.client-filter-select {
+  padding: 6px 12px;
+  font-size: 14px;
+  color: #333;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 200px;        /* Largeur minimale */
+  outline: none;           /* Retire le contour par défaut */
+  cursor: pointer;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Hover sur la liste */
+.client-filter-select:hover {
+  border-color: #aaa;
+}
+
+/* Focus (quand on clique dessus) */
+.client-filter-select:focus {
+  border-color: #DCAF26;  /* Couleur dorée pour rappeler le style du site */
+  box-shadow: 0 0 5px rgba(220,175,38,0.5);
+}

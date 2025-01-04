@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faHome,
@@ -17,19 +16,18 @@ import {
   faHandshake,
   faFileContract,
   faMoneyBillWave,
-  faUserPlus, // Import de la nouvelle icône
+  faUserPlus,
 } from '@fortawesome/free-solid-svg-icons';
 import './Menu.css';
 import '@fontsource/poppins';
 import { useDispatch } from 'react-redux';
 import { logout } from '../slices/authSlice';
 
-
 const MenuOP = ({ isMenuOpen, toggleMenu }) => {
   const [openMenu, setOpenMenu] = useState({});
   const [activeLink, setActiveLink] = useState('');
-  const dispatch = useDispatch(); // Définit dispatch
-  const navigate = useNavigate(); // Définit navigate
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const toggleSubMenu = (menu) => {
     setOpenMenu((prevState) => ({
@@ -56,7 +54,6 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
     // Redirige l'utilisateur vers la page de connexion
     navigate('/login');
   };
-  
 
   const currentYear = new Date().getFullYear();
   const previousYear = currentYear - 1;
@@ -204,6 +201,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
           </span>
           {openMenu.administration && (
             <ul className="submenu">
+              {/* Sous-menu "Clients" */}
               <li>
                 <span
                   className={`menu-title ${openMenu.clients ? 'open' : ''}`}
@@ -211,7 +209,32 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                 >
                   <FontAwesomeIcon icon={faUsers} className="icon" /> Clients
                 </span>
+
+                {openMenu.clients && (
+                  <ul className="submenu">
+                    <li>
+                      <Link
+                        to="/dashboard/operator/inscriptions"
+                        className={activeLink === 'inscriptions' ? 'active' : ''}
+                        onClick={() => handleLinkClick('clients', 'inscriptions')}
+                      >
+                        <FontAwesomeIcon icon={faUserPlus} className="icon" /> Nouvelles inscriptions
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/dashboard/operator/clientvalides"
+                        className={activeLink === 'clientsvalides' ? 'active' : ''}
+                        onClick={() => handleLinkClick('clients', 'clientsvalides')}
+                      >
+                        <FontAwesomeIcon icon={faUsers} className="icon" /> Clients validés
+                      </Link>
+                    </li>
+                  </ul>
+                )}
               </li>
+
+              {/* Sous-menu "Opérateurs" */}
               <li>
                 <span
                   className={`menu-title ${openMenu.operators ? 'open' : ''}`}
@@ -221,18 +244,20 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                 </span>
                 {openMenu.operators && (
                   <ul className="submenu">
+                    {/* Lien vers la nouvelle page OperatorsList */}
                     <li>
                       <Link
-                        to="/dashboard/operator/inscriptions"
-                        className={activeLink === 'operatorInscriptions' ? 'active' : ''}
-                        onClick={() => handleLinkClick('operators', 'operatorInscriptions')}
+                        to="/dashboard/operator/operatorslist"
+                        className={activeLink === 'operatorslist' ? 'active' : ''}
+                        onClick={() => handleLinkClick('operators', 'operatorslist')}
                       >
-                        <FontAwesomeIcon icon={faUserPlus} className="icon" /> Nouvelles inscriptions
+                        <FontAwesomeIcon icon={faUsers} className="icon" /> Liste des opérateurs
                       </Link>
                     </li>
                   </ul>
                 )}
               </li>
+
               <li>
                 <span
                   className={`menu-title ${openMenu.services ? 'open' : ''}`}
@@ -278,7 +303,6 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
           )}
         </li>
 
-     
         {/* Bouton de déconnexion */}
         <li>
           <button
@@ -287,8 +311,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
           >
             <FontAwesomeIcon icon={faSignOutAlt} className="icon" /> Se déconnecter
           </button>
-        </li>    
-
+        </li>
       </ul>
     </nav>
   );
