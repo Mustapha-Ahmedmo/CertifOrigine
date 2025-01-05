@@ -14,16 +14,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const { URL } = require('url');
-
-// Retrieve VITE_API_URL from the environment
-const apiUrl = process.env.VITE_API_URL || 'http://localhost:3000';
-
-// Parse the URL to extract the host or IP
-const parsedUrl = new URL(apiUrl);
-const dynamicIpOrDomain = parsedUrl.hostname;
-
-console.log('Dynamic Host or IP:', dynamicIpOrDomain);
 
 const sendEmail = async (to, subject, text) => {
   try {
@@ -1020,7 +1010,7 @@ const requestPasswordReset = async (req, res) => {
     );
 
     // Send reset email
-    const resetLink = `http://${dynamicIpOrDomain}/forgot-password?token=${token}`;
+    const resetLink = `http://51.195.203.178/forgot-password?token=${token}`;
     await sendEmail(
       email,
       'Réinitialisation de mot de passe',
