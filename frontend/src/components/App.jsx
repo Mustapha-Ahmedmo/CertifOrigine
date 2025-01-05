@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Routes,
   Route,
@@ -41,14 +41,18 @@ const App = () => {
   const dispatch = useDispatch();
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
 
+  const [authRestored, setAuthRestored] = useState(false);
+
   const location = useLocation();
   const navigate = useNavigate();
 
   /**
    * 1. On restaure l'état d'auth depuis le localStorage dès le premier rendu
+   *    pour savoir si on a déjà un token, user, etc.
    */
   useEffect(() => {
-    const storedIsAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    const storedIsAuthenticated =
+      localStorage.getItem('isAuthenticated') === 'true';
     const storedUser = JSON.parse(localStorage.getItem('user'));
     const storedToken = localStorage.getItem('token');
 
@@ -61,8 +65,17 @@ const App = () => {
         })
       );
     } else {
-      dispatch(restoreAuthState({ isAuthenticated: false, user: null, token: null }));
+      dispatch(
+        restoreAuthState({ isAuthenticated: false, user: null, token: null })
+      );
     }
+
+    // Après avoir dispatché, on peut signaler que la restauration est terminée
+    // (Dans la vraie vie, on écouterait peut-être un "fulfilled" dans Redux,
+    //  mais ici on simplifie)
+    setTimeout(() => {
+      setAuthRestored(true);
+    }, 100);
   }, [dispatch]);
 
   /**
@@ -76,8 +89,7 @@ const App = () => {
   }, [location, isAuthenticated]);
 
   /**
-   * 3. Au moment où on devient "isAuthenticated === true",
-   *    on récupère la route sauvegardée.
+   * 3. Une fois qu'on est authentifié, on récupère la route sauvegardée.
    *    Si on est sur "/" ou "/login", on redirige vers la route sauvegardée.
    */
   useEffect(() => {
@@ -90,12 +102,15 @@ const App = () => {
         navigate(savedRoute, { replace: true });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, location.pathname]);
+  }, [isAuthenticated, location.pathname, navigate]);
 
-  // Tant que la restauration de l'état est en cours, on peut afficher un loader
-  if (loading) {
-    return <div>Loading...</div>;
+  /**
+   * Tant que la restauration (authRestored) n’est pas terminée
+   * ou qu’on est en "loading" Redux, on affiche un loader
+   * => évite le flash de la page login si on est déjà logué
+   */
+  if (!authRestored || loading) {
+    return <div>Chargement...</div>;
   }
 
   return (
@@ -104,7 +119,7 @@ const App = () => {
       <InactivityHandler timeout={600000} />
 
       <Routes>
-        {/* Route racine : si déjà connecté, va sur /dashboard, sinon Login */}
+        {/* 1) Route racine : si on est connecté, go /dashboard, sinon /login */}
         <Route
           path="/"
           element={
@@ -112,7 +127,7 @@ const App = () => {
           }
         />
 
-        {/* Dashboard protégé par ProtectedRoute */}
+        {/* 2) Dashboard protégé par ProtectedRoute */}
         <Route
           path="/dashboard"
           element={
@@ -126,7 +141,10 @@ const App = () => {
           <Route path="to-complete" element={<ToComplete />} />
           <Route path="to-pay" element={<ToPay />} />
           <Route path="returned-orders" element={<ReturnedOrders />} />
-          <Route path="completed-orders-this-year" element={<CompletedOrdersThisYear />} />
+          <Route
+            path="completed-orders-this-year"
+            element={<CompletedOrdersThisYear />}
+          />
           <Route path="create-order" element={<CreateOrder />} />
 
           {/* Routes "opérateur" */}
@@ -139,7 +157,7 @@ const App = () => {
           </Route>
         </Route>
 
-        {/* Layout simple pour /login */}
+        {/* 3) Layout simple pour /login */}
         <Route
           path="/login"
           element={
@@ -149,7 +167,7 @@ const App = () => {
           <Route index element={<Login />} />
         </Route>
 
-        {/* Autres routes "simples" */}
+        {/* 4) Autres routes "simples" */}
         <Route path="/register" element={<Register />}>
           <Route index element={<Login />} />
         </Route>
@@ -166,6 +184,9 @@ const App = () => {
         <Route path="/account-created" element={<SimpleLayout />}>
           <Route index element={<AccountCreated />} />
         </Route>
+
+        {/* 5) Fallback si aucune route ne matche (page blanche -> rediriger) */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );
