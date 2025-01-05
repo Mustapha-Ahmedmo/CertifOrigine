@@ -1,5 +1,15 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate
+} from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { restoreAuthState } from '../slices/authSlice';
+
+// Pages & layouts
 import Login from '../pages/Login';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
@@ -13,9 +23,7 @@ import Inscriptions from '../pages/Inscriptions';
 import ClientsValides from '../pages/ClientsValides';
 import OperatorsList from '../pages/OperatorsList';
 
-import { startTransition } from 'react';
-
-// Import de vos pages du dashboard
+// Pages du dashboard
 import Home from '../pages/Home';
 import HomeOperateur from '../pages/HomeOperateur';
 import ToComplete from '../components/orders/ToComplete';
@@ -26,60 +34,83 @@ import CompletedOrdersThisYear from '../components/orders/CompletedOrdersThisYea
 import CreateOrder from '../components/orders/Create/CreateOrder';
 import OperateurLayout from './OperateurLayout';
 
-// Import du gestionnaire d'inactivité
+// Gestion de l'inactivité
 import InactivityHandler from './InactivityHandler';
-import { useDispatch, useSelector } from 'react-redux';
-import { restoreAuthState } from '../slices/authSlice';
 
 const App = () => {
-
   const dispatch = useDispatch();
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
+
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Restore authentication state on app load
+  /**
+   * 1. On restaure l'état d'auth depuis le localStorage dès le premier rendu
+   */
   useEffect(() => {
     const storedIsAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
     const storedUser = JSON.parse(localStorage.getItem('user'));
     const storedToken = localStorage.getItem('token');
 
-
     if (storedIsAuthenticated && storedUser && storedToken) {
-      dispatch(restoreAuthState({ isAuthenticated: storedIsAuthenticated, user: storedUser, token: storedToken }));
+      dispatch(
+        restoreAuthState({
+          isAuthenticated: true,
+          user: storedUser,
+          token: storedToken,
+        })
+      );
     } else {
       dispatch(restoreAuthState({ isAuthenticated: false, user: null, token: null }));
     }
   }, [dispatch]);
 
+  /**
+   * 2. On sauvegarde la route courante dans le localStorage
+   *    seulement si on est authentifié et qu'on n'est pas sur "/login".
+   */
+  useEffect(() => {
+    if (isAuthenticated && location.pathname !== '/login') {
+      localStorage.setItem('currentRoute', location.pathname);
+    }
+  }, [location, isAuthenticated]);
 
-    // Save current route to localStorage
-    useEffect(() => {
-      if (isAuthenticated) {
-        localStorage.setItem('currentRoute', location.pathname);
-      }
-    }, [location, isAuthenticated]);
-
-
-    useEffect(() => {
+  /**
+   * 3. Au moment où on devient "isAuthenticated === true",
+   *    on récupère la route sauvegardée.
+   *    Si on est sur "/" ou "/login", on redirige vers la route sauvegardée.
+   */
+  useEffect(() => {
+    if (isAuthenticated) {
       const savedRoute = localStorage.getItem('currentRoute');
-      if (isAuthenticated && savedRoute) {
-        console.log(savedRoute)
-          navigate(savedRoute, { replace: true });
+      if (
+        savedRoute &&
+        (location.pathname === '/' || location.pathname === '/login')
+      ) {
+        navigate(savedRoute, { replace: true });
       }
-    }, [isAuthenticated]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, location.pathname]);
 
+  // Tant que la restauration de l'état est en cours, on peut afficher un loader
   if (loading) {
-    // You can render a loader here
     return <div>Loading...</div>;
   }
+
   return (
     <>
-      {/* Gestion de l'inactivité (5 minutes par défaut) */}
+      {/* Gestion de l'inactivité (ex. 10 min = 600000 ms) */}
       <InactivityHandler timeout={600000} />
 
       <Routes>
-        <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />} />
+        {/* Route racine : si déjà connecté, va sur /dashboard, sinon Login */}
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? <Navigate to="/dashboard" /> : <Login />
+          }
+        />
 
         {/* Dashboard protégé par ProtectedRoute */}
         <Route
@@ -90,7 +121,7 @@ const App = () => {
             </ProtectedRoute>
           }
         >
-          {/* Routes pour les clients (index = Home) */}
+          {/* Routes "client" */}
           <Route index element={<Home />} />
           <Route path="to-complete" element={<ToComplete />} />
           <Route path="to-pay" element={<ToPay />} />
@@ -98,7 +129,7 @@ const App = () => {
           <Route path="completed-orders-this-year" element={<CompletedOrdersThisYear />} />
           <Route path="create-order" element={<CreateOrder />} />
 
-          {/* Routes pour les opérateurs */}
+          {/* Routes "opérateur" */}
           <Route path="operator" element={<OperateurLayout />}>
             <Route index element={<HomeOperateur />} />
             <Route path="to-validateOP" element={<ToValidateOP />} />
@@ -108,27 +139,27 @@ const App = () => {
           </Route>
         </Route>
 
-        {/* Routes simples avec SimpleLayout */}
-
+        {/* Layout simple pour /login */}
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/dashboard" /> : <SimpleLayout />}
+          element={
+            isAuthenticated ? <Navigate to="/dashboard" /> : <SimpleLayout />
+          }
         >
           <Route index element={<Login />} />
         </Route>
+
+        {/* Autres routes "simples" */}
         <Route path="/register" element={<Register />}>
           <Route index element={<Login />} />
         </Route>
         <Route path="/registerop" element={<RegisterOP />}>
           <Route index element={<Login />} />
         </Route>
-
         <Route path="/forgot-password" element={<SimpleLayout />}>
-        <Route index element={<ForgotPassword />} />
-        <Route path=":token" element={<ForgotPassword />} />
-      </Route>
-
-        
+          <Route index element={<ForgotPassword />} />
+          <Route path=":token" element={<ForgotPassword />} />
+        </Route>
         <Route path="/reset-password" element={<SimpleLayout />}>
           <Route index element={<ResetPassword />} />
         </Route>
