@@ -1,8 +1,22 @@
 import React from 'react';
-import './OperatorsList.css'; // ou import de Inscriptions.css si tu le préfères
+import { useNavigate } from 'react-router-dom';
+
+// Importe le composant "FontAwesomeIcon"
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
+// Importe seulement les icônes que tu utilises
+// (tu peux en importer plusieurs et les lister comme tu le fais déjà)
+import {
+  faPlus,     // pour le bouton "ajouter"
+  faEdit,     // pour le bouton "modifier"
+  faTrashAlt, // pour le bouton "supprimer"
+} from '@fortawesome/free-solid-svg-icons';
+
+import './OperatorsList.css';
 
 const OperatorsList = () => {
-  // Données factices pour l’exemple
+  const navigate = useNavigate();
+
   const operators = [
     {
       id: 1,
@@ -13,51 +27,35 @@ const OperatorsList = () => {
       mobile: '0625592038',
       group: 'Administrateurs',
     },
-    {
-      id: 2,
-      name: 'Mme Neima Youssouf',
-      login: 'neima.youssouf',
-      email: 'n.youssouf@ccd.dj',
-      phone: '355432',
-      mobile: '623789093',
-      group: 'Opérateurs avec pouvoirs',
-    },
-    {
-      id: 3,
-      name: 'Mme Fatima Abdallah',
-      login: 'fatima.abd',
-      email: 'f.abdallah@ccd.dj',
-      phone: '355433',
-      mobile: '772345678',
-      group: 'Opérateurs avec pouvoirs',
-    },
-    {
-      id: 4,
-      name: 'Mr Djamal Houmed',
-      login: 'djhoumed',
-      email: 'djhoumed@ccd.dj',
-      phone: '355431',
-      mobile: '779876543',
-      group: 'Administrateurs',
-    },
+    // ...
   ];
 
-  // Handlers fictifs (pour l’instant) :
-  const handleAdd = (operatorId) => {
-    alert(`Action: Ajouter un opérateur (ou fonctionnalité) pour l’ID ${operatorId}`);
-  };
-
   const handleEdit = (operatorId) => {
-    alert(`Action: Modifier l’opérateur avec l’ID ${operatorId}`);
+    alert(`Action: Modifier l’opérateur ID = ${operatorId}`);
   };
 
   const handleDelete = (operatorId) => {
-    alert(`Action: Supprimer l’opérateur avec l’ID ${operatorId}`);
+    alert(`Action: Supprimer l’opérateur ID = ${operatorId}`);
+  };
+
+  // Redirige vers /registerop
+  const handleAddNew = () => {
+    navigate('/registerop');
   };
 
   return (
     <div className="operators-page-container">
-      <h1>LISTING DES OPÉRATEURS</h1>
+      {/* En-tête de la page */}
+      <div className="operators-header">
+        <h1>LISTING DES OPÉRATEURS</h1>
+
+        {/* Bouton "Ajouter un nouvel opérateur" avec l'icône faPlus */}
+        <button className="add-operator-button" onClick={handleAddNew}>
+          <FontAwesomeIcon icon={faPlus} className="icon-left" />
+          Ajouter un nouvel opérateur
+        </button>
+      </div>
+
       <div className="dashboard-table-container">
         <table className="dashboard-table">
           <thead>
@@ -83,24 +81,20 @@ const OperatorsList = () => {
                 <td>{op.mobile}</td>
                 <td>{op.group}</td>
                 <td>
-                  {/* Trois liens/boutons pour Ajouter, Modifier, Supprimer */}
-                  <button
-                    className="minimal-button action-button"
-                    onClick={() => handleAdd(op.id)}
-                  >
-                    Ajouter
-                  </button>
+                  {/* On a retiré le bouton "Ajouter" dans la colonne Actions */}
                   <button
                     className="minimal-button action-button"
                     onClick={() => handleEdit(op.id)}
                   >
-                    Modifier
+                    <FontAwesomeIcon icon={faEdit} />
+                    &nbsp; Modifier
                   </button>
                   <button
                     className="minimal-button action-button"
                     onClick={() => handleDelete(op.id)}
                   >
-                    Supprimer
+                    <FontAwesomeIcon icon={faTrashAlt} />
+                    &nbsp; Supprimer
                   </button>
                 </td>
               </tr>

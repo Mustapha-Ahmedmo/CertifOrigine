@@ -237,9 +237,9 @@ const Inscriptions = () => {
                     )}
 
                     {/* Affichage explicite du numéro en fonction de la situation */}
-                    {registration.in_free_zone && registration.licenseNumber && (
+                    {registration.in_free_zone && registration.trade_registration_num && (
                       <div style={{ marginTop: '5px', fontStyle: 'italic' }}>
-                        Numéro de licence : <strong>{registration.licenseNumber}</strong>
+                        Numéro de licence : <strong>{registration.trade_registration_num}</strong>
                       </div>
                     )}
 
