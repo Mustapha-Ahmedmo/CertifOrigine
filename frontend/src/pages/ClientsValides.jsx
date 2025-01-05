@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import {
-  getCustAccountInfo
-} from '../services/apiServices';
+import { getCustAccountInfo } from '../services/apiServices';
 import { formatDate } from '../utils/dateUtils';
-import './Inscriptions.css';  // Vous pouvez utiliser le même CSS que la page Inscriptions
+import './Inscriptions.css'; // Même CSS
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 
@@ -14,25 +12,19 @@ const ClientsValides = () => {
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
 
-  // État pour la liste déroulante (filtre par nom de client)
-  const [clientsList, setClientsList] = useState([]);
-  const [selectedClient, setSelectedClient] = useState('');
+  // État du champ de recherche
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchValidatedAccounts = async () => {
       try {
-        // Récupère tous les comptes via l'API
+        // Récupère tous les comptes
         const response = await getCustAccountInfo(null, 2, true);
         const data = response.data || [];
 
-        // Filtre pour ne garder que les comptes validés
+        // Filtrer localement pour ne garder que les comptes validés
         const onlyValidated = data.filter((account) => account.statut_flag === 2);
-
         setCustAccounts(onlyValidated);
-
-        // Construire la liste (unique) des noms de clients validés
-        const uniqueClients = [...new Set(onlyValidated.map((item) => item.cust_name))];
-        setClientsList(uniqueClients);
       } catch (err) {
         console.error(err);
       }
@@ -40,54 +32,70 @@ const ClientsValides = () => {
     fetchValidatedAccounts();
   }, []);
 
-  // Ouvrir la modal de contacts pour l'inscription cliquée
+  // Ouvre la modal de contacts
   const handleOpenContactsModal = (account) => {
     setSelectedAccount(account);
     setShowContactModal(true);
   };
 
-  // Fermer la modal de contacts
+  // Ferme la modal
   const handleCloseContactsModal = () => {
     setSelectedAccount(null);
     setShowContactModal(false);
   };
 
-  // Filtrage par client
-  const handleSelectClient = (e) => {
-    setSelectedClient(e.target.value);
-  };
-
-  // Filtre local pour afficher uniquement les comptes validés DU client sélectionné
-  const filteredAccounts = selectedClient
-    ? custAccounts.filter((acc) => acc.cust_name === selectedClient)
-    : custAccounts;
-
-  // Ouverture du fichier justificatif dans un nouvel onglet
+  // Ouvrir fichier
   const handleFileClick = (file) => {
     const fileUrl = `${API_URL}/files/inscriptions/${new Date().getFullYear()}/${file.file_guid}`;
     window.open(fileUrl, '_blank');
   };
 
+  // Saisie de la recherche
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Filtrage texte
+  const filteredAccounts = custAccounts.filter((registration) => {
+    const search = searchTerm.toLowerCase().trim();
+    if (!search) return true;
+
+    const dateString = formatDate(registration.insertdate);
+
+    const fields = [
+      registration.cust_name,
+      registration.legal_form,
+      registration.full_address,
+      registration.co_symbol_fr,
+      registration.sectorName?.symbol_fr,
+      registration.nif,
+      registration.rchNumber,
+      registration.licenseNumber,
+      dateString,
+    ]
+      .filter(Boolean)
+      .map((val) => String(val).toLowerCase());
+
+    return fields.some((field) => field.includes(search));
+  });
+
   return (
     <div className="inscriptions-page-container">
       <h1>CLIENTS VALIDÉS ({custAccounts.length})</h1>
 
-      {/* Conteneur liste déroulante pour filtrer par client */}
-      <div className="client-filter-container">
-        <label htmlFor="clientSelect">Filtrer par client :</label>
-        <select
-          id="clientSelect"
-          className="client-filter-select"
-          value={selectedClient}
-          onChange={handleSelectClient}
-        >
-          <option value="">-- Tous les clients validés --</option>
-          {clientsList.map((client) => (
-            <option key={client} value={client}>
-              {client}
-            </option>
-          ))}
-        </select>
+      {/* Barre de recherche textuelle */}
+      <div className="search-container">
+        <label htmlFor="searchInput" className="search-label">
+          Rechercher :
+        </label>
+        <input
+          id="searchInput"
+          className="search-input"
+          type="text"
+          placeholder="Tapez un mot-clé ou un chiffre..."
+          value={searchTerm}
+          onChange={handleSearch}
+        />
       </div>
 
       <div className="dashboard-table-container">
@@ -105,82 +113,90 @@ const ClientsValides = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredAccounts.map((registration) => {
-              return (
-                <tr key={registration.id_cust_account}>
-                  <td>{formatDate(registration.insertdate)}</td>
-                  <td>
-                    {registration.legal_form} {registration.cust_name}
-                  </td>
-                  <td>{registration.sectorName?.symbol_fr || 'N/A'}</td>
-                  <td>{registration.full_address}</td>
-                  <td>{registration.co_symbol_fr}</td>
-                  <td>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={registration.in_free_zone}
-                        readOnly
-                      />
-                      <span style={{ marginLeft: '5px' }}>Zone franche</span>
-                    </label>
-                  </td>
-                  <td>
-                    {registration.files && registration.files.length > 0 ? (
-                      registration.files.map((file) => {
-                        let fileDescription = file.txt_description_fr || 'Type inconnu';
-                        // Ajouter la valeur NIF / RCS / licence entre parenthèses si disponible
-                        if (fileDescription === 'NIF' && registration.nif) {
-                          fileDescription += ` (${registration.nif})`;
-                        } else if (
-                          fileDescription === 'Immatriculation RCS' &&
-                          registration.rchNumber
-                        ) {
-                          fileDescription += ` (${registration.rchNumber})`;
-                        } else if (
-                          fileDescription === 'Numéro de licence' &&
-                          registration.licenseNumber
-                        ) {
-                          fileDescription += ` (${registration.licenseNumber})`;
-                        }
+            {filteredAccounts.map((registration) => (
+              <tr key={registration.id_cust_account}>
+                <td>{formatDate(registration.insertdate)}</td>
+                <td>
+                  {registration.legal_form} {registration.cust_name}
+                </td>
+                <td>{registration.sectorName?.symbol_fr || 'N/A'}</td>
+                <td>{registration.full_address}</td>
+                <td>{registration.co_symbol_fr}</td>
+                <td>
+                  <label>
+                    <input type="checkbox" checked={registration.in_free_zone} readOnly />
+                    <span style={{ marginLeft: '5px' }}>Zone franche</span>
+                  </label>
+                </td>
+                <td>
+                  {/* Affichage des fichiers */}
+                  {registration.files && registration.files.length > 0 ? (
+                    registration.files.map((file) => {
+                      let fileDescription = file.txt_description_fr || 'Type inconnu';
+                      if (fileDescription === 'NIF' && registration.nif) {
+                        fileDescription += ` (${registration.nif})`;
+                      } else if (
+                        fileDescription === 'Immatriculation RCS' &&
+                        registration.rchNumber
+                      ) {
+                        fileDescription += ` (${registration.rchNumber})`;
+                      } else if (
+                        fileDescription === 'Numéro de licence' &&
+                        registration.licenseNumber
+                      ) {
+                        fileDescription += ` (${registration.licenseNumber})`;
+                      }
+                      return (
+                        <button
+                          key={file.id_files_repo}
+                          className="file-button minimal-button"
+                          onClick={() => handleFileClick(file)}
+                        >
+                          {fileDescription}
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <span>Aucun fichier</span>
+                  )}
 
-                        return (
-                          <button
-                            key={file.id_files_repo}
-                            className="file-button minimal-button"
-                            onClick={() => handleFileClick(file)}
-                          >
-                            {fileDescription}
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <span>Aucun fichier</span>
-                    )}
-                  </td>
-                  <td>
-                    <button
-                      className="minimal-button toggle-contact-button"
-                      onClick={() => handleOpenContactsModal(registration)}
-                    >
-                      <FontAwesomeIcon icon={faEye} />
-                      <span className="button-text"> Ouvrir</span>
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+                  {/* Affichage explicite du numéro */
+                  registration.in_free_zone && registration.licenseNumber && (
+                    <div style={{ marginTop: '5px', fontStyle: 'italic' }}>
+                      Numéro de licence : <strong>{registration.licenseNumber}</strong>
+                    </div>
+                  )}
+                  {!registration.in_free_zone && registration.nif && (
+                    <div style={{ marginTop: '5px', fontStyle: 'italic' }}>
+                      NIF : <strong>{registration.nif}</strong>
+                    </div>
+                  )}
+                  {!registration.in_free_zone && registration.rchNumber && (
+                    <div style={{ marginTop: '5px', fontStyle: 'italic' }}>
+                      RCS : <strong>{registration.rchNumber}</strong>
+                    </div>
+                  )}
+                </td>
+                <td>
+                  <button
+                    className="minimal-button toggle-contact-button"
+                    onClick={() => handleOpenContactsModal(registration)}
+                  >
+                    <FontAwesomeIcon icon={faEye} />
+                    <span className="button-text"> Ouvrir</span>
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      {/* Modal pour afficher la/les fiche(s) de contact */}
+      {/* Modal de contact */}
       {showContactModal && selectedAccount && (
         <div className="modal-overlay" onClick={handleCloseContactsModal}>
           <div className="contacts-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>
-              LISTING DES CONTACTS DE LA SOCIÉTÉ "{selectedAccount.cust_name}"
-            </h2>
+            <h2>LISTING DES CONTACTS DE LA SOCIÉTÉ "{selectedAccount.cust_name}"</h2>
 
             <table className="contacts-modal-table">
               <thead>
