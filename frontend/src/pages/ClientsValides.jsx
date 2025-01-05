@@ -22,7 +22,7 @@ const ClientsValides = () => {
     const fetchValidatedAccounts = async () => {
       try {
         // Récupère tous les comptes via l'API
-        const response = await getCustAccountInfo(null, 1, true);
+        const response = await getCustAccountInfo(null, 2, true);
         const data = response.data || [];
 
         // Filtre pour ne garder que les comptes validés

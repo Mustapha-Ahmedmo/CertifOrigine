@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { executeSetCustAccount, executeSetCustUser, executeGetCustAccountInfo, updateCustAccountStatus, rejectCustAccount, executeAddSubscription, executeCreateSubscriptionWithFile, executeGetCustAccountFiles } = require('../controllers/customerController');
+const { executeSetCustAccount, executeSetCustUser, executeGetCustAccountInfo, updateCustAccountStatus, rejectCustAccount, executeAddSubscription, executeCreateSubscriptionWithFile, executeGetCustAccountFiles, requestPasswordReset, executeResetPassword } = require('../controllers/customerController');
 const upload = require('../src/middleware/upload');
 
 // Route to handle set_cust_account
@@ -29,5 +29,9 @@ router.post(
 
   // New route for fetching customer account files
 router.get('/get-files', executeGetCustAccountFiles);
-  
+
+// Password reset routes
+router.post('/password-reset/request', requestPasswordReset);
+router.post('/password-reset/reset', executeResetPassword);
+
 module.exports = router;

@@ -11,6 +11,10 @@ DROP TABLE IF EXISTS LOGIN_STATS CASCADE;
 DROP TABLE IF EXISTS FILES_REPO_TYPEoF CASCADE;
 DROP TABLE IF EXISTS FILES_REPO CASCADE;
 DROP TABLE IF EXISTS CUST_ACCOUNT_FILES CASCADE;
+DROP TABLE IF EXISTS "ORDER" CASCADE;
+DROP TABLE IF EXISTS ORDER_STATUS CASCADE;
+
+DROP TABLE IF EXISTS GLOBAL_SETTINGS CASCADE;
 
 
 CREATE TABLE LOGIN_USER (
@@ -153,6 +157,70 @@ CREATE TABLE CUST_ACCOUNT_FILES (
     DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
     FOREIGN KEY (ID_FILES_REPO) REFERENCES FILES_REPO(ID_FILES_REPO),
     FOREIGN KEY (ID_CUST_ACCOUNT) REFERENCES CUST_ACCOUNT(ID_CUST_ACCOUNT)
+);
+
+
+CREATE TABLE ORDER_STATUS (
+    ID_ORDER_STATUS INT PRIMARY KEY,
+    TXT_ORDER_STATUS_FR VARCHAR(64) NOT NULL,       -- Non nullable
+    TXT_ORDER_STATUS_ENG VARCHAR(64) NOT NULL,       -- Non nullable
+    NOTE VARCHAR(64) NULL                        -- Nullable
+);
+
+CREATE TABLE "ORDER" (
+    ID_ORDER INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_CUST_ACCOUNT INT NOT NULL,                 -- Non nullable
+    ORDER_TITLE VARCHAR(32) NOT NULL,            -- Non nullable
+    ID_ORDER_STATUS INT,
+    IDLOGIN_OWNER INT,
+    IDLOGIN_SPARE INT,
+    DATE_OWNER TIMESTAMP,
+    DATE_SPARE TIMESTAMP,
+    DATE_LAST_SUBMISSION TIMESTAMP,
+    DATE_LAST_RETURN TIMESTAMP,
+    DATE_VALIDATION TIMESTAMP,
+    INSERTDATE TIMESTAMP,
+    IDLOGIN_INSERT INT,
+    LASTMODIFIED TIMESTAMP,
+    IDLOGIN_MODIFY INT,
+    TYPEoF INT DEFAULT 0 NOT NULL,               -- Non nullable avec valeur par défaut
+   
+    FOREIGN KEY (ID_CUST_ACCOUNT) REFERENCES CUST_ACCOUNT(ID_CUST_ACCOUNT),
+    FOREIGN KEY (ID_ORDER_STATUS) REFERENCES ORDER_STATUS(ID_ORDER_STATUS),
+    FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_OWNER) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_SPARE) REFERENCES LOGIN_USER(ID_LOGIN_USER)
+);
+
+
+CREATE TABLE GLOBAL_SETTINGS (
+    ID_GLOBAL_SETTINGS INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    CODE INT NOT NULL,                                -- Non nullable
+    IDLOGIN INT NULL,                                -- Nullable
+    ID_ORDER INT NULL,                              -- Nullable
+    ID_CUST_ACCOUNT INT NULL,                       -- Nullable
+    ID_FILES_REPO INT NULL,                         -- Nullable
+    FREE_TXT1 VARCHAR(128) NULL,                    -- Nullable
+    FREE_TXT2 VARCHAR(128) NULL,                    -- Nullable
+    FREE_TXT3 VARCHAR(128) NULL,                    -- Nullable
+    FREE_MEMO TEXT NULL,                            -- Nullable
+    FREE_FLOAT1 FLOAT NULL,                         -- Nullable
+    FREE_FLOAT2 FLOAT NULL,                         -- Nullable
+    FREE_FLOAT3 FLOAT NULL,                         -- Nullable
+    FREE_DATE1 TIMESTAMP NULL,                      -- Nullable
+    FREE_DATE2 TIMESTAMP NULL,                      -- Nullable
+    FREE_DATE3 TIMESTAMP NULL,                      -- Nullable
+    INSERTDATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Non nullable avec valeur par défaut
+    LASTMODIFIED TIMESTAMP NULL,                    -- Nullable
+    ACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Non nullable avec valeur par défaut
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
+    FREE_BIT1 BOOLEAN,
+    FREE_BIT2 BOOLEAN,
+    FOREIGN KEY (IDLOGIN) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (ID_ORDER) REFERENCES "ORDER"(ID_ORDER),
+    FOREIGN KEY (ID_CUST_ACCOUNT) REFERENCES CUST_ACCOUNT(ID_CUST_ACCOUNT),
+    FOREIGN KEY (ID_FILES_REPO) REFERENCES FILES_REPO(ID_FILES_REPO)
 );
 
 
@@ -1236,6 +1304,176 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+
+
+DROP PROCEDURE IF EXISTS add_TokenResetPwd_Settings;
+CREATE OR REPLACE PROCEDURE add_TokenResetPwd_Settings(
+    p_token VARCHAR(128),
+    p_login VARCHAR(32),
+    p_email VARCHAR(32),
+    p_activation_date TIMESTAMP,
+    p_deactivation_date TIMESTAMP,
+    p_id INOUT INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    p_id_login_user INT;
+    p_idForeign INT;
+    p_id_cust_account INT;
+    p_code INT := 1052;
+BEGIN
+    -- Vérification des paramètres
+    IF p_token IS NULL OR p_login IS NULL OR p_email IS NULL THEN
+        RAISE EXCEPTION 'token, login et email ne doivent pas être nuls.';
+    END IF;
+
+    -- Récupération des informations utilisateur
+    SELECT 
+        id_login_user, 
+        idforeign, 
+        id_cust_account
+    INTO 
+        p_id_login_user, 
+        p_idForeign, 
+        p_id_cust_account
+    FROM 
+        view_login
+    WHERE 
+        USERNAME = p_login 
+        AND EMAIL = RTRIM(LTRIM(p_email))
+        AND isavailable_user = 1
+        AND isavailable_login = 1;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Utilisateur non trouvé ou indisponible.';
+    END IF;
+
+    -- Validation de id_cust_account avec valeur par défaut si 0
+    IF p_id_cust_account = 0 THEN
+        p_id_cust_account := NULL; -- Remplacez par NULL
+    END IF;
+
+    -- Récupération de l'ID de la configuration existante
+    SELECT ID_GLOBAL_SETTINGS INTO p_id
+    FROM GLOBAL_SETTINGS
+    WHERE 
+        CODE = p_code
+        AND IDLOGIN = p_id_login_user
+        AND FREE_FLOAT1 = p_idForeign;
+
+    -- Insertion ou mise à jour des données
+    IF p_id IS NULL THEN
+        INSERT INTO GLOBAL_SETTINGS (
+            FREE_TXT1, FREE_TXT2, FREE_TXT3, FREE_MEMO, FREE_FLOAT1, FREE_FLOAT2, 
+            FREE_FLOAT3, FREE_DATE1, FREE_DATE2, FREE_DATE3, FREE_BIT1, FREE_BIT2, 
+            CODE, IDLOGIN, ACTIVATION_DATE, DEACTIVATION_DATE,
+            ID_ORDER, ID_CUST_ACCOUNT, ID_FILES_REPO
+        )
+        VALUES (
+            p_token, NULL, NULL, NULL, p_idForeign, NULL, NULL, 
+            NULL, NULL, NULL, NULL, NULL, p_code, p_id_login_user, 
+            p_activation_date, p_deactivation_date, 
+            NULL, p_id_cust_account, NULL
+        )
+        RETURNING ID_GLOBAL_SETTINGS INTO p_id;
+    ELSE
+        UPDATE GLOBAL_SETTINGS
+        SET 
+            FREE_TXT1 = p_token,
+            ACTIVATION_DATE = p_activation_date,
+            DEACTIVATION_DATE = p_deactivation_date,
+            LASTMODIFIED = NOW()
+        WHERE CODE = p_code 
+          AND ID_GLOBAL_SETTINGS = p_id;
+    END IF;
+END;
+$$;
+
+
+
+DROP PROCEDURE IF EXISTS spChange_Credentials;
+CREATE OR REPLACE PROCEDURE spChange_Credentials(
+    p_login VARCHAR(32),
+    p_pwd VARCHAR(128),
+    p_pwd_old VARCHAR(128),
+    p_id_login_user INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF p_login IS NULL OR p_pwd IS NULL OR p_pwd_old IS NULL OR p_id_login_user IS NULL THEN
+        RAISE EXCEPTION 'Tous les paramètres doivent être fournis et ne doivent pas être vides.';
+    END IF;
+
+    IF p_login = '' OR p_pwd = '' OR p_pwd_old = '' THEN
+        RAISE EXCEPTION 'Tous les paramètres doivent être non vides.';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM LOGIN_USER
+        WHERE ID_LOGIN_USER = p_id_login_user
+          AND USERNAME = p_login
+          AND PWD = p_pwd_old
+          AND DEACTIVATION_DATE >= CURRENT_TIMESTAMP
+    ) THEN
+        RAISE EXCEPTION 'Demande non autorisée : l\utilisateur ou l\ancien mot de passe est incorrect.';
+    END IF;
+
+    UPDATE LOGIN_USER
+    SET PWD = p_pwd
+    WHERE ID_LOGIN_USER = p_id_login_user
+      AND USERNAME = p_login
+      AND PWD = p_pwd_old
+      AND DEACTIVATION_DATE >= CURRENT_TIMESTAMP;
+
+    RAISE NOTICE 'Mot de passe modifié avec succès pour l\utilisateur %', p_login;
+
+END;
+$$;
+
+DROP PROCEDURE IF EXISTS set_ResetPwd_Settings;
+CREATE OR REPLACE PROCEDURE set_ResetPwd_Settings(
+    p_token VARCHAR(128),
+    p_login INT,               -- Changed to INT
+    p_pwd VARCHAR(128)
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF p_token IS NULL OR p_login IS NULL OR p_pwd IS NULL THEN
+        RAISE EXCEPTION 'ERROR: Les paramètres p_token, p_login ou p_pwd ne peuvent pas être nuls';
+    END IF;
+
+    -- Verify the token is valid and retrieve associated login
+    PERFORM 1 FROM GLOBAL_SETTINGS
+    WHERE CODE = 1052
+      AND FREE_TXT1 = p_token
+      AND ACTIVATION_DATE <= CURRENT_TIMESTAMP
+      AND DEACTIVATION_DATE > CURRENT_TIMESTAMP;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'ERROR: pas de token valide';
+    END IF;
+
+    -- Update the user's password
+    UPDATE LOGIN_USER
+    SET PWD = p_pwd
+    WHERE ID_LOGIN_USER = p_login
+      AND DEACTIVATION_DATE >= CURRENT_TIMESTAMP;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'ERROR: Utilisateur non trouvé ou indisponible.';
+    END IF;
+
+    -- Invalidate the token by updating DEACTIVATION_DATE
+    UPDATE GLOBAL_SETTINGS
+    SET DEACTIVATION_DATE = CURRENT_TIMESTAMP -- or another appropriate value
+    WHERE CODE = 1052
+      AND FREE_TXT1 = p_token;
+END;
+$$;
 
 
 CALL set_sector(0, 'ALIMENTAIRE','FOODS');

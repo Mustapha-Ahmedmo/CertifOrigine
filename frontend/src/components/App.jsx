@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Login from '../pages/Login';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
@@ -12,6 +12,8 @@ import AccountCreated from '../pages/AccountCreated';
 import Inscriptions from '../pages/Inscriptions';
 import ClientsValides from '../pages/ClientsValides';
 import OperatorsList from '../pages/OperatorsList';
+
+import { startTransition } from 'react';
 
 // Import de vos pages du dashboard
 import Home from '../pages/Home';
@@ -32,22 +34,45 @@ import { restoreAuthState } from '../slices/authSlice';
 const App = () => {
 
   const dispatch = useDispatch();
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // Restore authentication state on app load
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-    const user = JSON.parse(localStorage.getItem('user'));
-    const token = localStorage.getItem('token');
+    const storedIsAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    const storedToken = localStorage.getItem('token');
 
-    if (isAuthenticated && user && token) {
-      dispatch(restoreAuthState({ isAuthenticated, user, token }));
+
+    if (storedIsAuthenticated && storedUser && storedToken) {
+      dispatch(restoreAuthState({ isAuthenticated: storedIsAuthenticated, user: storedUser, token: storedToken }));
+    } else {
+      dispatch(restoreAuthState({ isAuthenticated: false, user: null, token: null }));
     }
   }, [dispatch]);
 
-  console.log("Is Authicated ->", isAuthenticated);
 
-  console.log("Is user ->", user);
+    // Save current route to localStorage
+    useEffect(() => {
+      if (isAuthenticated) {
+        localStorage.setItem('currentRoute', location.pathname);
+      }
+    }, [location, isAuthenticated]);
+
+
+    useEffect(() => {
+      const savedRoute = localStorage.getItem('currentRoute');
+      if (isAuthenticated && savedRoute) {
+        console.log(savedRoute)
+          navigate(savedRoute, { replace: true });
+      }
+    }, [isAuthenticated]);
+
+  if (loading) {
+    // You can render a loader here
+    return <div>Loading...</div>;
+  }
   return (
     <>
       {/* Gestion de l'inactivité (5 minutes par défaut) */}
@@ -97,9 +122,13 @@ const App = () => {
         <Route path="/registerop" element={<RegisterOP />}>
           <Route index element={<Login />} />
         </Route>
+
         <Route path="/forgot-password" element={<SimpleLayout />}>
-          <Route index element={<ForgotPassword />} />
-        </Route>
+        <Route index element={<ForgotPassword />} />
+        <Route path=":token" element={<ForgotPassword />} />
+      </Route>
+
+        
         <Route path="/reset-password" element={<SimpleLayout />}>
           <Route index element={<ResetPassword />} />
         </Route>

@@ -1,5 +1,6 @@
 const sequelize = require('../config/db'); // Correctly import sequelize
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 const transporter = nodemailer.createTransport({
   host: 'mail.gandi.net',
   port: 587,
@@ -407,7 +408,7 @@ Vous pouvez désormais vous connecter à votre compte en cliquant sur le lien su
 [Portail Chambre de Commerce de Djibouti](https://portal.ccd.dj)
 
 Identifiants de connexion :
-- **Nom d'utilisateur** : ${username}
+- **Nom d'utilisateur** : ${email}
 - **Mot de passe** : celui que vous avez défini lors de votre inscription.
 
 ⚠️ Si vous n'êtes pas à l'origine de cette demande, nous vous invitons à nous signaler immédiatement cet e-mail à l'adresse : abuse@ccd.dj.
@@ -967,6 +968,176 @@ const executeGetCustAccountFiles = async (req, res) => {
   }
 };
 
+const requestPasswordReset = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validate input
+    if (!email) {
+      return res.status(400).json({
+        message: 'Email est requis pour réinitialiser le mot de passe.',
+      });
+    }
+
+    // Generate a token and calculate expiration date
+    const token = crypto.randomUUID();
+    const activationDate = new Date();
+    const deactivationDate = new Date();
+    deactivationDate.setHours(deactivationDate.getHours() + 24); // Token valid for 24 hours
+
+    // Save the token and email in the database using the stored procedure
+    const result = await sequelize.query(
+      `CALL add_TokenResetPwd_Settings(
+        :p_token,
+        :p_login,
+        :p_email,
+        :p_activation_date,
+        :p_deactivation,
+        :p_id
+      )`,
+      {
+        replacements: {
+          p_token: token,
+          p_login: email,
+          p_email: email,
+          p_activation_date: activationDate,
+          p_deactivation: deactivationDate,
+          p_id: null,
+        },
+        type: sequelize.QueryTypes.RAW,
+      }
+    );
+
+    // Send reset email
+    const resetLink = `http://146.59.239.14/reset-password?token=${token}`;
+    await sendEmail(
+      email,
+      'Réinitialisation de mot de passe',
+      `Bonjour,
+
+Vous avez demandé à réinitialiser votre mot de passe. Veuillez cliquer sur le lien suivant pour définir un nouveau mot de passe :
+${resetLink}
+
+⚠️ Ce lien expirera dans 24 heures.
+
+Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail ou nous contacter à abuse@ccd.dj.
+
+Cordialement,
+L'équipe du portail Chambre de Commerce de Djibouti`
+    );
+
+    res.status(200).json({
+      message: 'Lien de réinitialisation envoyé avec succès.',
+    });
+  } catch (error) {
+    console.error('Erreur lors de la demande de réinitialisation de mot de passe:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la demande de réinitialisation de mot de passe.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
+
+const executeResetPassword = async (req, res) => {
+  try {
+    const { token, hPassword } = req.body;
+
+    // 1. Validate Inputs
+    if (!token || !hPassword) {
+      return res.status(400).json({
+        message: 'Le token et le nouveau mot de passe sont requis.',
+      });
+    }
+
+
+    // 4. Retrieve User Information Based on Token
+    // Since tokens are stored in GLOBAL_SETTINGS with CODE = 1052 and FREE_TXT1 = hashedToken
+    const tokenRecord = await sequelize.query(
+      `SELECT ID_GLOBAL_SETTINGS, IDLOGIN, DEACTIVATION_DATE, ID_CUST_ACCOUNT 
+       FROM GLOBAL_SETTINGS 
+       WHERE CODE = 1052 AND FREE_TXT1 = :token`,
+      {
+        replacements: { token },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (tokenRecord.length === 0) {
+      // Token not found
+      return res.status(400).json({
+        message: 'Token invalide ou inexistant.',
+      });
+    }
+    const { idlogin: loginId, DEACTIVATION_DATE: deactivationDate, ID_CUST_ACCOUNT: idCustAccount } = tokenRecord[0];
+
+    console.log("Token Record loginId => ", loginId)
+    // 5. Retrieve User Email Based on loginId
+    const user = await sequelize.query(
+      `SELECT email FROM view_login WHERE id_login_user = :loginId AND isavailable_user = 1 AND isavailable_login = 1`,
+      {
+        replacements: { loginId },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (user.length === 0) {
+      return res.status(400).json({
+        message: 'Utilisateur non trouvé ou indisponible.',
+      });
+    }
+
+    const userEmail = user[0].email;
+
+    console.log(userEmail);
+
+    // 6. Call the Stored Procedure to Update the Password and Invalidate the Token
+    try {
+      await sequelize.query(
+        `CALL set_ResetPwd_Settings(:p_token, :p_login, :p_pwd)`,
+        {
+          replacements: {
+            p_token: token, // Ensure hashedToken is defined
+            p_login: loginId, // Integer ID
+            p_pwd: hPassword, // Assuming hPassword is already hashed
+          },
+          type: sequelize.QueryTypes.RAW,
+        }
+      );
+    } catch (procError) {
+      // Handle specific stored procedure errors if necessary
+      console.error('Erreur lors de l\'appel de set_ResetPwd_Settings:', procError);
+      return res.status(400).json({
+        message: 'Erreur lors de la réinitialisation du mot de passe.',
+        error: procError.message || 'Erreur inconnue.',
+      });
+    }
+
+    // 7. Send Confirmation Email (Optional)
+    await sendEmail(
+      userEmail,
+      'Confirmation de la réinitialisation de votre mot de passe',
+      `Bonjour,
+
+Votre mot de passe a été réinitialisé avec succès.
+
+Si vous n'avez pas effectué cette action, veuillez contacter notre support immédiatement à abuse@ccd.dj.
+
+Cordialement,
+L'équipe de la Chambre de Commerce de Djibouti`
+    );
+
+    // 8. Respond to the Client
+    res.status(200).json({
+      message: 'Votre mot de passe a été réinitialisé avec succès.',
+    });
+  } catch (error) {
+    console.error('Erreur lors de la réinitialisation du mot de passe:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la réinitialisation du mot de passe.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
 
 // Export the new function along with the existing ones
 module.exports = {
@@ -978,4 +1149,6 @@ module.exports = {
   executeAddSubscription,
   executeCreateSubscriptionWithFile,
   executeGetCustAccountFiles,
+  requestPasswordReset,
+  executeResetPassword
 };

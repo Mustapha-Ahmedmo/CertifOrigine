@@ -268,3 +268,48 @@ export const addSubscriptionWithFile = async (subscriptionData) => {
     throw error;
   }
 };
+
+export const requestPasswordReset = async (data) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/password-reset/request`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data), // Expected format: { email: 'user@example.com' }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to request password reset');
+    }
+
+    return await response.json(); // Expected response: { message: 'Password reset link sent.' }
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
+  }
+};
+
+export const resetPassword = async (data) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/password-reset/reset`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data), // Expected format: { token: 'reset-token', newPassword: 'NewPass123' }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to reset password');
+    }
+
+    return await response.json(); // Expected response: { message: 'Password reset successful.' }
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
+  }
+};
+
