@@ -1076,7 +1076,7 @@ const requestPasswordReset = async (req, res) => {
     );
 
     // Send reset email
-    const resetLink = `http://146.59.239.14/forgot-password?token=${token}`;
+    const resetLink = `http://51.195.203.178/forgot-password?token=${token}`;
     await sendEmail(
       email,
       'Réinitialisation de mot de passe',
