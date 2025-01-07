@@ -46,72 +46,7 @@ const App = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  /**
-   * 1. On restaure l'état d'auth depuis le localStorage dès le premier rendu
-   *    pour savoir si on a déjà un token, user, etc.
-   */
-  useEffect(() => {
-    const storedIsAuthenticated =
-      localStorage.getItem('isAuthenticated') === 'true';
-    const storedUser = JSON.parse(localStorage.getItem('user'));
-    const storedToken = localStorage.getItem('token');
 
-    if (storedIsAuthenticated && storedUser && storedToken) {
-      dispatch(
-        restoreAuthState({
-          isAuthenticated: true,
-          user: storedUser,
-          token: storedToken,
-        })
-      );
-    } else {
-      dispatch(
-        restoreAuthState({ isAuthenticated: false, user: null, token: null })
-      );
-    }
-
-    // Après avoir dispatché, on peut signaler que la restauration est terminée
-    // (Dans la vraie vie, on écouterait peut-être un "fulfilled" dans Redux,
-    //  mais ici on simplifie)
-    setTimeout(() => {
-      setAuthRestored(true);
-    }, 100);
-  }, [dispatch]);
-
-  /**
-   * 2. On sauvegarde la route courante dans le localStorage
-   *    seulement si on est authentifié et qu'on n'est pas sur "/login".
-   */
-  useEffect(() => {
-    if (isAuthenticated && location.pathname !== '/login') {
-      localStorage.setItem('currentRoute', location.pathname);
-    }
-  }, [location, isAuthenticated]);
-
-  /**
-   * 3. Une fois qu'on est authentifié, on récupère la route sauvegardée.
-   *    Si on est sur "/" ou "/login", on redirige vers la route sauvegardée.
-   */
-  useEffect(() => {
-    if (isAuthenticated) {
-      const savedRoute = localStorage.getItem('currentRoute');
-      if (
-        savedRoute &&
-        (location.pathname === '/' || location.pathname === '/login')
-      ) {
-        navigate(savedRoute, { replace: true });
-      }
-    }
-  }, [isAuthenticated, location.pathname, navigate]);
-
-  /**
-   * Tant que la restauration (authRestored) n’est pas terminée
-   * ou qu’on est en "loading" Redux, on affiche un loader
-   * => évite le flash de la page login si on est déjà logué
-   */
-  if (!authRestored || loading) {
-    return <div>Chargement...</div>;
-  }
 
   return (
     <>
