@@ -1,4 +1,4 @@
-import React, { useState, forwardRef } from 'react';
+import React, { useState, forwardRef, useEffect } from 'react';
 import './Register.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -10,7 +10,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../assets/logo.jpg';
 import { Helmet } from 'react-helmet';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 // IMPORT DU FICHIER DES INDICATIFS
 import countryCodes from '../components/countryCodes';
@@ -21,6 +21,8 @@ import countryCodes from '../components/countryCodes';
 // MUI
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
+import { createOperator, getOperatorList } from '../services/apiServices';
+import { homemadeHash } from '../utils/hashUtils';
 
 // ↓↓↓ FONCTION DE VALIDATION SIMPLIFIÉE POUR LES NUMÉROS ↓↓↓
 const isValidLocalNumber = (number) => {
@@ -33,6 +35,8 @@ const Alert = forwardRef(function Alert(props, ref) {
 });
 
 const RegisterOP = () => {
+  const { id } = useParams(); // Get the operator ID from the URL
+
   const navigate = useNavigate();
   
   // État du formulaire (UNIQUEMENT la partie Contact)
@@ -46,9 +50,7 @@ const RegisterOP = () => {
     email: '',
     password: '',
     confirmPassword: '',
-
-    // Nouveau champ pour le choix "Administrateur" / "Opérateur avec pouvoir"
-    role: '',  // Valeur obligatoire (on mettra 'Administrateur' ou 'Opérateur' )
+    role: '', // Administrator or Operator
   });
 
   const [error, setError] = useState('');
@@ -66,6 +68,37 @@ const RegisterOP = () => {
     }
     setSnackbarOpen(false);
   };
+
+
+  
+  useEffect(() => {
+    const preloadOperatorData = async () => {
+      if (id) {
+        try {
+          const response = await getOperatorList(`${id}`, null, null); // Pass '1' as a string
+          if (response.data && response.data.length > 0) {
+            const operator = response.data[0];
+            setFormData({
+              gender: operator.gender === 1 ? 'Mr' : 'Mme',
+              name: operator.full_name,
+              phoneFixedCountryCode: operator.phone_number.slice(0, 3),
+              phoneFixedNumber: operator.phone_number.slice(3),
+              phoneMobileCountryCode: operator.mobile_number.slice(0, 3),
+              phoneMobileNumber: operator.mobile_number.slice(3),
+              email: operator.email,
+              password: '', // Leave blank for security
+              confirmPassword: '', // Leave blank for security
+              role: operator.roles === 1 ? 'Administrateur' : 'Opérateur avec pouvoir',
+            });
+          }
+        } catch (err) {
+          setError('Erreur lors du chargement des données de l’opérateur.');
+        }
+      }
+    };
+
+    preloadOperatorData();
+  }, [id]);
 
   // Gère le changement des champs du formulaire
   const handleChange = (e) => {
@@ -141,15 +174,20 @@ const RegisterOP = () => {
 
     try {
       // Exemple : construire un objet userData
-      const userData = {
-        gender: formData.gender,
-        name: formData.name,
-        phoneFixed: formData.phoneFixedCountryCode + formData.phoneFixedNumber,
-        phoneMobile: formData.phoneMobileCountryCode + formData.phoneMobileNumber,
+      const operatorData = {
+        id_op_user: id || 0, // Use ID for update or 0 for new creation
+        gender: formData.gender === 'Mr' ? 1 : 2, // Convert to 1 (Mr) or 2 (Mme)
+        fullName: formData.name,
+        roles: formData.role === 'Administrateur' ? 1 : 2, // 1 for Admin, 2 for Operator
+        isAdmin: formData.role === 'Administrateur',
         email: formData.email,
-        password: formData.password,
-        role: formData.role,
+        password: homemadeHash(formData.password, 'md5'),
+        phoneNumber: formData.phoneFixedCountryCode + formData.phoneFixedNumber,
+        mobileNumber: formData.phoneMobileCountryCode + formData.phoneMobileNumber,
+        idLoginInsert: 1
       };
+
+      await createOperator(operatorData);
 
       // Appel API à adapter
       // const response = await registerUser(userData);

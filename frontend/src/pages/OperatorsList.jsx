@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Importe le composant "FontAwesomeIcon"
@@ -13,29 +13,48 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 import './OperatorsList.css';
+import { disableOperator, getOperatorList } from '../services/apiServices';
 
 const OperatorsList = () => {
   const navigate = useNavigate();
 
-  const operators = [
-    {
-      id: 1,
-      name: 'Mr Mohamed Ali',
-      login: 'mohamed.ali',
-      email: 'mohamed.ali@ccd.dj',
-      phone: '355432',
-      mobile: '0625592038',
-      group: 'Administrateurs',
-    },
-    // ...
-  ];
+  const [operators, setOperators] = useState([]); // State for operators
+  const [loading, setLoading] = useState(true); // Loading state
+  const [error, setError] = useState(null); // Error state
+
+  useEffect(() => {
+    const fetchOperators = async () => {
+      try {
+        const response = await getOperatorList(null, null, true); // Fetch active operators
+        setOperators(response.data); // Set the retrieved data
+      } catch (err) {
+        setError('Erreur lors de la récupération des opérateurs.');
+        console.error(err);
+      } finally {
+        setLoading(false); // Stop loading
+      }
+    };
+
+    fetchOperators();
+  }, []);
 
   const handleEdit = (operatorId) => {
-    alert(`Action: Modifier l’opérateur ID = ${operatorId}`);
+    navigate(`/registerop/${operatorId}`);
   };
 
-  const handleDelete = (operatorId) => {
-    alert(`Action: Supprimer l’opérateur ID = ${operatorId}`);
+  const handleDelete = async (operatorId) => {
+    if (window.confirm('Êtes-vous sûr de vouloir désactiver cet opérateur ?')) {
+      try {
+        await disableOperator(operatorId);
+        setOperators((prevOperators) =>
+          prevOperators.filter((op) => op.id_op_user !== operatorId)
+        );
+        alert('Opérateur désactivé avec succès.');
+      } catch (err) {
+        alert('Erreur lors de la désactivation de l’opérateur.');
+        console.error(err);
+      }
+    }
   };
 
   // Redirige vers /registerop
@@ -71,27 +90,27 @@ const OperatorsList = () => {
           </thead>
           <tbody>
             {operators.map((op) => (
-              <tr key={op.id}>
-                <td>{op.name}</td>
-                <td>{op.login}</td>
+              <tr key={op.id_op_user}>
+                <td>{op.full_name}</td>
+                <td>{op.username}</td>
                 <td>
                   <a href={`mailto:${op.email}`}>{op.email}</a>
                 </td>
-                <td>{op.phone}</td>
-                <td>{op.mobile}</td>
-                <td>{op.group}</td>
+                <td>{op.phone_number}</td>
+                <td>{op.mobile_number}</td>
+                <td>{op.roles}</td>
                 <td>
                   {/* On a retiré le bouton "Ajouter" dans la colonne Actions */}
                   <button
                     className="minimal-button action-button"
-                    onClick={() => handleEdit(op.id)}
+                    onClick={() => handleEdit(op.id_op_user)}
                   >
                     <FontAwesomeIcon icon={faEdit} />
                     &nbsp; Modifier
                   </button>
                   <button
                     className="minimal-button action-button"
-                    onClick={() => handleDelete(op.id)}
+                    onClick={() => handleDelete(op.id_op_user)}
                   >
                     <FontAwesomeIcon icon={faTrashAlt} />
                     &nbsp; Supprimer

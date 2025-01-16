@@ -106,7 +106,7 @@ const App = () => {
         <Route path="/register" element={<Register />}>
           <Route index element={<Login />} />
         </Route>
-        <Route path="/registerop" element={<RegisterOP />}>
+        <Route path="/registerop/:id?" element={<RegisterOP />}>
           <Route index element={<Login />} />
         </Route>
         <Route path="/forgot-password" element={<SimpleLayout />}>
