@@ -24,7 +24,6 @@ import ClientsValides from '../pages/ClientsValides';
 import OperatorsList from '../pages/OperatorsList';
 import Maintenance from '../pages/Maintenance';
 
-
 // Pages du dashboard
 import Home from '../pages/Home';
 import HomeOperateur from '../pages/HomeOperateur';
@@ -41,7 +40,6 @@ import RegisterContact from '../pages/RegisterContact';
 // Gestion de l'inactivité
 import InactivityHandler from './InactivityHandler';
 
-
 const App = () => {
   const dispatch = useDispatch();
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
@@ -51,12 +49,10 @@ const App = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-
-
   return (
     <>
-      {/* Gestion de l'inactivité (ex. 10 min = 600000 ms) */}
-      <InactivityHandler timeout={600000} />
+      {/* On monte InactivityHandler seulement si l'utilisateur est authentifié */}
+      {isAuthenticated && <InactivityHandler timeout={600000} />}
 
       <Routes>
         {/* 1) Route racine : si on est connecté, go /dashboard, sinon /login */}
@@ -113,7 +109,7 @@ const App = () => {
         <Route path="/register" element={<Register />}>
           <Route index element={<Login />} />
         </Route>
-        <Route path="registercontact" element={<RegisterContact />} />
+        <Route path="/registercontact" element={<RegisterContact />} />
         <Route path="/registerop/:id?" element={<RegisterOP />}>
           <Route index element={<Login />} />
         </Route>
