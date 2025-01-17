@@ -792,12 +792,15 @@ BEGIN
     ELSE
      IF p_email IS NOT NULL AND LENGTH(TRIM(p_email, ' '))>0 AND p_password IS NOT NULL OR LENGTH(TRIM(p_password, ' '))>0
      THEN
-     UPDATE login_user 
-     SET 
-        username = p_email,
-        pwd = p_password 
-     FROM login_user INNER JOIN op_user ON login_user."id_login_user" = op_user."id_login_user"
-     WHERE "id_op_user" = p_id_op_user;
+        UPDATE login_user 
+        SET 
+            username = p_email,
+            pwd = p_password 
+        WHERE login_user."id_login_user" = (
+            SELECT "id_login_user"
+            FROM op_user
+            WHERE "id_op_user" = p_id_op_user
+        );
        END IF; 
      UPDATE op_user
         SET
@@ -1519,6 +1522,69 @@ BEGIN
     INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
     VALUES (new_id, 'Dubai', 'Dubai');
 END $$;
+
+DROP FUNCTION IF EXISTS get_op_user;
+CREATE OR REPLACE FUNCTION get_op_user(
+    p_id_list TEXT,
+    p_role_list TEXT,
+    p_isactive BOOLEAN
+)
+RETURNS TABLE(
+    id_op_user INT,
+    id_login_user INT,
+    gender INT,
+    full_name VARCHAR(96),
+    roles INT,
+    email VARCHAR(32),
+    phone_number VARCHAR(32),
+    mobile_number VARCHAR(12),
+    idlogin_insert INT,
+    insertdate TIMESTAMP,
+    deactivation_date TIMESTAMP,
+    username VARCHAR(32),
+    lastlogin_time TIMESTAMP
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        ou."id_op_user",
+        ou."id_login_user",
+        ou."gender",
+        ou."full_name",
+        ou."roles",
+        ou."email",
+        ou."phone_number",
+        ou."mobile_number",
+        ou."idlogin_insert",
+        ou."insertdate",
+        ou."deactivation_date",
+        lu."username",
+        lu."lastlogin_time"
+    FROM 
+        op_user ou
+    JOIN 
+        login_user lu ON ou."id_login_user" = lu."id_login_user"
+    WHERE 
+        (p_id_list IS NULL OR ou."id_op_user" = ANY (string_to_array(p_id_list, ',')::INT[]))
+    AND 
+        (p_role_list IS NULL OR ou."roles" = ANY (string_to_array(p_role_list, ',')::INT[]))
+    AND (
+	     p_isactive IS NULL
+        -- Si p_isactive = 0, je verifie si une des deux dates de désactivation est avant la date du jour
+        OR(p_isactive IS NOT TRUE AND (
+            ou."deactivation_date" <= CURRENT_DATE 
+            OR lu."deactivation_date" <= CURRENT_DATE
+        ))
+        -- Si p_isactive = 1, je verifie que les deux dates de désactivation sont après la date du jour
+        OR (p_isactive IS TRUE AND (
+            ( ou."deactivation_date" > CURRENT_DATE)
+            AND (lu."deactivation_date" > CURRENT_DATE)
+        ))
+        
+    );
+END;
+$$ LANGUAGE plpgsql;
 
 call set_op_user(0, 0, 'M. Admin', 1, TRUE,
 'admin@cdd.dj','4889ba9b',

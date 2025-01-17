@@ -313,3 +313,78 @@ export const resetPassword = async (data) => {
   }
 };
 
+export const getOperatorList = async (idList = null, roleList = null, isActive = null) => {
+  try {
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (idList) params.append('id_list', idList); // Add ID list to query params
+    if (roleList) params.append('role_list', roleList); // Add Role list to query params
+    if (isActive !== null) params.append('isActive', isActive); // Convert to string and add isActive
+
+    // Perform API request
+    const response = await fetch(`${API_URL}/operators/list?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include JWT token if required
+      },
+    });
+
+    // Check if response is okay
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch operator list');
+    }
+
+    // Return response JSON
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getOperatorList):', error);
+    throw error;
+  }
+};
+
+export const createOperator = async (operatorData) => {
+  try {
+    const response = await fetch(`${API_URL}/operators/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include JWT token if required
+      },
+      body: JSON.stringify(operatorData), // Pass the operator data as the request body
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create operator');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (createOperator):', error);
+    throw error;
+  }
+};
+
+export const disableOperator = async (operatorId) => {
+  try {
+    const response = await fetch(`${API_URL}/operators/disable/${operatorId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include JWT token if required
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to disable operator');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (disableOperator):', error);
+    throw error;
+  }
+};
