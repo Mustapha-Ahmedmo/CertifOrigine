@@ -1,0 +1,21 @@
+.maintenance-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+    background-color: #f9f9f9;
+  }
+  
+  .maintenance-page h1 {
+    font-size: 2.5rem;
+    color: #FF6347; /* Couleur orange/rouge */
+    margin-bottom: 20px;
+  }
+  
+  .maintenance-page p {
+    font-size: 1.2rem;
+    color: #555;
+  }
+  

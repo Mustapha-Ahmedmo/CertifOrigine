@@ -11,20 +11,22 @@ const ContactsList = () => {
     {
       id: 1,
       name: 'John Doe',
+      role: 'Manager',
       email: 'john.doe@example.com',
       phone: '123-456-7890',
       mobile: '987-654-3210',
-      company: 'Acme Corp',
+      isPrimary: true,
     },
     {
       id: 2,
       name: 'Jane Smith',
+      role: 'Assistant',
       email: 'jane.smith@example.com',
       phone: '555-555-5555',
       mobile: '444-444-4444',
-      company: 'Globex Inc',
+      isPrimary: false,
     },
-    // Ajoutez plus de contacts ici
+    // Ajoute d'autres contacts ici
   ];
 
   const handleEdit = (contactId) => {
@@ -42,7 +44,7 @@ const ContactsList = () => {
   return (
     <div className="contacts-page-container">
       <div className="contacts-header">
-        <h1>LISTING DES CONTACTS</h1>
+        <h1>LISTE DES CONTACTS</h1>
         <button className="add-contact-button" onClick={handleAddNew}>
           <FontAwesomeIcon icon={faPlus} className="icon-left" />
           Ajouter un nouveau contact
@@ -53,10 +55,11 @@ const ContactsList = () => {
           <thead>
             <tr>
               <th>Nom</th>
+              <th>Fonction</th>
               <th>Email</th>
-              <th>Téléphone</th>
+              <th>Tél</th>
               <th>Portable</th>
-              <th>Entreprise</th>
+              <th>Statut</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -64,12 +67,22 @@ const ContactsList = () => {
             {contacts.map((contact) => (
               <tr key={contact.id}>
                 <td>{contact.name}</td>
+                <td>{contact.role}</td>
                 <td>
                   <a href={`mailto:${contact.email}`}>{contact.email}</a>
                 </td>
                 <td>{contact.phone}</td>
                 <td>{contact.mobile}</td>
-                <td>{contact.company}</td>
+                <td>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={contact.isPrimary}
+                      disabled
+                    />
+                    &nbsp; Contact principal
+                  </label>
+                </td>
                 <td>
                   <button
                     className="minimal-button action-button"

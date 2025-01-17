@@ -203,7 +203,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
             <ul className="submenu">
               <li>
                 <Link
-                  to="/clients/list"
+                  to="/dashboard/destinatairelist"
                   className={activeLink === 'listClients' ? 'active' : ''}
                   onClick={() => handleLinkClick('clients', 'listClients')}
                 >
@@ -213,6 +213,30 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
             </ul>
           )}
         </li>
+
+        {/* Mes contacts */}
+        <li>
+          <span
+            className={`menu-title main-title ${openSubmenus.contacts ? 'open' : ''}`}
+            onClick={() => toggleSubMenu('contacts')}
+          >
+            <FontAwesomeIcon icon={faUsers} className="icon" /> Mes contacts
+          </span>
+          {openSubmenus.contacts && (
+            <ul className="submenu">
+              <li>
+                <Link
+                  to="/dashboard/contactslist"
+                  className={activeLink === 'listContacts' ? 'active' : ''}
+                  onClick={() => handleLinkClick('contacts', 'listContacts')}
+                >
+                  <FontAwesomeIcon icon={faUsers} className="icon" /> Liste des contacts
+                </Link>
+              </li>
+            </ul>
+          )}
+        </li>
+
 
         {/* Déconnexion */}
         <li>

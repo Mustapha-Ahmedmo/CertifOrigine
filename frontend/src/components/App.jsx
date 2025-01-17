@@ -22,6 +22,8 @@ import AccountCreated from '../pages/AccountCreated';
 import Inscriptions from '../pages/Inscriptions';
 import ClientsValides from '../pages/ClientsValides';
 import OperatorsList from '../pages/OperatorsList';
+import Maintenance from '../pages/Maintenance';
+
 
 // Pages du dashboard
 import Home from '../pages/Home';
@@ -33,9 +35,12 @@ import ReturnedOrders from '../components/orders/ReturnedOrders';
 import CompletedOrdersThisYear from '../components/orders/CompletedOrdersThisYear';
 import CreateOrder from '../components/orders/Create/CreateOrder';
 import OperateurLayout from './OperateurLayout';
+import ContactsList from '../pages/ContactsList';
+import RegisterContact from '../pages/RegisterContact';
 
 // Gestion de l'inactivité
 import InactivityHandler from './InactivityHandler';
+
 
 const App = () => {
   const dispatch = useDispatch();
@@ -76,6 +81,8 @@ const App = () => {
           <Route path="to-complete" element={<ToComplete />} />
           <Route path="to-pay" element={<ToPay />} />
           <Route path="returned-orders" element={<ReturnedOrders />} />
+          <Route path="contactslist" element={<ContactsList />} />
+          <Route path="destinatairelist" element={<Maintenance />} />
           <Route
             path="completed-orders-this-year"
             element={<CompletedOrdersThisYear />}
@@ -106,6 +113,7 @@ const App = () => {
         <Route path="/register" element={<Register />}>
           <Route index element={<Login />} />
         </Route>
+        <Route path="registercontact" element={<RegisterContact />} />
         <Route path="/registerop/:id?" element={<RegisterOP />}>
           <Route index element={<Login />} />
         </Route>
