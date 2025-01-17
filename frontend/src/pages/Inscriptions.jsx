@@ -164,7 +164,7 @@ const Inscriptions = () => {
           <thead>
             <tr>
               <th>Date</th>
-              <th>Client (Catégorie + Nom)</th>
+              <th>Client</th>
               <th>Secteur</th>
               <th>Adresse Complète</th>
               <th>Pays</th>

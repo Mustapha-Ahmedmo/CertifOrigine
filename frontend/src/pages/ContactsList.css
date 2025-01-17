@@ -1,0 +1,84 @@
+/* Conteneur principal de la page */
+.contacts-page-container {
+    margin-left: 240px;
+    text-align: center;
+    padding: 20px 20px 40px;
+    background-color: #f9f9f9;
+  }
+  
+  /* Titre principal de la page */
+  .contacts-page-container h1 {
+    margin-bottom: 35px;
+    color: #DCAF26;
+    font-size: 22px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  
+  /* Conteneur du tableau */
+  .dashboard-table-container {
+    overflow-x: auto;
+    width: 100%;
+    margin-top: 20px;
+  }
+  
+  /* Tableau principal */
+  .dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  
+  /* En-tête du tableau */
+  .dashboard-table thead tr {
+    background-color: #f4f4f4;
+  }
+  
+  /* Cellules */
+  .dashboard-table th,
+  .dashboard-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  
+  /* Boutons d’action */
+  .action-button {
+    border: none;
+    background-color: transparent;
+    color: #007bff;
+    text-decoration: underline;
+    margin-right: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .action-button:hover {
+    color: #0056b3;
+    text-decoration: none;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .contacts-page-container {
+      margin-left: 0;
+      padding: 10px;
+    }
+  
+    .contacts-page-container h1 {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+  
+    .dashboard-table th,
+    .dashboard-table td {
+      padding: 8px;
+    }
+  
+    .action-button {
+      margin-right: 5px;
+      font-size: 0.85rem;
+    }
+  }
+  
