@@ -388,3 +388,53 @@ export const disableOperator = async (operatorId) => {
     throw error;
   }
 };
+export const getCustUsersByAccount = async (custAccountId, statutflag = null, isactiveCA = 'true', isactiveCU = 'true', ismain_user = 'true') => {
+  try {
+    const params = new URLSearchParams();
+    params.append('custAccountId', custAccountId);
+    if (statutflag !== null) params.append('statutflag', statutflag);
+    params.append('isactiveCA', isactiveCA);
+    params.append('isactiveCU', isactiveCU);
+    params.append('ismain_user', ismain_user);
+    
+    const response = await fetch(`${API_URL}/customer/get-cust-users?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch cust users');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getCustUsersByAccount):', error);
+    throw error;
+  }
+};
+
+export const deleteCustUser = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/delete-cust-user/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include token if needed
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to deactivate customer user');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (deleteCustUser):', error);
+    throw error;
+  }
+};

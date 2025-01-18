@@ -109,7 +109,7 @@ const App = () => {
         <Route path="/register" element={<Register />}>
           <Route index element={<Login />} />
         </Route>
-        <Route path="/registercontact" element={<RegisterContact />} />
+        <Route path="/registercontact/:id?" element={<RegisterContact />} />
         <Route path="/registerop/:id?" element={<RegisterOP />}>
           <Route index element={<Login />} />
         </Route>

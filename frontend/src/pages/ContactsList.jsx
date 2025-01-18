@@ -1,40 +1,73 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import './ContactsList.css';
+import { useSelector } from 'react-redux';
+import { deleteCustUser, getCustUsersByAccount } from '../services/apiServices';
 
 const ContactsList = () => {
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+  // Assuming the user object contains a property id_cust_account
+  const custAccountId = user ? user.id_cust_account : null;
 
-  const contacts = [
-    {
-      id: 1,
-      name: 'John Doe',
-      role: 'Manager',
-      email: 'john.doe@example.com',
-      phone: '123-456-7890',
-      mobile: '987-654-3210',
-      isPrimary: true,
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      role: 'Assistant',
-      email: 'jane.smith@example.com',
-      phone: '555-555-5555',
-      mobile: '444-444-4444',
-      isPrimary: false,
-    },
-    // Ajoute d'autres contacts ici
-  ];
+
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        const result = await getCustUsersByAccount(
+          custAccountId,
+          null,            // statutflag (optional)
+          'true',          // isactiveCA: as string ('true' to filter active accounts)
+          'true',          // isactiveCU: as string ('true' to filter active users)
+          null           // ismain_user: as string ('true' to filter main users; or use 'false'/null)
+        );
+        // Assuming the response format is { message: '...', data: [...] }
+        setContacts(result.data || []);
+      } catch (err) {
+        console.error('Error fetching contacts:', err);
+        setError('Une erreur est survenue lors de la récupération des contacts.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (custAccountId) {
+      fetchContacts();
+    } else {
+      setError('Aucun identifiant de compte client trouvé.');
+      setLoading(false);
+    }
+  }, [custAccountId]);
+
+
+  
 
   const handleEdit = (contactId) => {
-    alert(`Action: Modifier le contact ID = ${contactId}`);
+    // Navigate to registercontact/<id> for editing
+    navigate(`/registercontact/${contactId}`);
   };
 
-  const handleDelete = (contactId) => {
-    alert(`Action: Supprimer le contact ID = ${contactId}`);
+  const handleDelete = async (contactId) => {
+    if (window.confirm('Êtes-vous sûr de vouloir désactiver ce contact ?')) {
+      try {
+        await deleteCustUser(contactId);
+        // Remove the deactivated contact from the UI
+        setContacts((prevContacts) =>
+          prevContacts.filter((contact) => contact.id_cust_user !== contactId)
+        );
+        alert('Contact désactivé avec succès.');
+      } catch (err) {
+        alert('Erreur lors de la désactivation du contact.');
+        console.error(err);
+      }
+    }
   };
 
   const handleAddNew = () => {
@@ -65,19 +98,19 @@ const ContactsList = () => {
           </thead>
           <tbody>
             {contacts.map((contact) => (
-              <tr key={contact.id}>
-                <td>{contact.name}</td>
-                <td>{contact.role}</td>
+              <tr key={contact.id_cust_user}>
+                <td>{contact.full_name}</td>
+                <td>{contact.position}</td>
                 <td>
                   <a href={`mailto:${contact.email}`}>{contact.email}</a>
                 </td>
-                <td>{contact.phone}</td>
-                <td>{contact.mobile}</td>
+                <td>{contact.phone_number}</td>
+                <td>{contact.mobile_number}</td>
                 <td>
                   <label>
                     <input
                       type="checkbox"
-                      checked={contact.isPrimary}
+                      checked={contact.ismain_user}
                       disabled
                     />
                     &nbsp; Contact principal
@@ -86,14 +119,14 @@ const ContactsList = () => {
                 <td>
                   <button
                     className="minimal-button action-button"
-                    onClick={() => handleEdit(contact.id)}
+                    onClick={() => handleEdit(contact.id_cust_user)}
                   >
                     <FontAwesomeIcon icon={faEdit} />
                     &nbsp; Modifier
                   </button>
                   <button
                     className="minimal-button action-button"
-                    onClick={() => handleDelete(contact.id)}
+                    onClick={() => handleDelete(contact.id_cust_user)}
                   >
                     <FontAwesomeIcon icon={faTrashAlt} />
                     &nbsp; Supprimer

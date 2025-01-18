@@ -725,6 +725,88 @@ IF p_email IS NOT NULL AND LENGTH(TRIM(p_email, ' '))>0 AND p_password IS NOT NU
 END;
 $$ LANGUAGE plpgsql;
 
+DROP FUNCTION IF EXISTS get_custuser_info;
+CREATE OR REPLACE FUNCTION get_custuser_info(
+    p_id_listCA TEXT,
+    p_statutflag INT,
+    p_isactiveCA BOOLEAN,
+    p_isactiveCU BOOLEAN,
+    p_id_listCU TEXT,
+    p_ismain_user BOOLEAN
+)
+RETURNS TABLE(
+    id_cust_user INT,
+    id_cust_account INT,
+    id_login_user INT,
+    gender INT,
+    full_name VARCHAR(96),
+    ismain_user BOOLEAN,
+    email VARCHAR(32),
+    phone_number VARCHAR(32),
+    mobile_number VARCHAR(12),
+    "position" VARCHAR(64), -- Correct alias for user_position
+    idlogin_insert INT,
+    insertdate TIMESTAMP,
+    deactivation_date TIMESTAMP,
+    username VARCHAR(32),
+    lastlogin_time TIMESTAMP
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        cu."id_cust_user",
+        cu."id_cust_account",
+        cu."id_login_user",
+        cu."gender",
+        cu."full_name",
+        cu."ismain_user",
+        cu."email",
+        cu."phone_number",
+        cu."mobile_number",
+        cu."user_position" AS "position", -- Correct alias applied
+        cu."idlogin_insert",
+        cu."insertdate",
+        cu."deactivation_date",
+        lu."username",
+        lu."lastlogin_time"
+    FROM 
+        cust_user cu
+    JOIN 
+        login_user lu ON cu."id_login_user" = lu."id_login_user"
+    JOIN 
+        cust_account ca ON cu."id_cust_account" = ca."id_cust_account"
+    WHERE 
+        (p_id_listCA IS NULL OR ca."id_cust_account"::TEXT = ANY(STRING_TO_ARRAY(p_id_listCA, ',')))
+        AND (p_id_listCU IS NULL OR cu."id_cust_user"::TEXT = ANY(STRING_TO_ARRAY(p_id_listCU, ',')))
+        AND (p_statutflag IS NULL OR ca."statut_flag" = p_statutflag)
+        AND (p_ismain_user IS NULL OR cu."ismain_user" = p_ismain_user)
+        AND (
+            p_isactiveCA IS NULL
+            OR (p_isactiveCA IS NOT TRUE AND (
+                ca."deactivation_date" <= CURRENT_DATE 
+                OR lu."deactivation_date" <= CURRENT_DATE
+            ))
+            OR (p_isactiveCA IS TRUE AND (
+                ca."deactivation_date" > CURRENT_DATE 
+                AND lu."deactivation_date" > CURRENT_DATE
+            ))
+        )
+        AND (
+            p_isactiveCU IS NULL
+            OR (p_isactiveCU IS NOT TRUE AND (
+                cu."deactivation_date" <= CURRENT_DATE 
+                OR lu."deactivation_date" <= CURRENT_DATE
+            ))
+            OR (p_isactiveCU IS TRUE AND (
+                cu."deactivation_date" > CURRENT_DATE 
+                AND lu."deactivation_date" > CURRENT_DATE
+            ))
+        );
+END;
+$$ LANGUAGE plpgsql;
+
+
 DROP PROCEDURE IF EXISTS set_op_user;
 CREATE OR REPLACE PROCEDURE set_op_user(
     p_id_op_user INT,
@@ -983,7 +1065,7 @@ CREATE OR REPLACE FUNCTION get_custuser_info(
     p_isactiveCA BOOLEAN,
     p_isactiveCU BOOLEAN,
     p_id_listCU TEXT,
-    p_ismain_user BOOLEAN  -- Remplacement de p_isAdmin par p_ismain_user
+    p_ismain_user BOOLEAN  -- if NULL, return all; if TRUE, return main users; if FALSE, return non-main users
 )
 RETURNS TABLE(
     id_cust_user INT,
@@ -1015,7 +1097,7 @@ BEGIN
         cu."email",
         cu."phone_number",
         cu."mobile_number",
-        cu."user_position" AS "position", -- Utilisation de l'alias "position"
+        cu."user_position" AS "position",  -- Using user_position column and aliasing it as "position"
         cu."idlogin_insert",
         cu."insertdate",
         cu."deactivation_date",
@@ -1031,7 +1113,8 @@ BEGIN
         (p_id_listCA IS NULL OR ca."id_cust_account"::TEXT = ANY(STRING_TO_ARRAY(p_id_listCA, ',')))
         AND (p_id_listCU IS NULL OR cu."id_cust_user"::TEXT = ANY(STRING_TO_ARRAY(p_id_listCU, ',')))
         AND (p_statutflag IS NULL OR ca."statut_flag" = p_statutflag)
-        AND (p_ismain_user IS NULL OR cu."ismain_user" = p_ismain_user)  -- Utilisation de ismain_user
+        -- If p_ismain_user is NULL, this condition is always true (i.e. return both main and non-main)
+        AND (p_ismain_user IS NULL OR cu."ismain_user" = p_ismain_user)
         AND (
             p_isactiveCA IS NULL
             OR (p_isactiveCA IS NOT TRUE AND (

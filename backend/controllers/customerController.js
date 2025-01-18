@@ -110,6 +110,70 @@ const executeSetCustAccount = async (req, res) => {
     });
   }
 };
+const executeGetCustUsersByAccount = async (req, res) => {
+  try {
+    // Extract query parameters. They come in as strings.
+    let { custAccountId, statutflag, isactiveCA, isactiveCU, ismain_user } = req.query;
+    
+    if (!custAccountId) {
+      return res.status(400).json({
+        message: 'Le paramètre "custAccountId" est requis pour récupérer les utilisateurs du compte client.'
+      });
+    }
+    
+    // Convert string "null" to actual null, and convert booleans as needed.
+    statutflag = statutflag !== undefined && statutflag !== 'null' ? parseInt(statutflag, 10) : null;
+    isactiveCA = (isactiveCA === 'true' || isactiveCA === '1') ? true
+               : (isactiveCA === 'false' || isactiveCA === '0') ? false 
+               : null;
+    isactiveCU = (isactiveCU === 'true' || isactiveCU === '1') ? true
+               : (isactiveCU === 'false' || isactiveCU === '0') ? false
+               : null;
+    // Convert "null" string to null for p_ismain_user
+    ismain_user = (ismain_user === 'null' || ismain_user === null) 
+               ? null 
+               : ((ismain_user === 'true' || ismain_user === '1') ? true
+               : (ismain_user === 'false' || ismain_user === '0') ? false
+               : null);
+
+    const replacements = {
+      p_id_listCA: custAccountId, // Expecting a string for the CSV list
+      p_statutflag: statutflag,
+      p_isactiveCA: isactiveCA,
+      p_isactiveCU: isactiveCU,
+      p_id_listCU: null, // No filtering by individual customer user IDs
+      p_ismain_user: ismain_user,
+    };
+
+    const custUsers = await sequelize.query(
+      `SELECT * FROM get_custuser_info(
+        :p_id_listCA,
+        :p_statutflag,
+        :p_isactiveCA,
+        :p_isactiveCU,
+        :p_id_listCU,
+        :p_ismain_user
+      )`,
+      {
+        replacements,
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    console.log('get_custuser_info result:', custUsers);
+
+    res.status(200).json({
+      message: 'Les utilisateurs du compte client ont été récupérés avec succès.',
+      data: custUsers,
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des utilisateurs du compte client:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la récupération des utilisateurs du compte client.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
 
 const executeSetCustUser = async (req, res) => {
   try {
@@ -120,17 +184,32 @@ const executeSetCustUser = async (req, res) => {
       full_name,
       ismain_user,
       email,
-      password,
+      password, // received password (may be empty when updating)
       phone_number,
       mobile_number,
       idlogin,
       position,
     } = req.body;
 
-    // Debugging: Log the incoming data
+    // Debug: log incoming data
     console.log('Received set_cust_user data:', req.body);
 
-    // Execute the stored procedure
+    // Prepare replacements. If updating an existing user (id_cust_user exists) and password is empty, pass null.
+    const replacements = {
+      id_cust_user,
+      id_cust_account,
+      gender,
+      full_name,
+      ismain_user,
+      email,
+      phone_number,
+      mobile_number,
+      idlogin,
+      position,
+      password: (id_cust_user && (!password || password.trim() === '')) ? null : password,
+    };
+
+    // Execute the stored procedure. Notice we pass p_password as null in update mode if no new password is provided.
     const result = await sequelize.query(
       `CALL set_cust_user(
         :id_cust_user, 
@@ -146,26 +225,14 @@ const executeSetCustUser = async (req, res) => {
         :position
       )`,
       {
-        replacements: {
-          id_cust_user,
-          id_cust_account,
-          gender,
-          full_name,
-          ismain_user,
-          email,
-          password,
-          phone_number,
-          mobile_number,
-          idlogin,
-          position,
-        },
+        replacements,
         type: sequelize.QueryTypes.RAW, // Specify the query type
       }
     );
 
-    // Debugging: Log the result
     console.log('set_cust_user result:', result);
 
+    // Send a confirmation email after processing (if necessary)
     await sendEmail(
       email,
       'Votre compte est en attente de validation',
@@ -181,11 +248,10 @@ const executeSetCustUser = async (req, res) => {
     res.status(500).json({
       message: 'Error executing set_cust_user',
       error: error.message || 'Unknown error occurred',
-      details: error.original || error, // Log the original Sequelize error
+      details: error.original || error,
     });
   }
 };
-
 const executeGetCustAccountInfo = async (req, res) => {
   try {
     const { id_list, statutflag, isactive } = req.query;
@@ -1140,6 +1206,39 @@ L'équipe de la Chambre de Commerce de Djibouti`
   }
 };
 
+const executeDeleteCustUser = async (req, res) => {
+  try {
+    const { id } = req.params; // id_cust_user to be deactivated
+
+    if (!id) {
+      return res.status(400).json({
+        message: 'L’ID du contact est requis pour la désactivation.'
+      });
+    }
+
+    await sequelize.query(
+      `UPDATE cust_user
+       SET DEACTIVATION_DATE = CURRENT_TIMESTAMP
+       WHERE ID_CUST_USER = :id`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.UPDATE,
+      }
+    );
+
+
+    res.status(200).json({
+      message: `Contact (ID: ${id}) désactivé avec succès.`
+    });
+  } catch (error) {
+    console.error('Erreur lors de la désactivation du contact:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la désactivation du contact.',
+      error: error.message || 'Erreur inconnue.'
+    });
+  }
+};
+
 // Export the new function along with the existing ones
 module.exports = {
   executeSetCustAccount,
@@ -1151,5 +1250,7 @@ module.exports = {
   executeCreateSubscriptionWithFile,
   executeGetCustAccountFiles,
   requestPasswordReset,
-  executeResetPassword
+  executeResetPassword,
+  executeGetCustUsersByAccount,
+  executeDeleteCustUser
 };
