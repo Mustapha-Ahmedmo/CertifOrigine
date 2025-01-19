@@ -59,6 +59,8 @@ const Inscriptions = () => {
           prev.filter((accountId) => accountId !== id)
         );
       }, 300);
+
+      window.dispatchEvent(new Event('updateInscriptionCount'));
     } catch (err) {
       alert(`Erreur lors de la mise à jour du statut : ${err.message}`);
     }
@@ -89,6 +91,8 @@ const Inscriptions = () => {
           prev.filter((accountId) => accountId !== rejectingAccountId)
         );
       }, 300);
+
+      window.dispatchEvent(new Event('updateInscriptionCount'));
 
       setShowRejectModal(false);
       setRejectingAccountId(null);

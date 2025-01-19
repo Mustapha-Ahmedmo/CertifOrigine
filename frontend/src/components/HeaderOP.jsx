@@ -31,14 +31,17 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
       try {
         const response = await getCustAccountInfo(null, 1, true);
         const pendingCount = response.data.filter((account) => account.statut_flag === 1).length;
-        console.log(pendingCount);
         setInscriptionNotificationCount(pendingCount);
       } catch (err) {
         console.error('Failed to fetch inscription count:', err);
       }
     };
-
+  
+    window.addEventListener('updateInscriptionCount', fetchInscriptionCount);
+    // Optionally: fetch once on mount:
     fetchInscriptionCount();
+  
+    return () => window.removeEventListener('updateInscriptionCount', fetchInscriptionCount);
   }, []);
 
   return (
