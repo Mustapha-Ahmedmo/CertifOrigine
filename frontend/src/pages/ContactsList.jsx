@@ -11,6 +11,7 @@ const ContactsList = () => {
   const { user } = useSelector((state) => state.auth);
   // Assuming the user object contains a property id_cust_account
   const custAccountId = user ? user.id_cust_account : null;
+  const isMainContact = user?.role_user === 1;
 
 
   const [contacts, setContacts] = useState([]);
@@ -50,11 +51,20 @@ const ContactsList = () => {
   
 
   const handleEdit = (contactId) => {
-    // Navigate to registercontact/<id> for editing
-    navigate(`/registercontact/${contactId}`);
+    if (isMainContact) {
+      navigate(`/registercontact/${contactId}`);
+    } else {
+      alert("Seul un contact principal peut modifier un contact.");
+    }
   };
 
   const handleDelete = async (contactId) => {
+
+    if (!isMainContact) {
+      alert("Seul un contact principal peut supprimer un contact.");
+      return;
+    }
+
     if (window.confirm('Êtes-vous sûr de vouloir désactiver ce contact ?')) {
       try {
         await deleteCustUser(contactId);
@@ -71,7 +81,11 @@ const ContactsList = () => {
   };
 
   const handleAddNew = () => {
-    navigate('/registercontact');
+    if (isMainContact) {
+      navigate('/registercontact');
+    } else {
+      alert("Seul un contact principal peut ajouter un nouveau contact.");
+    }
   };
 
   return (

@@ -14,13 +14,25 @@ import {
 
 import './OperatorsList.css';
 import { disableOperator, getOperatorList } from '../services/apiServices';
+import { useSelector } from 'react-redux';
 
 const OperatorsList = () => {
   const navigate = useNavigate();
 
+  const { user } = useSelector((state) => state.auth);
+  // If the user object contains isadmin_login, we check that to restrict operator creation.
+  const isAdmin = user?.isadmin_login;
+
   const [operators, setOperators] = useState([]); // State for operators
   const [loading, setLoading] = useState(true); // Loading state
   const [error, setError] = useState(null); // Error state
+
+  const getGroupLabel = (roles) => {
+    const labels = [];
+    if (roles === 1) labels.push('Administrateur');
+    if (roles === 2) labels.push('Opérateur avec pouvoir');
+    return labels.join(' ET ');
+  };
 
   useEffect(() => {
     const fetchOperators = async () => {
@@ -59,7 +71,11 @@ const OperatorsList = () => {
 
   // Redirige vers /registerop
   const handleAddNew = () => {
-    navigate('/registerop');
+    if (isAdmin) {
+      navigate('/registerop');
+    } else {
+      alert("Seul un administrateur peut créer un nouvel opérateur.");
+    }
   };
 
   return (
@@ -98,7 +114,7 @@ const OperatorsList = () => {
                 </td>
                 <td>{op.phone_number}</td>
                 <td>{op.mobile_number}</td>
-                <td>{op.roles}</td>
+                <td>{getGroupLabel(op.roles)}</td>
                 <td>
                   {/* On a retiré le bouton "Ajouter" dans la colonne Actions */}
                   <button

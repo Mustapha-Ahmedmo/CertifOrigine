@@ -25,15 +25,15 @@ const DashboardWrapper = () => {
    * on le redirige vers "/dashboard/operator".
    */
   useEffect(() => {
-    if (user.isadmin_login && location.pathname === '/dashboard') {
+    if (user.isopuser && location.pathname === '/dashboard') {
       navigate('/dashboard/operator', { replace: true });
     }
-  }, [user.isadmin_login, location.pathname, navigate]);
+  }, [user.isopuser, location.pathname, navigate]);
 
   /**
    * Si c'est un admin, on rend le layout opérateur
    */
-  if (user.isadmin_login) {
+  if (user.isopuser) {
     return (
       <OperateurLayout>
         <Outlet />

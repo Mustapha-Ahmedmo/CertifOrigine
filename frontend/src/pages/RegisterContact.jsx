@@ -146,6 +146,11 @@ const RegisterContact = () => {
     }
   };
 
+  const handleCancel = () => {
+    navigate('/login');
+  };
+
+
   return (
     <div className="register-page-container">
       <Helmet>
@@ -301,11 +306,16 @@ const RegisterContact = () => {
             <button type="submit" className="register-client-button">
               {id ? 'Enregistrer les modifications' : 'Enregistrer'}
             </button>
+            <button
+              type="button"
+              className="register-client-button cancel-button"
+              onClick={handleCancel}
+            >
+              Annuler
+            </button>
           </div>
+
         </form>
-        <div className="register-client-login-link">
-          <Link to="/login">Revenir à la page de connexion</Link>
-        </div>
       </div>
     </div>
   );

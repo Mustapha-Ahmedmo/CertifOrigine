@@ -50,7 +50,7 @@ const RegisterOP = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: '', // Administrator or Operator
+    role: 'Opérateur avec pouvoir', // Administrator or Operator
   });
 
   const [error, setError] = useState('');
@@ -208,6 +208,10 @@ const RegisterOP = () => {
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
+  };
+
+  const handleCancel = () => {
+    navigate('/login'); // Redirect to the operators list without saving
   };
 
   return (
@@ -389,8 +393,7 @@ const RegisterOP = () => {
             <div className="register-client-form-row">
               <div className="register-client-field register-client-full-width">
                 <label style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-                  Rôle (obligatoire)
-                  <span className="register-client-required-asterisk"> *</span>
+                  Rôle (obligatoire)  
                 </label>
                 <div style={{ display: 'flex', gap: '20px' }}>
                   <label className="register-client-radio-label">
@@ -420,18 +423,22 @@ const RegisterOP = () => {
             </div>
           </div>
 
-          {/* Bouton d'action */}
           <div className="register-client-form-actions">
             <button type="submit" className="register-client-button">
-              Créer
+              {id ? 'Modifier' : 'Créer'}
+            </button>
+
+            <button
+              type="button"
+              className="register-client-button cancel-button"
+              onClick={handleCancel}
+            >
+              Annuler
             </button>
           </div>
         </form>
 
-        {/* Lien vers la page de connexion */}
-        <div className="register-client-login-link">
-          <Link to="/login">Revenir à la page de connexion</Link>
-        </div>
+
       </div>
 
       {/* Snackbar Component */}
