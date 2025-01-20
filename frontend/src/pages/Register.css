@@ -403,3 +403,17 @@ input[type="checkbox"]:checked + .register-client-toggle-label {
   background-color: #fff;
   box-sizing: border-box;
 }
+
+/* Styles spécifiques pour le bouton "Annuler" */
+.registerOP-client-button.cancel-button {
+  background-color: #ffcccc; /* Couleur de fond rouge clair */
+  color: #d9534f;           /* Texte rouge */
+  border-color: #d9534f;    /* Bordure rouge */
+  margin-left: 10px;
+  
+}
+
+.registerOP-client-button.cancel-button:hover {
+  background-color: #f2dede; /* Couleur de fond plus foncée au survol */
+  color: #c9302c;            /* Texte rouge foncé au survol */
+}

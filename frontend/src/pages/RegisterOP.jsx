@@ -50,7 +50,8 @@ const RegisterOP = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'Opérateur avec pouvoir', // Administrator or Operator
+    role: 'Opérateur', // Opérateur par défaut
+    isAdmin: false,    // Admin ou non
   });
 
   const [error, setError] = useState('');
@@ -389,23 +390,49 @@ const RegisterOP = () => {
               </div>
             </div>
 
+            <div className="register-client-form-row">
+              <div className="register-client-toggle-switch">
+                <input
+                  type="checkbox"
+                  id="admin-toggle"
+                  name="isAdmin"
+                  checked={formData.isAdmin}
+                  onChange={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      isAdmin: !prev.isAdmin, // Basculer entre true et false
+                    }))
+                  }
+                />
+                <label htmlFor="admin-toggle" className="register-client-toggle-label">
+                  <span className="register-client-toggle-slider"></span>
+                </label>
+                <label htmlFor="admin-toggle" className="register-client-role-label">
+                  {formData.isAdmin ? 'Administrateur' : 'Non Administrateur'}
+                </label>
+              </div>
+            </div>
+
+
+
             {/* Choix obligatoire Rôle */}
             <div className="register-client-form-row">
               <div className="register-client-field register-client-full-width">
                 <label style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-                  Rôle (obligatoire)  
+                  Rôle  
                 </label>
+                <span className="register-client-required-asterisk">*</span>
                 <div style={{ display: 'flex', gap: '20px' }}>
                   <label className="register-client-radio-label">
                     <input
                       type="radio"
                       name="role"
-                      value="Administrateur"
-                      checked={formData.role === 'Administrateur'}
+                      value="Opérateur"
+                      checked={formData.role === 'Opérateur'}
                       onChange={handleChange}
                       required
                     />
-                    Administrateur
+                    Opérateur
                   </label>
                   <label className="register-client-radio-label">
                     <input
@@ -430,7 +457,7 @@ const RegisterOP = () => {
 
             <button
               type="button"
-              className="register-client-button cancel-button"
+              className="registerOP-client-button cancel-button"
               onClick={handleCancel}
             >
               Annuler
