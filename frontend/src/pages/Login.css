@@ -1,154 +1,188 @@
-/* Base styles */
-body {
-  background-color: #f6f6f6;
-  margin: 0;
-  padding: 0;
-}
 
-.login-page-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background-color: #f6f6f6;
-}
+   body {
+    margin: 0;
+    padding: 0;
 
-.login-page-card {
-  background-color: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  width: 100%;
-  max-width: 360px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+  }
 
-.login-page-logo {
-  width: 175px;
-  margin-bottom: 1rem;
-}
+  .certificate-title {
+    color: yellow;
+    font-size: 40px;
+  }
+  
+  
+  .login-page-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  
+    min-height: 100vh;
+  
+    
+    background-color: #f6f6f6; /* Couleur de fond fallback si l'image ne charge pas */
+    background-image: url('../assets/Port-Djibouti-Doraleh.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 
-/* Style pour le titre */
-.login-page-title {
-  font-size: 1.5rem;
-  color: #333;
-  margin-bottom: 1.5rem;
-}
-
-.login-page-input-field {
-  width: 100%;
-  max-width: 340px;
-  padding: 14px;
-  margin-bottom: 1.5rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
-.login-page-input-field::placeholder {
-  color: #999;
-}
-
-.login-page-input-field:focus {
-  border-color: #0056b3;
-  outline: none;
-}
-
-/* Bouton "Se connecter" */
-.login-page-btn-login {
-  width: 100%;
-  max-width: 340px;
-  padding: 14px;
-  background-color: #DCAF26;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  margin-bottom: 1rem; /* Ajustement de la marge */
-}
-
-.login-page-btn-login:hover {
-  background-color: #DCAF26;
-}
-
-/* Lien "Mot de passe oublié ?" */
-.login-page-forgot-password {
-  display: block;
-  margin-bottom: 1.5rem;
-  font-size: 0.95rem;
-  color: #0056b3;
-  text-decoration: none;
-}
-
-.login-page-forgot-password:hover {
-  text-decoration: underline;
-}
-
-/* Texte "Vous n'avez pas de compte ?" et lien "Créer un compte" */
-.login-page-no-account {
-  margin-top: 1rem;
-  font-size: 0.95rem;
-  color: #333;
-}
-
-.login-page-create-account-link {
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.login-page-create-account-link:hover {
-  text-decoration: underline;
-}
-
-/* Responsive styles for mobile devices */
-@media (max-width: 768px) {
+    padding-right: 20px; 
+  }
+  
+ 
   .login-page-card {
-    padding: 1.5rem 1rem;
-    border-radius: 0;
-    box-shadow: none;
+    background-color: white;
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  
+    /* Largeur maximum de la carte */
+    width: 100%;
+    max-width: 550px;
+    min-height: 500px;
+  
+    /* Flex interne pour centrer le contenu */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-
+  
   .login-page-logo {
-    width: 200px;
+    width: 175px;
+    margin-bottom: 1rem;
   }
-
+  
+  /* Titre "CONNEXION" */
   .login-page-title {
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 1.5rem;
   }
-
+  
+ 
   .login-page-input-field {
-    max-width: 90%;
-    padding: 10px;
-    margin-bottom: 1rem;
+    width: 100%;
+    max-width: 340px;
+    padding: 14px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: #eaeaea; /* Fond gris clair */
+    color: #333; /* Texte */
+  }
+  
+  .login-page-input-field::placeholder {
+    color: #666;
+  }
+  
+  .login-page-input-field:focus {
+    border-color: #0056b3;
+    outline: none;
+    background-color: #f0f0f0; 
   }
 
   .login-page-btn-login {
-    max-width: 100%;
-    padding: 12px;
+    width: 100%;
+    max-width: 340px;
+    padding: 14px;
+    background-color: #DCAF26;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 1rem; 
   }
+  
+  .login-page-btn-login:hover {
+    /* Garde la même couleur ou assombrit un peu */
+    background-color: #c0a31f;
+  }
+  
+ 
+  .login-page-forgot-password {
+    display: block;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    color: #0056b3;
+    text-decoration: none;
+  }
+  
+  .login-page-forgot-password:hover {
+    text-decoration: underline;
+  }
+  
 
-  .login-page-forgot-password,
   .login-page-no-account {
-    font-size: 0.85rem;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    color: #333;
   }
-
-  .login-page-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: white;
+  
+  .login-page-create-account-link {
+    text-decoration: none;
+    font-weight: bold;
+    color: #DCAF26; /* Pour rappeler la couleur du bouton ? */
   }
-}
-
-.login-page-error-message {
-  color: red;
-  font-size: 0.9rem; /* Ajustez la taille selon vos préférences */
-  margin-top: -1rem; /* Ajustement optionnel pour rapprocher le message du champ de mot de passe */
-  margin-bottom: 1rem; /* Espace entre le message et le bouton */
-}
+  
+  .login-page-create-account-link:hover {
+    text-decoration: underline;
+  }
+  
+  .login-page-error-message {
+    color: red;
+    font-size: 0.9rem;
+    margin-top: -1rem;
+    margin-bottom: 1rem;
+  }
+  
+ 
+  @media (max-width: 768px) {
+    /* Centre la carte sur mobile */
+    .login-page-wrapper {
+      justify-content: center;
+      align-items: center;
+      padding-right: 0;
+      /* retire background-color: white si tu veux garder l'image */
+      /* background-color: white; */ 
+    }
+  
+    /* Réduit la taille de la carte */
+    .login-page-card {
+      padding: 1.5rem 1rem;
+      border-radius: 8px;
+      max-width: 90%; 
+      min-height: auto; 
+      box-shadow: none;
+      margin: 1rem; /* pour éviter qu'elle touche les bords */
+    }
+  
+    .login-page-logo {
+      width: 150px;
+      margin-bottom: 1rem;
+    }
+  
+    .login-page-title {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+  
+    /* Champ de formulaire un peu moins large sur mobile */
+    .login-page-input-field {
+      max-width: 90%;
+      padding: 10px;
+      margin-bottom: 1rem;
+    }
+  
+    .login-page-btn-login {
+      max-width: 90%;
+      padding: 12px;
+    }
+  
+    .login-page-forgot-password,
+    .login-page-no-account {
+      font-size: 0.85rem;
+    }
+  }
+  

@@ -1,0 +1,62 @@
+/* Rendre le header transparent */
+.page-header {
+    position: absolute;   /* ou fixed */
+    top: 0; left: 0;
+    width: 100%;
+    z-index: 999;         /* Passe devant le fond */
+    background-color: transparent;
+    color: #fff;          /* si tu veux des liens/blocs en blanc */
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  /* Style de la navigation dans le header */
+  .header-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* liens à gauche, bouton à droite */
+    width: 100%;
+    max-width: 1200px; /* Optionnel, pour limiter la largeur */
+    margin: 0 auto;     /* Centrer la nav */
+  }
+  
+  /* Liste des liens */
+  .header-nav ul {
+    list-style: none;
+    display: flex;
+    gap: 6rem; /* espace entre les liens */
+    margin: 0;
+    padding: 0;
+  }
+  
+  .header-nav li a {
+    color: white;             /* Couleur du texte */
+    text-decoration: none;    /* Retire le souligné */
+    font-weight: 500;         /* Exemple de mise en forme */
+    font-weight: bold;
+  }
+  
+  .header-nav li a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Bouton "Contactez-nous" 
+     (même style que "Se connecter" si vous voulez) 
+     Adaptez selon la classe .login-page-btn-login si besoin */
+  .contact-button {
+    background-color: #DCAF26;  /* Couleur de fond identique au bouton login si besoin */
+    color: #fff;
+    border: none;
+    border-radius: 4px;         /* même radius que le bouton login */
+    padding: 0.5rem 1rem;       /* adapté */
+    cursor: pointer;
+    font-size: 1rem;
+   
+  }
+  
+  .contact-button:hover {
+    background-color: #003060;  /* Couleur hover */
+  }
+  

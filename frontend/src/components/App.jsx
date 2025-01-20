@@ -23,6 +23,7 @@ import Inscriptions from '../pages/Inscriptions';
 import ClientsValides from '../pages/ClientsValides';
 import OperatorsList from '../pages/OperatorsList';
 import Maintenance from '../pages/Maintenance';
+import HeaderLayout from '../components/HeaderLayout';
 
 // Pages du dashboard
 import Home from '../pages/Home';
@@ -99,7 +100,7 @@ const App = () => {
         <Route
           path="/login"
           element={
-            isAuthenticated ? <Navigate to="/dashboard" /> : <SimpleLayout />
+            isAuthenticated ? <Navigate to="/dashboard" /> : <HeaderLayout />
           }
         >
           <Route index element={<Login />} />

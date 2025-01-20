@@ -25,8 +25,8 @@ const Login = () => {
       const response = await loginUser(username, homemadeHash(password));
       dispatch(
         login({
-          user: response.user, // Store the entire user object
-          token: response.token, // Store the token
+          user: response.user,
+          token: response.token,
         })
       );
       navigate('/dashboard');
@@ -41,10 +41,31 @@ const Login = () => {
         <title>Connexion</title>
         <meta name="description" content="Connectez-vous à votre compte." />
       </Helmet>
+
+      {/* Colonne GAUCHE : Texte de présentation, etc. (facultatif) */}
+      <div className="login-page-left">
+      <h1 className="certificate-title">Certificat d'origine Électronique</h1>
+        <p>
+          La Chambre de Commerce de Djibouti (CCD) est habilitée 
+          à effectuer une partie des formalités requises...
+        </p>
+        <button className="btn-readmore">Lire plus</button>
+      </div>
+
+      {/* Colonne DROITE : Carte / Formulaire de connexion */}
       <div className={`login-page-card ${isMobile ? 'mobile' : ''}`}>
-        <img src={logo} alt="Logo" className={`login-page-logo ${isMobile ? 'mobile' : ''}`} />
-        <h2 className={`login-page-title ${isMobile ? 'mobile' : ''}`}>Connexion</h2>
-        <form onSubmit={handleSubmit} className={`login-form ${isMobile ? 'mobile' : ''}`}>
+        <img
+          src={logo}
+          alt="Logo"
+          className={`login-page-logo ${isMobile ? 'mobile' : ''}`}
+        />
+        <h2 className={`login-page-title ${isMobile ? 'mobile' : ''}`}>
+          CONNEXION
+        </h2>
+        <form
+          onSubmit={handleSubmit}
+          className={`login-form ${isMobile ? 'mobile' : ''}`}
+        >
           <input
             type="text"
             placeholder="E-mail"
@@ -61,18 +82,35 @@ const Login = () => {
             required
             className={`login-page-input-field ${isMobile ? 'mobile' : ''}`}
           />
-          {/* Affichage du message d'erreur sous le champ de mot de passe */}
-          {errorMessage && <p className="login-page-error-message">{errorMessage}</p>}
-          <button type="submit" className={`login-page-btn-login ${isMobile ? 'mobile' : ''}`}>
+
+          {/* Message d'erreur éventuel */}
+          {errorMessage && (
+            <p className="login-page-error-message">{errorMessage}</p>
+          )}
+
+          <button
+            type="submit"
+            className={`login-page-btn-login ${isMobile ? 'mobile' : ''}`}
+          >
             Se connecter
           </button>
         </form>
-        <Link to="/forgot-password" className={`login-page-forgot-password ${isMobile ? 'mobile' : ''}`}>
+
+        <Link
+          to="/forgot-password"
+          className={`login-page-forgot-password ${isMobile ? 'mobile' : ''}`}
+        >
           Mot de passe oublié ?
         </Link>
+
         <div className={`login-page-no-account ${isMobile ? 'mobile' : ''}`}>
           Vous n'avez pas de compte ?{' '}
-          <Link to="/register" className={`primary login-page-create-account-link ${isMobile ? 'mobile' : ''}`}>
+          <Link
+            to="/register"
+            className={`primary login-page-create-account-link ${
+              isMobile ? 'mobile' : ''
+            }`}
+          >
             Créer un compte
           </Link>
         </div>
