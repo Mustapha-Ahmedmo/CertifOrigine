@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../slices/authSlice';
 import './Login.css';
-import logo from '../assets/logo.jpg';
+import logo from '../assets/logo3.jpeg';
 import { Helmet } from 'react-helmet';
 import { loginUser } from '../services/apiServices';
 import { useMediaQuery } from 'react-responsive';
@@ -42,17 +42,19 @@ const Login = () => {
         <meta name="description" content="Connectez-vous à votre compte." />
       </Helmet>
 
-      {/* Colonne GAUCHE : Texte de présentation, etc. (facultatif) */}
+      {/* Colonne GAUCHE */}
       <div className="login-page-left">
-      <h1 className="certificate-title">Certificat d'origine Électronique</h1>
+        <h1 className="certificate-title">Certificat d'origine Électronique</h1>
         <p>
-          La Chambre de Commerce de Djibouti (CCD) est habilitée 
-          à effectuer une partie des formalités requises...
+          La Chambre de Commerce de Djibouti (CCD) est habilitée
+          à effectuer une partie des formalités requises par les activités à
+          l'international des entreprises. La CCD délivre les Certificats d'origine et légalise 
+          les documents commerciaux : Facture commerciales, Contrats, Licences de vente, etc.
         </p>
         <button className="btn-readmore">Lire plus</button>
       </div>
 
-      {/* Colonne DROITE : Carte / Formulaire de connexion */}
+      {/* Colonne DROITE : Carte de connexion */}
       <div className={`login-page-card ${isMobile ? 'mobile' : ''}`}>
         <img
           src={logo}
@@ -88,32 +90,30 @@ const Login = () => {
             <p className="login-page-error-message">{errorMessage}</p>
           )}
 
-          <button
-            type="submit"
-            className={`login-page-btn-login ${isMobile ? 'mobile' : ''}`}
-          >
-            Se connecter
-          </button>
-        </form>
-
-        <Link
-          to="/forgot-password"
-          className={`login-page-forgot-password ${isMobile ? 'mobile' : ''}`}
-        >
-          Mot de passe oublié ?
-        </Link>
-
-        <div className={`login-page-no-account ${isMobile ? 'mobile' : ''}`}>
-          Vous n'avez pas de compte ?{' '}
+          {/* Mot de passe oublié -> au-dessus du bouton Se connecter */}
           <Link
-            to="/register"
-            className={`primary login-page-create-account-link ${
-              isMobile ? 'mobile' : ''
-            }`}
+            to="/forgot-password"
+            className={`login-page-forgot-password ${isMobile ? 'mobile' : ''}`}
           >
-            Créer un compte
+            Mot de passe oublié ?
           </Link>
-        </div>
+
+          {/* Conteneur des 2 boutons : "Créer un compte" et "Se connecter" */}
+          <div className="login-page-buttons-container">
+            <Link
+              to="/register"
+              className="login-page-create-account-btn"
+            >
+              Créer un compte
+            </Link>
+            <button
+              type="submit"
+              className={`login-page-btn-login ${isMobile ? 'mobile' : ''}`}
+            >
+              Se connecter
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

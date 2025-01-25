@@ -33,7 +33,7 @@
 .register-client-container h2 {
   text-align: center;
   margin-bottom: 40px;
-  color: #DCAF26;
+  color: black;
 }
 
 /* Formulaire */
@@ -46,8 +46,9 @@
 /* Section du formulaire */
 .register-client-form-section h3 {
   margin-bottom: 20px;
+  text-transform: none;
   font-size: 1.5em;
-  color: #004080; /* Bleu pour les titres */
+  font-weight: normal
 }
 
 /* Alignement des champs dans une rangée */
@@ -58,21 +59,36 @@
   margin-bottom: 20px;
 }
 
-/* Champ de saisie */
-.register-client-input {
-  padding: 10px;
+/* Champ de saisie avec dégradé */
+.register-client-input,
+.register-client-input:focus,
+.country-code-select,
+.phone-number-input {
+  background: linear-gradient(135deg, #f9f9f9, #f3f3f3); /* Dégradé de gris */
   border: 1px solid #ccc;
   border-radius: 4px;
+  padding: 10px;
   font-size: 1em;
-  background-color: #fff; /* Fond blanc */
   width: 100%;
   box-sizing: border-box;
   color: #333; /* Couleur par défaut du texte */
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1); /* Ombre intérieure subtile */
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 /* Placeholder en gris pour les inputs */
 .register-client-input::placeholder {
   color: #999; /* Texte des placeholders en gris */
+  font-style: italic; /* Italique pour un aspect élégant */
+}
+
+/* Effet au focus */
+.register-client-input:focus,
+.country-code-select:focus,
+.phone-number-input:focus {
+  outline: none; /* Supprime le contour par défaut */
+  border-color: #004080; /* Bordure bleue marine au focus */
+  box-shadow: 0 0 5px rgba(0, 64, 128, 0.5); /* Lueur subtile */
 }
 
 /* Style pour le select lorsqu'il est en état de placeholder */
@@ -374,7 +390,6 @@ input[type="checkbox"]:checked + .register-client-toggle-label {
   }
 }
 
-
 /* Wrapper pour l’indicatif + le numéro */
 .phone-wrapper {
   display: flex;       /* Pour aligner sélecteur et input sur la même ligne */
@@ -388,9 +403,8 @@ input[type="checkbox"]:checked + .register-client-toggle-label {
   min-width: 90px;     /* Largeur minimale pour ne pas être trop petit */
   border: 1px solid #ccc;
   border-radius: 4px;
-  background-color: #fff; 
+  background: linear-gradient(135deg, #f9f9f9, #eaeaea); /* Dégradé léger */
   cursor: pointer;
-  
 }
 
 /* Style du champ de numéro local */
@@ -400,20 +414,6 @@ input[type="checkbox"]:checked + .register-client-toggle-label {
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 1em;
-  background-color: #fff;
+  background: linear-gradient(135deg, #f0f0f0, #e0e0e0); /* Dégradé de gris */
   box-sizing: border-box;
-}
-
-/* Styles spécifiques pour le bouton "Annuler" */
-.registerOP-client-button.cancel-button {
-  background-color: #ffcccc; /* Couleur de fond rouge clair */
-  color: #d9534f;           /* Texte rouge */
-  border-color: #d9534f;    /* Bordure rouge */
-  margin-left: 10px;
-  
-}
-
-.registerOP-client-button.cancel-button:hover {
-  background-color: #f2dede; /* Couleur de fond plus foncée au survol */
-  color: #c9302c;            /* Texte rouge foncé au survol */
 }
