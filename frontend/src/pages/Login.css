@@ -143,7 +143,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1rem;
+  gap: 4rem;
   margin-top: 1.5rem;
 
   max-width: 500px;
@@ -155,13 +155,14 @@ body {
   flex: 1;
   max-width: 200px;
   text-align: center;
+  
 }
 
 /* ----- BOUTON CRÉER UN COMPTE (blanc, bordure orange) ----- */
 .login-page-create-account-btn {
   display: inline-block;
   padding: 12px 12px;
-  font-size: 1rem;
+  font-size: 16px;
   font-weight: bold;
   color: #C39408;
   background-color: #fff;
@@ -169,6 +170,11 @@ body {
   border-radius: 6px;
   text-decoration: none;
   cursor: pointer;
+  white-space: nowrap; /* Empêche le texte de passer à la ligne */
+  text-align: center;  /* Centre le texte dans le bouton */
+  min-width: 150px;    /* Assurez une largeur minimale */
+
+  
 }
 
 .login-page-create-account-btn:hover {
@@ -187,6 +193,7 @@ body {
   font-weight: bold;
   font-size: 16px;
   cursor: pointer;
+  
 }
 
 .login-page-btn-login:hover {
@@ -262,6 +269,7 @@ body {
     align-items: stretch; /* largeurs identiques */
     max-width: 90%;
     margin: 1rem auto 0 auto;
+    gap: 1rem;
   }
 
   .login-page-buttons-container > * {
@@ -270,5 +278,7 @@ body {
 
   .login-page-btn-login {
     max-width: 100%;
+    font-size: 16px !important;
+    
   }
 }
