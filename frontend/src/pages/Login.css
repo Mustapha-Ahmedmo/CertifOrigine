@@ -2,12 +2,7 @@
 body {
   margin: 0;
   padding: 0;
-}
-
-/* ----- TITRE PRINCIPAL ----- */
-.certificate-title {
-  color: #FFD863;
-  font-size: 70px;
+  font-family: sans-serif; /* Optionnel : police par défaut */
 }
 
 /* ----- WRAPPER GENERAL DE LA PAGE LOGIN ----- */
@@ -15,7 +10,7 @@ body {
   position: relative;
   display: flex;
   justify-content: space-around;
-  align-items: center;
+  align-items: flex-start; /* On aligne en haut par défaut */
   gap: 10rem;
   min-height: 100vh;
   background: linear-gradient(
@@ -27,14 +22,21 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   padding-right: 20px;
+  padding-left: 20px; /* Pour aérer sur les bords gauche/droit */
+  box-sizing: border-box;
 }
 
-/* ----- COLONNE GAUCHE ----- */
+/* ----- COLONNE GAUCHE (infos + bouton lire plus) ----- */
 .login-page-left {
-  margin-left: 3rem; /* Décale vers la gauche */
-  margin-top: 2rem;  /* Remonte le bloc */
+  margin-top: 10rem;  /* Espace en haut */
   color: white;
-  
+  max-width: 600px;  /* Limite la largeur */
+}
+
+.certificate-title {
+  color: #FFD863;
+  font-size: 70px;
+  margin-bottom: 1rem;
 }
 
 .login-page-left p {
@@ -42,11 +44,12 @@ body {
   color: white;                  /* Couleur de remplissage du texte */
   font-weight: bold;             /* Optionnel : rend les lettres plus visibles */
   font-size: 22px;
+  margin-bottom: 2rem;
 }
 
 .btn-readmore {
   width: 100%;
-  max-width: 100px;
+  max-width: 120px;
   padding: 14px;
   background-color: #C39408;
   color: white;
@@ -57,21 +60,18 @@ body {
   margin-bottom: 1rem;
 }
 
-/* ----- CARTE / FORMULAIRE DE CONNEXION ----- */
+/* ----- CARTE / FORMULAIRE DE CONNEXION (colonne droite) ----- */
 .login-page-card {
   background-color: white;
   padding: 3rem;
   border-radius: 12px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   text-align: center;
-  
-
+  margin-top: 10rem;  /* Espace en haut */
   width: 100%;
   max-width: 550px;
   min-height: 500px;
-
-  /* Flex interne pour centrer le contenu verticalement */
-  display: flex;
+  display: flex;            /* Pour centrer le contenu verticalement si voulu */
   flex-direction: column;
   align-items: center;
 }
@@ -88,6 +88,13 @@ body {
 }
 
 /* ----- CHAMPS DE SAISIE ----- */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
 .login-page-input-field {
   width: 100%;
   max-width: 340px;
@@ -97,7 +104,7 @@ body {
   border-radius: 6px;
   font-size: 1rem;
   background-color: #eaeaea; /* Fond gris clair */
-  color: #333;              /* Couleur du texte */
+  color: #333;
 }
 
 .login-page-input-field::placeholder {
@@ -131,25 +138,22 @@ body {
   text-decoration: underline;
 }
 
-
-
+/* ----- CONTENEUR DES 2 BOUTONS ----- */
 .login-page-buttons-container {
   display: flex;
-  justify-content: center; /* tu peux mettre space-between si tu préfères */
+  justify-content: center;
   align-items: center;
-  gap: 1rem;               /* espace horizontal entre les boutons */
+  gap: 1rem;
   margin-top: 1.5rem;
-  
-  
+
   max-width: 500px;
   margin-left: auto;
   margin-right: auto;
 }
 
-/* Chaque élément enfant (les deux boutons) prend la même place */
 .login-page-buttons-container > * {
-  flex: 1; 
-  max-width: 200px;  /* Ajuste selon la taille souhaitée */
+  flex: 1;
+  max-width: 200px;
   text-align: center;
 }
 
@@ -159,11 +163,11 @@ body {
   padding: 12px 12px;
   font-size: 1rem;
   font-weight: bold;
-  color: #C39408;         /* Texte orange */
-  background-color: #fff; /* Fond blanc */
+  color: #C39408;
+  background-color: #fff;
   border: 2px solid #C39408;
   border-radius: 6px;
-  text-decoration: none;  /* pas de soulignement */
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -173,52 +177,71 @@ body {
 
 /* ----- BOUTON SE CONNECTER (orange) ----- */
 .login-page-btn-login {
-  display: inline-block;   /* pour être géré par le flex: 1 */
+  display: inline-block;
   padding: 12px 12px;
   background-color: #C39408;
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
   font-family: 'Montserrat', sans-serif;
   font-weight: bold;
   font-size: 16px;
-
-  /* Retire l'ancien margin-bottom si tu l'avais */
-  margin-bottom: 0;
+  cursor: pointer;
 }
 
 .login-page-btn-login:hover {
   background-color: #c0a31f;
 }
 
-/* ----- MEDIA QUERIES / RESPONSIVE ----- */
+/* ------------------------------------------------------------------ */
+/* ----------------------- MEDIA QUERIES (MOBILE) -------------------- */
+/* ------------------------------------------------------------------ */
+
 @media (max-width: 768px) {
-  /* Centre la carte sur mobile */
+  /* On empile verticalement la colonne gauche et la colonne droite */
   .login-page-wrapper {
-    justify-content: center;
-    align-items: center;
-    padding-right: 0;
+    flex-direction: column;
+    gap: 2rem;                /* Espace vertical entre les deux blocs */
+    justify-content: center;  /* On centre verticalement */
+    align-items: center;      /* On centre horizontalement */
+    padding: 0 1rem;        /* Retire le padding latéral si tu veux */
+    min-height: auto;         /* On n'impose plus 100vh */
+    box-sizing: border-box;
   }
 
-  /* Réduit la taille de la carte */
+  /* Colonne gauche occupe 90% de la largeur */
+  .login-page-left {
+    max-width: 90%;
+    margin: 1rem auto 0 auto; 
+    text-align: center; /* Optionnel : centrage du texte */
+  }
+
+  /* On diminue la taille du gros titre pour mobile */
+  .certificate-title {
+    font-size: 40px; /* au lieu de 70px */
+  }
+
+  .login-page-left p {
+    font-size: 18px; /* Réduit un peu la taille du texte */
+    -webkit-text-stroke: 0.5px black; /* on diminue l’épaisseur si on veut */
+  }
+
+  /* On ajuste la carte */
   .login-page-card {
+    max-width: 90%;
     padding: 1.5rem 1rem;
     border-radius: 8px;
-    max-width: 90%;
-    min-height: auto;
     box-shadow: none;
-    margin: 1rem; /* évite que ça colle aux bords */
+    min-height: auto;
+    margin-top: 1rem;  /* Espace en haut */
   }
 
   .login-page-logo {
     width: 150px;
-    margin-bottom: 1rem;
   }
 
   .login-page-title {
-    font-size: 1.25rem;
+    font-size: 1.3rem;
     margin-bottom: 1rem;
   }
 
@@ -228,24 +251,24 @@ body {
     margin-bottom: 1rem;
   }
 
-  /* Bouton se connecter sur mobile */
-  .login-page-btn-login {
-    max-width: 90%;
-    padding: 12px;
-  }
-
   .login-page-forgot-password {
     font-size: 0.85rem;
+    margin-bottom: 1rem;
   }
 
-  /* Container des 2 boutons : on peut passer en colonne sur mobile */
+  /* On peut empiler les 2 boutons verticalement si souhaité */
   .login-page-buttons-container {
     flex-direction: column;
-    align-items: stretch;
-    max-width: 90%; /* pour ne pas que ça déborde sur petit écran */
+    align-items: stretch; /* largeurs identiques */
+    max-width: 90%;
+    margin: 1rem auto 0 auto;
   }
 
   .login-page-buttons-container > * {
+    max-width: 100%;
+  }
+
+  .login-page-btn-login {
     max-width: 100%;
   }
 }
