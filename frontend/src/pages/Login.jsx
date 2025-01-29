@@ -8,6 +8,7 @@ import { Helmet } from 'react-helmet';
 import { loginUser } from '../services/apiServices';
 import { useMediaQuery } from 'react-responsive';
 import { homemadeHash } from '../utils/hashUtils';
+import HeaderLayout from '../components/HeaderLayout';
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -36,87 +37,91 @@ const Login = () => {
   };
 
   return (
-    <div className="login-page-wrapper">
-      <Helmet>
-        <title>Connexion</title>
-        <meta name="description" content="Connectez-vous à votre compte." />
-      </Helmet>
+    <>
+      {/* Intégration du header */}
+      <HeaderLayout />
 
-      {/* Colonne GAUCHE */}
-      <div className="login-page-left">
-        <h1 className="certificate-title">Certificat d'origine Électronique</h1>
-        <p>
-          La Chambre de Commerce de Djibouti (CCD) est habilitée
-          à effectuer une partie des formalités requises par les activités à
-          l'international des entreprises. La CCD délivre les Certificats d'origine et légalise 
-          les documents commerciaux : Facture commerciales, Contrats, Licences de vente, etc.
-        </p>
-        <button className="btn-readmore">Lire plus</button>
-      </div>
+      <div className="login-page-wrapper">
+        <Helmet>
+          <title>Connexion</title>
+          <meta name="description" content="Connectez-vous à votre compte." />
+        </Helmet>
 
-      {/* Colonne DROITE : Carte de connexion */}
-      <div className={`login-page-card ${isMobile ? 'mobile' : ''}`}>
-        <img
-          src={logo}
-          alt="Logo"
-          className={`login-page-logo ${isMobile ? 'mobile' : ''}`}
-        />
-        <h2 className={`login-page-title ${isMobile ? 'mobile' : ''}`}>
-          CONNEXION
-        </h2>
-        <form
-          onSubmit={handleSubmit}
-          className={`login-form ${isMobile ? 'mobile' : ''}`}
-        >
-          <input
-            type="text"
-            placeholder="E-mail"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            className={`login-page-input-field ${isMobile ? 'mobile' : ''}`}
+        {/* Colonne GAUCHE */}
+        <div className="login-page-left">
+          <h1 className="certificate-title">Certificat d'origine Électronique</h1>
+          <p>
+            La Chambre de Commerce de Djibouti (CCD) est habilitée
+            à effectuer une partie des formalités requises par les activités à
+            l'international des entreprises. La CCD délivre les Certificats d'origine et légalise 
+            les documents commerciaux : Facture commerciales, Contrats, Licences de vente, etc.
+          </p>
+          <button className="btn-readmore">Lire plus</button>
+        </div>
+
+        {/* Colonne DROITE : Carte de connexion */}
+        <div className={`login-page-card ${isMobile ? 'mobile' : ''}`}>
+          <img
+            src={logo}
+            alt="Logo"
+            className={`login-page-logo ${isMobile ? 'mobile' : ''}`}
           />
-          <input
-            type="password"
-            placeholder="Mot de passe"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className={`login-page-input-field ${isMobile ? 'mobile' : ''}`}
-          />
-
-          {/* Message d'erreur éventuel */}
-          {errorMessage && (
-            <p className="login-page-error-message">{errorMessage}</p>
-          )}
-
-          {/* Mot de passe oublié -> au-dessus du bouton Se connecter */}
-          <Link
-            to="/forgot-password"
-            className={`login-page-forgot-password ${isMobile ? 'mobile' : ''}`}
+          <h2 className={`login-page-title ${isMobile ? 'mobile' : ''}`}>
+            CONNEXION
+          </h2>
+          <form
+            onSubmit={handleSubmit}
+            className={`login-form ${isMobile ? 'mobile' : ''}`}
           >
-            Mot de passe oublié ?
-          </Link>
+            <input
+              type="text"
+              placeholder="E-mail"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              className={`login-page-input-field ${isMobile ? 'mobile' : ''}`}
+            />
+            <input
+              type="password"
+              placeholder="Mot de passe"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className={`login-page-input-field ${isMobile ? 'mobile' : ''}`}
+            />
 
-          {/* Conteneur des 2 boutons : "Créer un compte" et "Se connecter" */}
-          <div className="login-page-buttons-container">
+            {/* Message d'erreur éventuel */}
+            {errorMessage && (
+              <p className="login-page-error-message">{errorMessage}</p>
+            )}
+
+            {/* Mot de passe oublié -> au-dessus du bouton Se connecter */}
             <Link
-              to="/register"
-              className="login-page-create-account-btn"
+              to="/forgot-password"
+              className={`login-page-forgot-password ${isMobile ? 'mobile' : ''}`}
             >
-              Créer un compte
+              Mot de passe oublié ?
             </Link>
-            <button
-              type="submit"
-              className={`login-page-btn-login ${isMobile ? 'mobile' : ''}`}
-            >
-              Se connecter
-            </button>
-          </div>
-          
-        </form>
+
+            {/* Conteneur des 2 boutons : "Créer un compte" et "Se connecter" */}
+            <div className="login-page-buttons-container">
+              <Link
+                to="/register"
+                className="login-page-create-account-btn"
+              >
+                Créer un compte
+              </Link>
+              <button
+                type="submit"
+                className={`login-page-btn-login ${isMobile ? 'mobile' : ''}`}
+              >
+                Se connecter
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

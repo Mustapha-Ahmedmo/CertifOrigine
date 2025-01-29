@@ -73,6 +73,26 @@
   cursor: pointer;
 }
 
+.contact-button {
+  background-color: #C39408;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: bold;
+  text-decoration: none; /* Supprime le soulignement */
+  display: inline-block; /* Comportement similaire à un bouton */
+  text-align: center;
+}
+
+.contact-button:hover {
+  background-color: #b38307; /* Change de couleur au survol */
+}
+
+
 /* -------------------------------------------------------- */
 /* ---------------------- MEDIA QUERY ---------------------- */
 /* -------------------------------------------------------- */

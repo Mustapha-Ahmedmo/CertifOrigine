@@ -11,6 +11,7 @@ import { restoreAuthState } from '../slices/authSlice';
 
 // Pages & layouts
 import Login from '../pages/Login';
+import ContactUs from '../pages/ContactUs';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
 import Register from '../pages/Register';
@@ -109,6 +110,9 @@ const App = () => {
         {/* 4) Autres routes "simples" */}
         <Route path="/register" element={<Register />}>
           <Route index element={<Login />} />
+        </Route>
+        <Route path="/contact-us" element={<ContactUs />}>
+          <Route index element={<ContactUs />} />
         </Route>
         <Route path="/registercontact/:id?" element={<RegisterContact />} />
         <Route path="/registerop/:id?" element={<RegisterOP />}>

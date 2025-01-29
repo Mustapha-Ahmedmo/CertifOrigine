@@ -47,9 +47,10 @@ const Register = () => {
 
     // Champs "Entreprise"
     companyName: '',
-    companyCategory: '',
-    sector: '',
-    otherSector: '',
+    companyCategory: '',           // Statut juridique (select principal)
+    companyCategoryOther: '',      // Champ libre si "Autre" est sélectionné
+    sector: '',                    // Secteur (select principal)
+    otherSector: '',               // Champ libre si "Autre" est sélectionné
     companyResidenceCountry: '',
     companyOriginCountry: '',
     companyType: '', // "zoneFranche" ou "autre"
@@ -168,6 +169,44 @@ const Register = () => {
       return;
     }
 
+    // Si on change le statut juridique
+    if (name === 'companyCategory') {
+      // Si ce n'est plus "Autre", on vide la valeur du champ "companyCategoryOther"
+      if (value !== 'Autre') {
+        setFormData((prev) => ({
+          ...prev,
+          companyCategory: value,
+          companyCategoryOther: '',
+        }));
+      } else {
+        // Sinon on stocke "Autre" et on ne vide pas le champ "companyCategoryOther"
+        setFormData((prev) => ({
+          ...prev,
+          companyCategory: value,
+        }));
+      }
+      return;
+    }
+
+    // Si on change le secteur
+    if (name === 'sector') {
+      // Si ce n'est plus "Autre", on vide la valeur du champ "otherSector"
+      if (value !== 'Autre') {
+        setFormData((prev) => ({
+          ...prev,
+          sector: value,
+          otherSector: '',
+        }));
+      } else {
+        // Sinon on stocke "Autre" et on ne vide pas le champ "otherSector"
+        setFormData((prev) => ({
+          ...prev,
+          sector: value,
+        }));
+      }
+      return;
+    }
+
     // Contrôle basique du numéro de téléphone (fixe / mobile)
     if (name === 'phoneFixedNumber' || name === 'phoneMobileNumber') {
       if (!isValidLocalNumber(value) && value !== '') {
@@ -236,8 +275,13 @@ const Register = () => {
     const fullPhoneMobile = formData.phoneMobileCountryCode + formData.phoneMobileNumber;
 
     try {
-      // Trouver l'ID du secteur choisi
-      const selectedSector = sectors.find((s) => s.symbol_fr === formData.sector);
+      // --- Gérer le secteur : si Autre => selectedSector = null
+      let selectedSector = null;
+      if (formData.sector !== 'Autre') {
+        selectedSector = sectors.find((s) => s.symbol_fr === formData.sector);
+      }
+
+      // Récupérer Pays de résidence/origine
       const selectedResidenceCountry = countries.find(
         (c) => c.symbol_fr === formData.companyResidenceCountry
       );
@@ -245,10 +289,18 @@ const Register = () => {
         (c) => c.symbol_fr === formData.companyOriginCountry
       );
 
+      // Préparer la valeur finale pour le statut juridique
+      const finalLegalForm =
+        formData.companyCategory === 'Autre'
+          ? formData.companyCategoryOther // le champ libre si "Autre"
+          : formData.companyCategory;
+
       // Préparer l'objet pour l'API
       const subscriptionData = {
         uploadType: 'inscriptions',
-        legal_form: formData.companyCategory,
+
+        // Statut juridique final
+        legal_form: finalLegalForm,
         cust_name: formData.companyName,
         licenseNumber: formData.licenseNumber,
         in_free_zone: formData.isFreeZoneCompany,
@@ -256,8 +308,11 @@ const Register = () => {
         rchNumber: formData.rchNumber,
         full_address: formData.address,
 
+        // id_sector si ce n'est pas "Autre", sinon null
         id_sector: selectedSector ? selectedSector.id_sector : null,
-        other_sector: formData.otherSector || null,
+        // other_sector si c'est "Autre"
+        other_sector: formData.sector === 'Autre' ? formData.otherSector : null,
+
         id_country: selectedResidenceCountry
           ? selectedResidenceCountry.id_country
           : null,
@@ -299,7 +354,8 @@ const Register = () => {
       setSnackbarMessage(err.message);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
-      // Redirection après un délai (si voulu)
+
+      // Redirection après un délai (si souhaité)
       setTimeout(() => {
         navigate('/account-created');
       }, 2000);
@@ -348,6 +404,7 @@ const Register = () => {
 
             {/* Statut juridique + Secteur */}
             <div className="register-client-form-row">
+              {/* Statut juridique */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
                   <select
@@ -355,7 +412,9 @@ const Register = () => {
                     value={formData.companyCategory}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${!formData.companyCategory ? 'placeholder' : ''}`}
+                    className={`register-client-input ${
+                      !formData.companyCategory ? 'placeholder' : ''
+                    }`}
                   >
                     <option value="" disabled hidden>
                       Statut juridique
@@ -376,6 +435,7 @@ const Register = () => {
                 </div>
               </div>
 
+              {/* Secteur */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
                   <select
@@ -383,7 +443,9 @@ const Register = () => {
                     value={formData.sector}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${!formData.companyCategory ? 'placeholder' : ''}`}
+                    className={`register-client-input ${
+                      !formData.sector ? 'placeholder' : ''
+                    }`}
                   >
                     <option value="" disabled hidden>
                       Secteur
@@ -394,11 +456,53 @@ const Register = () => {
                           s.symbol_fr.slice(1).toLowerCase()}
                       </option>
                     ))}
+                    {/* On ajoute l'option "Autre" */}
+                    <option value="Autre">Autre</option>
                   </select>
                   <span className="register-client-required-asterisk">*</span>
                 </div>
               </div>
             </div>
+
+            {/* Champ libre si "Autre" est sélectionné pour Statut juridique */}
+            {formData.companyCategory === 'Autre' && (
+              <div className="register-client-form-row">
+                <div className="register-client-field register-client-full-width">
+                  <div className="register-client-input-wrapper">
+                    <input
+                      type="text"
+                      name="companyCategoryOther"
+                      value={formData.companyCategoryOther}
+                      onChange={handleChange}
+                      required
+                      className="register-client-input"
+                      placeholder="Précisez votre statut juridique"
+                    />
+                    <span className="register-client-required-asterisk">*</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Champ libre si "Autre" est sélectionné pour Secteur */}
+            {formData.sector === 'Autre' && (
+              <div className="register-client-form-row">
+                <div className="register-client-field register-client-full-width">
+                  <div className="register-client-input-wrapper">
+                    <input
+                      type="text"
+                      name="otherSector"
+                      value={formData.otherSector}
+                      onChange={handleChange}
+                      required
+                      className="register-client-input"
+                      placeholder="Précisez votre secteur"
+                    />
+                    <span className="register-client-required-asterisk">*</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Pays de résidence + Pays d'origine */}
             <div className="register-client-form-row">
@@ -409,7 +513,9 @@ const Register = () => {
                     value={formData.companyResidenceCountry}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${!formData.companyCategory ? 'placeholder' : ''}`}
+                    className={`register-client-input ${
+                      !formData.companyResidenceCountry ? 'placeholder' : ''
+                    }`}
                   >
                     <option value="" disabled hidden>
                       Pays de résidence de l'entreprise
@@ -432,7 +538,9 @@ const Register = () => {
                     value={formData.companyOriginCountry}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${!formData.companyCategory ? 'placeholder' : ''}`}
+                    className={`register-client-input ${
+                      !formData.companyOriginCountry ? 'placeholder' : ''
+                    }`}
                   >
                     <option value="" disabled hidden>
                       Pays d'origine de l'entreprise
@@ -458,7 +566,9 @@ const Register = () => {
                     value={formData.companyType}
                     onChange={handleChange}
                     required
-                    className={`register-client-input ${!formData.companyCategory ? 'placeholder' : ''}`}
+                    className={`register-client-input ${
+                      !formData.companyType ? 'placeholder' : ''
+                    }`}
                   >
                     <option value="" disabled hidden>
                       Type d'entreprise
@@ -507,7 +617,7 @@ const Register = () => {
                 <div className="register-client-field register-client-half-width">
                   <label htmlFor="licenseFile" className="custom-file-btn">
                     {selectedLicenseFileName ||
-                      'Télécharger la licence de zone franche'}
+                      'Upload'}
                   </label>
                   <input
                     type="file"
@@ -543,7 +653,7 @@ const Register = () => {
 
                   <div className="register-client-field register-client-half-width">
                     <label htmlFor="patenteFile" className="custom-file-btn">
-                      {selectedPatenteFileName || 'Télécharger patente'}
+                      {selectedPatenteFileName || 'Upload'}
                     </label>
                     <input
                       type="file"
@@ -574,7 +684,7 @@ const Register = () => {
                   <div className="register-client-field register-client-half-width">
                     <label htmlFor="rchFile" className="custom-file-btn">
                       {selectedRchFileName ||
-                        "Télécharger le numéro d'immatriculation RCS"}
+                        "Upload"}
                     </label>
                     <input
                       type="file"
@@ -660,7 +770,7 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Téléphone fixe + portable (SANS labels ni icônes) */}
+            {/* Téléphone fixe + portable */}
             <div className="register-client-form-row">
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper phone-wrapper">

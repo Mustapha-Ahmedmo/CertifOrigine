@@ -37,7 +37,9 @@ const HeaderLayout = () => {
           </div>
 
           {/* Bouton contact à droite (toujours visible) */}
-          <button className="contact-button">Contactez-nous</button>
+          <Link to="/contact-us" className="contact-button">
+            Contactez-nous
+          </Link>
         </nav>
       </header>
 
