@@ -142,14 +142,13 @@
 /* Astérisque pour les champs obligatoires */
 .register-client-required-asterisk {
   color: red;
-  position: absolute;
+  position: absolute; /* Par défaut : position absolue pour les champs classiques */
   top: 0;
   right: 10px;
   font-size: 1.2em;
 }
 
 /* ---------- Radio ---------- */
-
 .register-client-radio-label {
   display: inline-flex;
   align-items: center;
@@ -161,26 +160,29 @@
   margin-right: 5px;
 }
 
-/* ---------- Checkbox : version alignée à gauche ---------- */
-
+/* ---------- Checkbox : version alignée ---------- */
 .register-client-checkbox-label {
-  display: inline-flex;     /* Garde le checkbox et le texte sur la même ligne */
-  align-items: baseline;    /* Aligne la case sur la ligne de base du texte */
+  display: flex;         /* Pour un alignement horizontal correct */
+  align-items: center;   /* Centre la case et le texte */
   cursor: pointer;
-  line-height: 1.4;         /* Contrôle la hauteur de ligne si le texte est long */
+  line-height: 1.4;
   margin-bottom: 15px;
-  position: relative;
+  /* position: relative; n'est pas nécessaire si on n'a plus d'absolu dedans */
+}
+
+input[type="checkbox"] {
+  width: auto !important;
 }
 
 .register-client-checkbox-label input[type="checkbox"] {
   margin-right: 8px; 
-  margin-top: 0;          /* Pour éviter un décalage vertical */
-  vertical-align: middle; /* Centre la case sur la ligne de texte */
+  margin-top: 0;
+  vertical-align: middle;
 }
 
-/* Astérisque pour la checkbox */
+/* On écrase le position absolute pour l’astérisque sur les checkboxes */
 .register-client-checkbox-label .register-client-required-asterisk {
-  color: red;
+  position: static; /* ou initial */
   margin-left: 5px;
   font-size: 1.2em;
 }
@@ -225,13 +227,13 @@
 .custom-file-btn {
   background-color: orange;
   color: white;
-  padding: 6px 12px;   /* Réduit la taille du bouton */
+  padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
   display: inline-block;
   font-weight: 500;
   transition: background-color 0.3s;
-  font-size: 0.9em;    /* Réduit la taille de police */
+  font-size: 0.9em;
 }
 
 .custom-file-btn:hover {
@@ -268,12 +270,11 @@
 
 /* ---------- Phone wrapper ---------- */
 .phone-wrapper {
-  display: flex;       /* Sur desktop, le select + input sont sur la même ligne */
+  display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* Style du select d’indicatifs */
 .country-code-select {
   width: auto;
   min-width: 90px;
@@ -283,7 +284,6 @@
   cursor: pointer;
 }
 
-/* Le champ numéro local */
 .phone-number-input {
   flex: 1;
   box-sizing: border-box;
@@ -336,13 +336,15 @@
   }
 
   .register-logo {
-    max-width: 150px;
+    padding-top: 40px;
+    max-width: 200px;
+    height: auto;
   }
 
   .register-client-checkbox-label {
     font-size: 0.9em;
-    display: flex;           /* Sur mobile, on pourrait repasser en flex */
-    align-items: center;     /* Sinon baseline si vous voulez strictement en bas */
+    display: flex;           /* reste en flex sur mobile */
+    align-items: center;     
   }
 
   .register-client-login-link a {
@@ -358,14 +360,8 @@
     box-shadow: none;
   }
 
-  .register-logo {
-    padding-top: 40px;
-    max-width: 200px;
-    height: auto;
-  }
-
   .phone-wrapper {
-    flex-direction: column; /* Sur mobile, select + input passent l'un en dessous de l'autre */
+    flex-direction: column; /* Sur mobile, le select et l’input passent l'un en dessous de l'autre */
     align-items: flex-start;
     width: 100%;
   }
@@ -374,4 +370,45 @@
   .phone-wrapper input {
     width: 100%;
   }
+}
+
+
+/* Alignement des boutons */
+.register-client-form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px; /* Espacement entre les boutons */
+  margin-top: 20px;
+}
+
+/* Bouton principal */
+.register-client-button {
+  padding: 15px 40px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: background-color 0.3s ease;
+  background-color: #C39408;
+  color: white;
+}
+
+.register-client-button:hover {
+  background-color: #003366;
+}
+
+/* Bouton retour (rose saumon) */
+.register-client-cancel-button {
+  padding: 15px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  background-color: #FA8072; /* Rose saumon */
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+.register-client-cancel-button:hover {
+  background-color: #E57373; /* Légèrement plus foncé au survol */
 }

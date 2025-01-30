@@ -36,6 +36,14 @@ const ContactUs = () => {
         <p><strong>Téléphone :</strong> 21 35 10 70 poste 130</p>
         <p><strong>E-mail :</strong> <a href="mailto:siee@ccd.dj">siee@ccd.dj</a></p>
       </div>
+
+      {/* Nouveau bloc en bas à droite */}
+      <div className="footer-info">
+        <p>
+          Chambre de Commerce de Djibouti . Place Djibouti .
+          Tel : +253-21351070 . Email : <a href="mailto:ccd@ccd.dj">ccd@ccd.dj</a>
+        </p>
+      </div>
     </div>
   );
 };

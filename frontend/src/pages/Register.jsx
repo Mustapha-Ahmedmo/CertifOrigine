@@ -47,10 +47,10 @@ const Register = () => {
 
     // Champs "Entreprise"
     companyName: '',
-    companyCategory: '',           // Statut juridique (select principal)
-    companyCategoryOther: '',      // Champ libre si "Autre" est sélectionné
-    sector: '',                    // Secteur (select principal)
-    otherSector: '',               // Champ libre si "Autre" est sélectionné
+    companyCategory: '',
+    companyCategoryOther: '',
+    sector: '',
+    otherSector: '',
     companyResidenceCountry: '',
     companyOriginCountry: '',
     companyType: '', // "zoneFranche" ou "autre"
@@ -63,7 +63,6 @@ const Register = () => {
     nif: '',
     patenteFile: null,
     rchNumber: '',
-    rchFile: null,
 
     // Acceptation conditions
     acceptsConditions: false,
@@ -73,7 +72,6 @@ const Register = () => {
   // Pour afficher le nom des fichiers sélectionnés
   const [selectedLicenseFileName, setSelectedLicenseFileName] = useState('');
   const [selectedPatenteFileName, setSelectedPatenteFileName] = useState('');
-  const [selectedRchFileName, setSelectedRchFileName] = useState('');
 
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -149,9 +147,6 @@ const Register = () => {
         case 'patenteFile':
           setSelectedPatenteFileName(file ? file.name : '');
           break;
-        case 'rchFile':
-          setSelectedRchFileName(file ? file.name : '');
-          break;
         default:
           break;
       }
@@ -179,7 +174,6 @@ const Register = () => {
           companyCategoryOther: '',
         }));
       } else {
-        // Sinon on stocke "Autre" et on ne vide pas le champ "companyCategoryOther"
         setFormData((prev) => ({
           ...prev,
           companyCategory: value,
@@ -190,7 +184,6 @@ const Register = () => {
 
     // Si on change le secteur
     if (name === 'sector') {
-      // Si ce n'est plus "Autre", on vide la valeur du champ "otherSector"
       if (value !== 'Autre') {
         setFormData((prev) => ({
           ...prev,
@@ -198,7 +191,6 @@ const Register = () => {
           otherSector: '',
         }));
       } else {
-        // Sinon on stocke "Autre" et on ne vide pas le champ "otherSector"
         setFormData((prev) => ({
           ...prev,
           sector: value,
@@ -234,7 +226,6 @@ const Register = () => {
     const filesToValidate = [
       { name: 'licenseFile', file: formData.licenseFile },
       { name: 'patenteFile', file: formData.patenteFile },
-      { name: 'rchFile', file: formData.rchFile },
     ];
     for (const { name, file } of filesToValidate) {
       if (file && !validateFileType(file)) {
@@ -292,7 +283,7 @@ const Register = () => {
       // Préparer la valeur finale pour le statut juridique
       const finalLegalForm =
         formData.companyCategory === 'Autre'
-          ? formData.companyCategoryOther // le champ libre si "Autre"
+          ? formData.companyCategoryOther
           : formData.companyCategory;
 
       // Préparer l'objet pour l'API
@@ -336,7 +327,6 @@ const Register = () => {
         // Fichiers
         licenseFile: formData.isFreeZoneCompany ? formData.licenseFile : null,
         patenteFile: formData.isOtherCompany ? formData.patenteFile : null,
-        rchFile: formData.isOtherCompany ? formData.rchFile : null,
       };
 
       // Appel API
@@ -355,7 +345,6 @@ const Register = () => {
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
 
-      // Redirection après un délai (si souhaité)
       setTimeout(() => {
         navigate('/account-created');
       }, 2000);
@@ -404,7 +393,6 @@ const Register = () => {
 
             {/* Statut juridique + Secteur */}
             <div className="register-client-form-row">
-              {/* Statut juridique */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
                   <select
@@ -435,7 +423,6 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Secteur */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
                   <select
@@ -456,7 +443,6 @@ const Register = () => {
                           s.symbol_fr.slice(1).toLowerCase()}
                       </option>
                     ))}
-                    {/* On ajoute l'option "Autre" */}
                     <option value="Autre">Autre</option>
                   </select>
                   <span className="register-client-required-asterisk">*</span>
@@ -574,7 +560,7 @@ const Register = () => {
                       Type d'entreprise
                     </option>
                     <option value="zoneFranche">Entreprise en zone franche</option>
-                    <option value="autre">Entreprise Hors Zone franche</option>
+                    <option value="autre">Entreprise hors zone franche</option>
                   </select>
                   <span className="register-client-required-asterisk">*</span>
                 </div>
@@ -608,7 +594,7 @@ const Register = () => {
                       onChange={handleChange}
                       required
                       className="register-client-input"
-                      placeholder="Numéro de licence"
+                      placeholder="Numéro de licence de Zone franche"
                     />
                     <span className="register-client-required-asterisk">*</span>
                   </div>
@@ -616,8 +602,7 @@ const Register = () => {
 
                 <div className="register-client-field register-client-half-width">
                   <label htmlFor="licenseFile" className="custom-file-btn">
-                    {selectedLicenseFileName ||
-                      'Upload'}
+                    {selectedLicenseFileName || 'Upload'}
                   </label>
                   <input
                     type="file"
@@ -645,7 +630,7 @@ const Register = () => {
                         onChange={handleChange}
                         required
                         className="register-client-input"
-                        placeholder="NIF"
+                        placeholder="Numéro d'identification Fiscal NIF"
                       />
                       <span className="register-client-required-asterisk">*</span>
                     </div>
@@ -667,6 +652,7 @@ const Register = () => {
                   </div>
                 </div>
 
+                {/* On garde uniquement le champ texte RCS (on supprime le bouton upload) */}
                 <div className="register-client-form-row">
                   <div className="register-client-field register-client-half-width">
                     <div className="register-client-input-wrapper">
@@ -676,23 +662,9 @@ const Register = () => {
                         value={formData.rchNumber}
                         onChange={handleChange}
                         className="register-client-input"
-                        placeholder="Numéro d'immatriculation RCS"
+                        placeholder="Numéro RCS"
                       />
                     </div>
-                  </div>
-
-                  <div className="register-client-field register-client-half-width">
-                    <label htmlFor="rchFile" className="custom-file-btn">
-                      {selectedRchFileName ||
-                        "Upload"}
-                    </label>
-                    <input
-                      type="file"
-                      id="rchFile"
-                      name="rchFile"
-                      onChange={handleChange}
-                      className="real-file-input"
-                    />
                   </div>
                 </div>
               </>
@@ -702,7 +674,7 @@ const Register = () => {
 
           {/* SECTION CONTACT */}
           <div className="register-client-form-section">
-            <h3 className="primary">Contact</h3>
+            <h3 className="primary">Informations Contact</h3>
 
             <div className="register-client-form-row">
               {/* Civilité */}
@@ -912,13 +884,13 @@ const Register = () => {
             <button type="submit" className="register-client-button">
               Créer
             </button>
+            <Link to="/login">
+              <button type="button" className="register-client-cancel-button">
+                Revenir à la page de connexion
+              </button>
+            </Link>
           </div>
         </form>
-
-        {/* Lien vers la page de connexion */}
-        <div className="register-client-login-link">
-          <Link to="/login">Revenir à la page de connexion</Link>
-        </div>
       </div>
 
       {/* Snackbar */}
