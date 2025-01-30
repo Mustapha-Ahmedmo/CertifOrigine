@@ -24,8 +24,6 @@
   max-width: 800px;
   width: 100%;
   padding: 20px;
-  background-color: #fff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   border-radius: 8px; /* Ajout de cette ligne pour arrondir les bords */
 }
 
@@ -33,7 +31,6 @@
 .register-client-container h2 {
   text-align: center;
   margin-bottom: 40px;
-  color: #DCAF26;
 }
 
 /* Formulaire */
@@ -48,6 +45,11 @@
   margin-bottom: 20px;
   font-size: 1.5em;
   color: #004080; /* Bleu pour les titres */
+  text-transform: lowercase; /* Force le texte en minuscules */
+}
+
+.register-client-form-section h3::first-letter {
+  text-transform: uppercase; /* Majuscule seulement pour la première lettre */
 }
 
 /* Alignement des champs dans une rangée */
@@ -101,8 +103,62 @@
 }
 
 .register-client-input {
-  padding-left: 35px; /* Ajustement pour laisser de la place à l'icône */
+  padding-left: 20px; /* Ajustement pour laisser de la place à l'icône */
 }
+
+//* Conteneur pour les boutons radio sur une seule ligne */
+.register-client-radio-group {
+  display: flex;
+  justify-content: flex-start; /* Aligné à gauche */
+  gap: 15px; /* Espacement entre Mr et Mme */
+  align-items: center;
+}
+
+/* Style de base pour les labels radio */
+.register-client-radio-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 1em;
+  gap: 6px;
+}
+
+/* Masquer les boutons radio natifs */
+.register-client-radio-input {
+  display: none !important;
+}
+
+/* Style du bouton radio personnalisé (plus petit et orange) */
+.register-client-radio-custom {
+  width: 16px !important;  /* Taille plus petite */
+  height: 16px !important;
+  border: 2px solid #ff9800 !important; /* Couleur orange */
+  border-radius: 50% !important;
+  display: inline-block;
+  position: relative;
+  transition: all 0.3s ease-in-out !important;
+}
+
+/* Style du point à l'intérieur quand sélectionné */
+.register-client-radio-input:checked + .register-client-radio-custom::after {
+  content: "" !important;
+  width: 8px !important;
+  height: 8px !important;
+  background-color: #ff9800 !important; /* Point orange */
+  border-radius: 50% !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Changement de couleur au survol */
+.register-client-radio-label:hover .register-client-radio-custom {
+  border-color: #e68900 !important; /* Orange plus foncé */
+}
+
+
+
 
 /* Champs avec taille 50% */
 .register-client-half-width {
@@ -228,13 +284,13 @@ input[type="checkbox"]:checked + .register-client-toggle-label {
   cursor: pointer;
   font-size: 1.1rem;
   transition: background-color 0.3s ease;
-  background-color: #004080; /* Bleu marine pour le bouton Créer */
+  background-color: #C39408; /* Bleu marine pour le bouton Créer */
   color: white;
 }
 
 /* Effet au survol */
 .register-client-button:hover {
-  background-color: #003366; /* Bleu plus foncé au survol */
+  background-color: #C39408
 }
 
 /* Style pour les champs de téléchargement de fichiers */
@@ -256,7 +312,7 @@ input[type="checkbox"]:checked + .register-client-toggle-label {
 }
 
 .register-client-login-link a {
-  color: #0056b3;
+  color: #DCAF26 !important;;
   text-decoration: none;
 }
 
@@ -402,4 +458,118 @@ input[type="checkbox"]:checked + .register-client-toggle-label {
   font-size: 1em;
   background-color: #fff;
   box-sizing: border-box;
+}
+
+
+/* Style du bouton Upload */
+.register-client-file-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  position: relative;
+}
+
+.register-client-file-upload label {
+  background-color: #ff9800; /* Couleur orange */
+  color: white;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  text-align: center;
+  display: inline-block;
+  transition: background-color 0.3s ease;
+}
+
+.register-client-file-upload label:hover {
+  background-color: #e68900; /* Orange plus foncé */
+}
+
+/* Cacher l'input natif */
+.register-client-file-input {
+  display: none;
+}
+
+/* Affichage du nom du fichier */
+.register-client-file-name {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+
+.register-client-file-upload .register-client-required-asterisk {
+  display: none;
+} 
+
+/* Fixer la taille de l'indicatif et empêcher les variations */
+.country-code-select {
+  width: 110x; /* Taille fixe pour l'indicatif */
+  min-width: 75px; /* Évite les variations */
+  text-align: center; /* Centre le texte */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+  appearance: none; /* Désactive le style natif des select */
+}
+
+/* Empêcher le champ téléphone de bouger */
+.phone-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%; /* Assurer que l'ensemble du champ reste stable */
+  gap: 8px;
+}
+
+/* Fixer la largeur du champ téléphone pour qu'il s'adapte au reste */
+.phone-number-input {
+  flex-grow: 1; /* Prend tout l’espace restant */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1em;
+  background-color: #fff;
+  box-sizing: border-box;
+}
+
+
+/* Styles pour les checkboxes */
+.register-client-checkbox-label {
+  display: flex; /* Met la case à cocher et le texte sur la même ligne */
+  align-items: center; /* Centre verticalement */
+  gap: 8px; /* Ajoute un espacement entre la case et le texte */
+  width: 100%; /* Permet aux labels de bien s'aligner */
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Corrige l'alignement des cases à cocher */
+.register-client-checkbox-label input[type="checkbox"] {
+  width: 10px; /* Taille standard de la case */
+  height: 18px;
+  flex-shrink: 0; /* Empêche le rétrécissement */
+  margin: 0; /* Supprime les marges inutiles */
+}
+
+/* Correction pour éviter que l'astérisque (*) décale tout */
+.register-client-checkbox-label .register-client-required-asterisk {
+  position: static; /* Supprime le positionnement absolu */
+  margin-left: 5px; /* Ajoute un petit espace après */
+  font-size: 1.2em;
+  color: red;
+}
+
+/* Centrer correctement les checkboxes et le bouton "Créer" */
+.register-client-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Espacement entre chaque checkbox */
+}
+
+/* Alignement correct du bouton "Créer" sous les checkboxes */
+.register-client-form-actions {
+  display: flex;
+  justify-content: center; /* Centre les boutons */
+  gap: 15px; /* Espacement entre les boutons */
 }

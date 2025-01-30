@@ -327,19 +327,33 @@ const Register = () => {
       </div>
 
       <div className="register-client-container">
-        <h2>Créer un Compte</h2>
+        <h2>Créer son compte</h2>
         {error && <p className="error-message">{error}</p>}
         {successMessage && <p className="success-message">{successMessage}</p>}
 
         <form onSubmit={handleSubmit} className="register-client-form">
           {/* Section Information Entreprise */}
           <div className="register-client-form-section">
-            <h3 className="primary">Information Entreprise</h3>
+            <h3 className="primary">Information(s) Entreprise</h3>
             <div className="register-client-form-row">
+              {/* Raison sociale */}
+              <div className="register-client-field register-client-full-width">
+                <div className="register-client-input-wrapper">
+                  <input
+                    type="text"
+                    name="companyName"
+                    value={formData.companyName}
+                    onChange={handleChange}
+                    required
+                    className="register-client-input"
+                    placeholder="Nom de l'entreprise"
+                  />
+                  <span className="register-client-required-asterisk">*</span>
+                </div>
+              </div>
               {/* Catégorie */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faBuilding} className="input-icon" />
                   <select
                     name="companyCategory"
                     value={formData.companyCategory}
@@ -350,7 +364,7 @@ const Register = () => {
                     }`}
                   >
                     <option value="" disabled hidden>
-                      Catégorie
+                      Statut juridique
                     </option>
                     <option value="Auto-entrepreneur">Auto-entrepreneur</option>
                     <option value="Entreprise individuelle">Entreprise individuelle</option>
@@ -371,7 +385,6 @@ const Register = () => {
               {/* Secteur */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faIndustry} className="input-icon" />
                   <select
                     name="sector"
                     value={formData.sector}
@@ -401,7 +414,6 @@ const Register = () => {
               <div className="register-client-form-row">
                 <div className="register-client-field register-client-full-width">
                   <div className="register-client-input-wrapper">
-                    <FontAwesomeIcon icon={faIndustry} className="input-icon" />
                     <input
                       type="text"
                       name="otherSector"
@@ -417,48 +429,12 @@ const Register = () => {
               </div>
             )}
 
-            {/* Raison sociale et autre champs */}
-            <div className="register-client-form-row">
-              {/* Raison sociale */}
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faAddressCard} className="input-icon" />
-                  <input
-                    type="text"
-                    name="companyName"
-                    value={formData.companyName}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Nom de l'entreprise"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-
-              {/* Adresse complète */}
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faAddressCard} className="input-icon" />
-                  <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Adresse complète"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
+          
 
             <div className="register-client-form-row">
               {/* Pays */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faGlobe} className="input-icon" />
                   <select
                     name="country"
                     value={formData.country}
@@ -469,7 +445,7 @@ const Register = () => {
                     }`}
                   >
                     <option value="" disabled hidden>
-                      Pays
+                      Pays de résidence de l'entreprise
                     </option>
                     {countries.map((country) => (
                       <option key={country.id_country} value={country.symbol_fr}>
@@ -483,30 +459,50 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Liste déroulante pour le type d'entreprise */}
-            <div className="register-client-form-row">
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faBuilding} className="input-icon" />
-                  <select
-                    name="companyType"
-                    value={formData.companyType}
-                    onChange={handleChange}
-                    required
-                    className={`register-client-input ${
-                      formData.companyType === '' ? 'placeholder' : ''
-                    }`}
-                  >
-                    <option value="" disabled hidden>
-                      Type d'entreprise
-                    </option>
-                    <option value="zoneFranche">Entreprise en zone franche</option>
-                    <option value="autre">Autre Entreprise</option>
-                  </select>
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
+          {/* Type d'entreprise et Adresse complète côte à côte */}
+          <div className="register-client-form-row">
+            
+            {/* Type d'entreprise */}
+            <div className="register-client-field register-client-half-width">
+              <div className="register-client-input-wrapper">
+                <select
+                  name="companyType"
+                  value={formData.companyType}
+                  onChange={handleChange}
+                  required
+                  className={`register-client-input ${
+                    formData.companyType === '' ? 'placeholder' : ''
+                  }`}
+                >
+                  <option value="" disabled hidden>
+                    Type d'entreprise
+                  </option>
+                  <option value="zoneFranche">Entreprise en zone franche</option>
+                  <option value="autre">Autre Entreprise</option>
+                </select>
+                <span className="register-client-required-asterisk">*</span>
               </div>
             </div>
+
+            {/* Adresse complète */}
+            <div className="register-client-field register-client-half-width">
+              <div className="register-client-input-wrapper">
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  required
+                  className="register-client-input"
+                  placeholder="Adresse complète"
+                />
+                <span className="register-client-required-asterisk">*</span>
+              </div>
+            </div>
+
+          </div>
+
+
 
             {/* Champs conditionnels basés sur le type d'entreprise */}
             {formData.isFreeZoneCompany && (
@@ -514,7 +510,6 @@ const Register = () => {
                 {/* Numéro de licence */}
                 <div className="register-client-field register-client-half-width">
                   <div className="register-client-input-wrapper">
-                    <FontAwesomeIcon icon={faAddressCard} className="input-icon" />
                     <input
                       type="text"
                       name="licenseNumber"
@@ -531,16 +526,27 @@ const Register = () => {
                 {/* Télécharger la licence */}
                 <div className="register-client-field register-client-half-width">
                   <label className="register-client-file-label">
-                    Télécharger la licence de zone franche
-                    <input
-                      type="file"
-                      name="licenseFile"
-                      onChange={handleChange}
-                      required
-                      className="register-client-file-input"
-                    />
+                    {/* Télécharger la licence */}
+                    <div className="register-client-field register-client-half-width">
+                      <div className="register-client-file-upload">
+                        <label htmlFor="licenseFile">Upload</label>
+                        <input
+                          type="file"
+                          id="licenseFile"
+                          name="licenseFile"
+                          className="register-client-file-input"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              setFormData((prev) => ({ ...prev, licenseFile: file }));
+                            }
+                          }}
+                        />
+                        {formData.licenseFile && <span className="register-client-file-name">{formData.licenseFile.name}</span>}
+                      </div>
+                    </div>
+
                   </label>
-                  <span className="register-client-required-asterisk">*</span>
                 </div>
               </div>
             )}
@@ -551,7 +557,6 @@ const Register = () => {
                   {/* NIF */}
                   <div className="register-client-field register-client-half-width">
                     <div className="register-client-input-wrapper">
-                      <FontAwesomeIcon icon={faAddressCard} className="input-icon" />
                       <input
                         type="text"
                         name="nif"
@@ -568,16 +573,26 @@ const Register = () => {
                   {/* Télécharger patente */}
                   <div className="register-client-field register-client-half-width">
                     <label className="register-client-file-label">
-                      Télécharger patente
-                      <input
-                        type="file"
-                        name="patenteFile"
-                        onChange={handleChange}
-                        required
-                        className="register-client-file-input"
-                      />
+                      {/* Télécharger patente */}
+                      <div className="register-client-field register-client-half-width">
+                        <div className="register-client-file-upload">
+                          <label htmlFor="patenteFile">Upload</label>
+                          <input
+                            type="file"
+                            id="patenteFile"
+                            name="patenteFile"
+                            className="register-client-file-input"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) {
+                                setFormData((prev) => ({ ...prev, patenteFile: file }));
+                              }
+                            }}
+                          />
+                          {formData.patenteFile && <span className="register-client-file-name">{formData.patenteFile.name}</span>}
+                        </div>
+                      </div>
                     </label>
-                    <span className="register-client-required-asterisk">*</span>
                   </div>
                 </div>
 
@@ -585,7 +600,6 @@ const Register = () => {
                   {/* Numéro d'immatriculation RCS */}
                   <div className="register-client-field register-client-half-width">
                     <div className="register-client-input-wrapper">
-                      <FontAwesomeIcon icon={faAddressCard} className="input-icon" />
                       <input
                         type="text"
                         name="rchNumber"
@@ -600,13 +614,26 @@ const Register = () => {
                   {/* Télécharger le numéro d'immatriculation RCS */}
                   <div className="register-client-field register-client-half-width">
                     <label className="register-client-file-label">
-                      Télécharger le numéro d'immatriculation RCS
-                      <input
-                        type="file"
-                        name="rchFile"
-                        onChange={handleChange}
-                        className="register-client-file-input"
-                      />
+                      {/* Télécharger le numéro d'immatriculation RCS */}
+                      <div className="register-client-field register-client-half-width">
+                        <div className="register-client-file-upload">
+                          <label htmlFor="rchFile">Upload</label>
+                          <input
+                            type="file"
+                            id="rchFile"
+                            name="rchFile"
+                            className="register-client-file-input"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) {
+                                setFormData((prev) => ({ ...prev, rchFile: file }));
+                              }
+                            }}
+                          />
+                          {formData.rchFile && <span className="register-client-file-name">{formData.rchFile.name}</span>}
+                        </div>
+                      </div>
+
                     </label>
                   </div>
                 </div>
@@ -616,32 +643,41 @@ const Register = () => {
 
           {/* Section Contact */}
           <div className="register-client-form-section">
-            <h3 className="primary">Contact</h3>
+            <h3 className="primary">Information(s) Contact</h3>
             <div className="register-client-form-row">
-              {/* Civilité */}
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-toggle-switch">
+              {/* Civilité avec boutons radio sur la même ligne */}
+              <div className="register-client-field register-client-half-width register-client-radio-group">
+                <label className="register-client-radio-label">
                   <input
-                    type="checkbox"
-                    id="gender-toggle"
+                    type="radio"
                     name="gender"
-                    checked={formData.gender === 'Mme'}
-                    onChange={toggleGender}
+                    value="Mr"
+                    checked={formData.gender === 'Mr'}
+                    onChange={handleChange}
+                    className="register-client-radio-input"
                   />
-                  <label htmlFor="gender-toggle" className="register-client-toggle-label">
-                    <span className="register-client-toggle-slider"></span>
-                  </label>
-                  <label htmlFor="gender-toggle" className="register-client-gender-label">
-                    {formData.gender}
-                  </label>
-                </div>
-                <span className="register-client-required-asterisk">*</span>
+                  <span className="register-client-radio-custom"></span>
+                  Mr
+                </label>
+
+                <label className="register-client-radio-label">
+                  <input
+                    type="radio"
+                    name="gender"
+                    value="Mme"
+                    checked={formData.gender === 'Mme'}
+                    onChange={handleChange}
+                    className="register-client-radio-input"
+                  />
+                  <span className="register-client-radio-custom"></span>
+                  Mme
+                </label>
               </div>
+
 
               {/* Nom */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faUser} className="input-icon" />
                   <input
                     type="text"
                     name="name"
@@ -660,7 +696,6 @@ const Register = () => {
               {/* Fonction */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faBuilding} className="input-icon" />
                   <input
                     type="text"
                     name="position"
@@ -678,21 +713,19 @@ const Register = () => {
             {/* Téléphone fixe + indicatif */}
             <div className="register-client-form-row">
               <div className="register-client-field register-client-half-width">
-                <label className="register-client-label">Téléphone (fixe)</label>
                 <div className="register-client-input-wrapper phone-wrapper">
-                  <FontAwesomeIcon icon={faPhone} className="input-icon" />
-                  <select
-                    name="phoneFixedCountryCode"
-                    value={formData.phoneFixedCountryCode}
-                    onChange={handleChange}
-                    className="register-client-input country-code-select"
-                  >
-                    {countryCodes.map((country) => (
-                      <option key={country.code} value={country.code}>
-                        {country.flag} {country.name} ({country.code})
-                      </option>
-                    ))}
-                  </select>
+                <select
+                  name="phoneFixedCountryCode"
+                  value={formData.phoneFixedCountryCode}
+                  onChange={handleChange}
+                  className="register-client-input country-code-select"
+                >
+                  {countryCodes.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.flag} ({country.code})
+                    </option>
+                  ))}
+                </select>
                   <input
                     type="text"
                     name="phoneFixedNumber"
@@ -700,17 +733,15 @@ const Register = () => {
                     onChange={handleChange}
                     required
                     className="register-client-input phone-number-input"
-                    placeholder="612345678"
+                    placeholder="Téléphone (fixe)"
                   />
                   <span className="register-client-required-asterisk">*</span>
                 </div>
               </div>
 
               {/* Téléphone portable + indicatif */}
-              <div className="register-client-field register-client-half-width">
-                <label className="register-client-label">Téléphone (portable)</label>
+              <div className="register-client-field register-client-full-width">
                 <div className="register-client-input-wrapper phone-wrapper">
-                  <FontAwesomeIcon icon={faMobileAlt} className="input-icon" />
                   <select
                     name="phoneMobileCountryCode"
                     value={formData.phoneMobileCountryCode}
@@ -719,7 +750,7 @@ const Register = () => {
                   >
                     {countryCodes.map((country) => (
                       <option key={country.code} value={country.code}>
-                        {country.flag} {country.name} ({country.code})
+                        {country.flag} ({country.code})
                       </option>
                     ))}
                   </select>
@@ -730,7 +761,7 @@ const Register = () => {
                     onChange={handleChange}
                     required
                     className="register-client-input phone-number-input"
-                    placeholder="712345678"
+                    placeholder="Téléphone (portable)"
                   />
                   <span className="register-client-required-asterisk">*</span>
                 </div>
@@ -741,7 +772,6 @@ const Register = () => {
             <div className="register-client-form-row">
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
                   <input
                     type="email"
                     name="email"
@@ -760,7 +790,6 @@ const Register = () => {
             <div className="register-client-form-row">
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faLock} className="input-icon" />
                   <input
                     type="password"
                     name="password"
@@ -776,7 +805,6 @@ const Register = () => {
 
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faLock} className="input-icon" />
                   <input
                     type="password"
                     name="confirmPassword"
