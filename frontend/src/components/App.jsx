@@ -41,6 +41,7 @@ import RegisterContact from '../pages/RegisterContact';
 
 // Gestion de l'inactivité
 import InactivityHandler from './InactivityHandler';
+import Step2 from './orders/Create/steps/Step2';
 
 const App = () => {
   const dispatch = useDispatch();
@@ -128,6 +129,9 @@ const App = () => {
         <Route path="/account-created" element={<SimpleLayout />}>
           <Route index element={<AccountCreated />} />
         </Route>
+
+
+        <Route path="/create-order/step2" element={<Step2 />} />
 
         {/* 5) Fallback si aucune route ne matche (page blanche -> rediriger) */}
         <Route path="*" element={<Navigate to="/" replace />} />

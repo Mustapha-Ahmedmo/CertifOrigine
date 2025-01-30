@@ -438,3 +438,208 @@ export const deleteCustUser = async (id) => {
     throw error;
   }
 };
+
+export const createOrder = async (orderTitle, idCustAccount, idloginInsert) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include token if needed
+      },
+      body: JSON.stringify({
+        orderTitle,
+        idCustAccount,
+        idloginInsert,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create order');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (createOrder):', error);
+    throw error;
+  }
+};
+
+export const getTransmodeInfo = async (idList = null, isActive = null) => {
+  try {
+    const params = new URLSearchParams();
+    if (idList) params.append('id_list', idList); // Add ID list to query params
+    if (isActive !== null) params.append('isActive', isActive); // Convert to string and add isActive
+
+    const response = await fetch(`${API_URL}/orders/transport-modes?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include JWT token if required
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch transport mode information');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getTransmodeInfo):', error);
+    throw error;
+  }
+};
+
+export const getUnitWeightInfo = async (idList = null, isActive = null) => {
+  try {
+    const params = new URLSearchParams();
+    if (idList) params.append('id_list', idList); // Add ID list to query params
+    if (isActive !== null) params.append('isActive', isActive); // Convert to string and add isActive
+
+    const response = await fetch(`${API_URL}/orders/unit-weights?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include JWT token if required
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch unit weight information');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getUnitWeightInfo):', error);
+    throw error;
+  }
+};
+
+export const fetchRecipients = async (filters = {}) => {
+  try {
+    const params = new URLSearchParams(filters);
+
+    const response = await fetch(`${API_URL}/orders/recipients?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch recipients');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching recipients:', error);
+  }
+};
+
+export const addRecipient = async (recipientData) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/recipients`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(recipientData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to add or update recipient');
+    }
+
+    const data = await response.json();
+    console.log(data.message); // Success message
+    return data;
+  } catch (error) {
+    console.error('Error adding recipient:', error);
+  }
+};
+
+export const createCertificate = async (certData) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/create-certif`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(certData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create certificate');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating certificate:', error);
+    throw error;
+  }
+};
+
+export const addOrUpdateGoods = async (goodsData) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/certif-goods`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(goodsData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to add or update goods');
+    }
+
+    const data = await response.json();
+    console.log('Goods added/updated successfully:', data);
+
+    return data; // Return the API response, including the new ID
+  } catch (error) {
+    console.error('Error adding/updating goods:', error);
+    throw error; // Ensure the caller can handle errors properly
+  }
+};
+export const getOrdersForCustomer = async ({ idOrderList = null, idCustAccountList = null, idOrderStatusList = null, idLogin }) => {
+  try {
+    console.log("test");
+    if (!idLogin) {
+      throw new Error('Le champ idLogin est requis.');
+    }
+
+    const params = new URLSearchParams();
+    if (idOrderList) params.append('idOrderList', idOrderList);
+    if (idCustAccountList) params.append('idCustAccountList', idCustAccountList);
+    if (idOrderStatusList) params.append('idOrderStatusList', idOrderStatusList);
+    params.append('idLogin', idLogin);
+
+    const response = await fetch(`${API_URL}/orders/customer-orders?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include JWT token if required
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch orders');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching orders for customer:', error);
+    throw error;
+  }
+};

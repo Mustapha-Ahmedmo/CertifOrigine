@@ -13,9 +13,23 @@ DROP TABLE IF EXISTS FILES_REPO CASCADE;
 DROP TABLE IF EXISTS CUST_ACCOUNT_FILES CASCADE;
 DROP TABLE IF EXISTS "ORDER" CASCADE;
 DROP TABLE IF EXISTS ORDER_STATUS CASCADE;
-
 DROP TABLE IF EXISTS GLOBAL_SETTINGS CASCADE;
+DROP TABLE IF EXISTS HISTO_ORDER CASCADE;
+DROP TABLE IF EXISTS TRANSPORT_MODE CASCADE;
+DROP TABLE IF EXISTS UNIT_WEIGHT CASCADE;
+DROP TABLE IF EXISTS RECIPIENT_ACCOUNT CASCADE;
+DROP TABLE IF EXISTS ORD_CERTIF_ORI CASCADE;
+DROP TABLE IF EXISTS ORD_CERTIF_GOODS CASCADE;
+DROP TABLE IF EXISTS SERVICES_CHARGES CASCADE;
+DROP TABLE IF EXISTS CURRENCY CASCADE;
+DROP TABLE IF EXISTS ORD_COM_INVOICE CASCADE;
 
+CREATE TABLE CURRENCY (
+    ID_CURRENCY INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    SYMBOL VARCHAR(8) NOT NULL,                 -- Non nullable
+    CODE VARCHAR(16) NOT NULL,                  -- Non nullable
+    EXCHANGE_RATE FLOAT DEFAULT 0 NOT NULL      -- Non nullable avec valeur par défaut
+);
 
 CREATE TABLE LOGIN_USER (
     ID_LOGIN_USER INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -221,6 +235,180 @@ CREATE TABLE GLOBAL_SETTINGS (
     FOREIGN KEY (ID_ORDER) REFERENCES "ORDER"(ID_ORDER),
     FOREIGN KEY (ID_CUST_ACCOUNT) REFERENCES CUST_ACCOUNT(ID_CUST_ACCOUNT),
     FOREIGN KEY (ID_FILES_REPO) REFERENCES FILES_REPO(ID_FILES_REPO)
+);
+
+
+CREATE TABLE HISTO_ORDER (
+    ID_HISTO_ORDER INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_ORDER INT,
+    ID_CUST_ACCOUNT INT,
+    ORDER_TITLE VARCHAR(32),
+    ID_ORDER_STATUS INT,
+    IDLOGIN_OWNER INT,
+    IDLOGIN_SPARE INT,
+    DATE_OWNER TIMESTAMP,
+    DATE_SPARE TIMESTAMP,
+    DATE_LAST_SUBMISSION TIMESTAMP,
+    DATE_LAST_RETURN TIMESTAMP,
+    DATE_VALIDATION TIMESTAMP,
+    INSERTDATE TIMESTAMP,
+    IDLOGIN_INSERT INT,
+    LASTMODIFIED TIMESTAMP,
+    IDLOGIN_MODIFY INT,
+    TYPEoF INT DEFAULT 1,
+    ORDER_HISTO_ACTION INT,              -- Non nullable
+    INSERTDATE_HISTO TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Non nullable avec valeur par défaut
+    IDLOGIN_INSERT_HISTO INT NOT NULL,                  -- Non nullable
+    
+    FOREIGN KEY (ID_ORDER) REFERENCES "ORDER"(ID_ORDER),
+    FOREIGN KEY (ID_CUST_ACCOUNT) REFERENCES CUST_ACCOUNT(ID_CUST_ACCOUNT),
+    FOREIGN KEY (ID_ORDER_STATUS) REFERENCES ORDER_STATUS(ID_ORDER_STATUS),
+    FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_OWNER) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_SPARE) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_INSERT_HISTO) REFERENCES LOGIN_USER(ID_LOGIN_USER)
+);
+
+CREATE TABLE TRANSPORT_MODE (
+    ID_TRANSPORT_MODE INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    SYMBOL_FR VARCHAR(64) NOT NULL,             -- Non nullable
+    SYMBOL_ENG VARCHAR(64) NOT NULL,            -- Non nullable
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL -- Non nullable avec valeur par défaut
+);
+
+CREATE TABLE UNIT_WEIGHT (
+    ID_UNIT_WEIGHT INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    SYMBOL_FR VARCHAR(64) NOT NULL,             -- Non nullable
+    SYMBOL_ENG VARCHAR(64) NOT NULL,            -- Non nullable
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL -- Non nullable avec valeur par défaut
+);
+
+
+CREATE TABLE RECIPIENT_ACCOUNT (
+    ID_RECIPIENT_ACCOUNT INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_CUST_ACCOUNT INT,
+    RECIPIENT_NAME VARCHAR(96),
+    ADDRESS_1 VARCHAR(160),
+    ADDRESS_2 VARCHAR(160) NULL,    -- Nullable
+    ADDRESS_3 VARCHAR(160) NULL,    -- Nullable
+    ID_CITY INT,
+    STATUT_FLAG INT DEFAULT 1 NOT NULL,   -- Valeur par défaut
+    INSERTDATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,   -- Non nullable
+    ACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,   -- Non nullable
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL,  -- Non nullable
+    IDLOGIN_INSERT INT NOT NULL,
+    LASTMODIFIED TIMESTAMP NULL,   -- Nullable
+    IDLOGIN_MODIFY INT NULL,      -- Nullable
+    FOREIGN KEY (ID_CUST_ACCOUNT) REFERENCES CUST_ACCOUNT(ID_CUST_ACCOUNT),
+    FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (ID_CITY) REFERENCES CITY(ID_CITY),
+    FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER)
+);
+
+
+CREATE TABLE ORD_CERTIF_ORI (
+    ID_ORD_CERTIF_ORI INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_ORDER INT NOT NULL,                                -- Non nullable
+    ID_RECIPIENT_ACCOUNT INT,
+    ID_COUNTRY_ORIGIN INT NOT NULL,                       -- Non nullable
+    ID_COUNTRY_DESTINATION INT NOT NULL,                  -- Non nullable
+    TRANSPORT_REMARKS VARCHAR(160) NULL,                  -- Nullable
+    NOTES VARCHAR(256) NULL,                              -- Nullable
+    COPY_COUNT INT DEFAULT 0 NOT NULL,                    -- Non nullable avec valeur par défaut
+    EQUIVALENT_AMOUNT REAL DEFAULT 1 NOT NULL,            -- Non nullable
+    INSERTDATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Non nullable avec valeur par défaut
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
+    IDLOGIN_INSERT INT NOT NULL,                          -- Non nullable
+    DATE_VALIDATION TIMESTAMP,
+    LASTMODIFIED TIMESTAMP NULL,                          -- Nullable
+    IDLOGIN_MODIFY INT NULL,                              -- Nullable
+    TYPEoF INT DEFAULT 1,
+    FOREIGN KEY (ID_ORDER) REFERENCES "ORDER"(ID_ORDER),
+    FOREIGN KEY (ID_RECIPIENT_ACCOUNT) REFERENCES RECIPIENT_ACCOUNT(ID_RECIPIENT_ACCOUNT),
+    FOREIGN KEY (ID_COUNTRY_ORIGIN) REFERENCES COUNTRY(ID_COUNTRY),
+    FOREIGN KEY (ID_COUNTRY_DESTINATION) REFERENCES COUNTRY(ID_COUNTRY),
+    FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER)
+);
+
+
+CREATE TABLE ORD_CERTIF_GOODS (
+    ID_ORD_CERTIF_GOODS INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_ORD_CERTIF_ORI INT NOT NULL,                -- Non nullable
+    GOOD_DESCRIPTION VARCHAR(256) NOT NULL,       -- Non nullable
+    GOOD_REFERENCES VARCHAR(160) NULL,            -- Nullable
+    DOC_REFERENCES VARCHAR(256) NULL,
+    WEIGHT_QTY FLOAT NOT NULL,                    -- Non nullable
+    ID_UNIT_WEIGHT INT NOT NULL,                  -- Non nullable
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
+    FOREIGN KEY (ID_ORD_CERTIF_ORI) REFERENCES ORD_CERTIF_ORI(ID_ORD_CERTIF_ORI),
+    FOREIGN KEY (ID_UNIT_WEIGHT) REFERENCES UNIT_WEIGHT(ID_UNIT_WEIGHT)
+);
+
+
+CREATE TABLE SERVICES_CHARGES (
+    ID_SERVICES_CHARGES INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    DESCRIPTION_FR VARCHAR(96) NOT NULL,             -- Non nullable
+    DESCRIPTION_ENG VARCHAR(96) NOT NULL,             -- Non nullable
+    TYPEoF INT DEFAULT 1 NOT NULL,               -- Non nullable avec valeur par défaut
+    UNIT_PRICE REAL DEFAULT 1 NOT NULL,                   -- Non nullable
+    UNIT_PERCENT REAL DEFAULT 1 NOT NULL,
+    AMOUNT_LOWER_LIMIT REAL DEFAULT 0,
+    AMOUNT_UPPER_LIMIT REAL DEFAULT 9999999999999999,
+    WITH_TAX_STAMP BOOLEAN DEFAULT FALSE,
+    UNIT_PRICE_STAMP REAL DEFAULT 0,
+    WITH_COPIES BOOLEAN DEFAULT FALSE,
+    UNIT_PRICE_COPIES REAL DEFAULT 10,
+    ID_CURRENCY INT NOT NULL,                    -- Non nullable
+    ACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Non nullable avec valeur par défaut
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
+    FOREIGN KEY (ID_CURRENCY) REFERENCES CURRENCY(ID_CURRENCY)
+);
+
+
+
+CREATE TABLE ORD_LEGALIZATION (
+    ID_ORD_LEGALIZATION INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_ORDER INT,
+    NOTES VARCHAR(256) NULL,
+    COPY_COUNT INT DEFAULT 0,
+    EQUIVALENT_AMOUNT REAL DEFAULT 1,
+    INSERTDATE TIMESTAMP,
+    DEACTIVATION_DATE TIMESTAMP,
+    IDLOGIN_INSERT INT,
+    DATE_VALIDATION TIMESTAMP,
+    LASTMODIFIED TIMESTAMP NULL,
+    IDLOGIN_MODIFY INT NULL,
+    TYPEoF INT DEFAULT 10,
+
+    FOREIGN KEY (ID_ORDER) REFERENCES "ORDER"(ID_ORDER),
+    FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER)
+);
+
+
+CREATE TABLE ORD_COM_INVOICE (
+    ID_ORD_COM_INVOICE INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_ORDER INT,
+    NOTES VARCHAR(256),
+    COPY_COUNT INT DEFAULT 0,
+    ID_CURRENCY INT,
+    CURRENCY_AMOUNT REAL,
+    CURRENCY_RATES REAL DEFAULT 1,
+    EQUIVALENT_AMOUNT REAL DEFAULT 1,
+    INSERTDATE TIMESTAMP,
+    DEACTIVATION_DATE TIMESTAMP,
+    IDLOGIN_INSERT INT,
+    DATE_VALIDATION TIMESTAMP,
+    LASTMODIFIED TIMESTAMP,
+    IDLOGIN_MODIFY INT,
+    TYPEoF INT DEFAULT 100,
+
+    FOREIGN KEY (ID_ORDER) REFERENCES "ORDER"(ID_ORDER),
+    FOREIGN KEY (ID_CURRENCY) REFERENCES CURRENCY(ID_CURRENCY),
+    FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER)
 );
 
 
@@ -1669,10 +1857,995 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
+
+DROP PROCEDURE IF EXISTS set_histo_order;
+CREATE OR REPLACE PROCEDURE set_histo_order(
+    p_id_order INT,
+    p_id_login_histo INT,
+    p_order_histo_action INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF p_id_order IS NOT NULL THEN
+        INSERT INTO HISTO_ORDER (
+            ID_ORDER,
+            ID_CUST_ACCOUNT,
+            ORDER_TITLE,
+            ID_ORDER_STATUS,
+            IDLOGIN_OWNER,
+            IDLOGIN_SPARE,
+            DATE_OWNER,
+            DATE_SPARE,
+            DATE_LAST_SUBMISSION,
+            DATE_LAST_RETURN,
+            DATE_VALIDATION,
+			INSERTDATE,
+			IDLOGIN_INSERT,
+			LASTMODIFIED,
+			IDLOGIN_MODIFY,
+			TYPEoF,
+            IDLOGIN_INSERT_HISTO,
+            ORDER_HISTO_ACTION
+        )
+        SELECT 
+            o.ID_ORDER,
+            o.ID_CUST_ACCOUNT,
+            o.ORDER_TITLE,
+            o.ID_ORDER_STATUS,
+            o.IDLOGIN_OWNER,
+            o.IDLOGIN_SPARE,
+            o.DATE_OWNER,
+            o.DATE_SPARE,
+            o.DATE_LAST_SUBMISSION,
+            o.DATE_LAST_RETURN,
+            o.DATE_VALIDATION,
+			o.INSERTDATE,
+			o.IDLOGIN_INSERT,
+			o.LASTMODIFIED,
+			o.IDLOGIN_MODIFY,
+			o.TYPEoF,
+            p_id_login_histo,
+            p_order_histo_action
+        FROM "ORDER" o
+        WHERE o.ID_ORDER = p_id_order;
+    END IF;
+END;
+$$;
+
+
+-- CREATE ORDER
+---
+---
+
+DROP PROCEDURE IF EXISTS add_order;
+CREATE OR REPLACE PROCEDURE add_order(
+    p_id_cust_account INT,
+    p_order_title VARCHAR,
+    p_idlogin_insert INT,
+    INOUT p_new_order_id INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+   
+    INSERT INTO "ORDER" (
+        ID_CUST_ACCOUNT,
+        ORDER_TITLE,
+        ID_ORDER_STATUS,
+        IDLOGIN_INSERT,
+        TYPEoF,
+        INSERTDATE
+    )
+    VALUES (
+        p_id_cust_account,
+        p_order_title,
+        1,
+        p_idlogin_insert,
+        0,
+        NOW()
+    )
+    RETURNING ID_ORDER INTO p_new_order_id;
+
+    
+    CALL set_histo_order(
+        p_new_order_id,
+        p_idlogin_insert,
+        1 
+    );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION add_order_wrapper(
+    p_id_cust_account INT,
+    p_order_title VARCHAR,
+    p_idlogin_insert INT
+) RETURNS INT AS $$
+DECLARE
+    new_order_id INT;
+BEGIN
+    CALL add_order(p_id_cust_account, p_order_title, p_idlogin_insert, new_order_id);
+    RETURN new_order_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+DROP FUNCTION IF EXISTS get_orderstatus_info;
+CREATE OR REPLACE FUNCTION get_orderstatus_info(id_list TEXT)
+RETURNS TABLE(id_order_status INT, txt_order_status_fr VARCHAR(32), txt_order_status_eng VARCHAR(32), note VARCHAR(32)) AS
+$$
+BEGIN
+    
+    RETURN QUERY
+    SELECT os."id_order_status", os."txt_order_status_fr", os."txt_order_status_eng", os."note"
+    FROM order_status os
+    WHERE id_list is null OR os."id_order_status" = ANY (string_to_array(id_list, ',')::INT[]);
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE PROCEDURE set_order_status(
+    p_id_order_status INT,
+    p_txt_order_status_fr VARCHAR(32),
+    p_txt_order_status_eng VARCHAR(32),
+    p_note VARCHAR(32)
+)
+AS
+$$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM order_status WHERE "id_order_status" = p_id_order_status
+    ) THEN
+        INSERT INTO order_status (
+            "id_order_status",
+            "txt_order_status_fr",
+            "txt_order_status_eng",
+            "note"
+        ) VALUES (
+            p_id_order_status,
+            p_txt_order_status_fr,
+            p_txt_order_status_eng,
+            p_note
+        );
+    ELSE
+        UPDATE order_status
+        SET
+            "txt_order_status_fr" = p_txt_order_status_fr,
+            "txt_order_status_eng" = p_txt_order_status_eng,
+            "note" = p_note
+        WHERE "id_order_status" = p_id_order_status;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+DROP PROCEDURE IF EXISTS set_transport_mode;
+CREATE OR REPLACE PROCEDURE set_transport_mode(
+    p_id_transport_mode INT,
+    p_symbol_fr VARCHAR(64),
+	p_symbol_eng VARCHAR (64)
+)
+AS
+$$
+BEGIN
+    IF p_id_transport_mode IS NULL OR p_id_transport_mode = 0 THEN
+        INSERT INTO transport_mode (
+		    "symbol_fr",
+            "symbol_eng"
+        ) VALUES (
+			p_symbol_fr,
+            p_symbol_eng
+        );
+    ELSE
+        UPDATE transport_mode
+        SET
+			"symbol_fr" = p_symbol_fr,
+            "symbol_eng" = p_symbol_eng
+        WHERE "id_transport_mode" = p_id_transport_mode;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP FUNCTION IF EXISTS get_transmode_info;
+CREATE OR REPLACE FUNCTION get_transmode_info(
+    p_id_list TEXT,
+    p_isactive BOOLEAN
+)
+RETURNS TABLE(
+    id_transport_mode INT,
+    symbol_fr VARCHAR(64),
+    symbol_eng VARCHAR(64),
+	deactivation_date TIMESTAMP
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        tp."id_transport_mode",
+        tp."symbol_fr",
+        tp."symbol_eng",
+        tp."deactivation_date"
+    FROM 
+        transport_mode tp
+    WHERE 
+        (p_id_list IS NULL OR tp."id_transport_mode" = ANY (string_to_array(p_id_list, ',')::INT[]))
+    AND (
+	     p_isactive IS NULL
+        OR(p_isactive IS NOT TRUE AND tp."deactivation_date" <= CURRENT_DATE
+        )
+        OR (p_isactive IS TRUE AND tp."deactivation_date" > CURRENT_DATE
+        )
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+
+DROP PROCEDURE IF EXISTS set_unitweight;
+CREATE OR REPLACE PROCEDURE set_unitweight(
+    p_id_unit_weight INT,
+    p_symbol_fr VARCHAR(64),
+    p_symbol_eng VARCHAR (64)
+)
+AS
+$$
+BEGIN
+    IF p_id_unit_weight IS NULL OR p_id_unit_weight = 0 THEN
+        INSERT INTO unit_weight (
+	    "symbol_fr",
+            "symbol_eng"
+        ) VALUES (
+	    p_symbol_fr,
+            p_symbol_eng
+        );
+    ELSE
+        UPDATE unit_weight
+        SET
+	    "symbol_fr" = p_symbol_fr,
+            "symbol_eng" = p_symbol_eng
+        WHERE "id_unit_weight" = p_id_unit_weight;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+DROP FUNCTION IF EXISTS get_unitweight_info;
+CREATE OR REPLACE FUNCTION get_unitweight_info(
+    p_id_list TEXT,
+    p_isactive BOOLEAN
+)
+RETURNS TABLE(
+    id_unit_weight INT,
+    symbol_fr VARCHAR(64),
+    symbol_eng VARCHAR(64),
+	deactivation_date TIMESTAMP
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        uw."id_unit_weight",
+        uw."symbol_fr",
+        uw."symbol_eng",
+        uw."deactivation_date"
+    FROM 
+        unit_weight uw
+    WHERE 
+        (p_id_list IS NULL OR uw."id_unit_weight" = ANY (string_to_array(p_id_list, ',')::INT[]))
+    AND (
+	     p_isactive IS NULL
+        OR(p_isactive IS NOT TRUE AND (
+            uw."deactivation_date" <= CURRENT_DATE
+        ))
+        OR (p_isactive IS TRUE AND (
+            ( uw."deactivation_date" > CURRENT_DATE)
+        ))
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+
+DROP FUNCTION IF EXISTS get_recipient_info;
+CREATE OR REPLACE FUNCTION get_recipient_info(
+    p_id_list_r TEXT,
+    p_id_list_ca TEXT,
+    p_isactive_r BOOLEAN,
+    p_isactive_ca BOOLEAN,
+    p_statut_flag_r INT,
+    p_statut_flag_ca INT
+)
+RETURNS TABLE (
+    id_recipient_account INT,
+    id_cust_account INT,
+    recipient_name VARCHAR(96),
+    address_1 VARCHAR(160),
+    address_2 VARCHAR(160),
+    address_3 VARCHAR(160),
+    id_city_recipient INT,
+    id_country_recipient INT,
+    id_country_cust INT,
+    city_symbol_fr_recipient VARCHAR(64),
+    city_symbol_eng_recipient VARCHAR(64),
+    country_symbol_fr_recipient VARCHAR(64),
+    country_symbol_eng_recipient VARCHAR(64),
+    country_symbol_fr_cust VARCHAR(64),
+    country_symbol_eng_cust VARCHAR(64),
+    statut_flag_recipient INT,
+    insertdate TIMESTAMP,
+    activation_date TIMESTAMP,
+    deactivation_date TIMESTAMP,
+    idlogin_insert INT,
+    lastmodified TIMESTAMP,
+    idlogin_modify INT,
+    legal_form VARCHAR(32),
+    cust_name VARCHAR(96),
+    trade_registration_num VARCHAR(32),
+    in_free_zone BOOLEAN,
+    identification_number VARCHAR(32),
+    full_address VARCHAR(160)
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        ra."id_recipient_account",
+        ra."id_cust_account",
+        ra."recipient_name",
+        ra."address_1",
+        ra."address_2",
+        ra."address_3",
+        ra."id_city" AS id_city_recipient,
+        city_recipient."id_country" AS id_country_recipient,
+        ca."id_country" AS id_country_cust,
+        city_recipient."symbol_fr" AS city_symbol_fr_recipient,
+        city_recipient."symbol_eng" AS city_symbol_eng_recipient,
+        country_recipient."symbol_fr" AS country_symbol_fr_recipient,
+        country_recipient."symbol_eng" AS country_symbol_eng_recipient,
+        country_cust."symbol_fr" AS country_symbol_fr_cust,
+        country_cust."symbol_eng" AS country_symbol_eng_cust,
+        ra."statut_flag" AS statut_flag_recipient,
+        ra."insertdate",
+        ra."activation_date",
+        ra."deactivation_date",
+        ra."idlogin_insert",
+        ra."lastmodified",
+        ra."idlogin_modify",
+        ca."legal_form",
+        ca."cust_name",
+        ca."trade_registration_num",
+        ca."in_free_zone",
+        ca."identification_number",
+        ca."full_address"
+    FROM recipient_account ra
+    JOIN city city_recipient ON ra."id_city" = city_recipient."id_city"
+         JOIN country country_recipient ON city_recipient."id_country" = country_recipient."id_country"
+    JOIN cust_account ca ON ra."id_cust_account" = ca."id_cust_account"
+         JOIN country country_cust ON ca."id_country" = country_cust."id_country"
+    WHERE 
+        (p_id_list_r IS NULL OR ra."id_recipient_account"::TEXT = ANY(STRING_TO_ARRAY(p_id_list_r, ',')))
+        AND (p_id_list_ca IS NULL OR ca."id_cust_account"::TEXT = ANY(STRING_TO_ARRAY(p_id_list_ca, ',')))
+        AND (p_statut_flag_r IS NULL OR ra."statut_flag" = p_statut_flag_r)
+        AND (p_statut_flag_ca IS NULL OR ca."statut_flag" = p_statut_flag_ca)
+        AND (
+            p_isactive_r IS NULL
+            OR (p_isactive_r IS NOT TRUE AND ra."deactivation_date" <= CURRENT_DATE)
+            OR (p_isactive_r IS TRUE AND ra."deactivation_date" > CURRENT_DATE)
+        )
+        AND (
+            p_isactive_ca IS NULL
+            OR (p_isactive_ca IS NOT TRUE AND ca."deactivation_date" <= CURRENT_DATE)
+            OR (p_isactive_ca IS TRUE AND ca."deactivation_date" > CURRENT_DATE)
+        );
+END;
+$$ LANGUAGE plpgsql;
+
+DROP PROCEDURE IF EXISTS set_recipient_account;
+CREATE OR REPLACE PROCEDURE set_recipient_account(
+    p_id_recipient_account INT,
+    p_id_cust_account INT,
+    p_recipient_name VARCHAR(96),
+    p_address_1 VARCHAR(160),
+    p_address_2 VARCHAR(160),
+    p_address_3 VARCHAR(160),
+    p_id_city INT,
+    p_statut_flag INT,
+    p_activation_date TIMESTAMP,
+    p_deactivation_date TIMESTAMP,
+    p_idlogin_insert INT,
+    p_idlogin_modify INT
+)
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    IF p_id_recipient_account IS NULL OR p_id_recipient_account = 0 THEN
+        INSERT INTO recipient_account(
+            id_cust_account,
+            recipient_name,
+            address_1,
+            address_2,
+            address_3,
+            id_city,
+            statut_flag,
+            activation_date,
+            deactivation_date,
+            idlogin_insert
+        ) VALUES (
+            p_id_cust_account,
+            p_recipient_name,
+            p_address_1,
+            p_address_2,
+            p_address_3,
+            p_id_city,
+            p_statut_flag,
+            p_activation_date,
+            p_deactivation_date,
+            p_idlogin_insert
+        );
+    ELSE
+        UPDATE recipient_account
+        SET
+            id_cust_account = p_id_cust_account,
+            recipient_name = p_recipient_name,
+            address_1 = p_address_1,
+            address_2 = p_address_2,
+            address_3 = p_address_3,
+            id_city = p_id_city,
+            statut_flag = p_statut_flag,
+            activation_date = p_activation_date,
+            deactivation_date = p_deactivation_date,
+            idlogin_modify = p_idlogin_modify,
+            lastmodified = CURRENT_TIMESTAMP 
+        WHERE id_recipient_account = p_id_recipient_account;
+    END IF;
+END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE add_certif_order(p_id_order INT, p_idlogin_modify INT)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM ORD_CERTIF_ORI
+        WHERE ID_ORDER = p_id_order 
+          AND DEACTIVATION_DATE >= CURRENT_TIMESTAMP
+    ) THEN
+        RAISE EXCEPTION 'Une certification active existe déjà pour cet ordre.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM "ORDER"
+        WHERE ID_ORDER = p_id_order
+          AND MOD(TYPEOF, 10) = 0
+          AND ID_ORDER_STATUS IN (1, 6)
+    ) THEN
+        UPDATE "ORDER"
+        SET LASTMODIFIED = CURRENT_TIMESTAMP,
+            TYPEOF = TYPEOF + 1
+        WHERE ID_ORDER = p_id_order;
+
+        CALL set_histo_order(
+            p_id_order := p_id_order,
+            p_id_login_histo := p_idlogin_modify,
+            p_order_histo_action := 3  -- 3 = Ajout ord_certif
+        );
+    ELSE
+        RAISE EXCEPTION 'Les conditions de mise à jour dans la table ORDER ne sont pas respectées.';
+    END IF;
+END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE rem_certif_order(p_id_order INT, p_id_ord_certif_ori INT, p_idlogin_modify INT)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM ORD_CERTIF_ORI
+        WHERE ID_ORDER = p_id_order
+          AND ID_ORD_CERTIF_ORI = p_id_ord_certif_ori
+          AND DEACTIVATION_DATE >= CURRENT_TIMESTAMP
+    ) THEN
+        RAISE EXCEPTION 'Aucune certification active trouvée pour cet ordre et cet ID de certification.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM "ORDER"
+        WHERE ID_ORDER = p_id_order
+          AND MOD(TYPEOF, 10) = 1  -- Le reste de TYPEOF divisé par 10 doit être 1
+          AND ID_ORDER_STATUS IN (1, 6)  -- Status doit être 1 (insert) ou 6 (pending replace)
+    ) THEN
+        UPDATE "ORDER"
+        SET LASTMODIFIED = CURRENT_TIMESTAMP,
+            TYPEOF = TYPEOF - 1
+        WHERE ID_ORDER = p_id_order;
+
+        CALL set_histo_order(
+            p_id_order := p_id_order,
+            p_id_login_histo := p_idlogin_modify,
+            p_order_histo_action := 4  -- 4 = sup. ord_certif
+        );
+    ELSE
+        RAISE EXCEPTION 'Les conditions de mise à jour dans la table ORDER ne sont pas respectées.';
+    END IF;
+END;
+$$;
+
+
+
+CREATE OR REPLACE PROCEDURE add_certif(
+    p_id_order INT,
+    p_id_recipient_account INT,
+    p_id_country_origin INT,
+    p_id_country_destination INT,
+    p_notes TEXT,
+    p_copy_count INT,
+    p_idlogin_insert INT,
+    p_transport_remarks VARCHAR(160),
+    INOUT p_id_ord_certif_ori INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    CALL add_certif_order(p_id_order, p_idlogin_insert);
+
+    INSERT INTO ORD_CERTIF_ORI (
+        ID_ORDER,
+        ID_RECIPIENT_ACCOUNT,
+        ID_COUNTRY_ORIGIN,
+        ID_COUNTRY_DESTINATION,
+        NOTES,
+        COPY_COUNT,
+        IDLOGIN_INSERT,
+        INSERTDATE,
+		TRANSPORT_REMARKS
+    ) VALUES (
+        p_id_order,
+        p_id_recipient_account,
+        p_id_country_origin,
+        p_id_country_destination,
+        p_notes,
+        p_copy_count,
+        p_idlogin_insert,
+        CURRENT_TIMESTAMP,
+		p_transport_remarks
+    )
+    RETURNING ID_ORD_CERTIF_ORI INTO p_id_ord_certif_ori;
+
+END;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE rem_certif(
+    p_id_order INT,
+    p_id_ord_certif_ori INT,
+    p_idlogin_modify INT,
+    p_mode INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    CALL rem_certif_order(p_id_order, p_id_ord_certif_ori, p_idlogin_modify);
+
+    IF p_mode IS NULL OR p_mode = 0 THEN
+        UPDATE ORD_CERTIF_ORI
+        SET LASTMODIFIED = CURRENT_TIMESTAMP,
+            IDLOGIN_MODIFY = p_idlogin_modify,
+            DEACTIVATION_DATE = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE ID_ORD_CERTIF_ORI = p_id_ord_certif_ori;
+    ELSE
+        DELETE FROM ORD_CERTIF_ORI
+        WHERE ID_ORD_CERTIF_ORI = p_id_ord_certif_ori;
+    END IF;
+END;
+$$;
+
+DROP FUNCTION IF EXISTS add_certif_wrapper;
+CREATE OR REPLACE FUNCTION add_certif_wrapper(
+    p_id_order INT,
+    p_id_recipient_account INT,
+    p_id_country_origin INT,
+    p_id_country_destination INT,
+    p_notes TEXT,
+    p_copy_count INT,
+    p_idlogin_insert INT,
+    p_transport_remarks VARCHAR(160)
+) RETURNS INT AS $$
+DECLARE
+    v_id_ord_certif_ori INT;
+BEGIN
+    -- Call the existing procedure with INOUT parameter
+    CALL add_certif(
+        p_id_order,
+        p_id_recipient_account,
+        p_id_country_origin,
+        p_id_country_destination,
+        p_notes,
+        p_copy_count,
+        p_idlogin_insert,
+        p_transport_remarks,
+        v_id_ord_certif_ori
+    );
+
+    -- Return the newly created certificat ID
+    RETURN v_id_ord_certif_ori;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Drop the existing procedure and function if they exist
+DROP PROCEDURE IF EXISTS set_recipient_account;
+DROP FUNCTION IF EXISTS add_or_update_recipient;
+
+-- Create the new function
+CREATE OR REPLACE FUNCTION add_or_update_recipient(
+    p_id_recipient_account INT,
+    p_id_cust_account INT,
+    p_recipient_name VARCHAR(96),
+    p_address_1 VARCHAR(160),
+    p_address_2 VARCHAR(160),
+    p_address_3 VARCHAR(160),
+    p_id_city INT,
+    p_statut_flag INT,
+    p_activation_date TIMESTAMP,
+    p_deactivation_date TIMESTAMP,
+    p_idlogin_insert INT,
+    p_idlogin_modify INT
+) RETURNS INT AS
+$$
+DECLARE
+    new_id INT;
+BEGIN
+    IF p_id_recipient_account IS NULL OR p_id_recipient_account = 0 THEN
+        -- Insert a new recipient and capture the new ID
+        INSERT INTO recipient_account (
+            id_cust_account,
+            recipient_name,
+            address_1,
+            address_2,
+            address_3,
+            id_city,
+            statut_flag,
+            activation_date,
+            deactivation_date,
+            idlogin_insert
+        ) VALUES (
+            p_id_cust_account,
+            p_recipient_name,
+            p_address_1,
+            p_address_2,
+            p_address_3,
+            p_id_city,
+            p_statut_flag,
+            p_activation_date,
+            p_deactivation_date,
+            p_idlogin_insert
+        )
+        RETURNING id_recipient_account INTO new_id;
+    ELSE
+        -- Update existing recipient and capture the ID
+        UPDATE recipient_account
+        SET
+            id_cust_account = p_id_cust_account,
+            recipient_name = p_recipient_name,
+            address_1 = p_address_1,
+            address_2 = p_address_2,
+            address_3 = p_address_3,
+            id_city = p_id_city,
+            statut_flag = p_statut_flag,
+            activation_date = p_activation_date,
+            deactivation_date = p_deactivation_date,
+            idlogin_modify = p_idlogin_modify,
+            lastmodified = CURRENT_TIMESTAMP 
+        WHERE id_recipient_account = p_id_recipient_account
+        RETURNING id_recipient_account INTO new_id;
+    END IF;
+
+    RETURN new_id;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION add_or_update_ordcertif_goods(
+    p_id_ord_certif_goods INT,
+    p_id_ord_certif_ori INT,
+    p_good_description VARCHAR(256),
+    p_good_references VARCHAR(160),
+    p_doc_references VARCHAR(256),
+    p_weight_qty FLOAT,
+    p_id_unit_weight INT
+) RETURNS INT AS
+$$
+DECLARE
+    new_id INT;
+BEGIN
+    IF p_id_ord_certif_goods IS NULL OR p_id_ord_certif_goods = 0 THEN
+        -- Insert a new goods entry and capture the new ID
+        INSERT INTO ord_certif_goods (
+            id_ord_certif_ori,
+            good_description,
+            good_references,
+            doc_references,
+            weight_qty,
+            id_unit_weight
+        ) VALUES (
+            p_id_ord_certif_ori,
+            p_good_description,
+            p_good_references,
+            p_doc_references,
+            p_weight_qty,
+            p_id_unit_weight
+        )
+        RETURNING id_ord_certif_goods INTO new_id;
+    ELSE
+        -- Update existing goods entry and capture the ID
+        UPDATE ord_certif_goods
+        SET
+            id_ord_certif_ori = p_id_ord_certif_ori,
+            good_description = p_good_description,
+            good_references = p_good_references,
+            doc_references = p_doc_references,
+            weight_qty = p_weight_qty,
+            id_unit_weight = p_id_unit_weight
+        WHERE id_ord_certif_goods = p_id_ord_certif_goods
+        RETURNING id_ord_certif_goods INTO new_id;
+    END IF;
+
+    RETURN new_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+DROP FUNCTION IF EXISTS get_order_cust_info;
+CREATE OR REPLACE FUNCTION get_order_cust_info(
+	p_id_order_list TEXT,
+	p_id_cust_account_list TEXT,
+	p_id_order_status_list TEXT,
+	--p_idlogin_op INT, -- supprimée
+	p_idlogin INT
+)
+RETURNS TABLE(
+    id_order INT,
+    id_cust_account INT,
+    order_title VARCHAR(32),
+    id_order_status INT,
+	idlogin_owner INT,
+	idlogin_spare INT,
+	date_owner TIMESTAMP,
+	date_spare TIMESTAMP,
+	date_last_submission TIMESTAMP,
+	date_last_return TIMESTAMP,
+	date_validation_order TIMESTAMP,
+	insertdate_order TIMESTAMP,
+	idlogin_insert_order INT,
+	lastmodified_order TIMESTAMP,
+	idlogin_modify_order INT,
+	typeof_order INT,
+	id_ord_certif_ori INT,
+	id_recipient_account INT,
+	id_country_origin INT,
+	id_country_destination INT,
+	transport_remarks VARCHAR(160),
+	notes_ori VARCHAR(256),
+	copy_count_ori INT,
+	equivalent_amount_ori REAL,
+	insertdate_ori TIMESTAMP,
+	deactivation_date_ori TIMESTAMP,
+	idlogin_insert_ori INT,
+	date_validation_ori TIMESTAMP,
+	lastmodified_ori TIMESTAMP,
+	idlogin_modify_ori INT,
+	typeof_ori INT,
+	recipient_name VARCHAR(96),
+	address_1 VARCHAR(160),
+	address_2 VARCHAR(160),
+	address_3 VARCHAR(160),
+	id_city INT,
+	statut_flag INT,
+	insertdate_recip TIMESTAMP,
+	activation_date_recip TIMESTAMP,
+	deactivation_date_recip TIMESTAMP,
+	idlogin_insert_recip INT,
+	lastmodified_recip TIMESTAMP,
+	idlogin_modify INT,
+	id_services_charges INT,
+	description_fr VARCHAR(96),
+	description_eng VARCHAR(96),
+	typeof_serv INT,
+	unit_price REAL,
+	unit_percent REAL,
+	amount_lower_limit REAL,
+        amount_upper_limit REAL,
+	with_tax_stamp BOOLEAN,
+	unit_price_stamp REAL,
+	with_copies BOOLEAN,
+	unit_price_copies REAL,
+	id_currency_serv INT,
+	activation_date_serv TIMESTAMP,
+	deactivation_date_serv TIMESTAMP,
+	id_ord_legalization INT,
+	notes_legali VARCHAR(256),
+	copy_count_legali INT,
+	equivalent_amount_legali REAL,
+	insertdate_legali TIMESTAMP,
+	deactivation_date_legali TIMESTAMP,
+	idlogin_insert_legali INT,
+	date_validation_legali TIMESTAMP,
+	lastmodified_legali TIMESTAMP,
+	idlogin_modify_legali INT,
+	typeof_legali INT,
+	id_ord_com_invoice INT,
+	notes_invoice VARCHAR(256),
+	copy_count_invoice INT,
+	id_currency_invoice INT,
+	currency_amount REAL,
+	currency_rates REAL,
+	equivalent_amount_invoice REAL,
+	insertdate_invoice TIMESTAMP,
+	deactivation_date_invoice TIMESTAMP,
+	idlogin_insert_invoice INT,
+	date_validation_invoice TIMESTAMP,
+	lastmodified_invoice TIMESTAMP,
+	idlogin_modify_invoice INT,
+	typeof_invoice INT
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        o."id_order",
+        o."id_cust_account",
+        o."order_title",
+		o."id_order_status",
+        o."idlogin_owner",
+        o."idlogin_spare",
+		o."date_owner",
+		o."date_spare",
+        o."date_last_submission",
+		o."date_last_return",
+		o."date_validation" as date_validation_order,
+		o."insertdate" as insertdate_order,
+		o."idlogin_insert" as idlogin_insert_order,
+		o."lastmodified" as lastmodified_order,
+		o."idlogin_modify" as idlogin_modify_order,
+		o."typeof" as typeof_order,
+		oco."id_ord_certif_ori",
+	    r."id_recipient_account",
+	    oco."id_country_origin",
+	    oco."id_country_destination",
+	    oco."transport_remarks",
+	    oco."notes" as notes_ori,
+	    oco."copy_count" as copy_count_ori,
+	    oco."equivalent_amount" as equivalent_amount_ori,
+	    oco."insertdate" as insertdate_ori,
+	    oco."deactivation_date" as deactivation_date_ori,
+	    oco."idlogin_insert" as idlogin_insert_ori,
+	    oco."date_validation" as date_validation_ori,
+	    oco."lastmodified" as lastmodified_ori,
+	    oco."idlogin_modify" as idlogin_modify_ori,
+	    oco."typeof" as typeof_ori,
+		r."recipient_name",
+		r."address_1",
+		r."address_2",
+		r."address_3",
+		r."id_city",
+		r."statut_flag",
+		r."insertdate" as insertdate_recip,
+		r."activation_date" as activation_date_recip,
+		r."deactivation_date" as deactivation_date_recip,
+		r."idlogin_insert" as idlogin_insert_recip,
+		r."lastmodified" as lastmodified_recip,
+		r."idlogin_modify" as idlogin_modify,
+		sc."id_services_charges",
+		sc."description_fr",
+		sc."description_eng",
+		sc."typeof" as typeof_serv,
+		sc."unit_price",
+		sc."unit_percent",
+		sc."amount_lower_limit",
+	    sc."amount_upper_limit",
+		sc."with_tax_stamp",
+		sc."unit_price_stamp",
+		sc."with_copies",
+		sc."unit_price_copies",
+		sc."id_currency" as id_currency_serv,
+		sc."activation_date" as activation_date_serv,
+		sc."deactivation_date" as deactivation_date_serv,
+		ol."id_ord_legalization",
+		ol."notes" as notes_legali,
+		ol."copy_count" as copy_count_legali,
+		ol."equivalent_amount" as equivalent_amount_legali,
+		ol."insertdate" as insertdate_legali,
+		ol."deactivation_date" as deactivation_date_legali,
+		ol."idlogin_insert" as idlogin_insert_legali,
+		ol."date_validation" as date_validation_legali,
+		ol."lastmodified" as lastmodified_legali,
+		ol."idlogin_modify" as idlogin_modify_legali,
+		ol."typeof" as typeof_legali,
+		oi."id_ord_com_invoice",
+		oi."notes" as notes_invoice,
+		oi."copy_count" as copy_count_invoice,
+		oi."id_currency" as id_currency_invoice,
+		oi."currency_amount",
+		oi."currency_rates",
+		oi."equivalent_amount" as equivalent_amount_invoice,
+		oi."insertdate" as insertdate_invoice ,
+		oi."deactivation_date" as deactivation_date_invoice ,
+		oi."idlogin_insert" as idlogin_insert_invoice ,
+		oi."date_validation" as date_validation_invoice ,
+		oi."lastmodified" as lastmodified_invoice ,
+		oi."idlogin_modify" as idlogin_modify_invoice ,
+		oi."typeof" as typeof_invoice
+    FROM 
+        "ORDER" o
+        INNER JOIN 
+			CUST_ACCOUNT ca ON o."id_cust_account" = ca."id_cust_account"  -- modifiée remplacer CUST_USER par CUST_ACCOUNT
+			INNER JOIN 
+				CUST_USER cu ON ca."id_cust_account" = cu."id_cust_account"
+        INNER JOIN 
+			ORDER_STATUS os ON o."id_order_status" = os."id_order_status"
+        LEFT JOIN 
+			ORD_CERTIF_ORI oco ON o."id_order" = oco."id_order"
+        		LEFT JOIN 
+					RECIPIENT_ACCOUNT r ON oco."id_recipient_account" = r."id_recipient_account"
+        		LEFT JOIN 
+					SERVICES_CHARGES sc ON oco."typeof" = sc."typeof"
+        LEFT JOIN 
+			ORD_LEGALIZATION ol ON o."id_order" = ol."id_order"
+        LEFT JOIN 
+			ORD_COM_INVOICE oi ON o."id_order" = oi."id_order"
+    WHERE 
+        (p_id_order_list IS NULL OR o."id_order" = ANY(string_to_array(p_id_order_list, ',')::INT[])) 
+		AND 
+		(p_id_cust_account_list IS NULL OR o."id_cust_account" = ANY(string_to_array(p_id_cust_account_list, ',')::INT[])) 
+		AND 
+		(p_id_order_status_list IS NULL OR o."id_order_status" = ANY(string_to_array(p_id_order_status_list, ',')::INT[]))
+		AND 
+		cu."id_login_user" = p_idlogin
+		;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
 call set_op_user(0, 0, 'M. Admin', 1, TRUE,
 'admin@cdd.dj','4889ba9b',
 '253355445', '25377340000',
 0); -- password mdp
+
+CALL set_unitweight(1, 'Kilo', 'Kilogram');
+CALL set_unitweight(2, 'Tonne', 'Tonne');
+CALL set_unitweight(3, 'Mtonne', 'Megatonne');
+CALL set_unitweight(4, 'Gramme', 'Gram');
+CALL set_unitweight(5, 'Livre', 'Pound');
+CALL set_unitweight(6, 'Once', 'Ounce');
+CALL set_unitweight(7, 'Stone', 'Stone');
+CALL set_unitweight(8, 'Carat', 'Carat');
+CALL set_unitweight(9, 'Quintal', 'Quintal');
+CALL set_unitweight(10, 'Milligramme', 'Milligram');
+
+call set_transport_mode(0,'Route','Road');
+
+call set_transport_mode(0,'Mer','Sea');
+
+call set_transport_mode(0,'Train','Train');
+
+call set_transport_mode(0,'Air','Air');
+
+call set_transport_mode(0,'Mixte','Mixed');
+
+call set_order_status( 1, 'insertion' ,'insert','Soumission');
+call set_order_status( 2, 'nouveau' ,'new', 'Nouvelle');
+call set_order_status( 3, 'approuvé' ,'approved', 'Approbation');
+call set_order_status( 4, 'facturé' ,'billed', 'Facturation');
+call set_order_status( 5, 'payé' ,'paid', 'Paiement');
+call set_order_status( 6, 'à corriger' ,'pending replace', 'En Correction');
+call set_order_status( 7, 'corrigé' ,'replaced', 'Correction');
+call set_order_status( 8, 'annulé' ,'canceled', 'Annulation');
+call set_order_status( 9, 'rejeté' ,'rejected', 'Refus');
 
 CALL add_files_repo_typeof(1, 'Licence zone franche', 'Free zone license', TRUE);
 CALL add_files_repo_typeof(50, 'Numéro Identification Fiscale (NIF)', 'Tax Identification Number (TIN)', TRUE);
