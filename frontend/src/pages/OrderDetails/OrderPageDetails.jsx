@@ -67,8 +67,16 @@ const OrderDetailsPage = () => {
         });
         console.log("Transpmode =>", transpResponse);
         if (transpResponse && transpResponse.data) {
-          setTranspModes(transpResponse.data);
-        }
+            // Join the French symbols of the returned transport modes.
+            const joinedSymbols = transpResponse.data
+              .map(item => item.symbol_fr)
+              .join(', ');
+            // Update formData with the joined string.
+            setFormData(prev => ({
+              ...prev,
+              transportModeLabels: joinedSymbols,
+            }));
+          }
 
         // --- 2. Fetch Countries and Build Mapping ---
         const countriesResponse = await fetchCountries();
