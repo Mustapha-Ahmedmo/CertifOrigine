@@ -1241,6 +1241,66 @@ const executeDeleteCustUser = async (req, res) => {
   }
 };
 
+const handleContactForm = async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({
+        message: 'Tous les champs sont obligatoires : nom, email, sujet et message.',
+      });
+    }
+
+    // Email content for the company
+    const companyEmailText = `
+Nouveau message de contact:
+      
+Nom: ${name}
+Email: ${email}
+Sujet: ${subject}
+      
+Message:
+${message}
+`;
+
+    // Send email to company
+    await sendEmail(
+      'contact@ccd.dj', // Your company email
+      `[Contact] ${subject}`,
+      companyEmailText
+    );
+
+    // Confirmation email to user
+    const userEmailText = `
+Bonjour ${name},
+
+Nous avons bien reçu votre message et vous remercions de nous avoir contactés.
+
+Nous traitons votre demande et vous répondrons dans les plus brefs délais.
+
+Cordialement,
+L'équipe de la Chambre de Commerce de Djibouti
+`;
+
+    await sendEmail(
+      email,
+      'Confirmation de réception de votre message',
+      userEmailText
+    );
+
+    res.status(200).json({
+      message: 'Votre message a été envoyé avec succès.',
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi du formulaire de contact:', error);
+    res.status(500).json({
+      message: 'Une erreur est survenue lors de l\'envoi du message.',
+      error: error.message || 'Erreur inconnue',
+    });
+  }
+};
+
 // Export the new function along with the existing ones
 module.exports = {
   executeSetCustAccount,
@@ -1254,5 +1314,6 @@ module.exports = {
   requestPasswordReset,
   executeResetPassword,
   executeGetCustUsersByAccount,
-  executeDeleteCustUser
+  executeDeleteCustUser,
+  handleContactForm
 };
