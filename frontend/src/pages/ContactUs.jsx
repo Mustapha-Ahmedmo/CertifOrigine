@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import './ContactUs.css';
 import { sendContactForm } from '../services/apiServices';
 
-
 const ContactUs = () => {
   const [formData, setFormData] = useState({
     firstName: '',
@@ -69,6 +68,14 @@ const ContactUs = () => {
           Pour plus d’informations sur les conditions de délivrances ou de légalisation ainsi
           que les tarifs, prière de contacter :
         </p>
+
+        {/* Bloc du responsable produit inséré directement ici */}
+        <div className="responsable-section">
+          <p><strong>Le responsable produit :</strong></p>
+          <p><strong>Nom :</strong> Mme Fathia Hassan Ali</p>
+          <p><strong>Téléphone :</strong> 21 35 10 70 poste 130</p>
+          <p><strong>E-mail :</strong> <a href="mailto:siee@ccd.dj">siee@ccd.dj</a></p>
+        </div>
       </div>
 
       {/* Formulaire à droite */}
@@ -121,14 +128,6 @@ const ContactUs = () => {
           {successMessage && <p className="success-message">{successMessage}</p>}
           {error && <p className="error-message">{error}</p>}
         </form>
-      </div>
-
-      {/* Section du responsable produit */}
-      <div className="responsable-section">
-        <p><strong>Le responsable produit :</strong></p>
-        <p><strong>Nom :</strong> Mme Fathia Hassan Ali</p>
-        <p><strong>Téléphone :</strong> 21 35 10 70 poste 130</p>
-        <p><strong>E-mail :</strong> <a href="mailto:siee@ccd.dj">siee@ccd.dj</a></p>
       </div>
 
       {/* Nouveau bloc en bas à droite */}
