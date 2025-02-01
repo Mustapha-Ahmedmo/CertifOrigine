@@ -7,6 +7,7 @@ const countriesRoutes = require('./routes/countriesRoutes');
 const sectorsRoutes = require('./routes/sectorsRoutes');
 const customerRoutes = require('./routes/customerRoutes'); 
 const operatorRoutes = require('./routes/operatorRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 const path = require('path');
 
 // Charger les variables d'environnement
@@ -24,6 +25,7 @@ app.use('/api/countries', countriesRoutes);
 app.use('/api/sectors', sectorsRoutes);
 app.use('/api/customer', customerRoutes);
 app.use('/api/operators', operatorRoutes);
+app.use('/api/orders', orderRoutes);
 
 
 const fs = require('fs');

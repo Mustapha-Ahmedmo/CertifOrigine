@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './ForgotPassword.css';  // Utiliser le nouveau fichier CSS
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'; // Pour la navigation
-import logo from '../assets/logo.jpg'; // Assurez-vous que le logo est dans le bon chemin
+import logo from '../assets/logo3.jpeg'; // Assurez-vous que le logo est dans le bon chemin
 import { requestPasswordReset, resetPassword } from '../services/apiServices';
 import { homemadeHash } from '../utils/hashUtils';
 
@@ -85,18 +85,18 @@ const ForgotPassword = () => {
               Indiquez l'adresse e-mail associée à votre Espace pour générer un nouveau mot de passe.
             </p>
             <form onSubmit={handleRequestSubmit}>
-              <div className="forgot-password-form-group">
-                <label htmlFor="email">Adresse email</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="forgot-password-input-field"
-                />
-              </div>
+                <div className="forgot-password-form-group">
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder='Adresse email'
+                    className="forgot-password-input-field"
+                  />
+                </div>
               <button type="submit" className="forgot-password-btn-submit" disabled={isRequesting}>
                 {isRequesting ? 'Envoi...' : 'Envoyer'}
               </button>

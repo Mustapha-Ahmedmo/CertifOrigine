@@ -1,0 +1,154 @@
+/* --- Le header est en position absolue, transparent, etc. --- */
+.page-header {
+  position: absolute; 
+  top: 0; left: 0;
+  width: 100%;
+  z-index: 999;
+  background-color: transparent;
+  color: #fff;
+  padding: 1rem 2rem;
+}
+
+/* --- Container de la nav --- */
+.header-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  max-width: 1200px;
+  margin: 0 auto; 
+  width: 100%;
+}
+
+/* Bloc gauche : hamburger + liens */
+.header-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem; /* Espace entre le bouton hamburger et la liste */
+}
+
+/* --------- La liste de liens --------- */
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 6rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* Liens individuels */
+.nav-links li a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.nav-links li a:hover {
+  text-decoration: underline;
+}
+
+/* --------- Bouton "Contactez-nous" --------- */
+.contact-button {
+  background-color: #C39408;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: bold;
+}
+
+.contact-button:hover {
+  background-color: #003060;
+}
+
+/* --------- Le bouton hamburger --------- */
+.hamburger-button {
+  display: none; /* masqué par défaut sur desktop */
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.contact-button {
+  background-color: #C39408;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: bold;
+  text-decoration: none; /* Supprime le soulignement */
+  display: inline-block; /* Comportement similaire à un bouton */
+  text-align: center;
+}
+
+.contact-button:hover {
+  background-color: #b38307; /* Change de couleur au survol */
+}
+
+
+/* -------------------------------------------------------- */
+/* ---------------------- MEDIA QUERY ---------------------- */
+/* -------------------------------------------------------- */
+@media (max-width: 768px) {
+  /* On rétablit le flux normal 
+     pour que le header ne masque pas le contenu */
+  .page-header {
+    position: relative; 
+    background-color: rgba(0,0,0,0.7); /* ou transparent si souhaité */
+  }
+
+  /* On affiche le bouton hamburger 
+     et on masque la liste par défaut */
+  .hamburger-button {
+    display: block;
+  }
+
+  /* .nav-links en mode "burger" : 
+     on les masque par défaut (display: none) 
+     ou on le fait en togglant la classe .open */
+  .nav-links {
+    display: none; 
+    flex-direction: column;
+    gap: 1rem;
+    position: absolute; 
+    top: 60px;   /* sous le header, ajustez selon la hauteur */
+    left: 0;
+    width: 100%;
+    background-color: rgba(0,0,0,0.7);
+    padding: 1rem 2rem;
+  }
+
+  /* Lorsqu’on ajoute la classe .open, on rend visible le menu */
+  .nav-links.open {
+    display: flex;
+  }
+
+  /* Les liens sont centrés */
+  .nav-links li {
+    margin: 0.5rem 0;
+  }
+
+  .nav-links li a {
+    color: #fff;
+    font-size: 1rem;
+  }
+
+  /* On peut réduire le gap du header-nav-left */
+  .header-nav-left {
+    gap: 1rem;
+  }
+
+  /* Bouton Contactez-nous : 
+     on peut le repositionner (ex: tout en bas) ou le laisser comme tel */
+  .contact-button {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+  }
+}

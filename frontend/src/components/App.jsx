@@ -11,6 +11,7 @@ import { restoreAuthState } from '../slices/authSlice';
 
 // Pages & layouts
 import Login from '../pages/Login';
+import ContactUs from '../pages/ContactUs';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
 import Register from '../pages/Register';
@@ -23,6 +24,7 @@ import Inscriptions from '../pages/Inscriptions';
 import ClientsValides from '../pages/ClientsValides';
 import OperatorsList from '../pages/OperatorsList';
 import Maintenance from '../pages/Maintenance';
+import HeaderLayout from '../components/HeaderLayout';
 
 // Pages du dashboard
 import Home from '../pages/Home';
@@ -39,6 +41,7 @@ import RegisterContact from '../pages/RegisterContact';
 
 // Gestion de l'inactivité
 import InactivityHandler from './InactivityHandler';
+import Step2 from './orders/Create/steps/Step2';
 
 const App = () => {
   const dispatch = useDispatch();
@@ -99,7 +102,7 @@ const App = () => {
         <Route
           path="/login"
           element={
-            isAuthenticated ? <Navigate to="/dashboard" /> : <SimpleLayout />
+            isAuthenticated ? <Navigate to="/dashboard" /> : <HeaderLayout />
           }
         >
           <Route index element={<Login />} />
@@ -108,6 +111,9 @@ const App = () => {
         {/* 4) Autres routes "simples" */}
         <Route path="/register" element={<Register />}>
           <Route index element={<Login />} />
+        </Route>
+        <Route path="/contact-us" element={<ContactUs />}>
+          <Route index element={<ContactUs />} />
         </Route>
         <Route path="/registercontact/:id?" element={<RegisterContact />} />
         <Route path="/registerop/:id?" element={<RegisterOP />}>
@@ -123,6 +129,9 @@ const App = () => {
         <Route path="/account-created" element={<SimpleLayout />}>
           <Route index element={<AccountCreated />} />
         </Route>
+
+
+        <Route path="/create-order/step2" element={<Step2 />} />
 
         {/* 5) Fallback si aucune route ne matche (page blanche -> rediriger) */}
         <Route path="*" element={<Navigate to="/" replace />} />

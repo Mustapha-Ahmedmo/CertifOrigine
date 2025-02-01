@@ -1,0 +1,189 @@
+.contact-us-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+  padding: 2rem;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+  font-family: 'Montserrat', sans-serif;
+  position: relative;
+  flex-wrap: wrap; /* Permet aux éléments de passer à la ligne en mobile */
+}
+
+/* Section texte à gauche */
+.contact-us-text {
+  flex: 1;
+  color: #333;
+  max-width: 50%; /* Limite la largeur à 50% sur desktop */
+}
+
+.contact-us-text h1 {
+  color: #C39408;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.contact-us-text p {
+  font-size: 1rem;
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+/* Formulaire à droite */
+.contact-us-form {
+  flex: 1;
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.contact-us-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-row input {
+  flex: 1;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+textarea {
+  resize: none;
+}
+
+button.send-message-btn {
+  background-color: #C39408;
+  color: #fff;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button.send-message-btn:hover {
+  background-color: #b38307;
+}
+
+/* Section responsable produit */
+.responsable-section {
+  position: absolute;
+  bottom: 2rem;
+  left: 2rem;
+  color: #C39408; /* Police en orange */
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.responsable-section a {
+  color: #C39408;
+  text-decoration: none;
+}
+
+.responsable-section a:hover {
+  text-decoration: underline;
+}
+
+/* Nouveau bloc en bas à droite */
+.footer-info {
+  position: absolute;
+  bottom: 2rem;
+  right: 2rem;
+  color: #C39408; /* Même couleur que la section responsable */
+  font-size: 0.9rem; /* Même taille de police */
+  line-height: 1.5;
+  text-align: right; /* Optionnel, pour aligner le texte à droite */
+}
+
+.footer-info a {
+  color: #C39408;
+  text-decoration: none;
+}
+
+.footer-info a:hover {
+  text-decoration: underline;
+}
+
+/* ----------------------------------------------------------------- */
+/* ----------------------- Media Queries --------------------------- */
+/* ----------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .contact-us-container {
+    flex-direction: column; /* Les sections passent en colonne */
+    gap: 1.5rem;
+    padding: 1rem;
+  }
+
+  .contact-us-text {
+    max-width: 100%; /* Texte prend 100% de la largeur */
+    text-align: center; /* Centre le texte */
+  }
+
+  .contact-us-text h1 {
+    font-size: 2rem; /* Titre légèrement plus petit */
+  }
+
+  .contact-us-text p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .contact-us-form {
+    max-width: 100%; /* Formulaire prend toute la largeur */
+    padding: 1.5rem;
+  }
+
+  .form-row {
+    flex-direction: column; /* Champs en colonne */
+  }
+
+  /* RESPONSABLE : position absolue supprimée en mobile */
+  .responsable-section {
+    position: static;
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.85rem;
+  }
+
+  /* FOOTER INFO : pareil, en mobile on le repasse en static */
+  .footer-info {
+    position: static;
+    margin-top: 1rem;
+    text-align: center; /* Centre le texte */
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .contact-us-text h1 {
+    font-size: 1.8rem; /* Titre encore plus petit pour petits écrans */
+  }
+
+  .contact-us-form {
+    padding: 1rem; /* Réduit le padding pour les très petits écrans */
+  }
+
+  button.send-message-btn {
+    font-size: 0.95rem;
+    padding: 0.6rem;
+  }
+}

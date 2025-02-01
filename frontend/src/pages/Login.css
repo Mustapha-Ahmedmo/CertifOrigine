@@ -1,27 +1,77 @@
-/* Base styles */
+/* ----- RESET / DEFAUTS ----- */
 body {
-  background-color: #f6f6f6;
   margin: 0;
   padding: 0;
+  font-family: sans-serif; /* Optionnel : police par défaut */
 }
 
+/* ----- WRAPPER GENERAL DE LA PAGE LOGIN ----- */
 .login-page-wrapper {
+  position: relative;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: space-around;
+  align-items: flex-start; /* On aligne en haut par défaut */
+  gap: 10rem;
   min-height: 100vh;
-  background-color: #f6f6f6;
+  background: linear-gradient(
+      rgba(0, 0, 0, 0.5),
+      rgba(0, 0, 0, 0.5)
+    ),
+    url('../assets/image_ccd.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding-right: 20px;
+  padding-left: 20px; /* Pour aérer sur les bords gauche/droit */
+  box-sizing: border-box;
 }
 
+/* ----- COLONNE GAUCHE (infos + bouton lire plus) ----- */
+.login-page-left {
+  margin-top: 10rem;  /* Espace en haut */
+  color: white;
+  max-width: 600px;  /* Limite la largeur */
+}
+
+.certificate-title {
+  color: #FFD863;
+  font-size: 70px;
+  margin-bottom: 1rem;
+}
+
+.login-page-left p {
+  -webkit-text-stroke: 1px black; /* Bordure noire de 1px autour des lettres */
+  color: white;                  /* Couleur de remplissage du texte */
+  font-weight: bold;             /* Optionnel : rend les lettres plus visibles */
+  font-size: 22px;
+  margin-bottom: 2rem;
+}
+
+.btn-readmore {
+  width: 100%;
+  max-width: 120px;
+  padding: 14px;
+  background-color: #C39408;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+/* ----- CARTE / FORMULAIRE DE CONNEXION (colonne droite) ----- */
 .login-page-card {
   background-color: white;
-  padding: 2rem;
+  padding: 3rem;
   border-radius: 12px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   text-align: center;
+  margin-top: 10rem;  /* Espace en haut */
   width: 100%;
-  max-width: 360px;
-  display: flex;
+  max-width: 550px;
+  min-height: 500px;
+  display: flex;            /* Pour centrer le contenu verticalement si voulu */
   flex-direction: column;
   align-items: center;
 }
@@ -31,11 +81,18 @@ body {
   margin-bottom: 1rem;
 }
 
-/* Style pour le titre */
 .login-page-title {
   font-size: 1.5rem;
   color: #333;
   margin-bottom: 1.5rem;
+}
+
+/* ----- CHAMPS DE SAISIE ----- */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 .login-page-input-field {
@@ -46,41 +103,34 @@ body {
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 1rem;
+  background-color: #eaeaea; /* Fond gris clair */
+  color: #333;
 }
 
 .login-page-input-field::placeholder {
-  color: #999;
+  color: #666;
 }
 
 .login-page-input-field:focus {
   border-color: #0056b3;
   outline: none;
+  background-color: #f0f0f0;
 }
 
-/* Bouton "Se connecter" */
-.login-page-btn-login {
-  width: 100%;
-  max-width: 340px;
-  padding: 14px;
-  background-color: #DCAF26;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  margin-bottom: 1rem; /* Ajustement de la marge */
+/* ----- MESSAGE D'ERREUR ----- */
+.login-page-error-message {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: -1rem;
+  margin-bottom: 1rem;
 }
 
-.login-page-btn-login:hover {
-  background-color: #DCAF26;
-}
-
-/* Lien "Mot de passe oublié ?" */
+/* ----- LIEN MOT DE PASSE OUBLIÉ ----- */
 .login-page-forgot-password {
   display: block;
   margin-bottom: 1.5rem;
   font-size: 0.95rem;
-  color: #0056b3;
+  color: #D34600;
   text-decoration: none;
 }
 
@@ -88,36 +138,117 @@ body {
   text-decoration: underline;
 }
 
-/* Texte "Vous n'avez pas de compte ?" et lien "Créer un compte" */
-.login-page-no-account {
-  margin-top: 1rem;
-  font-size: 0.95rem;
-  color: #333;
+/* ----- CONTENEUR DES 2 BOUTONS ----- */
+.login-page-buttons-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4rem;
+  margin-top: 1.5rem;
+
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.login-page-create-account-link {
-  text-decoration: none;
+.login-page-buttons-container > * {
+  flex: 1;
+  max-width: 200px;
+  text-align: center;
+  
+}
+
+/* ----- BOUTON CRÉER UN COMPTE (blanc, bordure orange) ----- */
+.login-page-create-account-btn {
+  display: inline-block;
+  padding: 12px 12px;
+  font-size: 16px;
   font-weight: bold;
+  color: #C39408;
+  background-color: #fff;
+  border: 2px solid #C39408;
+  border-radius: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap; /* Empêche le texte de passer à la ligne */
+  text-align: center;  /* Centre le texte dans le bouton */
+  min-width: 150px;    /* Assurez une largeur minimale */
+
+  
 }
 
-.login-page-create-account-link:hover {
-  text-decoration: underline;
+.login-page-create-account-btn:hover {
+  background-color: #f9f9f9;
 }
 
-/* Responsive styles for mobile devices */
+/* ----- BOUTON SE CONNECTER (orange) ----- */
+.login-page-btn-login {
+  display: inline-block;
+  padding: 12px 12px;
+  background-color: #C39408;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  
+}
+
+.login-page-btn-login:hover {
+  background-color: #c0a31f;
+}
+
+/* ------------------------------------------------------------------ */
+/* ----------------------- MEDIA QUERIES (MOBILE) -------------------- */
+/* ------------------------------------------------------------------ */
+
 @media (max-width: 768px) {
+  /* On empile verticalement la colonne gauche et la colonne droite */
+  .login-page-wrapper {
+    flex-direction: column;
+    gap: 2rem;                /* Espace vertical entre les deux blocs */
+    justify-content: center;  /* On centre verticalement */
+    align-items: center;      /* On centre horizontalement */
+    padding: 0 1rem;        /* Retire le padding latéral si tu veux */
+    min-height: auto;         /* On n'impose plus 100vh */
+    box-sizing: border-box;
+  }
+
+  /* Colonne gauche occupe 90% de la largeur */
+  .login-page-left {
+    max-width: 90%;
+    margin: 1rem auto 0 auto; 
+    text-align: center; /* Optionnel : centrage du texte */
+  }
+
+  /* On diminue la taille du gros titre pour mobile */
+  .certificate-title {
+    font-size: 40px; /* au lieu de 70px */
+  }
+
+  .login-page-left p {
+    font-size: 18px; /* Réduit un peu la taille du texte */
+    -webkit-text-stroke: 0.5px black; /* on diminue l’épaisseur si on veut */
+  }
+
+  /* On ajuste la carte */
   .login-page-card {
+    max-width: 90%;
     padding: 1.5rem 1rem;
-    border-radius: 0;
+    border-radius: 8px;
     box-shadow: none;
+    min-height: auto;
+    margin-top: 1rem;  /* Espace en haut */
   }
 
   .login-page-logo {
-    width: 200px;
+    width: 150px;
   }
 
   .login-page-title {
-    font-size: 1.25rem;
+    font-size: 1.3rem;
     margin-bottom: 1rem;
   }
 
@@ -127,28 +258,27 @@ body {
     margin-bottom: 1rem;
   }
 
+  .login-page-forgot-password {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  /* On peut empiler les 2 boutons verticalement si souhaité */
+  .login-page-buttons-container {
+    flex-direction: column;
+    align-items: stretch; /* largeurs identiques */
+    max-width: 90%;
+    margin: 1rem auto 0 auto;
+    gap: 1rem;
+  }
+
+  .login-page-buttons-container > * {
+    max-width: 100%;
+  }
+
   .login-page-btn-login {
     max-width: 100%;
-    padding: 12px;
+    font-size: 16px !important;
+    
   }
-
-  .login-page-forgot-password,
-  .login-page-no-account {
-    font-size: 0.85rem;
-  }
-
-  .login-page-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: white;
-  }
-}
-
-.login-page-error-message {
-  color: red;
-  font-size: 0.9rem; /* Ajustez la taille selon vos préférences */
-  margin-top: -1rem; /* Ajustement optionnel pour rapprocher le message du champ de mot de passe */
-  margin-bottom: 1rem; /* Espace entre le message et le bouton */
 }

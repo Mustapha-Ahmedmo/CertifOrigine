@@ -1,25 +1,58 @@
-// Home.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboardList,
   faDollarSign,
   faCheckCircle,
-  faPen,
-  faTimes,
   faPlus,
   faEye,
 } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
-import './Home.css';
-
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { getOrdersForCustomer } from '../services/apiServices';
+import './Home.css';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState('visa');
-
+  const [ordersVisa, setOrdersVisa] = useState([]);
+  const [ordersValidation, setOrdersValidation] = useState([]);
+  const [ordersPayment, setOrdersPayment] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const user = useSelector((state) => state.auth.user);
+  const idLogin = user?.id_login_user;
+  const idCustAccount = user?.id_cust_account;
+
+  useEffect(() => {
+    if (!idLogin || !idCustAccount) return;
+
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const response = await getOrdersForCustomer({
+          idCustAccountList: idCustAccount,
+          idLogin,
+        });
+
+        console.log(response);
+        const allOrders = response.data || [];
+
+        // Categorize orders based on status
+        setOrdersVisa(allOrders.filter(order => order.id_order_status === 1)); // À soumettre
+        setOrdersValidation(allOrders.filter(order => order.id_order_status === 2)); // En attente de validation
+        setOrdersPayment(allOrders.filter(order => order.id_order_status === 3)); // En attente de paiement
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+        setError(err.message || 'Erreur lors de la récupération des commandes.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [idLogin, idCustAccount]);
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -29,57 +62,6 @@ const Home = () => {
     setActiveTab(e.target.value);
   };
 
-  // Déclarez les données avant de définir les options
-  const ordersVisa = [
-    { id: 1, date: '01/08/2024', orderNumber: 'O-06789/24', designation: 'Produit A' },
-    { id: 2, date: '02/08/2024', orderNumber: 'O-06779/24', designation: 'Produit B' },
-    { id: 3, date: '27/10/2024', orderNumber: '', designation: 'Produit C' },
-  ];
-
-  const ordersValidation = [
-    {
-      id: 1,
-      date: '01/08/2024',
-      orderNumber: 'O-06791/24',
-      designation: 'Produit E',
-      submissionDate: '02/08/2024',
-    },
-    {
-      id: 2,
-      date: '04/08/2024',
-      orderNumber: 'O-06793/24',
-      designation: 'Produit F',
-      submissionDate: '05/08/2024',
-    },
-    {
-      id: 3,
-      date: '06/08/2024',
-      orderNumber: 'O-06734/24',
-      designation: 'Produit G',
-      submissionDate: '07/08/2024',
-    },
-  ];
-
-  const ordersPayment = [
-    {
-      id: 1,
-      date: '01/08/2024',
-      orderNumber: 'O-06759/24',
-      invoiceNumber: '',
-      designation: 'Produit C',
-      validationDate: '05/08/2024',
-    },
-    {
-      id: 2,
-      date: '03/08/2024',
-      orderNumber: 'O-06749/24',
-      invoiceNumber: '',
-      designation: 'Produit D',
-      validationDate: '06/08/2024',
-    },
-  ];
-
-  // Définissez les options après la déclaration des données
   const options = [
     {
       value: 'visa',
@@ -98,7 +80,13 @@ const Home = () => {
     },
   ];
 
-  console.log(user);
+  if (loading) {
+    return <div className="loading">Chargement des commandes...</div>;
+  }
+
+  if (error) {
+    return <div className="error-message">{error}</div>;
+  }
 
   return (
     <div className="home-container">
@@ -109,222 +97,132 @@ const Home = () => {
         Bienvenue <span className="home-highlight-text">{user?.companyname}</span>
       </div>
 
-      {/* Dropdown visible uniquement sur mobile */}
+      {/* Dropdown for mobile */}
       <div className="home-dropdown-container">
-        <select
-          className="home-dropdown"
-          value={activeTab}
-          onChange={handleDropdownChange}
-        >
+        <select className="home-dropdown" value={activeTab} onChange={handleDropdownChange}>
           {options.map((option) => (
-            <option
-              key={option.value}
-              value={option.value}
-              title={option.title} // Affiche le texte complet au survol
-            >
+            <option key={option.value} value={option.value} title={option.title}>
               {option.label}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Onglets visibles uniquement sur desktop */}
+      {/* Tabs for desktop */}
       <div className="home-tabs-container">
-        <div
-          className={`home-tab-item ${activeTab === 'visa' ? 'home-active' : ''}`}
-          onClick={() => handleTabClick('visa')}
-        >
-          <FontAwesomeIcon icon={faClipboardList} className="home-tab-icon" /> Mes commandes à soumettre ({ordersVisa.length})
-        </div>
-        <div
-          className={`home-tab-item ${activeTab === 'validation' ? 'home-active' : ''}`}
-          onClick={() => handleTabClick('validation')}
-        >
-          <FontAwesomeIcon icon={faCheckCircle} className="home-tab-icon" /> Mes commandes en attente de la CCD ({ordersValidation.length})
-        </div>
-        <div
-          className={`home-tab-item ${activeTab === 'payment' ? 'home-active' : ''}`}
-          onClick={() => handleTabClick('payment')}
-        >
-          <FontAwesomeIcon icon={faDollarSign} className="home-tab-icon" /> Mes commandes en attente de paiement ({ordersPayment.length})
-        </div>
+        {options.map((option) => (
+          <div
+            key={option.value}
+            className={`home-tab-item ${activeTab === option.value ? 'home-active' : ''}`}
+            onClick={() => handleTabClick(option.value)}
+          >
+            <FontAwesomeIcon icon={option.value === 'visa' ? faClipboardList : option.value === 'validation' ? faCheckCircle : faDollarSign} className="home-tab-icon" />
+            {option.label}
+          </div>
+        ))}
       </div>
 
       <div className="home-dashboard-grid">
-        {/* Commandes en attente de Visa */}
-        {activeTab === 'visa' && (
-          <div className="home-dashboard-item">
-            <div className="home-dashboard-table-container">
-              <table className="home-dashboard-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>N° de Commande</th>
-                    <th>Désignation</th>
-                    <th>Certificat d'Origine</th>
-                    <th>Facture Commerciale</th>
-                    <th>Législation</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ordersVisa.map((order) => (
-                    <tr key={order.id}>
-                      <td>{order.date}</td>
-                      <td>{order.orderNumber || '-'}</td>
-                      <td>{order.designation}</td>
-                      <td>
-                        {order.id === 2 || order.id === 3 ? (
-                          <button className="home-icon-button home-minimal-button" title="Ajouter">
-                            <FontAwesomeIcon icon={faPlus} />
-                          </button>
-                        ) : (
-                          <div className="home-icon-button-group">
-                            <button className="home-icon-button home-minimal-button" title="Modifier">
-                              <FontAwesomeIcon icon={faPen} />
-                            </button>
-                            <button className="home-icon-button home-delete-button home-minimal-button" title="Supprimer">
-                              <FontAwesomeIcon icon={faTimes} />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        {order.id === 3 ? (
-                          <div className="home-icon-button-group">
-                            <button className="home-icon-button home-minimal-button" title="Modifier">
-                              <FontAwesomeIcon icon={faPen} />
-                            </button>
-                            <button className="home-icon-button home-delete-button home-minimal-button" title="Supprimer">
-                              <FontAwesomeIcon icon={faTimes} />
-                            </button>
-                          </div>
-                        ) : (
-                          <button className="home-icon-button home-minimal-button" title="Ajouter">
-                            <FontAwesomeIcon icon={faPlus} />
-                          </button>
-                        )}
-                      </td>
-                      <td>
-                        {order.id === 3 ? (
-                          <button className="home-icon-button home-minimal-button" title="Ajouter">
-                            <FontAwesomeIcon icon={faPlus} />
-                          </button>
-                        ) : (
-                          <div className="home-icon-button-group">
-                            <button className="home-icon-button home-minimal-button" title="Modifier">
-                              <FontAwesomeIcon icon={faPen} />
-                            </button>
-                            <button className="home-icon-button home-delete-button home-minimal-button" title="Supprimer">
-                              <FontAwesomeIcon icon={faTimes} />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        <button className="home-submit-button home-minimal-button">Soumettre</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {activeTab === 'visa' && <OrderTable title="Commandes à soumettre" orders={ordersVisa} />}
+        {activeTab === 'validation' && <OrderTable title="Commandes en attente de validation" orders={ordersValidation} />}
+        {activeTab === 'payment' && <OrderTable title="Commandes en attente de paiement" orders={ordersPayment} />}
+      </div>
+    </div>
+  );
+};
 
-        {/* Commandes en attente de validation */}
-        {activeTab === 'validation' && (
-          <div className="home-dashboard-item">
-            <div className="home-dashboard-table-container">
-              <table className="home-dashboard-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>N° de Commande</th>
-                    <th>Désignation</th>
-                    <th>Date soumission</th>
-                    <th>Certificat d'Origine</th>
-                    <th>Facture Commerciale</th>
-                    <th>Législation</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ordersValidation.map((order) => (
-                    <tr key={order.id}>
-                      <td>{order.date}</td>
-                      <td>{order.orderNumber || '-'}</td>
-                      <td>{order.designation}</td>
-                      <td>{order.submissionDate}</td>
-                      <td>
-                        <button className="home-icon-button home-minimal-button" title="Voir">
-                          <FontAwesomeIcon icon={faEye} />
-                          <span className="home-button-text">Détails</span>
-                        </button>
-                      </td>
-                      <td></td>
-                      <td>
-                        <button className="home-icon-button home-minimal-button" title="Voir">
-                          <FontAwesomeIcon icon={faEye} />
-                          <span className="home-button-text">Détails</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+const OrderTable = ({ title, orders }) => {
+  const navigate = useNavigate();
 
-        {/* Commandes en attente de paiement */}
-        {activeTab === 'payment' && (
-          <div className="home-dashboard-item">
-            <div className="home-dashboard-table-container">
-              <table className="home-dashboard-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>N° de Commande</th>
-                    <th>N° Facture</th>
-                    <th>Désignation</th>
-                    <th>Date Validation</th>
-                    <th>Certificat d'Origine</th>
-                    <th>Facture Commerciale</th>
-                    <th>Législation</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ordersPayment.map((order) => (
-                    <tr key={order.id}>
-                      <td>{order.date}</td>
-                      <td>{order.orderNumber || '-'}</td>
-                      <td>{order.invoiceNumber || '-'}</td>
-                      <td>{order.designation}</td>
-                      <td>{order.validationDate}</td>
-                      <td>
-                        <button className="home-icon-button home-minimal-button" title="Voir">
-                          <FontAwesomeIcon icon={faEye} />
-                          <span className="home-button-text">Détails</span>
-                        </button>
-                      </td>
-                      <td></td>
-                      <td>
-                        <button className="home-icon-button home-minimal-button" title="Voir">
-                          <FontAwesomeIcon icon={faEye} />
-                          <span className="home-button-text">Détails</span>
-                        </button>
-                      </td>
-                      <td>
-                        <button className="home-submit-button home-minimal-button">Payer</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+  const handleDetailsClick = (orderId, certifId) => {
+    navigate(`/create-order?orderId=${orderId}&certifId=${certifId}`);
+  };
+
+  return (
+    <div className="home-dashboard-item">
+      <h3>{title}</h3>
+      <div className="home-dashboard-table-container">
+        <table className="home-dashboard-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>N° de Commande</th>
+              <th>Désignation</th>
+              <th>Certificat d'Origine</th>
+              <th>Facture Commerciale</th>
+              <th>Législation</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.length > 0 ? (
+              orders.map((order) => (
+                <tr key={order.id_order}>
+                  <td>{new Date(order.insertdate_order).toLocaleDateString()}</td>
+                  <td>{order.id_order || '-'}</td>
+                  <td>{order.order_title || '-'}</td>
+
+                  {/* Certificat d'Origine */}
+                  <td>
+                    {order.id_ord_certif_ori ? (
+                      <button
+                        className="home-icon-button home-minimal-button"
+                        title="Voir"
+                        onClick={() => handleDetailsClick(order.id_order, order.id_ord_certif_ori)}
+                      >
+                        <FontAwesomeIcon icon={faEye} />
+                        <span className="home-button-text">Détails</span>
+                      </button>
+                    ) : (
+                      <button className="home-icon-button home-minimal-button" title="Ajouter">
+                        <FontAwesomeIcon icon={faPlus} />
+                      </button>
+                    )}
+                  </td>
+
+                  {/* Facture Commerciale */}
+                  <td>
+                    {order.id_ord_com_invoice ? (
+                      <button className="home-icon-button home-minimal-button" title="Voir">
+                        <FontAwesomeIcon icon={faEye} />
+                        <span className="home-button-text">Détails</span>
+                      </button>
+                    ) : (
+                      <button className="home-icon-button home-minimal-button" title="Ajouter">
+                        <FontAwesomeIcon icon={faPlus} />
+                      </button>
+                    )}
+                  </td>
+
+                  {/* Législation */}
+                  <td>
+                    {order.id_ord_legalization ? (
+                      <button className="home-icon-button home-minimal-button" title="Voir">
+                        <FontAwesomeIcon icon={faEye} />
+                        <span className="home-button-text">Détails</span>
+                      </button>
+                    ) : (
+                      <button className="home-icon-button home-minimal-button" title="Ajouter">
+                        <FontAwesomeIcon icon={faPlus} />
+                      </button>
+                    )}
+                  </td>
+
+                  {/* Submit Button */}
+                  <td>
+                    <button className="home-submit-button home-minimal-button">
+                      {title.includes('paiement') ? 'Payer' : 'Soumettre'}
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="7">Aucune commande trouvée.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './ResetPassword.css';  // Utiliser le nouveau fichier CSS spécifique
 import { Link } from 'react-router-dom'; // Pour la navigation
-import logo from '../assets/logo.jpg'; // Assurez-vous que le logo est dans le bon chemin
+import logo from '../assets/logo3.jpeg'; // Assurez-vous que le logo est dans le bon chemin
 
 const ResetPassword = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);

@@ -25,7 +25,7 @@
   /* Titre principal */
   .account-created-box h1 {
     font-size: 2em;
-    color: #004080; /* Bleu comme les titres de Register */
+    color: #C39408; /* Bleu comme les titres de Register */
     margin-bottom: 20px;
   }
   
@@ -41,7 +41,7 @@
   .account-created-button {
     display: inline-block;
     padding: 12px 30px;
-    background-color: #004080; /* Même couleur que le bouton Créer */
+    background-color: #C39408; /* Même couleur que le bouton Créer */
     color: white;
     border: none;
     border-radius: 6px;
@@ -52,7 +52,7 @@
   }
   
   .account-created-button:hover {
-    background-color: #003366; /* Variation plus foncée */
+    background-color: #C39408; /* Variation plus foncée */
   }
   
   /* Responsive */
