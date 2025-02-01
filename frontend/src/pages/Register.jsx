@@ -263,6 +263,8 @@ const Register = () => {
       // Sélection du secteur et pays (pour usage dans l’API)
       const selectedSector = sectors.find((s) => s.symbol_fr === formData.sector);
       const selectedCountry = countries.find((c) => c.symbol_fr === formData.country);
+      
+      const selectedHeadOfficeCountry = countries.find((c) => c.symbol_fr === formData.originCountry);
 
       // Prépare les données pour l'abonnement
       const subscriptionData = {
@@ -283,7 +285,8 @@ const Register = () => {
         id_sector: selectedSector ? selectedSector.id_sector : null,
         other_sector: formData.otherSector || null,
         id_country: selectedCountry ? selectedCountry.id_country : null,
-        id_country_headoffice: selectedCountry ? selectedCountry.id_country : null,
+        id_country_headoffice: selectedHeadOfficeCountry ? selectedHeadOfficeCountry.id_country : null,
+        other_legal_form : otherCompanyCategory,
         statut_flag: 1,
         idlogin: 1,
         billed_cust_name: formData.billed_cust_name,
