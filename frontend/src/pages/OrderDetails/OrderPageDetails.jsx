@@ -67,14 +67,16 @@ const OrderDetailsPage = () => {
         });
         console.log("Transpmode =>", transpResponse);
         if (transpResponse && transpResponse.data) {
-            // Join the French symbols of the returned transport modes.
-            const joinedSymbols = transpResponse.data
-              .map(item => item.symbol_fr)
-              .join(', ');
-            // Update formData with the joined string.
-            setFormData(prev => ({
+            // Suppose you want to mark all returned modes as selected.
+            // (Or you might determine selection based on another piece of data.)
+            const transportModesObj = {};
+            transpResponse.data.forEach((mode) => {
+              // Use a key like the symbol in lowercase (or any key you choose)
+              transportModesObj[mode.symbol_fr.toLowerCase()] = true;
+            });
+            setFormData((prev) => ({
               ...prev,
-              transportModeLabels: joinedSymbols,
+              transportModes: transportModesObj,
             }));
           }
 

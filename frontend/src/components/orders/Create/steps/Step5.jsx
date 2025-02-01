@@ -130,12 +130,6 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal }) => 
                 : 'Non spécifié'}
             </span>
           </div>
-          <div className="recap-item">
-            <span className="recap-label">Mode(s) sélectionné(s) :</span>
-            <span className="recap-value">
-              {values.transportModeLabels || 'Non spécifié'}
-            </span>
-          </div>
           {values.transportRemarks && (
             <div className="recap-item">
               <span className="recap-label">Remarques sur le transport :</span>

@@ -1,7 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './Step1.css';
-import { addOrUpdateGoods, addRecipient, createCertificate, fetchCountries, fetchRecipients, getCertifGoodsInfo, getTransmodeInfo, getUnitWeightInfo } from '../../../../services/apiServices';
+import {
+  addOrUpdateGoods,
+  addRecipient,
+  createCertificate,
+  fetchCountries,
+  fetchRecipients,
+  getCertifGoodsInfo,
+  getTransmodeInfo,
+  getUnitWeightInfo,
+  setOrdCertifTranspMode
+} from '../../../../services/apiServices';
 import { useSelector } from 'react-redux';
 
 const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} }) => {
@@ -9,17 +19,17 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
   const [isNewDestinataire, setIsNewDestinataire] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [recipients, setRecipients] = useState([]); // State for actual recipients
-  const [selectedRecipient, setSelectedRecipient] = useState(''); // Selected reci
+  const [selectedRecipient, setSelectedRecipient] = useState(''); // Selected recipient ID
   const [selectedFakeCompany, setSelectedFakeCompany] = useState('');
 
   const [countries, setCountries] = useState([]); // State for countries
-  const [transportModes, setTransportModes] = useState([]); // State for transport modes
+  const [transportModes, setTransportModes] = useState([]); // State for transport modes (from API)
   const [unitWeights, setUnitWeights] = useState([]); // State for unit weights
 
   const [loading, setLoading] = useState(true); // Loading state
   const [error, setError] = useState(null); // Error state
 
-  // Extract query params (certifId)
+  // Extract query params (certifId and orderId)
   const params = new URLSearchParams(location.search);
   const certifId = params.get('certifId');
   const orderId = params.get('orderId');
@@ -32,7 +42,6 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
     const loadData = async () => {
       try {
         setLoading(true);
-
 
         // If certifId exists, fetch goods data and populate values.merchandises
         if (certifId) {
@@ -51,6 +60,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         setCountries(fetchedCountries);
 
         // Fetch transport modes
+        // For getTransmodeInfo, we assume it accepts (idListCT, isActiveTM) or similar parameters.
         const fetchedTransportModes = await getTransmodeInfo(null, true);
         setTransportModes(fetchedTransportModes.data);
 
@@ -58,13 +68,13 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         const fetchedUnitWeights = await getUnitWeightInfo(null, true);
         setUnitWeights(fetchedUnitWeights.data);
 
-        // Fetch recipients
+        // Fetch recipients if no certifId and a customerAccountId exists
         if (!certifId && customerAccountId) {
           const recipientFetched = await fetchRecipients({
             idListCA: customerAccountId, // Fetch recipients by customer account ID
           });
           setRecipients(recipientFetched.data);
-          console.log(recipientFetched)
+          console.log(recipientFetched);
         }
 
         setLoading(false);
@@ -77,6 +87,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
     loadData();
   }, [certifId, customerAccountId]);
 
+  // Use safeValues as fallback
   const safeValues = values || {
     goodsOrigin: '',
     goodsDestination: '',
@@ -84,28 +95,36 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
     remarks: '',
     copies: 1,
     isCommitted: false,
+    transportModes: {} // Initialize as an object
   };
+
+  // Compute a joined string of selected transport mode labels directly from form data.
+  // This code assumes that values.transportModes is an object like:
+  // { air: true, mer: false, terre: false, mixte: true }
+  const selectedTransportModes = Object.keys(safeValues.transportModes)
+    .filter(key => safeValues.transportModes[key])
+    .map(key => key.charAt(0).toUpperCase() + key.slice(1))  // Capitalize first letter
+    .join(', ') || 'Aucun mode sélectionné';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 1) Validate transport modes
-    const isTransportSelected = transportModes.some(
-      (mode) => values.transportModes[mode.symbol_eng.toLowerCase()]
+    // 1) Validate transport modes: at least one must be selected.
+    const isTransportSelected = Object.keys(safeValues.transportModes).some(
+      (key) => safeValues.transportModes[key]
     );
     if (!isTransportSelected) {
       setErrorMessage('Veuillez sélectionner au moins un mode de transport.');
       return;
     }
 
-    // 2) Validate merchandise
-    if (values.merchandises && values.merchandises.length === 0) {
+    // 2) Validate merchandise: at least one must be added.
+    if (safeValues.merchandises.length === 0) {
       setErrorMessage('Veuillez ajouter au moins une marchandise.');
       return;
     }
 
     let recipientId = selectedRecipient; // Default to selected recipient ID
-
 
     // 3) If user wants to create a new recipient (destinataire)
     if (isNewDestinataire) {
@@ -114,10 +133,10 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         const newRecipientData = {
           idRecipientAccount: null,
           idCustAccount: customerAccountId,
-          recipientName: values.receiverName,
-          address1: values.receiverAddress,
-          address2: values.receiverAddress2,
-          address3: values.receiverPostalCode,
+          recipientName: safeValues.receiverName,
+          address1: safeValues.receiverAddress,
+          address2: safeValues.receiverAddress2,
+          address3: safeValues.receiverPostalCode,
           idCity: 1, // Or the correct city ID
           statutFlag: 1,
           activationDate: new Date().toISOString(),
@@ -128,7 +147,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
 
         const recipientResponse = await addRecipient(newRecipientData);
         console.log(recipientResponse);
-        recipientId = recipientResponse?.newRecipientId; // Capture new ID
+        recipientId = recipientResponse?.newRecipientId;
         console.log(recipientId);
         console.log('New recipient created successfully!');
       } catch (error) {
@@ -136,33 +155,32 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         setErrorMessage(
           "Erreur lors de la création du nouveau destinataire. Veuillez réessayer."
         );
-        return; // Stop here if creation failed
+        return;
       }
     }
 
-    // Convert country names to country IDs
+    // Convert country names to country IDs using fetched countries
     const getCountryId = (countryName) => {
       const foundCountry = countries.find(country => country.symbol_fr === countryName);
       return foundCountry ? foundCountry.id_country : null;
     };
 
     const certData = {
-      idOrder: values.orderId, // Ensure order ID is available
+      idOrder: safeValues.orderId, // Ensure order ID is available
       idRecipientAccount: recipientId,
-      idCountryOrigin: getCountryId(values.goodsOrigin),  // Convert to ID
-      idCountryDestination: getCountryId(values.goodsDestination),  // Convert to ID
-      notes: values.remarks,
-      copyCount: values.copies,
+      idCountryOrigin: getCountryId(safeValues.goodsOrigin),  // Convert to ID
+      idCountryDestination: getCountryId(safeValues.goodsDestination),  // Convert to ID
+      notes: safeValues.remarks,
+      copyCount: safeValues.copies,
       idLoginInsert: auth?.user?.id_login_user || 1,
-      transportRemarks: values.transportRemarks,
+      transportRemarks: safeValues.transportRemarks,
     };
 
     const certResponse = await createCertificate(certData);
     console.log('Certificate created successfully:', certResponse);
 
-    for (const merchandise of values.merchandises) {
+    for (const merchandise of safeValues.merchandises) {
       try {
-
         const normalizeText = (text) => text.toLowerCase().trim();
 
         const matchedUnit = unitWeights.find(
@@ -172,7 +190,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
           idOrdCertifOri: certResponse.newCertifId, // Use the newly created certificate ID
           goodDescription: merchandise.designation,
           goodReferences: merchandise.boxReference,
-          idUnitWeight: unitWeights.find((unit) => unit.symbol_fr === merchandise.unit)?.id_unit_weight || null,
+          idUnitWeight: matchedUnit ? matchedUnit.id_unit_weight : null,
         };
 
         console.log("Merchandise => ", merchandise);
@@ -184,20 +202,43 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         setErrorMessage("Erreur lors de l'ajout des marchandises. Veuillez réessayer.");
         return;
       }
+
+      // 7) For each selected transport mode, call setOrdCertifTranspMode
+      //    We rely on transportModes (from getTransmodeInfo) to match ID by the mode's symbol_eng (lowercase)
+      const selectedModeKeys = Object.keys(values.transportModes || {}).filter(
+        (key) => values.transportModes[key]
+      );
+
+      for (const key of selectedModeKeys) {
+        // Find the matching mode in your fetched transportModes
+        const matched = transportModes.find(
+          (tm) => tm.symbol_eng.toLowerCase() === key
+        );
+        if (matched) {
+          // Call setOrdCertifTranspMode with the new certificate ID
+          const result = await setOrdCertifTranspMode({
+            id_ord_certif_transp_mode: null,
+            id_ord_certif_ori: certResponse.newCertifId,
+            id_transport_mode: matched.id_transport_mode,
+          });
+          console.log('Transport mode set:', result);
+        }
+      }
     }
 
     // 4) If everything is okay, proceed to next step
     setErrorMessage('');
     nextStep();
   };
+
   const addMerchandise = () => {
-    if (!values.designation || !values.quantity || !values.boxReference) return;
+    if (!safeValues.designation || !safeValues.quantity || !safeValues.boxReference) return;
 
     const newMerchandise = {
-      designation: values.designation,
-      boxReference: values.boxReference,
-      quantity: values.quantity,
-      unit: values.unit,
+      designation: safeValues.designation,
+      boxReference: safeValues.boxReference,
+      quantity: safeValues.quantity,
+      unit: safeValues.unit,
     };
 
     handleMerchandiseChange(newMerchandise);
@@ -209,16 +250,13 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
   };
 
   const removeMerchandise = (index) => {
-    const updatedMerchandises = values.merchandises.filter((_, i) => i !== index);
+    const updatedMerchandises = safeValues.merchandises.filter((_, i) => i !== index);
     handleChange('merchandises', updatedMerchandises);
   };
-
 
   return (
     <form onSubmit={handleSubmit} className="step-form">
       <h3>{t('step1.title')}</h3>
-
-
 
       <div className="section-title">{t('step1.exporterTitle')}</div>
       <p className="exporter-name">INDIGO TRADING FZCO</p>
@@ -256,7 +294,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
               const selectedId = e.target.value;
               setSelectedRecipient(selectedId);
 
-              // Find the selected recipient
+              // Find the selected recipient and update form data accordingly
               const recipient = recipients.find(
                 (r) => r.id_recipient_account.toString() === selectedId
               );
@@ -268,7 +306,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
                 handleChange('receiverPostalCode', recipient.address_3);
                 handleChange('receiverCity', recipient.city_symbol_fr_recipient);
                 handleChange('receiverCountry', recipient.country_symbol_fr_recipient);
-                handleChange('receiverPhone', recipient.trade_registration_num); // Replace this with the appropriate phone field if available
+                handleChange('receiverPhone', recipient.trade_registration_num);
               }
             }}
             required
@@ -286,7 +324,6 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         </div>
       )}
 
-
       {isNewDestinataire && (
         <>
           <div className="form-group-row">
@@ -294,7 +331,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
               <label>{t('step1.companyName')} *</label>
               <input
                 type="text"
-                value={values.receiverName}
+                value={safeValues.receiverName}
                 onChange={(e) => handleChange('receiverName', e.target.value)}
                 required
               />
@@ -306,7 +343,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
               <label>{t('step1.address')} *</label>
               <input
                 type="text"
-                value={values.receiverAddress}
+                value={safeValues.receiverAddress}
                 onChange={(e) => handleChange('receiverAddress', e.target.value)}
                 required
               />
@@ -316,7 +353,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
               <label>{t('step1.addressNext')}</label>
               <input
                 type="text"
-                value={values.receiverAddress2}
+                value={safeValues.receiverAddress2}
                 onChange={(e) => handleChange('receiverAddress2', e.target.value)}
               />
             </div>
@@ -327,7 +364,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
               <label>{t('step1.postalCode')} *</label>
               <input
                 type="text"
-                value={values.receiverPostalCode}
+                value={safeValues.receiverPostalCode}
                 onChange={(e) => handleChange('receiverPostalCode', e.target.value)}
                 required
               />
@@ -337,7 +374,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
               <label>{t('step1.city')} *</label>
               <input
                 type="text"
-                value={values.receiverCity}
+                value={safeValues.receiverCity}
                 onChange={(e) => handleChange('receiverCity', e.target.value)}
                 required
               />
@@ -346,7 +383,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
             <div className="form-group">
               <label>{t('step1.country')} *</label>
               <select
-                value={values.receiverCountry}
+                value={safeValues.receiverCountry}
                 onChange={(e) => handleChange('receiverCountry', e.target.value)}
                 required
               >
@@ -364,7 +401,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
             <label>Numéro de téléphone *</label>
             <input
               type="tel"
-              value={values.receiverPhone}
+              value={safeValues.receiverPhone}
               onChange={(e) => handleChange('receiverPhone', e.target.value)}
               required
             />
@@ -377,7 +414,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
       <div className="form-group">
         <label>Pays d'origine de la marchandise *</label>
         <select
-          value={values.goodsOrigin}
+          value={safeValues.goodsOrigin}
           onChange={(e) => handleChange('goodsOrigin', e.target.value)}
           required
         >
@@ -393,7 +430,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
       <div className="form-group">
         <label>Pays de destination de la marchandise *</label>
         <select
-          value={values.goodsDestination}
+          value={safeValues.goodsDestination}
           onChange={(e) => handleChange('goodsDestination', e.target.value)}
           required
         >
@@ -415,10 +452,10 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
             <label key={mode.id_transport_mode}>
               <input
                 type="checkbox"
-                checked={values.transportModes[mode.symbol_eng.toLowerCase()] || false}
+                checked={safeValues.transportModes[mode.symbol_eng.toLowerCase()] || false}
                 onChange={(e) =>
                   handleChange('transportModes', {
-                    ...values.transportModes,
+                    ...safeValues.transportModes,
                     [mode.symbol_eng.toLowerCase()]: e.target.checked,
                   })
                 }
@@ -429,10 +466,18 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         </div>
       </div>
 
+      {/* Display the joined selected transport mode labels */}
+      <div className="selected-transport-modes">
+        <strong>Modes sélectionnés :</strong> {Object.keys(safeValues.transportModes)
+          .filter((key) => safeValues.transportModes[key])
+          .map((key) => key.charAt(0).toUpperCase() + key.slice(1))
+          .join(', ') || 'Aucun mode sélectionné'}
+      </div>
+
       <div className="form-group">
         <label>Remarques sur le transport</label>
         <textarea
-          value={values.transportRemarks}
+          value={safeValues.transportRemarks}
           onChange={(e) => handleChange('transportRemarks', e.target.value)}
         />
       </div>
@@ -444,7 +489,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
           <label>Référence / HSCODE</label>
           <input
             type="text"
-            value={values.boxReference}
+            value={safeValues.boxReference}
             onChange={(e) => handleChange('boxReference', e.target.value)}
           />
         </div>
@@ -452,7 +497,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
           <label>Nature de la marchandise</label>
           <input
             type="text"
-            value={values.designation}
+            value={safeValues.designation}
             onChange={(e) => handleChange('designation', e.target.value)}
           />
         </div>
@@ -461,7 +506,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
           <label>Quantité</label>
           <input
             type="number"
-            value={values.quantity}
+            value={safeValues.quantity}
             onChange={(e) => handleChange('quantity', e.target.value)}
           />
         </div>
@@ -469,7 +514,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         <div className="form-group">
           <label>Unité</label>
           <select
-            value={values.unit}
+            value={safeValues.unit}
             onChange={(e) => handleChange('unit', e.target.value)}
           >
             {unitWeights.map((unit) => (
@@ -484,7 +529,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
           <label>Référence document justificatif</label>
           <input
             type="text"
-            value={values.reference}
+            value={safeValues.reference}
             onChange={(e) => handleChange('reference', e.target.value)}
           />
         </div>
@@ -496,7 +541,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         </div>
       </div>
 
-      {values.merchandises && values.merchandises.length > 0 && (
+      {safeValues.merchandises && safeValues.merchandises.length > 0 && (
         <div className="dashboard-table-container">
           <table className="table">
             <thead>
@@ -509,7 +554,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
               </tr>
             </thead>
             <tbody>
-              {values.merchandises.map((merchandise, index) => (
+              {safeValues.merchandises.map((merchandise, index) => (
                 <tr key={index}>
                   <td>{merchandise.designation}</td>
                   <td>{merchandise.boxReference}</td>
@@ -530,7 +575,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
       <div className="form-group">
         <input
           type="number"
-          value={values.copies}
+          value={safeValues.copies}
           onChange={(e) => handleChange('copies', e.target.value)}
           min="1"
           required
@@ -553,7 +598,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         <label>
           <input
             type="checkbox"
-            checked={values.isCommitted}
+            checked={safeValues.isCommitted}
             onChange={(e) => handleChange('isCommitted', e.target.checked)}
           /> Je certifie m'engager dans les conditions décrites ci-dessus
         </label>
@@ -564,13 +609,13 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
       <div className="form-group">
         <label>Remarques</label>
         <textarea
-          value={values.remarks}
+          value={safeValues.remarks}
           onChange={(e) => handleChange('remarks', e.target.value)}
           placeholder="Ajouter une remarque"
         />
       </div>
       <div className="character-counter">
-        Caractère(s) restant(s) : {300 - (values.remarks ? values.remarks.length : 0)}
+        Caractère(s) restant(s) : {300 - (safeValues.remarks ? safeValues.remarks.length : 0)}
       </div>
 
       {errorMessage && <p className="error-message">{errorMessage}</p>}

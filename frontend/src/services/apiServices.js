@@ -706,3 +706,26 @@ export const getCertifTranspMode = async (params) => {
     throw error;
   }
 };
+
+export const setOrdCertifTranspMode = async (payload) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/certif-transpmode`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+         'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to set order certif transport mode');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (setOrdCertifTranspMode):', error);
+    throw error;
+  }
+};
