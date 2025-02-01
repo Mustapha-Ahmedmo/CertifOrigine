@@ -42,6 +42,7 @@ import RegisterContact from '../pages/RegisterContact';
 // Gestion de l'inactivité
 import InactivityHandler from './InactivityHandler';
 import Step2 from './orders/Create/steps/Step2';
+import OrderDetailsPage from '../pages/OrderDetails/OrderPageDetails';
 
 const App = () => {
   const dispatch = useDispatch();
@@ -87,6 +88,8 @@ const App = () => {
             element={<CompletedOrdersThisYear />}
           />
           <Route path="create-order" element={<CreateOrder />} />
+
+          <Route path="order-details" element={<OrderDetailsPage />} />
 
           {/* Routes "opérateur" */}
           <Route path="operator" element={<OperateurLayout />}>

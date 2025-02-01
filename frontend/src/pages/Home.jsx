@@ -135,7 +135,7 @@ const OrderTable = ({ title, orders }) => {
   const navigate = useNavigate();
 
   const handleDetailsClick = (orderId, certifId) => {
-    navigate(`/create-order?orderId=${orderId}&certifId=${certifId}`);
+    navigate(`/dashboard/order-details?orderId=${orderId}&certifId=${certifId}`);
   };
 
   return (

@@ -510,6 +510,118 @@ const setOrdCertifGoods = async (req, res) => {
     }
 };
   
+const getCertifTranspMode = async (req, res) => {
+    try {
+      // Destructure query parameters
+      let {
+        idListCT,
+        idListCO,
+        isActiveOT,
+        isActiveTM,
+        idListOrder,
+        idCustAccount,
+        idListOrderStatus
+      } = req.query;
+  
+      // Convert parameters: if a parameter is missing or equals the string "null", set it to null.
+      idListCT = (idListCT === "null" || !idListCT) ? null : idListCT;
+      idListCO = (idListCO === "null" || !idListCO) ? null : idListCO;
+      idListOrder = (idListOrder === "null" || !idListOrder) ? null : idListOrder;
+      idListOrderStatus = (idListOrderStatus === "null" || !idListOrderStatus) ? null : idListOrderStatus;
+      idCustAccount = idCustAccount ? parseInt(idCustAccount, 10) : null;
+  
+      // Convert boolean strings to actual booleans
+      const activeOT = (isActiveOT === 'true' ? true : isActiveOT === 'false' ? false : null);
+      const activeTM = (isActiveTM === 'true' ? true : isActiveTM === 'false' ? false : null);
+  
+      // Execute the stored function
+      const result = await sequelize.query(
+        `SELECT * FROM get_certiftransp_mode(
+            :p_id_listCT,
+            :p_id_listCO,
+            :p_isactiveOT,
+            :p_isactiveTM,
+            :p_id_list_order,
+            :p_id_custaccount,
+            :p_id_list_orderstatus
+        )`,
+        {
+          replacements: {
+            p_id_listCT: idListCT,
+            p_id_listCO: idListCO,
+            p_isactiveOT: activeOT,
+            p_isactiveTM: activeTM,
+            p_id_list_order: idListOrder,
+            p_id_custaccount: idCustAccount,
+            p_id_list_orderstatus: idListOrderStatus,
+          },
+          type: sequelize.QueryTypes.SELECT,
+        }
+      );
+  
+      res.status(200).json({
+        message: 'Informations sur les modes de transport récupérées avec succès.',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Erreur lors de la récupération des informations de mode de transport:', error);
+      res.status(500).json({
+        message: 'Erreur lors de la récupération des informations de mode de transport.',
+        error: error.message || 'Erreur inconnue.',
+        details: error.original || error,
+      });
+    }
+  };
+  
+  const setOrdCertifTranspMode = async (req, res) => {
+    try {
+      const { id_ord_certif_transp_mode, id_ord_certif_ori, id_transport_mode } = req.body;
+  
+      // Validate required fields
+      if (!id_ord_certif_ori || !id_transport_mode) {
+        return res.status(400).json({
+          message: "Les champs id_ord_certif_ori et id_transport_mode sont requis.",
+        });
+      }
+  
+      // Call the stored procedure using CALL.
+      // Note: The procedure uses an INOUT parameter for p_id_ord_certif_transp_mode.
+      // Sequelize does not automatically return the updated INOUT value,
+      // so we log the result and return a success message.
+      const result = await sequelize.query(
+        `CALL add_ordcertif_transpmode(
+           :p_id_ord_certif_transp_mode,
+           :p_id_ord_certif_ori,
+           :p_id_transport_mode
+         )`,
+        {
+          replacements: {
+            p_id_ord_certif_transp_mode: id_ord_certif_transp_mode || null, // Pass null if not provided
+            p_id_ord_certif_ori: id_ord_certif_ori,
+            p_id_transport_mode: id_transport_mode,
+          },
+          type: QueryTypes.RAW,
+        }
+      );
+  
+      console.log('Procedure result:', result);
+  
+      // Return success. In a production system, you might want to query the row
+      // (or use a wrapper function) to fetch the updated INOUT parameter.
+      return res.status(200).json({
+        message: 'Ordre certif transport mode ajouté ou mis à jour avec succès.',
+        // Optionally, include additional details if needed.
+      });
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour de l\'ordre certif transport mode:', error);
+      return res.status(500).json({
+        message: 'Erreur lors de la mise à jour de l\'ordre certif transport mode.',
+        error: error.message || 'Erreur inconnue.',
+        details: error.original || error,
+      });
+    }
+  };
+  
 module.exports = {
   executeAddOrder,
   getTransmodeInfo,
@@ -520,5 +632,7 @@ module.exports = {
   getCertifGoodsInfo,
   executeAddCertifOrder,
   setOrdCertifGoods,
-  getOrdersForCustomer
+  getOrdersForCustomer,
+  getCertifTranspMode,
+  setOrdCertifTranspMode
 };

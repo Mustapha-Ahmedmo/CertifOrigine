@@ -684,3 +684,25 @@ export const sendContactForm = async (formData) => {
     throw error; // Re-throw the error for handling in the calling code
   }
 };
+
+export const getCertifTranspMode = async (params) => {
+  try {
+    // Construct query string from params object (you can use URLSearchParams for this)
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(`${API_URL}/orders/certif-transp-mode?${queryString}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // if required
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Fetching transport mode info failed');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getCertifTranspMode):', error);
+    throw error;
+  }
+};

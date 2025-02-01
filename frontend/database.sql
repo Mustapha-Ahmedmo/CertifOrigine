@@ -23,6 +23,7 @@ DROP TABLE IF EXISTS ORD_CERTIF_GOODS CASCADE;
 DROP TABLE IF EXISTS SERVICES_CHARGES CASCADE;
 DROP TABLE IF EXISTS CURRENCY CASCADE;
 DROP TABLE IF EXISTS ORD_COM_INVOICE CASCADE;
+DROP TABLE IF EXISTS ORD_CERTIF_TRANSP_MODE CASCADE;
 
 CREATE TABLE CURRENCY (
     ID_CURRENCY INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -409,6 +410,15 @@ CREATE TABLE ORD_COM_INVOICE (
     FOREIGN KEY (ID_CURRENCY) REFERENCES CURRENCY(ID_CURRENCY),
     FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
     FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER)
+);
+
+CREATE TABLE ORD_CERTIF_TRANSP_MODE (
+    ID_ORD_CERTIF_TRANSP_MODE INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_ORD_CERTIF_ORI INT NOT NULL,                 -- Non nullable
+    ID_TRANSPORT_MODE INT NOT NULL,                 -- Non nullable
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
+    FOREIGN KEY (ID_ORD_CERTIF_ORI) REFERENCES ORD_CERTIF_ORI(ID_ORD_CERTIF_ORI),
+    FOREIGN KEY (ID_TRANSPORT_MODE) REFERENCES TRANSPORT_MODE(ID_TRANSPORT_MODE)
 );
 
 
@@ -2891,6 +2901,118 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
+
+DROP FUNCTION IF EXISTS get_certiftransp_mode;
+CREATE OR REPLACE FUNCTION get_certiftransp_mode(
+    p_id_listCT TEXT,
+    p_id_listCO TEXT,
+    p_isactiveOT BOOLEAN,
+    p_isactiveTM BOOLEAN,
+    p_id_list_order TEXT,
+    p_id_custaccount INT,
+    p_id_list_orderstatus TEXT
+)
+RETURNS TABLE(
+    id_ord_certif_transp_mode INT,
+    id_ord_certif_ori INT,
+    id_transport_mode INT,
+    deactivation_date TIMESTAMP,
+    id_order INT,
+    symbol_fr VARCHAR(64),
+    symbol_eng VARCHAR(64),
+    tm_deactivation_date TIMESTAMP
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        ct."id_ord_certif_transp_mode",
+        ct."id_ord_certif_ori",
+        ct."id_transport_mode",
+        ct."deactivation_date",
+	co."id_order",
+        tm."symbol_fr",
+        tm."symbol_eng",
+        tm."deactivation_date"
+    FROM 
+        ord_certif_transp_mode ct
+    JOIN
+        ord_certif_ori co ON ct."id_ord_certif_ori" = co."id_ord_certif_ori"
+		JOIN
+        	"ORDER" o ON o."id_order" = co."id_order"
+    JOIN
+        transport_mode tm ON ct."id_transport_mode" = tm."id_transport_mode"
+    WHERE 
+        (p_id_listCO IS NULL OR ct."id_ord_certif_ori" = ANY (string_to_array(p_id_listCO, ',')::INT[]))
+    AND 
+        (p_id_listCT IS NULL OR ct."id_ord_certif_transp_mode" = ANY (string_to_array(p_id_listCT, ',')::INT[]))
+    AND
+        (p_id_list_order IS NULL OR o."id_order" = ANY (string_to_array(p_id_list_order, ',')::INT[]))
+    AND
+        (p_id_custaccount IS NULL OR o."id_cust_account" = p_id_custaccount)
+    AND
+        (p_id_list_orderstatus IS NULL OR o."id_order_status" = ANY (string_to_array(p_id_list_orderstatus, ',')::INT[]))
+    AND (
+         p_isactiveOT IS NULL
+        
+        OR (p_isactiveOT IS NOT TRUE AND (
+            ct."deactivation_date" <= CURRENT_DATE 
+            OR co."deactivation_date" <= CURRENT_DATE
+        ))
+        
+        OR (p_isactiveOT IS TRUE AND (
+            (ct."deactivation_date" > CURRENT_DATE)
+            AND (co."deactivation_date" > CURRENT_DATE)
+        ))
+    )
+    AND (
+         p_isactiveTM IS NULL
+        
+        OR (p_isactiveTM IS NOT TRUE AND tm."deactivation_date" <= CURRENT_DATE)
+        
+        OR (p_isactiveTM IS TRUE AND tm."deactivation_date" > CURRENT_DATE)
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+
+DROP PROCEDURE IF EXISTS add_ordcertif_transpmode;
+CREATE OR REPLACE PROCEDURE add_ordcertif_transpmode(
+    INOUT p_id_ord_certif_transp_mode INT,
+    p_id_ord_certif_ori INT,
+    p_id_transport_mode INT
+)
+AS
+$$
+BEGIN
+    -- vérification si l'élément existe déjà dans la table
+    IF EXISTS (
+        SELECT 1 
+        FROM ORD_CERTIF_TRANSP_MODE
+        WHERE id_ord_certif_ori = p_id_ord_certif_ori
+        AND id_transport_mode = p_id_transport_mode
+        AND deactivation_date > CURRENT_DATE
+    ) THEN
+        -- on récuperèr l'id existant
+        SELECT id_ord_certif_transp_mode
+        INTO p_id_ord_certif_transp_mode
+        FROM ORD_CERTIF_TRANSP_MODE
+        WHERE id_ord_certif_ori = p_id_ord_certif_ori
+        AND id_transport_mode = p_id_transport_mode
+        AND deactivation_date > CURRENT_DATE;
+    ELSE
+        INSERT INTO ORD_CERTIF_TRANSP_MODE (
+            "id_ord_certif_ori",
+            "id_transport_mode"
+        ) VALUES (
+            p_id_ord_certif_ori,
+            p_id_transport_mode
+        )
+        RETURNING id_ord_certif_transp_mode INTO p_id_ord_certif_transp_mode;  -- Retourner l'id généré
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
 
 
 call set_op_user(0, 0, 'M. Admin', 1, TRUE,
