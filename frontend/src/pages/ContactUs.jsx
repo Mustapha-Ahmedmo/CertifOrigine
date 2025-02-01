@@ -30,7 +30,7 @@ const ContactUs = () => {
     setLoading(true);
     setError('');
     setSuccessMessage('');
-  
+   
     try {
       // Transform formData to match backend requirements
       const transformedData = {
@@ -57,7 +57,7 @@ const ContactUs = () => {
       setLoading(false);
     }
   };
-  
+
   return (
     <div className="contact-us-container">
       {/* Section texte à gauche */}
