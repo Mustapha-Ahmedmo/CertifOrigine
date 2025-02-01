@@ -608,6 +608,7 @@ const executeAddSubscription = async (req, res) => {
       phone_number,
       mobile_number,
       position,
+      rchNumber,
     } = req.body;
 
     // Validate required fields
@@ -664,6 +665,7 @@ const executeAddSubscription = async (req, res) => {
         :phone_number, 
         :mobile_number, 
         :position, 
+        :rchNumber,   
         :id_cust_account
       )`,
       {

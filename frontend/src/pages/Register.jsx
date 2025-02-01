@@ -68,7 +68,9 @@ const Register = () => {
     address: '',
     city: '',
     country: '',
+    originCountry: '', 
     companyCategory: '',
+    otherCompanyCategory: '',
     sector: '',
     otherSector: '',
     isFreeZoneCompany: false,
@@ -230,6 +232,8 @@ const Register = () => {
       // Concatène l’indicatif et le numéro saisi
       const fullPhoneFixed = formData.phoneFixedCountryCode + formData.phoneFixedNumber;
       const fullPhoneMobile = formData.phoneMobileCountryCode + formData.phoneMobileNumber;
+      const legalForm = formData.companyCategory === 'Autre' ? null : formData.companyCategory;
+      const otherLegalForm = formData.companyCategory === 'Autre' ? formData.otherCompanyCategory : null;
 
       // Prépare les données pour l'inscription
       const userData = {
@@ -263,13 +267,16 @@ const Register = () => {
       // Prépare les données pour l'abonnement
       const subscriptionData = {
         uploadType: 'inscriptions',
-        legal_form: formData.companyCategory,
+        legal_form: legalForm,
+        p_other_legal_form: otherLegalForm,
         cust_name: formData.companyName,
-        trade_registration_num: formData.licenseNumber,
+        trade_registration_num: formData.licenseNumber || 'null',
         rchNumber: formData.rchNumber,
         licenseNumber: formData.licenseNumber,
         in_free_zone: formData.isFreeZoneCompany,
         nif: formData.nif,
+        identification_number: null, // Ajoutez ceci
+        register_number: null,       // Ajoutez ceci
         identification_number: formData.identification_number,
         register_number: formData.register_number,
         full_address: formData.address,
@@ -292,8 +299,10 @@ const Register = () => {
         // Fichiers
         licenseFile: formData.isFreeZoneCompany ? formData.licenseFile : null,
         patenteFile: formData.isOtherCompany ? formData.patenteFile : null,
-        rchFile: formData.isOtherCompany ? formData.rchFile : null,
+        rchFile: null,
       };
+
+      
 
       // Appel API avec envoi de fichiers
       const response = await addSubscriptionWithFile(subscriptionData);
@@ -382,6 +391,24 @@ const Register = () => {
                 </div>
               </div>
 
+              {/* Champ conditionnel pour préciser le statut juridique si "Autre" est sélectionné */}
+              {formData.companyCategory === 'Autre' && (
+                <div className="register-client-field register-client-full-width">
+                  <div className="register-client-input-wrapper">
+                    <input
+                      type="text"
+                      name="otherCompanyCategory"
+                      value={formData.otherCompanyCategory}
+                      onChange={handleChange}
+                      required
+                      className="register-client-input"
+                      placeholder="Précisez votre statut juridique"
+                    />
+                    <span className="register-client-required-asterisk">*</span>
+                  </div>
+                </div>
+              )}
+
               {/* Secteur */}
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
@@ -409,8 +436,8 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Champ pour 'Autres' secteur */}
-            {formData.sector === 'Autres' && (
+            {/* Champ pour 'Autres' secteur - insérez ce bloc ici */}
+            {formData.sector.toLowerCase() === 'autres' && (
               <div className="register-client-form-row">
                 <div className="register-client-field register-client-full-width">
                   <div className="register-client-input-wrapper">
@@ -428,9 +455,7 @@ const Register = () => {
                 </div>
               </div>
             )}
-
           
-
             <div className="register-client-form-row">
               {/* Pays */}
               <div className="register-client-field register-client-half-width">
@@ -446,6 +471,30 @@ const Register = () => {
                   >
                     <option value="" disabled hidden>
                       Pays de résidence de l'entreprise
+                    </option>
+                    {countries.map((country) => (
+                      <option key={country.id_country} value={country.symbol_fr}>
+                        {country.symbol_fr.charAt(0).toUpperCase() +
+                          country.symbol_fr.slice(1).toLowerCase()}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="register-client-required-asterisk">*</span>
+                </div>
+              </div>
+
+              {/* Nouveau champ pour Pays d'origine de l'entreprise */}
+              <div className="register-client-field register-client-half-width">
+                <div className="register-client-input-wrapper">
+                  <select
+                    name="originCountry"
+                    value={formData.originCountry}
+                    onChange={handleChange}
+                    required
+                    className={`register-client-input ${formData.originCountry === '' ? 'placeholder' : ''}`}
+                  >
+                    <option value="" disabled hidden>
+                      Pays d'origine de l'entreprise
                     </option>
                     {countries.map((country) => (
                       <option key={country.id_country} value={country.symbol_fr}>
@@ -611,31 +660,6 @@ const Register = () => {
                     </div>
                   </div>
 
-                  {/* Télécharger le numéro d'immatriculation RCS */}
-                  <div className="register-client-field register-client-half-width">
-                    <label className="register-client-file-label">
-                      {/* Télécharger le numéro d'immatriculation RCS */}
-                      <div className="register-client-field register-client-half-width">
-                        <div className="register-client-file-upload">
-                          <label htmlFor="rchFile">Upload</label>
-                          <input
-                            type="file"
-                            id="rchFile"
-                            name="rchFile"
-                            className="register-client-file-input"
-                            onChange={(e) => {
-                              const file = e.target.files[0];
-                              if (file) {
-                                setFormData((prev) => ({ ...prev, rchFile: file }));
-                              }
-                            }}
-                          />
-                          {formData.rchFile && <span className="register-client-file-name">{formData.rchFile.name}</span>}
-                        </div>
-                      </div>
-
-                    </label>
-                  </div>
                 </div>
               </>
             )}
