@@ -1214,7 +1214,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
 DROP FUNCTION IF EXISTS get_custaccount_info;
 CREATE OR REPLACE FUNCTION get_custaccount_info(
     p_id_list TEXT,
@@ -1263,7 +1262,8 @@ BEGIN
         ca."trade_registration_num",
         ca."in_free_zone",
         ca."identification_number",
-        ca."full_address",
+        ca."register_number",
+        ca."full_address"::VARCHAR,  -- Cast to VARCHAR explicitly
 		ca."id_country",
 	    ca."id_sector",
 	    ca."other_sector",
@@ -1280,14 +1280,12 @@ BEGIN
 		co."symbol_eng" as co_symbol_eng,
 		co."symbol_fr" as co_symbol_fr,
 		co."deactivation_date" as co_deactivation_date,
-
         ca."other_legal_form",
         ca."other_business_type",
 		co_ho."id_country" as co_ho_id_country,
 		co_ho."symbol_eng" as co_ho_symbol_eng,
 		co_ho."symbol_fr" as co_ho_symbol_fr,
 		co_ho."deactivation_date" as co_ho_deactivation_date
-
 	FROM
         cust_account ca
 	JOIN 
@@ -1300,14 +1298,8 @@ BEGIN
         (p_statutflag IS NULL OR ca."statut_flag" = p_statutflag)
     AND (
 	     p_isactive IS NULL
-        -- Si p_isactive = 0, je verifie si une des deux dates de désactivation est avant la date du jour
-        OR(p_isactive IS NOT TRUE AND ca."deactivation_date" <= CURRENT_DATE 
-            
-        )
-        -- Si p_isactive = 1, je verifie que les deux dates de désactivation sont après la date du jour
-        OR (p_isactive IS TRUE AND ca."deactivation_date" > CURRENT_DATE
-            
-        )
+        OR (p_isactive IS NOT TRUE AND ca."deactivation_date" <= CURRENT_DATE)
+        OR (p_isactive IS TRUE AND ca."deactivation_date" > CURRENT_DATE)
     );
 END;
 $$ LANGUAGE plpgsql;
