@@ -278,10 +278,17 @@ const getTransmodeInfo = async (req, res) => {
         });
     }
 };
-
 const getCertifGoodsInfo = async (req, res) => {
     try {
-        const { idOrdCertifOri } = req.query;
+        const {
+            idOrdCertifOri, // Certificate ID
+            idOrdCertifGoods = null, // Goods ID (optional)
+            isActiveOG = null, // Active status of goods (optional)
+            isActiveUW = null, // Active status of unit weight (optional)
+            idOrder = null, // Order ID (optional)
+            idCustAccount = null, // Customer Account ID (optional)
+            idOrderStatus = null // Order Status ID (optional)
+        } = req.query;
 
         // Ensure a valid certificate ID is provided
         if (!idOrdCertifOri) {
@@ -290,10 +297,27 @@ const getCertifGoodsInfo = async (req, res) => {
             });
         }
 
+        // Call the stored function with all required parameters
         const result = await sequelize.query(
-            `SELECT * FROM get_certifgoods_info(:p_id_ord_certif_ori)`,
+            `SELECT * FROM get_certifgoods_info(
+                :p_id_listCG,
+                :p_id_listCO,
+                :p_isactiveOG,
+                :p_isactiveUW,
+                :p_id_list_order,
+                :p_id_custaccount,
+                :p_id_list_orderstatus
+            )`,
             {
-                replacements: { p_id_ord_certif_ori: idOrdCertifOri },
+                replacements: {
+                    p_id_listCG: idOrdCertifGoods || null, // List of goods IDs (or NULL)
+                    p_id_listCO: idOrdCertifOri, // List of certif IDs (mandatory)
+                    p_isactiveOG: isActiveOG === "true" ? true : isActiveOG === "false" ? false : null,
+                    p_isactiveUW: isActiveUW === "true" ? true : isActiveUW === "false" ? false : null,
+                    p_id_list_order: idOrder || null, // Order ID (or NULL)
+                    p_id_custaccount: idCustAccount || null, // Customer Account ID (or NULL)
+                    p_id_list_orderstatus: idOrderStatus || null // Order Status ID (or NULL)
+                },
                 type: sequelize.QueryTypes.SELECT,
             }
         );

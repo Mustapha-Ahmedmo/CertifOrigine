@@ -14,9 +14,15 @@ const CreateOrder = () => {
   const auth = useSelector((state) => state.auth); // Access user data from Redux
   const customerAccountId = auth?.user?.id_cust_account; // Customer Account ID from the logged-in user
   const customerLoginId = auth?.user?.id_login_user;
+
+  const params = new URLSearchParams(location.search);
+  const existingOrderId = params.get('orderId');
+  const existingCertifId = params.get('certifId');
+
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    orderId: null,
+    orderId: existingOrderId || null,
+    certifId: existingCertifId || null,
     orderName: '',
     merchandises: [],
     remarks: '',
@@ -42,6 +48,41 @@ const CreateOrder = () => {
     receiverCity: '',
     receiverCountry: '',
   });
+
+  useEffect(() => {
+    const loadExistingData = async () => {
+      try {
+        if (existingOrderId) {
+          // 1. Fetch the order from the server
+          const order = await getOrderById(existingOrderId);
+          // Populate formData with order info
+          setFormData((prev) => ({
+            ...prev,
+            orderId: existingOrderId,
+            orderName: order.orderTitle || '',
+          }));
+        }
+  
+        if (existingCertifId) {
+          // 2. Fetch the certificate from the server
+          const cert = await getCertificateById(existingCertifId);
+          // Populate formData with certificate info
+          setFormData((prev) => ({
+            ...prev,
+            certifId: existingCertifId,
+            merchandises: cert.merchandises || [],
+            goodsOrigin: cert.goodsOrigin || '',
+            goodsDestination: cert.goodsDestination || '',
+            // etc...
+          }));
+        }
+      } catch (err) {
+        console.error('Error loading existing order/cert data:', err);
+      }
+    };
+  
+    loadExistingData();
+  }, [existingOrderId, existingCertifId]);
 
   useEffect(() => {
     console.log('formData updated:', formData);

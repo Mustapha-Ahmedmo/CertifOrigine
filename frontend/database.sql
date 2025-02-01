@@ -2377,6 +2377,88 @@ END;
 $$;
 
 
+DROP FUNCTION IF EXISTS get_certifgoods_info;
+CREATE OR REPLACE FUNCTION get_certifgoods_info(
+    p_id_listCG TEXT,
+    p_id_listCO TEXT,
+    p_isactiveOG BOOLEAN,
+    p_isactiveUW BOOLEAN,
+    p_id_list_order TEXT,
+    p_id_custaccount INT,
+    p_id_list_orderstatus TEXT
+)
+RETURNS TABLE(
+    id_ord_certif_goods INT,
+    id_ord_certif_ori INT,
+    good_description VARCHAR(256),
+    good_references VARCHAR(160),
+    doc_references VARCHAR(256),
+    weight_qty FLOAT,
+    id_unit_weight INT,
+    deactivation_date TIMESTAMP,
+    id_order INT,
+    symbol_fr VARCHAR(64),
+    symbol_eng VARCHAR(64),
+    weight_deactivation_date TIMESTAMP
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        cg."id_ord_certif_goods",
+        cg."id_ord_certif_ori",
+        cg."good_description",
+	cg."good_references",
+        cg."doc_references",
+        cg."weight_qty",
+        cg."id_unit_weight",
+        cg."deactivation_date",
+	co."id_order",
+        uw."symbol_fr",
+        uw."symbol_eng",
+        uw."deactivation_date" as weight_deactivation_date
+    FROM 
+        ord_certif_goods cg
+    JOIN 
+        ord_certif_ori co ON cg."id_ord_certif_ori" = co."id_ord_certif_ori"		
+	     JOIN
+        	"ORDER" o ON o."id_order" = co."id_order"
+	JOIN
+		unit_weight uw ON cg."id_unit_weight" = uw."id_unit_weight"
+    WHERE 
+        (p_id_listCO IS NULL OR cg."id_ord_certif_ori" = ANY (string_to_array(p_id_listCO, ',')::INT[]))
+    AND 
+        (p_id_listCG IS NULL OR cg."id_ord_certif_goods" = ANY (string_to_array(p_id_listCG, ',')::INT[]))
+    AND
+        (p_id_list_order IS NULL OR o."id_order" = ANY (string_to_array(p_id_list_order, ',')::INT[]))
+    AND
+        (p_id_custaccount IS NULL OR o."id_cust_account" = p_id_custaccount)
+    AND
+        (p_id_list_orderstatus IS NULL OR o."id_order_status" = ANY (string_to_array(p_id_list_orderstatus, ',')::INT[]))
+    AND (
+	     p_isactiveOG IS NULL
+        
+        OR (p_isactiveOG IS NOT TRUE AND (
+            cg."deactivation_date" <= CURRENT_DATE 
+            OR co."deactivation_date" <= CURRENT_DATE
+        ))
+        
+        OR (p_isactiveOG IS TRUE AND (
+            (cg."deactivation_date" > CURRENT_DATE)
+            AND (co."deactivation_date" > CURRENT_DATE)
+        ))
+    )
+	AND (
+	     p_isactiveUW IS NULL
+        
+        OR (p_isactiveUW IS NOT TRUE AND uw."deactivation_date" <= CURRENT_DATE)
+        
+        OR (p_isactiveUW IS TRUE AND uw."deactivation_date" > CURRENT_DATE)
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+
 
 CREATE OR REPLACE PROCEDURE add_certif(
     p_id_order INT,
@@ -2658,7 +2740,7 @@ RETURNS TABLE(
 	unit_price REAL,
 	unit_percent REAL,
 	amount_lower_limit REAL,
-        amount_upper_limit REAL,
+    amount_upper_limit REAL,
 	with_tax_stamp BOOLEAN,
 	unit_price_stamp REAL,
 	with_copies BOOLEAN,

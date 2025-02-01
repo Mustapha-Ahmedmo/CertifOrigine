@@ -613,7 +613,6 @@ export const addOrUpdateGoods = async (goodsData) => {
 };
 export const getOrdersForCustomer = async ({ idOrderList = null, idCustAccountList = null, idOrderStatusList = null, idLogin }) => {
   try {
-    console.log("test");
     if (!idLogin) {
       throw new Error('Le champ idLogin est requis.');
     }
@@ -640,6 +639,27 @@ export const getOrdersForCustomer = async ({ idOrderList = null, idCustAccountLi
     return await response.json();
   } catch (error) {
     console.error('Error fetching orders for customer:', error);
+    throw error;
+  }
+};
+
+export const getCertifGoodsInfo = async (idOrdCertifOri) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/certif-goods?idOrdCertifOri=${idOrdCertifOri}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch certification goods data.');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching certification goods info:', error);
     throw error;
   }
 };

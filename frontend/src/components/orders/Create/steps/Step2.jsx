@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './Step1.css';
-import { addOrUpdateGoods, addRecipient, createCertificate, fetchCountries, fetchRecipients, getTransmodeInfo, getUnitWeightInfo } from '../../../../services/apiServices';
+import { addOrUpdateGoods, addRecipient, createCertificate, fetchCountries, fetchRecipients, getCertifGoodsInfo, getTransmodeInfo, getUnitWeightInfo } from '../../../../services/apiServices';
 import { useSelector } from 'react-redux';
 
-const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
+const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} }) => {
   const { t } = useTranslation();
   const [isNewDestinataire, setIsNewDestinataire] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -19,6 +19,11 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
   const [loading, setLoading] = useState(true); // Loading state
   const [error, setError] = useState(null); // Error state
 
+  // Extract query params (certifId)
+  const params = new URLSearchParams(location.search);
+  const certifId = params.get('certifId');
+  const orderId = params.get('orderId');
+
   const auth = useSelector((state) => state.auth); // Access user data from Redux
   const customerAccountId = auth?.user?.id_cust_account; // Customer Account ID from the logged-in user
 
@@ -27,6 +32,19 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
     const loadData = async () => {
       try {
         setLoading(true);
+
+
+        // If certifId exists, fetch goods data and populate values.merchandises
+        if (certifId) {
+          const goodsResponse = await getCertifGoodsInfo(certifId);
+          const fetchedGoods = goodsResponse.data || [];
+          handleChange('merchandises', fetchedGoods.map((good) => ({
+            designation: good.goodDescription,
+            boxReference: good.goodReferences,
+            quantity: good.quantity,
+            unit: good.unit || 'N/A',
+          })));
+        }
 
         // Fetch countries
         const fetchedCountries = await fetchCountries();
@@ -41,7 +59,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         setUnitWeights(fetchedUnitWeights.data);
 
         // Fetch recipients
-        if (customerAccountId) {
+        if (!certifId && customerAccountId) {
           const recipientFetched = await fetchRecipients({
             idListCA: customerAccountId, // Fetch recipients by customer account ID
           });
@@ -57,8 +75,16 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
     };
 
     loadData();
-  }, [customerAccountId]);
+  }, [certifId, customerAccountId]);
 
+  const safeValues = values || {
+    goodsOrigin: '',
+    goodsDestination: '',
+    merchandises: [],
+    remarks: '',
+    copies: 1,
+    isCommitted: false,
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,7 +99,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
     }
 
     // 2) Validate merchandise
-    if (values.merchandises.length === 0) {
+    if (values.merchandises && values.merchandises.length === 0) {
       setErrorMessage('Veuillez ajouter au moins une marchandise.');
       return;
     }
@@ -133,7 +159,6 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
 
     const certResponse = await createCertificate(certData);
     console.log('Certificate created successfully:', certResponse);
-
 
     for (const merchandise of values.merchandises) {
       try {
@@ -471,7 +496,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values }) => {
         </div>
       </div>
 
-      {values.merchandises.length > 0 && (
+      {values.merchandises && values.merchandises.length > 0 && (
         <div className="dashboard-table-container">
           <table className="table">
             <thead>
