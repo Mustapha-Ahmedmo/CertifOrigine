@@ -663,3 +663,24 @@ export const getCertifGoodsInfo = async (idOrdCertifOri) => {
     throw error;
   }
 };
+
+export const sendContactForm = async (formData) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/contact`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to send the contact form.');
+    }
+
+    return await response.json(); // Return the response from the server
+  } catch (error) {
+    console.error('Error sending contact form:', error);
+    throw error; // Re-throw the error for handling in the calling code
+  }
+};
