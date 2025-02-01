@@ -608,7 +608,6 @@ const executeAddSubscription = async (req, res) => {
       phone_number,
       mobile_number,
       position,
-      rchNumber,
     } = req.body;
 
     // Validate required fields
@@ -665,7 +664,6 @@ const executeAddSubscription = async (req, res) => {
         :phone_number, 
         :mobile_number, 
         :position, 
-        :rchNumber,   
         :id_cust_account
       )`,
       {
@@ -720,9 +718,7 @@ const executeAddSubscription = async (req, res) => {
       error: error.message || 'Erreur inconnue.',
     });
   }
-};
-
-const executeCreateSubscriptionWithFile = async (req, res) => {
+};const executeCreateSubscriptionWithFile = async (req, res) => {
   try {
     const {
       uploadType, // 'inscriptions' or 'commandes'
@@ -744,13 +740,16 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
       full_name,
       ismain_user,
       email,
-      pwd,
+      pwd, // password (already hashed if needed)
       phone_number,
       mobile_number,
       position,
+      id_country_headoffice,
+      other_legal_form,
+      other_business_type,
     } = req.body;
 
-    // Create a map of required fields and their current values
+    // Create a map of required fields and check for missing ones
     const requiredFields = {
       uploadType,
       legal_form,
@@ -776,7 +775,6 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
       position,
     };
 
-    // Find missing fields
     const missingFields = Object.entries(requiredFields)
       .filter(([key, value]) => value === undefined || value === null || value === '')
       .map(([key]) => key);
@@ -792,82 +790,94 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
     const transaction = await sequelize.transaction();
 
     try {
-      // Call add_Subscription stored procedure
+      // Call the add_Subscription stored procedure.
+      // The procedure signature is:
+      //   add_Subscription(
+      //     p_legal_form, p_cust_name, p_trade_registration_num, p_in_free_zone, p_identification_number,
+      //     p_register_number, p_full_address, p_id_sector, p_other_sector, p_id_country, p_statut_flag, p_idlogin,
+      //     p_billed_cust_name, p_bill_full_address, p_gender, p_full_name, p_ismain_user, p_email, p_password,
+      //     p_phone_number, p_mobile_number, p_position, p_id_country_headoffice, p_other_legal_form, p_other_business_type,
+      //     INOUT p_id_cust_account
+      //   )
+      // We initialize p_id_cust_account with null.
       const subscriptionResult = await sequelize.query(
         `CALL add_Subscription(
-          :legal_form, 
-          :cust_name, 
-          :trade_registration_num, 
-          :in_free_zone, 
-          :identification_number, 
-          :register_number, 
-          :full_address, 
-          :id_sector, 
-          :other_sector, 
-          :id_country, 
-          :statut_flag, 
-          :idlogin, 
-          :billed_cust_name, 
-          :bill_full_address, 
-          :gender, 
-          :full_name, 
-          :ismain_user, 
-          :email, 
-          :pwd, 
-          :phone_number, 
-          :mobile_number, 
-          :position, 
-          :id_cust_account
+          :p_legal_form, 
+          :p_cust_name, 
+          :p_trade_registration_num, 
+          :p_in_free_zone, 
+          :p_identification_number, 
+          :p_register_number, 
+          :p_full_address, 
+          :p_id_sector, 
+          :p_other_sector, 
+          :p_id_country, 
+          :p_statut_flag, 
+          :p_idlogin, 
+          :p_billed_cust_name, 
+          :p_bill_full_address, 
+          :p_gender, 
+          :p_full_name, 
+          :p_ismain_user, 
+          :p_email, 
+          :p_password, 
+          :p_phone_number, 
+          :p_mobile_number, 
+          :p_position, 
+          :p_id_country_headoffice,  -- <== Now properly included
+          :p_other_legal_form, 
+          :p_other_business_type, 
+          :p_id_cust_account
         )`,
         {
           replacements: {
-            legal_form,
-            cust_name,
-            trade_registration_num,
-            in_free_zone,
-            identification_number,
-            register_number,
-            full_address,
-            id_sector,
-            other_sector: other_sector || null,
-            id_country,
-            statut_flag,
-            idlogin,
-            billed_cust_name,
-            bill_full_address,
-            gender,
-            full_name,
-            ismain_user,
-            email,
-            pwd,
-            phone_number,
-            mobile_number,
-            position,
-            id_cust_account: null, // INOUT parameter; initially null
+            p_legal_form: legal_form,
+            p_cust_name: cust_name,
+            p_trade_registration_num: trade_registration_num,
+            p_in_free_zone: in_free_zone,
+            p_identification_number: identification_number,
+            p_register_number: register_number,
+            p_full_address: full_address,
+            p_id_sector: id_sector,
+            p_other_sector: other_sector || null,
+            p_id_country: id_country,
+            p_statut_flag: statut_flag,
+            p_idlogin: idlogin,
+            p_billed_cust_name: billed_cust_name,
+            p_bill_full_address: bill_full_address,
+            p_gender: gender,
+            p_full_name: full_name,
+            p_ismain_user: ismain_user,
+            p_email: email,
+            p_password: pwd,
+            p_phone_number: phone_number,
+            p_mobile_number: mobile_number,
+            p_position: position,
+            p_id_country_headoffice: id_country_headoffice || null, // <== Ensure it's present
+            p_other_legal_form: other_legal_form || null,
+            p_other_business_type: other_business_type || null,
+            p_id_cust_account: null, // INOUT parameter, initially null
           },
           type: sequelize.QueryTypes.RAW,
           transaction,
         }
       );
 
-      // Assuming the stored procedure returns the new id_cust_account
-      const newAccountId =
-        subscriptionResult[0][0].p_id_cust_account;
-
+      // Attempt to extract the new customer account ID from the procedure result.
+      // Note: Due to INOUT parameter handling, Sequelize may not return the updated value.
+      // You might need to perform an additional query or use a wrapper function.
+      const newAccountId = subscriptionResult?.[0]?.[0]?.p_id_cust_account;
       if (!newAccountId) {
         throw new Error('Failed to retrieve id_cust_account from add_Subscription.');
       }
 
-      // Handle file uploads
+      // Process file uploads if provided
       if (req.files) {
         const files = req.files;
-
-        // Determine which files to process based on uploadType and company type
         const fileMappings = [];
 
         if (uploadType === 'inscriptions') {
           if (in_free_zone === 'true' || in_free_zone === true) {
-            // Process licenseFile
             if (files.licenseFile && files.licenseFile.length > 0) {
               console.log('Processing licenseFile:', files.licenseFile);
               fileMappings.push({
@@ -879,22 +889,20 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
               console.warn('No licenseFile found for inscriptions in free zone.');
             }
           } else {
-            // Process patenteFile and rchFile
             if (files.patenteFile && files.patenteFile.length > 0) {
               console.log('Processing patenteFile:', files.patenteFile);
               fileMappings.push({
-                type: 'inscriptions', // Or another appropriate type
+                type: 'inscriptions', // Or appropriate type
                 idfiles_repo_typeof: 50, // Numéro Identification Fiscale (NIF)
                 file: files.patenteFile[0],
               });
             } else {
               console.warn('No patenteFile found for inscriptions not in free zone.');
             }
-
             if (files.rchFile && files.rchFile.length > 0) {
               console.log('Processing rchFile:', files.rchFile);
               fileMappings.push({
-                type: 'inscriptions', // Or another appropriate type
+                type: 'inscriptions', // Or appropriate type
                 idfiles_repo_typeof: 51, // Numéro Immatriculation RCS
                 file: files.rchFile[0],
               });
@@ -904,22 +912,15 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
           }
         }
 
-
         console.log('File mappings to process:', fileMappings);
 
-        // Iterate over the file mappings and call the stored procedure for each file
         for (const mapping of fileMappings) {
           const { idfiles_repo_typeof, file } = mapping;
-
           if (!idfiles_repo_typeof || !file) {
             console.warn('Skipping file due to missing type or file:', mapping);
-            continue; // Skip if type or file is missing
+            continue;
           }
-
           console.log(`Uploading file: ${file.originalname}, Type: ${idfiles_repo_typeof}`);
-
-
-          // Call set_cust_account_files stored procedure
           try {
             await sequelize.query(
               `CALL set_cust_account_files(
@@ -982,6 +983,7 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
     });
   }
 };
+
 
 const executeGetCustAccountFiles = async (req, res) => {
   try {

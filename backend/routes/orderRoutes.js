@@ -21,6 +21,6 @@ router.get('/customer-orders', getOrdersForCustomer);
 router.get('/certif-transp-mode', getCertifTranspMode);
 
 
-router.post('/set-ord-certif-transpmode', setOrdCertifTranspMode);
+router.post('/certif-transpmode', setOrdCertifTranspMode);
 
 module.exports = router;

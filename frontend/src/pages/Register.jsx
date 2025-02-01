@@ -283,6 +283,7 @@ const Register = () => {
         id_sector: selectedSector ? selectedSector.id_sector : null,
         other_sector: formData.otherSector || null,
         id_country: selectedCountry ? selectedCountry.id_country : null,
+        id_country_headoffice: selectedCountry ? selectedCountry.id_country : null,
         statut_flag: 1,
         idlogin: 1,
         billed_cust_name: formData.billed_cust_name,

@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS SERVICES_CHARGES CASCADE;
 DROP TABLE IF EXISTS CURRENCY CASCADE;
 DROP TABLE IF EXISTS ORD_COM_INVOICE CASCADE;
 DROP TABLE IF EXISTS ORD_CERTIF_TRANSP_MODE CASCADE;
+DROP TABLE IF EXISTS ORD_LEGALIZATION CASCADE;
 
 CREATE TABLE CURRENCY (
     ID_CURRENCY INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -90,18 +91,19 @@ CREATE TABLE OP_USER (
     FOREIGN KEY (ID_LOGIN_USER) REFERENCES LOGIN_USER(ID_LOGIN_USER)
 );
 
-CREATE TABLE CUST_ACCOUNT (
+
+CREATE TABLE CUST_ACCOUNT ( 
     ID_CUST_ACCOUNT INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     LEGAL_FORM VARCHAR(32) NOT NULL,              -- Non nullable
     CUST_NAME VARCHAR(96) NOT NULL,               -- Non nullable
-    TRADE_REGISTRATION_NUM VARCHAR(32) NOT NULL,  -- Non nullable
-    IN_FREE_ZONE BOOLEAN DEFAULT FALSE NOT NULL,  -- Non nullable avec valeur par défaut
-    IDENTIFICATION_NUMBER VARCHAR(32) NOT NULL,   -- Non nullable
-    REGISTER_NUMBER VARCHAR(32),
+    TRADE_REGISTRATION_NUM VARCHAR(32) NULL,  -- Non nullable
+    IN_FREE_ZONE BOOLEAN DEFAULT FALSE NULL,  -- Non nullable avec valeur par défaut
+    IDENTIFICATION_NUMBER VARCHAR(32) NULL,   -- nullable
+    REGISTER_NUMBER VARCHAR(32) NULL,   -- nullable
     FULL_ADDRESS VARCHAR(160) NOT NULL,           -- Non nullable
     ID_SECTOR INT,
     OTHER_SECTOR VARCHAR(64), 
-    ID_COUNTRY INT,                                  -- Non nullable  
+    ID_COUNTRY INT NOT NULL,                                  -- Non nullable  
     STATUT_FLAG INT DEFAULT 1 NOT NULL,           -- Non nullable avec valeur par défaut
     INSERTDATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Non nullable avec valeur par défaut
     ACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Non nullable avec valeur par défaut
@@ -112,6 +114,15 @@ CREATE TABLE CUST_ACCOUNT (
     BILLED_CUST_NAME VARCHAR(96) NULL,            -- Nullable
     BILL_FULL_ADDRESS VARCHAR(160) NULL,          -- Nullable
     BILL_COUNTRY VARCHAR(32) NULL,                -- Nullable
+
+    ID_COUNTRY_HEADOFFICE INT NULL,           -- nullable  
+    OTHER_LEGAL_FORM VARCHAR(32) NULL,              -- nullable
+    OTHER_BUSINESS_TYPE VARCHAR(96) NULL,               -- nullable
+
+    FOREIGN KEY (ID_COUNTRY_HEADOFFICE) REFERENCES COUNTRY(ID_COUNTRY),
+
+
+
     FOREIGN KEY (ID_COUNTRY) REFERENCES COUNTRY(ID_COUNTRY),
     FOREIGN KEY (ID_SECTOR) REFERENCES SECTOR(ID_SECTOR),
     FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
@@ -562,6 +573,7 @@ END ;
 $$ LANGUAGE plpgsql;
 
 
+
 DROP PROCEDURE IF EXISTS add_Subscription; 
 CREATE OR REPLACE PROCEDURE add_Subscription(
     p_legal_form VARCHAR(32),
@@ -587,6 +599,11 @@ CREATE OR REPLACE PROCEDURE add_Subscription(
     p_phone_number VARCHAR(32),
     p_mobile_number VARCHAR(12),
     p_position VARCHAR(64),
+
+	p_id_country_headoffice INT,	
+ 	p_other_legal_form VARCHAR(32),
+	p_other_business_type VARCHAR(96),
+
 
     INOUT p_id_cust_account INT
 )
@@ -620,7 +637,10 @@ BEGIN
 		"insertdate",
 		"idlogin_insert",
 		"billed_cust_name",
-		"bill_full_address"
+		"bill_full_address",
+		"id_country_headoffice",
+		"other_legal_form",
+		"other_business_type"
 		) VALUES (
 		p_legal_form,
 		p_cust_name,
@@ -636,7 +656,12 @@ BEGIN
 		CURRENT_TIMESTAMP,
 		p_idlogin,
 		p_billed_cust_name,
-		p_bill_full_address
+		p_bill_full_address,
+
+		p_id_country_headoffice,	
+ 		p_other_legal_form,
+		p_other_business_type
+
 	)
 	RETURNING id_cust_account INTO p_id_cust_account;
 
@@ -673,7 +698,10 @@ CREATE OR REPLACE PROCEDURE upd_cust_account(
     p_statut_flag INT,
     p_idlogin INT,
     p_billed_cust_name VARCHAR(96),
-    p_bill_full_address VARCHAR(160)
+    p_bill_full_address VARCHAR(160),
+	p_id_country_headoffice INT,	
+ 	p_other_legal_form VARCHAR(32),
+	p_other_business_type VARCHAR(96)
 )
 AS
 $$
@@ -697,7 +725,12 @@ BEGIN
             "idlogin_modify" = p_idlogin,
             "lastmodified" = NOW(),
             "billed_cust_name" = p_billed_cust_name,
-            "bill_full_address" = p_bill_full_address
+            "bill_full_address" = p_bill_full_address,
+
+			"id_country_headoffice" =p_id_country_headoffice,
+			"other_legal_form"= p_other_legal_form,
+			"other_business_type" =p_other_business_type
+
         WHERE "id_cust_account" = p_id_cust_account;
     END IF;
 END;
@@ -1195,23 +1228,35 @@ RETURNS TABLE(
     trade_registration_num VARCHAR(32),
     in_free_zone BOOLEAN,
     identification_number VARCHAR(32),
-    register_number VARCHAR(32),        -- Colonne 7
-    full_address VARCHAR(160),           -- Colonne 8
-    id_sector INT,
-    other_sector VARCHAR(64),
+	register_number VARCHAR(32),
+    full_address VARCHAR(160),
     id_country INT,
-    statut_flag INT,
+	id_sector INT,
+	other_sector VARCHAR(64),
+	statut_flag INT,
     insertdate TIMESTAMP,
-    activation_date TIMESTAMP,
+	activation_date TIMESTAMP,
     deactivation_date TIMESTAMP,
     idlogin_insert INT,
-    lastmodified TIMESTAMP,
-    idlogin_modify INT,
-    billed_cust_name VARCHAR(96),
-    bill_full_address VARCHAR(160),
-    co_symbol_fr VARCHAR(64),
-    co_symbol_eng VARCHAR(64),
-    co_deactivation_date TIMESTAMP      -- Colonne 23
+	lastmodified TIMESTAMP,
+	idlogin_modify INT,
+	billed_cust_name VARCHAR(96),
+	bill_full_address VARCHAR(160),
+	co_id_country INT,
+	co_symbol_eng VARCHAR(64),
+	co_symbol_fr VARCHAR(64),
+	co_deactivation_date TIMESTAMP,
+
+
+	other_legal_form VARCHAR(32),
+	other_business_type VARCHAR(96),
+	co_ho_id_country INT,
+	co_ho_symbol_eng VARCHAR(64),
+	co_ho_symbol_fr VARCHAR(64),
+	co_ho_deactivation_date TIMESTAMP
+
+
+
 ) AS
 $$
 BEGIN
@@ -1223,35 +1268,51 @@ BEGIN
         ca."trade_registration_num",
         ca."in_free_zone",
         ca."identification_number",
-        ca."register_number",                -- Ajouté
         ca."full_address",
-        ca."id_sector",
-        ca."other_sector",
-        ca."id_country",
+		ca."id_country",
+	    ca."id_sector",
+	    ca."other_sector",
         ca."statut_flag",
         ca."insertdate",
         ca."activation_date",
         ca."deactivation_date",
-        ca."idlogin_insert",
-        ca."lastmodified",
-        ca."idlogin_modify",
-        ca."billed_cust_name",
-        ca."bill_full_address",
-        co."symbol_fr" as co_symbol_fr,
-        co."symbol_eng" as co_symbol_eng,
-        co."deactivation_date" as co_deactivation_date  -- Ajouté
-    FROM
+	    ca."idlogin_insert",
+		ca."lastmodified",
+		ca."idlogin_modify",
+		ca."billed_cust_name",
+		ca."bill_full_address",
+		co."id_country" as co_id_country,
+		co."symbol_eng" as co_symbol_eng,
+		co."symbol_fr" as co_symbol_fr,
+		co."deactivation_date" as co_deactivation_date,
+
+        ca."other_legal_form",
+        ca."other_business_type",
+		co_ho."id_country" as co_ho_id_country,
+		co_ho."symbol_eng" as co_ho_symbol_eng,
+		co_ho."symbol_fr" as co_ho_symbol_fr,
+		co_ho."deactivation_date" as co_ho_deactivation_date
+
+	FROM
         cust_account ca
-    JOIN 
-        country co ON ca."id_country" = co."id_country"
+	JOIN 
+		country co ON ca."id_country" = co."id_country"
+	LEFT OUTER JOIN 
+		country co_ho ON ca."id_country_headoffice" = co_ho."id_country" 
     WHERE 
         (p_id_list IS NULL OR ca."id_cust_account" = ANY (string_to_array(p_id_list, ',')::INT[]))
     AND 
         (p_statutflag IS NULL OR ca."statut_flag" = p_statutflag)
     AND (
-         p_isactive IS NULL
-        OR (p_isactive IS NOT TRUE AND ca."deactivation_date" <= CURRENT_DATE)
-        OR (p_isactive IS TRUE AND ca."deactivation_date" > CURRENT_DATE)
+	     p_isactive IS NULL
+        -- Si p_isactive = 0, je verifie si une des deux dates de désactivation est avant la date du jour
+        OR(p_isactive IS NOT TRUE AND ca."deactivation_date" <= CURRENT_DATE 
+            
+        )
+        -- Si p_isactive = 1, je verifie que les deux dates de désactivation sont après la date du jour
+        OR (p_isactive IS TRUE AND ca."deactivation_date" > CURRENT_DATE
+            
+        )
     );
 END;
 $$ LANGUAGE plpgsql;
