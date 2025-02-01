@@ -1246,17 +1246,12 @@ RETURNS TABLE(
 	co_symbol_eng VARCHAR(64),
 	co_symbol_fr VARCHAR(64),
 	co_deactivation_date TIMESTAMP,
-
-
 	other_legal_form VARCHAR(32),
 	other_business_type VARCHAR(96),
 	co_ho_id_country INT,
 	co_ho_symbol_eng VARCHAR(64),
 	co_ho_symbol_fr VARCHAR(64),
 	co_ho_deactivation_date TIMESTAMP
-
-
-
 ) AS
 $$
 BEGIN
@@ -3081,16 +3076,16 @@ call set_op_user(0, 0, 'M. Admin', 1, TRUE,
 '253355445', '25377340000',
 0); -- password mdp
 
-CALL set_unitweight(1, 'Kilo', 'Kilogram');
-CALL set_unitweight(2, 'Tonne', 'Tonne');
-CALL set_unitweight(3, 'Mtonne', 'Megatonne');
-CALL set_unitweight(4, 'Gramme', 'Gram');
-CALL set_unitweight(5, 'Livre', 'Pound');
-CALL set_unitweight(6, 'Once', 'Ounce');
-CALL set_unitweight(7, 'Stone', 'Stone');
-CALL set_unitweight(8, 'Carat', 'Carat');
-CALL set_unitweight(9, 'Quintal', 'Quintal');
-CALL set_unitweight(10, 'Milligramme', 'Milligram');
+CALL set_unitweight(0, 'Kilo', 'Kilogram');
+CALL set_unitweight(0, 'Tonne', 'Tonne');
+CALL set_unitweight(0, 'Mtonne', 'Megatonne');
+CALL set_unitweight(0, 'Gramme', 'Gram');
+CALL set_unitweight(0, 'Livre', 'Pound');
+CALL set_unitweight(0, 'Once', 'Ounce');
+CALL set_unitweight(0, 'Stone', 'Stone');
+CALL set_unitweight(0, 'Carat', 'Carat');
+CALL set_unitweight(0, 'Quintal', 'Quintal');
+CALL set_unitweight(0, 'Milligramme', 'Milligram');
 
 call set_transport_mode(0,'Route','Road');
 

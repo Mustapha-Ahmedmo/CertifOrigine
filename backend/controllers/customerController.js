@@ -252,6 +252,7 @@ const executeSetCustUser = async (req, res) => {
     });
   }
 };
+
 const executeGetCustAccountInfo = async (req, res) => {
   try {
     const { id_list, statutflag, isactive } = req.query;
@@ -260,12 +261,12 @@ const executeGetCustAccountInfo = async (req, res) => {
 
     // Execute the get_custaccount_info function to retrieve customer accounts
     const accounts = await sequelize.query(
-      `SELECT * FROM get_custaccount_info(:id_list, :statutflag, :isactive)`,
+      `SELECT * FROM get_custaccount_info(:p_id_list, :p_statutflag, :p_isactive)`,
       {
         replacements: {
-          id_list: id_list || null,
-          statutflag: statutflag !== undefined ? parseInt(statutflag, 10) : null,
-          isactive: isactive !== undefined ? (isactive === 'true' || isactive === '1') : null,
+          p_id_list: id_list || null,
+          p_statutflag: statutflag !== undefined ? parseInt(statutflag, 10) : null,
+          p_isactive: isactive !== undefined ? (isactive === 'true' || isactive === '1') : null,
         },
         type: sequelize.QueryTypes.SELECT,
       }
@@ -400,6 +401,7 @@ const executeGetCustAccountInfo = async (req, res) => {
     });
   }
 };
+
 const updateCustAccountStatus = async (req, res) => {
   try {
     const { id } = req.params; // ID du compte client à mettre à jour
