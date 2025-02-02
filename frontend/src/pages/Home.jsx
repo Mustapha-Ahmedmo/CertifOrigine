@@ -1,3 +1,4 @@
+// Home.jsx
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -10,7 +11,7 @@ import {
 import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { getOrdersForCustomer } from '../services/apiServices';
+import { getOrdersForCustomer, cancelOrder } from '../services/apiServices';
 import './Home.css';
 
 const Home = () => {
@@ -24,33 +25,32 @@ const Home = () => {
   const user = useSelector((state) => state.auth.user);
   const idLogin = user?.id_login_user;
   const idCustAccount = user?.id_cust_account;
+  const navigate = useNavigate();
+
+  const fetchOrders = async () => {
+    if (!idLogin || !idCustAccount) return;
+    try {
+      setLoading(true);
+      const response = await getOrdersForCustomer({
+        idCustAccountList: idCustAccount,
+        idLogin,
+      });
+      console.log(response);
+      const allOrders = response.data || [];
+
+      // Categorize orders based on status
+      setOrdersVisa(allOrders.filter(order => order.id_order_status === 1)); // À soumettre
+      setOrdersValidation(allOrders.filter(order => order.id_order_status === 2)); // En attente de validation
+      setOrdersPayment(allOrders.filter(order => order.id_order_status === 3)); // En attente de paiement
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setError(err.message || 'Erreur lors de la récupération des commandes.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!idLogin || !idCustAccount) return;
-
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        const response = await getOrdersForCustomer({
-          idCustAccountList: idCustAccount,
-          idLogin,
-        });
-
-        console.log(response);
-        const allOrders = response.data || [];
-
-        // Categorize orders based on status
-        setOrdersVisa(allOrders.filter(order => order.id_order_status === 1)); // À soumettre
-        setOrdersValidation(allOrders.filter(order => order.id_order_status === 2)); // En attente de validation
-        setOrdersPayment(allOrders.filter(order => order.id_order_status === 3)); // En attente de paiement
-      } catch (err) {
-        console.error('Error fetching orders:', err);
-        setError(err.message || 'Erreur lors de la récupération des commandes.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchOrders();
   }, [idLogin, idCustAccount]);
 
@@ -123,19 +123,55 @@ const Home = () => {
       </div>
 
       <div className="home-dashboard-grid">
-        {activeTab === 'visa' && <OrderTable title="Commandes à soumettre" orders={ordersVisa} />}
-        {activeTab === 'validation' && <OrderTable title="Commandes en attente de validation" orders={ordersValidation} />}
-        {activeTab === 'payment' && <OrderTable title="Commandes en attente de paiement" orders={ordersPayment} />}
+        {activeTab === 'visa' && (
+          <OrderTable
+            title="Commandes à soumettre"
+            orders={ordersVisa}
+            refreshOrders={fetchOrders}
+          />
+        )}
+        {activeTab === 'validation' && (
+          <OrderTable
+            title="Commandes en attente de validation"
+            orders={ordersValidation}
+            refreshOrders={fetchOrders}
+          />
+        )}
+        {activeTab === 'payment' && (
+          <OrderTable
+            title="Commandes en attente de paiement"
+            orders={ordersPayment}
+            refreshOrders={fetchOrders}
+          />
+        )}
       </div>
     </div>
   );
 };
 
-const OrderTable = ({ title, orders }) => {
+const OrderTable = ({ title, orders, refreshOrders }) => {
   const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
+  const currentUserId = user?.id_login_user;
 
   const handleDetailsClick = (orderId, certifId) => {
     navigate(`/dashboard/order-details?orderId=${orderId}&certifId=${certifId}`);
+  };
+
+  const handleCancelClick = async (orderId) => {
+    try {
+      const payload = {
+        p_id_order: orderId,
+        p_idlogin_modify: currentUserId,
+      };
+      const response = await cancelOrder(payload);
+      console.log('Order cancelled:', response);
+      // Refresh the orders list after cancellation
+      refreshOrders && refreshOrders();
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      alert("Erreur lors de l'annulation de la commande.");
+    }
   };
 
   return (
@@ -208,11 +244,25 @@ const OrderTable = ({ title, orders }) => {
                     )}
                   </td>
 
-                  {/* Submit Button */}
+                  {/* Action Column */}
                   <td>
-                    <button className="home-submit-button home-minimal-button">
-                      {title.includes('paiement') ? 'Payer' : 'Soumettre'}
-                    </button>
+                    {(order.id_order_status === 1 || order.id_order_status === 6) ? (
+                      <>
+                      <button
+                        className="home-icon-button home-minimal-button"
+                        title="Annuler"
+                        onClick={() => handleCancelClick(order.id_order)}
+                      >
+                        <FontAwesomeIcon /> Cancel
+                      </button>
+                                            <button className="home-submit-button home-minimal-button">
+                                            {title.includes('paiement') ? 'Payer' : 'Soumettre'}
+                                          </button>
+                    </>) : (
+                      <button className="home-submit-button home-minimal-button">
+                        {title.includes('paiement') ? 'Payer' : 'Soumettre'}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))

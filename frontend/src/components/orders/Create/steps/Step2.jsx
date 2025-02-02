@@ -35,9 +35,9 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
   const orderId = params.get('orderId');
 
   const auth = useSelector((state) => state.auth); // Access user data from Redux
-  const customerAccountId = auth?.user?.id_cust_account; // Customer Account ID from the logged-in user
+  const user = useSelector((state) => state.auth.user);
+  const customerAccountId = auth?.user?.id_cust_account; // Customer Account ID
 
-  // Fetch data on component mount
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -60,18 +60,29 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         setCountries(fetchedCountries);
 
         // Fetch transport modes
-        // For getTransmodeInfo, we assume it accepts (idListCT, isActiveTM) or similar parameters.
         const fetchedTransportModes = await getTransmodeInfo(null, true);
         setTransportModes(fetchedTransportModes.data);
 
-        // Fetch unit weights
+        // Fetch unit weights and filter out any unit with id less than 1
         const fetchedUnitWeights = await getUnitWeightInfo(null, true);
-        setUnitWeights(fetchedUnitWeights.data);
+        const filteredUnitWeights = (fetchedUnitWeights.data || []).filter(
+          (unit) => unit.id_unit_weight >= 1
+        );
+        setUnitWeights(filteredUnitWeights);
+
+        // Optionally, set a default unit if not already set:
+        if (!values.unit && filteredUnitWeights.length > 0) {
+          // Assume the unit with id 1 exists:
+          const defaultUnit = filteredUnitWeights.find(unit => unit.id_unit_weight === 1);
+          if (defaultUnit) {
+            handleChange('unit', defaultUnit.symbol_fr);
+          }
+        }
 
         // Fetch recipients if no certifId and a customerAccountId exists
         if (!certifId && customerAccountId) {
           const recipientFetched = await fetchRecipients({
-            idListCA: customerAccountId, // Fetch recipients by customer account ID
+            idListCA: customerAccountId,
           });
           setRecipients(recipientFetched.data);
           handleChange('recipients', recipientFetched.data);
@@ -100,17 +111,15 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
   };
 
   // Compute a joined string of selected transport mode labels directly from form data.
-  // This code assumes that values.transportModes is an object like:
-  // { air: true, mer: false, terre: false, mixte: true }
   const selectedTransportModes = Object.keys(safeValues.transportModes)
     .filter(key => safeValues.transportModes[key])
-    .map(key => key.charAt(0).toUpperCase() + key.slice(1))  // Capitalize first letter
+    .map(key => key.charAt(0).toUpperCase() + key.slice(1))
     .join(', ') || 'Aucun mode sélectionné';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 1) Validate transport modes: at least one must be selected.
+    // Validate transport modes: at least one must be selected.
     const isTransportSelected = Object.keys(safeValues.transportModes).some(
       (key) => safeValues.transportModes[key]
     );
@@ -119,18 +128,17 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
       return;
     }
 
-    // 2) Validate merchandise: at least one must be added.
+    // Validate merchandise: at least one must be added.
     if (safeValues.merchandises.length === 0) {
       setErrorMessage('Veuillez ajouter au moins une marchandise.');
       return;
     }
 
-    let recipientId = selectedRecipient; // Default to selected recipient ID
+    let recipientId = selectedRecipient;
 
-    // 3) If user wants to create a new recipient (destinataire)
+    // If user wants to create a new recipient (destinataire)
     if (isNewDestinataire) {
       try {
-        // 1) Construire l'objet pour le nouveau destinataire
         const newRecipientData = {
           idRecipientAccount: null,
           idCustAccount: customerAccountId,
@@ -138,10 +146,10 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
           address1: safeValues.receiverAddress,
           address2: safeValues.receiverAddress2,
           address3: safeValues.receiverPostalCode,
-          idCity: 1, // Or the correct city ID
+          idCity: 1, // Or correct city ID
           statutFlag: 1,
           activationDate: new Date().toISOString(),
-          deactivationDate: new Date('9999-12-31').toISOString(), // Future date
+          deactivationDate: new Date('9999-12-31').toISOString(),
           idLoginInsert: auth?.user?.id_login_user || 1,
           idLoginModify: null,
         };
@@ -170,25 +178,22 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
     
       } catch (error) {
         console.error('Error creating new recipient:', error);
-        setErrorMessage(
-          "Erreur lors de la création du nouveau destinataire. Veuillez réessayer."
-        );
+        setErrorMessage("Erreur lors de la création du nouveau destinataire. Veuillez réessayer.");
         return;
       }
     }
     
 
-    // Convert country names to country IDs using fetched countries
     const getCountryId = (countryName) => {
       const foundCountry = countries.find(country => country.symbol_fr === countryName);
       return foundCountry ? foundCountry.id_country : null;
     };
 
     const certData = {
-      idOrder: safeValues.orderId, // Ensure order ID is available
+      idOrder: safeValues.orderId,
       idRecipientAccount: recipientId,
-      idCountryOrigin: getCountryId(safeValues.goodsOrigin),  // Convert to ID
-      idCountryDestination: getCountryId(safeValues.goodsDestination),  // Convert to ID
+      idCountryOrigin: getCountryId(safeValues.goodsOrigin),
+      idCountryDestination: getCountryId(safeValues.goodsDestination),
       notes: safeValues.remarks,
       copyCount: safeValues.copies,
       idLoginInsert: auth?.user?.id_login_user || 1,
@@ -201,67 +206,57 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
     for (const merchandise of safeValues.merchandises) {
       try {
         const normalizeText = (text) => text.toLowerCase().trim();
-
         const matchedUnit = unitWeights.find(
           (unit) => normalizeText(unit.symbol_fr) === normalizeText(merchandise.unit)
         );
         const goodsData = {
-          idOrdCertifOri: certResponse.newCertifId, // Use the newly created certificate ID
+          idOrdCertifOri: certResponse.newCertifId,
           goodDescription: merchandise.designation,
           goodReferences: merchandise.boxReference,
+          weight_qty: merchandise.quantity,
           idUnitWeight: matchedUnit ? matchedUnit.id_unit_weight : null,
         };
-
-        console.log("Merchandise => ", merchandise);
-
-        const goodsResponse = await addOrUpdateGoods(goodsData);
-        console.log('Goods added successfully:', goodsResponse);
+        console.log("Merchandise =>", merchandise);
+        await addOrUpdateGoods(goodsData);
       } catch (error) {
         console.error('Error adding goods:', error);
         setErrorMessage("Erreur lors de l'ajout des marchandises. Veuillez réessayer.");
         return;
       }
+    }
 
-      // 7) For each selected transport mode, call setOrdCertifTranspMode
-      //    We rely on transportModes (from getTransmodeInfo) to match ID by the mode's symbol_eng (lowercase)
-      const selectedModeKeys = Object.keys(values.transportModes || {}).filter(
-        (key) => values.transportModes[key]
+    // For each selected transport mode, call setOrdCertifTranspMode
+    const selectedModeKeys = Object.keys(safeValues.transportModes || {}).filter(
+      (key) => safeValues.transportModes[key]
+    );
+
+    for (const key of selectedModeKeys) {
+      const matched = transportModes.find(
+        (tm) => tm.symbol_eng.toLowerCase() === key
       );
-
-      for (const key of selectedModeKeys) {
-        // Find the matching mode in your fetched transportModes
-        const matched = transportModes.find(
-          (tm) => tm.symbol_eng.toLowerCase() === key
-        );
-        if (matched) {
-          // Call setOrdCertifTranspMode with the new certificate ID
-          const result = await setOrdCertifTranspMode({
-            id_ord_certif_transp_mode: null,
-            id_ord_certif_ori: certResponse.newCertifId,
-            id_transport_mode: matched.id_transport_mode,
-          });
-          console.log('Transport mode set:', result);
-        }
+      if (matched) {
+        const result = await setOrdCertifTranspMode({
+          id_ord_certif_transp_mode: null,
+          id_ord_certif_ori: certResponse.newCertifId,
+          id_transport_mode: matched.id_transport_mode,
+        });
+        console.log('Transport mode set:', result);
       }
     }
 
-    // 4) If everything is okay, proceed to next step
     setErrorMessage('');
     nextStep();
   };
 
   const addMerchandise = () => {
     if (!safeValues.designation || !safeValues.quantity || !safeValues.boxReference) return;
-
     const newMerchandise = {
       designation: safeValues.designation,
       boxReference: safeValues.boxReference,
       quantity: safeValues.quantity,
       unit: safeValues.unit,
     };
-
     handleMerchandiseChange(newMerchandise);
-
     handleChange('designation', '');
     handleChange('quantity', '');
     handleChange('boxReference', '');
@@ -278,7 +273,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
       <h3>{t('step1.title')}</h3>
 
       <div className="section-title">{t('step1.exporterTitle')}</div>
-      <p className="exporter-name">INDIGO TRADING FZCO</p>
+      <p className="exporter-name">{user?.companyname}</p>
       <hr />
 
       <div className="section-title">{t('step1.receiverTitle')}</div>
@@ -318,7 +313,6 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
               const recipient = recipients.find(
                 (r) => r.id_recipient_account.toString() === selectedId
               );
-
               if (recipient) {
                 handleChange('receiverName', recipient.recipient_name);
                 handleChange('receiverAddress', recipient.address_1);
@@ -488,7 +482,8 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
 
       {/* Display the joined selected transport mode labels */}
       <div className="selected-transport-modes">
-        <strong>Modes sélectionnés :</strong> {Object.keys(safeValues.transportModes)
+        <strong>Modes sélectionnés :</strong>{' '}
+        {Object.keys(safeValues.transportModes)
           .filter((key) => safeValues.transportModes[key])
           .map((key) => key.charAt(0).toUpperCase() + key.slice(1))
           .join(', ') || 'Aucun mode sélectionné'}
@@ -527,7 +522,11 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
           <input
             type="number"
             value={safeValues.quantity}
-            onChange={(e) => handleChange('quantity', e.target.value)}
+            onChange={(e) => {
+              // Convert the typed string to a float, fallback to 0 if it's not valid.
+              const floatValue = parseFloat(e.target.value) || 0;
+              handleChange('quantity', floatValue);
+            }}
           />
         </div>
 
@@ -537,11 +536,13 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
             value={safeValues.unit}
             onChange={(e) => handleChange('unit', e.target.value)}
           >
-            {unitWeights.map((unit) => (
-              <option key={unit.id_unit_weight} value={unit.symbol_fr}>
-                {unit.symbol_fr}
-              </option>
-            ))}
+            {unitWeights
+              .filter((unit) => unit.id_unit_weight >= 1)
+              .map((unit) => (
+                <option key={unit.id_unit_weight} value={unit.symbol_fr}>
+                  {unit.symbol_fr}
+                </option>
+              ))}
           </select>
         </div>
 

@@ -611,6 +611,7 @@ export const addOrUpdateGoods = async (goodsData) => {
     throw error; // Ensure the caller can handle errors properly
   }
 };
+
 export const getOrdersForCustomer = async ({ idOrderList = null, idCustAccountList = null, idOrderStatusList = null, idLogin }) => {
   try {
     if (!idLogin) {
@@ -726,6 +727,29 @@ export const setOrdCertifTranspMode = async (payload) => {
     return await response.json();
   } catch (error) {
     console.error('API call error (setOrdCertifTranspMode):', error);
+    throw error;
+  }
+};
+
+export const cancelOrder = async (payload) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/cancel`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to cancel order');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (cancelOrder):', error);
     throw error;
   }
 };

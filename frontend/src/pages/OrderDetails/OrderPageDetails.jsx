@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import './OrderDetailsPage.css'; // Create this CSS file for page-specific styles
 import Step5 from '../../components/orders/Create/steps/Step5';
-import { fetchCountries, getCertifTranspMode, getOrdersForCustomer } from '../../services/apiServices';
+import { fetchCountries, getCertifGoodsInfo, getCertifTranspMode, getOrdersForCustomer } from '../../services/apiServices';
 import { useSelector } from 'react-redux';
 
 const OrderDetailsPage = () => {
@@ -130,8 +130,22 @@ const OrderDetailsPage = () => {
           }
         }
 
-        // --- 4. (Optional) Load Certificate Details if Needed ---
-        // If getCertificateById exists, you can fetch and map additional certificate data here.
+        if (certifId) {
+            const goodsResponse = await getCertifGoodsInfo(certifId);
+            console.log("Goods info response:", goodsResponse);
+            // Map the returned goods data to the structure expected by Step5.
+            // For example, we assume each good contains: goodDescription, goodReferences, quantity, unit.
+            const mappedGoods = (goodsResponse.data || []).map((good) => ({
+              designation: good.good_description,
+              boxReference: good.good_references,
+              quantity: good.weight_qty, // Ensure that your API returns quantity; otherwise, adjust
+              unit: good.symbol_fr || 'N/A',
+            }));
+            setFormData((prev) => ({
+              ...prev,
+              merchandises: mappedGoods,
+            }));
+          }
 
       } catch (err) {
         console.error('Error loading order details:', err);

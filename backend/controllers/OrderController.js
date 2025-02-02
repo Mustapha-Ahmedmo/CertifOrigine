@@ -231,53 +231,65 @@ const getTransmodeInfo = async (req, res) => {
       });
     }
   };
-
   const addOrUpdateCertifGood = async (req, res) => {
     try {
-        const { idOrdCertifGoods, idOrdCertifOri, goodDescription, goodReferences, docReferences, weightQty, idUnitWeight } = req.body;
-
-        // Validate required fields
-        if (!idOrdCertifOri || !goodDescription || !goodReferences || !idUnitWeight) {
-            return res.status(400).json({
-                message: "Les champs idOrdCertifOri, goodDescription, goodReferences et idUnitWeight sont requis.",
-            });
+      console.log("Request body for addOrUpdateCertifGood:", req.body);
+  
+      const { idOrdCertifGoods, idOrdCertifOri, goodDescription, goodReferences, docReferences, weight_qty, idUnitWeight } = req.body;
+  
+      // Validate required fields
+      if (!idOrdCertifOri || !goodDescription || !goodReferences || !idUnitWeight) {
+        console.error("Missing required fields:", { idOrdCertifOri, goodDescription, goodReferences, idUnitWeight });
+        return res.status(400).json({
+          message: "Les champs idOrdCertifOri, goodDescription, goodReferences et idUnitWeight sont requis.",
+        });
+      }
+  
+      const replacements = {
+        p_id_ord_certif_goods: idOrdCertifGoods || null,
+        p_id_ord_certif_ori: idOrdCertifOri,
+        p_good_description: goodDescription,
+        p_good_references: goodReferences,
+        p_doc_references: docReferences || null,
+        p_weight_qty: weight_qty,  // now correctly passes 123
+        p_id_unit_weight: idUnitWeight,
+      };
+  
+      console.log("Replacements for set_ordcertif_goods:", replacements);
+  
+      const result = await sequelize.query(
+        `CALL set_ordcertif_goods(
+            :p_id_ord_certif_goods,
+            :p_id_ord_certif_ori,
+            :p_good_description,
+            :p_good_references,
+            :p_doc_references,
+            :p_weight_qty,
+            :p_id_unit_weight
+        )`,
+        {
+          replacements,
+          type: QueryTypes.SELECT,
         }
-
-        await sequelize.query(
-            `CALL set_ordcertif_goods(
-                :p_id_ord_certif_goods,
-                :p_id_ord_certif_ori,
-                :p_good_description,
-                :p_good_references,
-                :p_doc_references,
-                :p_weight_qty,
-                :p_id_unit_weight
-            )`,
-            {
-                replacements: {
-                    p_id_ord_certif_goods: idOrdCertifGoods || null,
-                    p_id_ord_certif_ori: idOrdCertifOri,
-                    p_good_description: goodDescription,
-                    p_good_references: goodReferences,
-                    p_doc_references: docReferences || null,
-                    p_weight_qty: weightQty || 0,
-                    p_id_unit_weight: idUnitWeight,
-                },
-            }
-        );
-
-        res.status(201).json({
-            message: "Marchandise ajoutée ou mise à jour avec succès.",
-        });
+      );
+  
+      console.log("Result from set_ordcertif_goods call:", result);
+  
+      res.status(201).json({
+        message: "Marchandise ajoutée ou mise à jour avec succès.",
+        result, // Optionally include the result
+      });
     } catch (error) {
-        console.error("Erreur lors de l'ajout ou la mise à jour de la marchandise:", error);
-        res.status(500).json({
-            message: "Erreur lors de l'ajout ou la mise à jour de la marchandise.",
-            error: error.message || "Erreur inconnue.",
-            details: error.original || error,
-        });
+      console.error("Erreur lors de l'ajout ou de la mise à jour de la marchandise:", error);
+      res.status(500).json({
+        message: "Erreur lors de l'ajout ou de la mise à jour de la marchandise.",
+        error: error.message || "Erreur inconnue.",
+        details: error.original || error,
+      });
     }
-};
+  };
+
+
 const getCertifGoodsInfo = async (req, res) => {
     try {
         const {
@@ -416,6 +428,8 @@ const setOrdCertifGoods = async (req, res) => {
         id_unit_weight,
       } = req.body;
   
+console.log("WEIGHT QUANTITY => ", weight_qty);
+
       // Validate required fields
       if (!id_ord_certif_ori || !good_description || !good_references || !weight_qty || !id_unit_weight) {
         return res.status(400).json({ message: 'Missing required fields.' });
@@ -434,15 +448,15 @@ const setOrdCertifGoods = async (req, res) => {
         ) AS new_ord_certif_goods_id`,
         {
           replacements: {
-            p_id_ord_certif_goods: id_ord_certif_goods || null, // Pass NULL explicitly if needed
-            p_id_ord_certif_ori,
-            p_good_description,
-            p_good_references,
-            p_doc_references: doc_references || null, // Optional
-            p_weight_qty,
-            p_id_unit_weight,
+            p_id_ord_certif_goods: id_ord_certif_goods || null, // null for insertion
+            p_id_ord_certif_ori: id_ord_certif_ori,              // certificate ID
+            p_good_description: good_description,
+            p_good_references: good_references,
+            p_doc_references: doc_references || null,
+            p_weight_qty: parseFloat(weight_qty), // Make sure it's a number
+            p_id_unit_weight: id_unit_weight,
           },
-          type: QueryTypes.SELECT, // Specify the query type
+          type: sequelize.QueryTypes.SELECT,
         }
       );
   
@@ -621,6 +635,35 @@ const getCertifTranspMode = async (req, res) => {
       });
     }
   };
+
+  const cancelOrder = async (req, res) => {
+    try {
+      const { p_id_order, p_idlogin_modify } = req.body;
+      if (!p_id_order || !p_idlogin_modify) {
+        return res.status(400).json({
+          message: 'Les champs p_id_order et p_idlogin_modify sont requis.',
+        });
+      }
+      await sequelize.query(
+        `CALL cancel_order(:p_id_order, :p_idlogin_modify)`,
+        {
+          replacements: {
+            p_id_order,
+            p_idlogin_modify,
+          },
+          type: QueryTypes.RAW,
+        }
+      );
+      res.status(200).json({ message: 'La commande a été annulée avec succès.' });
+    } catch (error) {
+      console.error('Erreur lors de l\'annulation de la commande:', error);
+      res.status(500).json({
+        message: 'Erreur lors de l\'annulation de la commande.',
+        error: error.message || 'Erreur inconnue.',
+        details: error.original || error,
+      });
+    }
+  };
   
 module.exports = {
   executeAddOrder,
@@ -634,5 +677,6 @@ module.exports = {
   setOrdCertifGoods,
   getOrdersForCustomer,
   getCertifTranspMode,
-  setOrdCertifTranspMode
+  setOrdCertifTranspMode,
+  cancelOrder
 };

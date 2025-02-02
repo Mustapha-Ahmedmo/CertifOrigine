@@ -25,6 +25,7 @@ DROP TABLE IF EXISTS CURRENCY CASCADE;
 DROP TABLE IF EXISTS ORD_COM_INVOICE CASCADE;
 DROP TABLE IF EXISTS ORD_CERTIF_TRANSP_MODE CASCADE;
 DROP TABLE IF EXISTS ORD_LEGALIZATION CASCADE;
+DROP TABLE IF EXISTS ORDER_FILES CASCADE;
 
 CREATE TABLE CURRENCY (
     ID_CURRENCY INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -422,6 +423,17 @@ CREATE TABLE ORD_COM_INVOICE (
     FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
     FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER)
 );
+
+CREATE TABLE ORDER_FILES (
+    ID_ORDER_FILES INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_ORDER INT NOT NULL,                       -- Non nullable
+    ID_FILES_REPO INT NOT NULL,              -- Non nullable
+    TYPEoF_ORDER INT DEFAULT 0 NOT NULL,
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
+    FOREIGN KEY (ID_ORDER) REFERENCES "ORDER"(ID_ORDER),
+    FOREIGN KEY (ID_FILES_REPO) REFERENCES FILES_REPO(ID_FILES_REPO)
+);
+
 
 CREATE TABLE ORD_CERTIF_TRANSP_MODE (
     ID_ORD_CERTIF_TRANSP_MODE INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -3104,6 +3116,334 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+
+
+DROP PROCEDURE IF EXISTS cancel_order;
+
+CREATE OR REPLACE PROCEDURE cancel_order(
+    p_id_order INT,
+    p_idlogin_modify INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    m_typeof_order INT := 1;
+    m_id_ord_certif_ori INT;
+BEGIN
+--verifier si la commande peut etre annulée
+    IF EXISTS (
+        SELECT 1 FROM "ORDER"
+        WHERE ID_ORDER = p_id_order
+        AND ID_ORDER_STATUS IN (1, 6)  -- 1: insert, 6: pending replace
+    ) THEN 
+	-- mise a jour des champs pour les tables
+        UPDATE ORD_CERTIF_ORI 
+        SET 
+            IDLOGIN_MODIFY = p_idlogin_modify,
+            DEACTIVATION_DATE = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE ID_ORDER = p_id_order;
+
+        UPDATE ORD_COM_INVOICE
+        SET 
+            IDLOGIN_MODIFY = p_idlogin_modify,
+            DEACTIVATION_DATE = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE ID_ORDER = p_id_order;
+
+        UPDATE ORD_LEGALIZATION
+        SET 
+            IDLOGIN_MODIFY = p_idlogin_modify,
+            DEACTIVATION_DATE = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE ID_ORDER = p_id_order;
+
+        SELECT ID_ORD_CERTIF_ORI INTO m_id_ord_certif_ori
+        FROM ORD_CERTIF_ORI
+        WHERE ID_ORDER = p_id_order
+        LIMIT 1;
+
+        CALL del_all_ordcertif_transpmode_except(m_id_ord_certif_ori, '0');
+        CALL del_all_order_files_except(p_id_order, m_typeof_order, p_idlogin_modify, '0');
+        CALL del_all_ordcertif_goods_except(m_id_ord_certif_ori, '0');
+
+        UPDATE "ORDER"
+        SET 
+            ID_ORDER_STATUS = 8,  -- Annulé
+            LASTMODIFIED = NOW(),
+            IDLOGIN_MODIFY = p_idlogin_modify
+        WHERE 
+            ID_ORDER = p_id_order;
+
+        CALL set_histo_order(
+            p_id_order,
+            p_idlogin_modify,
+            15
+        );
+
+    ELSE
+        RAISE EXCEPTION 'La commande ne peut être annulée que si son statut est 1 (insert) ou 6 (pending replace)';
+    END IF;
+END;
+$$;
+
+
+DROP PROCEDURE IF EXISTS reject_order;
+CREATE OR REPLACE PROCEDURE reject_order(
+    p_id_order INT,
+    p_idlogin_modify INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    m_typeof_order INT := 1;
+    m_id_ord_certif_ori INT;
+BEGIN
+    -- vérifier que la commande peut être rejetée
+    IF EXISTS (
+        SELECT 1 FROM "ORDER"
+        WHERE ID_ORDER = p_id_order
+        AND ID_ORDER_STATUS IN (2, 7)  -- 2: NEW, 7: replaced
+        AND TYPEOF >= 1
+    ) THEN
+        -- mise à jour des champs pour les tables ORD_CERTIF_ORI, ORD_COM_INVOICE et ORD_LEGALIZATION
+        UPDATE ORD_CERTIF_ORI
+        SET 
+            IDLOGIN_MODIFY = p_idlogin_modify,
+            DEACTIVATION_DATE = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE ID_ORDER = p_id_order;
+
+        UPDATE ORD_COM_INVOICE
+        SET 
+            IDLOGIN_MODIFY = p_idlogin_modify,
+            DEACTIVATION_DATE = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE ID_ORDER = p_id_order;
+
+        UPDATE ORD_LEGALIZATION
+        SET 
+            IDLOGIN_MODIFY = p_idlogin_modify,
+            DEACTIVATION_DATE = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE ID_ORDER = p_id_order;
+
+        SELECT ID_ORD_CERTIF_ORI INTO m_id_ord_certif_ori
+        FROM ORD_CERTIF_ORI
+        WHERE ID_ORDER = p_id_order
+        LIMIT 1;
+
+        CALL del_all_ordcertif_transpmode_except(m_id_ord_certif_ori, '0');
+        CALL del_all_order_files_except(p_id_order, m_typeof_order, p_idlogin_modify, '0');
+        CALL del_all_ordcertif_goods_except(m_id_ord_certif_ori, '0');
+
+        -- mise à jour du statut de la commande
+        UPDATE "ORDER"
+        SET 
+            ID_ORDER_STATUS = 9,  -- 9: Rejected
+            DATE_LAST_RETURN = NOW(),
+            LASTMODIFIED = NOW(),
+            IDLOGIN_MODIFY = p_idlogin_modify
+        WHERE 
+            ID_ORDER = p_id_order;
+
+        CALL set_histo_order(
+            p_id_order,
+            p_idlogin_modify,
+            16  -- ACTION 16 pour 'Rejeté'
+        );
+
+    ELSE
+        RAISE EXCEPTION 'La commande ne peut être rejetée que si son statut est 2 (NEW) ou 7 (replaced) et que TYPEOF >= 1';
+    END IF;
+END;
+$$;
+
+
+
+DROP PROCEDURE IF EXISTS submit_order;
+
+CREATE OR REPLACE PROCEDURE submit_order(
+    p_id_order INT,
+    p_idlogin_modify INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    m_order_status INT;
+BEGIN
+    -- vérifier que la commande existe et a un statut valide
+    IF EXISTS (
+        SELECT 1 FROM "ORDER"
+        WHERE ID_ORDER = p_id_order
+        AND ID_ORDER_STATUS IN (1, 6)  -- 1: insert, 6: pending replace
+        AND TYPEOF >= 1
+    ) THEN
+        -- recupérer le statut actuel de la commande
+        SELECT ID_ORDER_STATUS INTO m_order_status
+        FROM "ORDER"
+        WHERE ID_ORDER = p_id_order;
+
+        -- mise a jour du statut de la commande
+        UPDATE "ORDER"
+        SET 
+            DATE_LAST_SUBMISSION = NOW(),
+            ID_ORDER_STATUS = CASE
+                                WHEN ID_ORDER_STATUS != 1 THEN 7  -- si le statut actuel n'est pas 1 (insert) mais 6 (pending replace), le mettre à 7 (replaced)
+                                ELSE 2  -- sinon statut  New 
+                              END,
+            LASTMODIFIED = NOW(),
+            IDLOGIN_MODIFY = p_idlogin_modify
+        WHERE 
+            ID_ORDER = p_id_order;
+
+        -- appel de la procedure set_histo_order avec l'action appropriée
+        IF m_order_status = 1 THEN
+            CALL set_histo_order(
+                p_id_order,
+                p_idlogin_modify,
+                9  -- ACTION 9 pour 'Soumission'
+            );
+        ELSE
+            CALL set_histo_order(
+                p_id_order,
+                p_idlogin_modify,
+                17  -- ACTION 17 pour 'Ordre remplacé'
+            );
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'La commande ne peut être soumise que si son statut est 1 (insert) ou 6 (pending replace) et que TYPEOF >= 1';
+    END IF;
+END;
+$$;
+
+
+
+DROP PROCEDURE IF EXISTS approve_order;
+CREATE OR REPLACE PROCEDURE approve_order(
+    p_id_order INT,
+    p_idlogin_modify INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM "ORDER"
+        WHERE ID_ORDER = p_id_order
+        AND ID_ORDER_STATUS IN (2, 7)  -- 2: NEW, 7: replaced
+        AND TYPEOF >= 1
+    ) THEN
+        -- mise à jour de DATE_VALIDATION dans les tables ORD_CERTIF_ORI, ORD_COM_INVOICE et ORD_LEGALIZATION
+        UPDATE ORD_CERTIF_ORI
+        SET DATE_VALIDATION =NOW()
+        WHERE ID_ORDER = p_id_order;
+
+        UPDATE ORD_COM_INVOICE
+        SET DATE_VALIDATION = NOW()
+        WHERE ID_ORDER = p_id_order;
+
+        UPDATE ORD_LEGALIZATION
+        SET DATE_VALIDATION = NOW()
+        WHERE ID_ORDER = p_id_order;
+
+        -- mise à jour du statut de la commande dans la table "ORDER"
+        UPDATE "ORDER"
+        SET 
+            DATE_VALIDATION = NOW(),
+            ID_ORDER_STATUS = 3,  -- 3: approved
+            LASTMODIFIED = NOW(),
+            IDLOGIN_MODIFY = p_idlogin_modify
+        WHERE 
+            ID_ORDER = p_id_order;
+
+        CALL set_histo_order(
+            p_id_order,
+            p_idlogin_modify,
+            13  -- ACTION 13 pour 'Validation/Approbation'
+        );
+    ELSE
+        RAISE EXCEPTION 'La commande ne peut être approuvée que si son statut est 2 (NEW) ou 7 (replaced) et que TYPEOF >= 1';
+    END IF;
+END;
+$$;
+
+
+DROP PROCEDURE IF EXISTS del_all_order_files_except;
+
+CREATE OR REPLACE PROCEDURE del_all_order_files_except (
+    p_id_order INT,
+    p_typeof_order INT,
+    p_idlogin_insert INT,
+    p_id_order_files_except_list TEXT
+)
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    ids_garder INT[] := string_to_array(p_id_order_files_except_list, ',')::INT[];
+BEGIN
+
+    UPDATE files_repo
+    SET deactivation_date = CURRENT_TIMESTAMP - INTERVAL '1 day'
+    WHERE deactivation_date > CURRENT_DATE
+      AND id_files_repo IN (
+          SELECT id_files_repo 
+          FROM order_files
+          WHERE id_order = p_id_order 
+            AND typeof_order = p_typeof_order 
+            AND deactivation_date > CURRENT_DATE
+            AND id_files_repo NOT IN (SELECT unnest(ids_garder))
+      )
+      AND id_files_repo NOT IN (SELECT unnest(ids_garder));
+
+    UPDATE order_files
+    SET deactivation_date = CURRENT_TIMESTAMP - INTERVAL '1 day'
+    WHERE id_order = p_id_order 
+      AND typeof_order = p_typeof_order
+      AND deactivation_date > CURRENT_DATE
+      AND id_files_repo NOT IN (SELECT unnest(ids_garder));
+
+END;
+$$;
+
+DROP PROCEDURE IF EXISTS del_all_ordcertif_goods_except;
+CREATE OR REPLACE PROCEDURE del_all_ordcertif_goods_except (
+    p_id_ord_certif_ori  INT,
+    p_id_ord_certif_ori_except_list TEXT
+)
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    ids_garder INT[] := string_to_array(p_id_ord_certif_ori_except_list, ',')::INT[];
+
+BEGIN
+
+        UPDATE ord_certif_goods
+        SET DEACTIVATION_DATE = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE ID_ORD_CERTIF_ORI = p_id_ord_certif_ori  AND deactivation_date > CURRENT_DATE
+AND id_ord_certif_goods NOT IN (SELECT unnest(ids_garder));
+END;
+$$;
+
+
+DROP PROCEDURE IF EXISTS del_all_ordcertif_transpmode_except;
+CREATE OR REPLACE PROCEDURE del_all_ordcertif_transpmode_except (
+    p_id_ord_certif_ori  INT,
+    p_id_ord_certif_transp_mode_except_list TEXT
+)
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    ids_garder INT[] := string_to_array(p_id_ord_certif_transp_mode_except_list, ',')::INT[];
+
+BEGIN
+
+        UPDATE ORD_CERTIF_TRANSP_MODE
+        SET DEACTIVATION_DATE = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE ID_ORD_CERTIF_ORI = p_id_ord_certif_ori  AND deactivation_date > CURRENT_DATE
+AND ID_ORD_CERTIF_TRANSP_MODE NOT IN (SELECT unnest(ids_garder));
+END;
+$$;
+
+
+
+
 
 
 call set_op_user(0, 0, 'M. Admin', 1, TRUE,
