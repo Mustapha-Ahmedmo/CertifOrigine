@@ -1,36 +1,125 @@
-/* Styles généraux pour le formulaire de récapitulatif */
-.step-form {
+/********************************/
+/*      STEP5 - SCOPED STYLES   */
+/********************************/
+
+.step5-form {
   margin: 0 auto;
   padding: 20px;
 }
 
-.step-form h3 {
+/* Titre principal (Récapitulatif) */
+.step5-title {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   color: #333;
-  font-weight: bold; /* Titre principal en gras */
-  font-size: 24px; /* Augmentation de la taille de police */
+  font-weight: bold;
+  font-size: 24px;
 }
 
-.step-form h5 {
-  font-weight: bold; /* Titre principal en gras */
-  font-size: 15px; /* Augmentation de la taille de police */
+/* Titre "Désignation de la commande" en haut à gauche */
+.step5-main-title {
+  font-size: 20px;
+  color: #DCAF26; /* Couleur or */
+  margin-bottom: 10px;
+  font-weight: bold;
+  text-align: left;
 }
 
-.step-form p {
-  font-size: 14px; /* Augmentation de la taille de police */
-}
-
-/* Styles pour l'encadré "Désignation commande" */
-.designation-commande {
+/* Rectangle "1/7 Demandeur / Expediteur" */
+.step5-designation-commande {
   border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  border-radius: 5px;
   padding: 20px;
   margin-bottom: 30px;
   position: relative;
-  background-color: #f9f9f9;
+  margin-top: 30px;
 }
 
-.designation-header {
+.step5-sub-title {
+  margin: 0 0 15px;
+  color: #333;
+  font-weight: bold;
+  font-size: 15px;
+  text-align: center;
+}
+
+/* Champs Société / Libellé */
+.step5-field-row {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.step5-field-label {
+  width: 180px;
+  font-weight: bold;
+  color: #333;
+}
+
+.step5-field-value {
+  flex: 1;
+  padding: 8px;
+  background-color: #e0e0e0;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Input en mode édition (blanc) */
+.step5-editable-input.step5-white-input {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  font-size: 14px;
+  border-radius: 3px;
+  width: auto;
+}
+
+/* Conteneur pour le bouton "Enregistrer" */
+.step5-save-container {
+  text-align: right;
+  margin-top: 5px;
+}
+
+/* Bouton "Enregistrer" */
+.step5-save-button {
+  background-color: #4CAF50;
+  color: #fff;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.step5-save-button:hover {
+  background-color: #45a049;
+}
+
+/* Affichage du libellé en mode non-édition */
+.step5-editable-display {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Icône crayon */
+.step5-pencil-icon {
+  cursor: pointer;
+  margin-left: 5px;
+  color: #DCAF26;
+  transition: color 0.3s ease;
+}
+
+.step5-pencil-icon:hover {
+  color: #b5931a;
+}
+
+/* Bloc pour "Contenu du Certificat d'origine" */
+.step5-designation-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -38,13 +127,13 @@
   margin-top: 15px;
 }
 
-.designation-header h4 {
+.step5-designation-header h4 {
   margin: 0;
-  font-weight: bold; /* Titre en gras */
-  color: #DCAF26; /* Couleur bleue */
+  font-weight: bold;
+  color: #DCAF26;
 }
 
-.modifier-button {
+.step5-modifier-button {
   background-color: #DCAF26;
   color: white;
   padding: 8px 15px;
@@ -54,202 +143,130 @@
   border-radius: 5px;
 }
 
-.modifier-button:hover {
+.step5-modifier-button:hover {
   background-color: #0056b3;
 }
 
-/* Style pour le Demandeur */
-.exporter-name-step5 {
-  color: #DCAF26; /* Couleur bleue */
-  font-weight: bold;
-}
-
-/* Styles pour les éléments de récapitulatif dans l'encadré */
-.designation-commande .recap-item {
-  display: flex;
-  flex-wrap: wrap; /* Permet le retour à la ligne si nécessaire */
-  margin-bottom: 10px;
-}
-
-.designation-commande .recap-label {
-  font-weight: bold;
-  width: 100%;
-  max-width: 200px; /* Largeur maximale pour les labels */
-  color: #333;
-}
-
-.designation-commande .recap-value {
-  flex: 1;
-  color: #555;
-}
-
-/* Styles pour l'encadré "Contenu du certificat d'origine" */
-.contenu-certificat {
+.step5-contenu-certificat {
   border: 1px solid #ddd;
   padding: 20px;
   background-color: #f9f9f9;
 }
 
-.contenu-certificat h4 {
-  margin-bottom: 20px;
-  font-weight: bold; /* Titre en gras */
-  color: #DCAF26; /* Couleur bleue */
-}
-
-/* Styles pour les sous-sections dans le contenu du certificat */
-.contenu-certificat .recap-section {
+.step5-recap-section {
   margin-bottom: 25px;
 }
 
-.contenu-certificat h5 {
-  margin-bottom: 15px;
-  font-weight: bold; /* Sous-titres en gras */
-  color: #333;
-}
-
-/* Styles pour les éléments de récapitulatif */
-.recap-item {
+.step5-recap-item {
   display: flex;
-  flex-wrap: wrap; /* Permet le retour à la ligne si nécessaire */
+  flex-wrap: wrap;
   margin-bottom: 10px;
   font-size: 14px;
 }
 
-.recap-label {
+.step5-recap-label {
   width: 100%;
-  max-width: 200px; /* Largeur maximale pour les labels */
+  max-width: 200px;
   font-weight: bold;
   color: #333;
 }
 
-.recap-value {
+.step5-recap-value {
   flex: 1;
   color: #555;
 }
 
-/* Styles spécifiques pour la liste des marchandises */
-.table-responsive {
-  width: 100%;
-  overflow-x: auto; /* Permet le défilement horizontal si nécessaire */
+/* Liste déroulante pour le destinataire */
+.step5-form-group {
+  margin-bottom: 15px;
 }
 
-.merchandise-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.merchandise-table th,
-.merchandise-table td {
-  padding: 12px;
-  border: 1px solid #ddd;
-  text-align: left;
-  font-size: 14px;
-  word-wrap: break-word; /* Permet le retour à la ligne dans les cellules */
-  word-break: break-word;
-}
-
-.merchandise-table th {
-  background-color: #f9f9f9;
-  font-weight: bold; /* En-têtes du tableau en gras */
-}
-
-.merchandise-table tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-
-.merchandise-table tr:hover {
-  background-color: #f1f1f1;
-}
-
-/* Styles pour l'encadré "Pièces justificatives" */
-.pieces-justificatives {
-  border: 1px solid #ddd;
-  padding: 20px;
-  margin-top: 30px;
-  background-color: #f9f9f9;
-}
-
-.pieces-justificatives h4 {
-  margin-bottom: 20px;
+.step5-dropdown-label {
+  display: block;
+  margin-bottom: 5px;
   font-weight: bold;
-  color: #DCAF26;
+  color: #333;
 }
 
-/* Styles pour le tableau des pièces justificatives */
-.document-table {
+.step5-recipient-select {
   width: 100%;
-  border-collapse: collapse;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+/* Rectangle gris pour afficher l'adresse du destinataire */
+.step5-destinaire-box {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* Tableaux (marchandises, documents) */
+.step5-table-responsive {
+  width: 100%;
+  overflow-x: auto;
   margin-top: 20px;
 }
 
-.document-table th,
-.document-table td {
+.step5-merchandise-table,
+.step5-document-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.step5-merchandise-table th,
+.step5-merchandise-table td,
+.step5-document-table th,
+.step5-document-table td {
   padding: 12px;
-  text-align: left;
   border: 1px solid #ddd;
-  word-wrap: break-word; /* Permet le retour à la ligne dans les cellules */
+  text-align: left;
+  font-size: 14px;
+  word-wrap: break-word;
   word-break: break-word;
 }
 
-.document-table th {
+.step5-merchandise-table th,
+.step5-document-table th {
   background-color: #f9f9f9;
   font-weight: bold;
 }
 
-.document-table tr:nth-child(even) {
+.step5-merchandise-table tr:nth-child(even),
+.step5-document-table tr:nth-child(even) {
   background-color: #f9f9f9;
 }
 
-.document-table tr:hover {
+.step5-merchandise-table tr:hover,
+.step5-document-table tr:hover {
   background-color: #f1f1f1;
 }
 
-.document-table td {
-  font-size: 14px;
-  color: #333;
-}
-
-/* Styles pour les actions */
-.step-actions {
-  display: flex;
-  flex-wrap: wrap; /* Permet le retour à la ligne si nécessaire */
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 40px;
-}
-
-/* Bouton "Retour" */
-.previous-button {
-  padding: 12px 25px;
-  font-size: 16px;
-  cursor: pointer;
-  background-color: #f1f1f1;
-  color: #333;
+/* Pièces justificatives */
+.step5-pieces-justificatives {
   border: none;
-  border-radius: 5px;
+  padding: 20px 0;
+  background-color: transparent;
 }
 
-.previous-button:hover {
-  background-color: #ddd;
-}
-
-/* Section pour les boutons à droite */
-.action-buttons {
+/* Boutons d'action */
+.step5-action-buttons {
   display: flex;
-  flex-wrap: wrap; /* Permet le retour à la ligne si nécessaire */
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   margin-top: 10px;
 }
 
-/* Question */
-.action-buttons span {
+.step5-action-buttons span {
   font-size: 16px;
   color: #333;
 }
 
-/* Bouton "Légalisation des documents" */
-.legislation-button {
+.step5-legislation-button {
   background-color: #DCAF26;
   color: white;
   padding: 12px 20px;
@@ -259,33 +276,18 @@
   border-radius: 5px;
 }
 
-.legislation-button:hover {
+.step5-legislation-button:hover {
   background-color: #0056b3;
 }
 
-/* Bouton "Soumettre" */
-.next-button {
-  background-color: #4CAF50;
-  color: white;
-  padding: 12px 25px;
-  font-size: 16px;
-  cursor: pointer;
-  border: none;
-  border-radius: 5px;
-}
-
-.next-button:hover {
-  background-color: #45a049;
-}
-
-/* Section pour le bouton "Soumettre" centré en bas */
-.submit-section {
+/* Bouton Soumettre */
+.step5-submit-section {
   display: flex;
   justify-content: center;
   margin-top: 40px;
 }
 
-.next-button-step5 {
+.step5-next-button {
   background-color: #4CAF50;
   color: white;
   padding: 12px 25px;
@@ -296,108 +298,114 @@
   transition: background-color 0.3s ease;
 }
 
-.next-button-step5:hover {
+.step5-next-button:hover {
   background-color: #45a049;
 }
 
-/* Responsivité */
+/* Éléments cliquables (ex. Société) */
+.step5-clickable {
+  cursor: pointer;
+  color: #DCAF26;
+  text-decoration: underline;
+}
+
+/* Responsive */
 @media screen and (max-width: 768px) {
-  .designation-header {
+  .step5-title {
+    font-size: 20px;
+  }
+
+  .step5-main-title {
+    font-size: 18px;
+  }
+
+  .step5-designation-header {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .modifier-button {
+  .step5-modifier-button {
     margin-top: 10px;
     align-self: flex-end;
   }
 
-  .recap-item {
+  .step5-recap-item {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .recap-label,
-  .recap-value {
+  .step5-recap-label,
+  .step5-recap-value {
     width: 100%;
   }
 
-  .recap-label {
+  .step5-field-label {
+    width: 100%;
     margin-bottom: 5px;
   }
 
-  .step-actions {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-
-  .step-actions button,
-  .action-buttons {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .action-buttons {
+  .step5-action-buttons {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .action-buttons span {
+  .step5-action-buttons span {
     text-align: center;
     margin-bottom: 10px;
-  }
-
-  .document-list li {
-    font-size: 14px;
   }
 }
 
 @media screen and (max-width: 480px) {
-  .step-form h3 {
-    font-size: 20px;
-  }
-
-  .step-form h5 {
-    font-size: 14px;
-  }
-
-  .designation-header h4 {
+  .step5-title {
     font-size: 18px;
   }
 
-  .modifier-button {
+  .step5-main-title {
+    font-size: 16px;
+  }
+
+  .step5-modifier-button {
     font-size: 12px;
     padding: 6px 10px;
   }
 
-  .recap-item {
+  .step5-recap-item {
     font-size: 13px;
   }
 
-  .recap-label {
+  .step5-recap-label {
     font-size: 13px;
   }
 
-  .recap-value {
+  .step5-recap-value {
     font-size: 13px;
   }
 
-  .previous-button,
-  .legislation-button,
-  .next-button-step5 {
+  .step5-legislation-button,
+  .step5-next-button {
     font-size: 14px;
     padding: 10px 20px;
   }
 
-  .submit-section {
+  .step5-submit-section {
     margin-top: 20px;
   }
 }
-
-.clickable {
-  cursor: pointer;
-  color: #DCAF26; /* Couleur bleue pour indiquer un lien */
-  text-decoration: underline; /* Souligner le texte */
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.4);
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+  z-index: 9999;
 }
 
+.modal-content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  width: 400px;
+  max-width: 90%;
+}

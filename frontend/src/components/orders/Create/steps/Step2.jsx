@@ -74,6 +74,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
             idListCA: customerAccountId, // Fetch recipients by customer account ID
           });
           setRecipients(recipientFetched.data);
+          handleChange('recipients', recipientFetched.data);
           console.log(recipientFetched);
         }
 
@@ -129,7 +130,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
     // 3) If user wants to create a new recipient (destinataire)
     if (isNewDestinataire) {
       try {
-        // Build data object for the new recipient
+        // 1) Construire l'objet pour le nouveau destinataire
         const newRecipientData = {
           idRecipientAccount: null,
           idCustAccount: customerAccountId,
@@ -140,16 +141,33 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
           idCity: 1, // Or the correct city ID
           statutFlag: 1,
           activationDate: new Date().toISOString(),
-          deactivationDate: new Date('9999-12-31').toISOString(), // Default future date
+          deactivationDate: new Date('9999-12-31').toISOString(), // Future date
           idLoginInsert: auth?.user?.id_login_user || 1,
           idLoginModify: null,
         };
-
+    
+        // 2) Création du nouveau destinataire
         const recipientResponse = await addRecipient(newRecipientData);
-        console.log(recipientResponse);
+        console.log('New recipient created successfully!', recipientResponse);
+    
+        // Récupérer l'ID du nouveau destinataire
         recipientId = recipientResponse?.newRecipientId;
-        console.log(recipientId);
-        console.log('New recipient created successfully!');
+        console.log('New recipient ID =', recipientId);
+    
+        // 3) Re-fetch de la liste complète des destinataires
+        const updatedRecipientsResponse = await fetchRecipients({
+          idListCA: customerAccountId, // Paramètre pour récupérer la liste
+        });
+        console.log('Liste mise à jour des destinataires:', updatedRecipientsResponse.data);
+    
+        // 4) Mise à jour du state local et de values
+        setRecipients(updatedRecipientsResponse.data);
+        handleChange('recipients', updatedRecipientsResponse.data);
+    
+        // 5) (Optionnel) Pré-sélection de ce nouveau destinataire si tu le souhaites
+        setSelectedRecipient(recipientId);
+        handleChange('selectedRecipientId', recipientId);
+    
       } catch (error) {
         console.error('Error creating new recipient:', error);
         setErrorMessage(
@@ -158,6 +176,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         return;
       }
     }
+    
 
     // Convert country names to country IDs using fetched countries
     const getCountryId = (countryName) => {
@@ -293,6 +312,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
             onChange={(e) => {
               const selectedId = e.target.value;
               setSelectedRecipient(selectedId);
+              handleChange('selectedRecipientId', selectedId);
 
               // Find the selected recipient and update form data accordingly
               const recipient = recipients.find(
