@@ -2950,6 +2950,49 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+DROP PROCEDURE IF EXISTS set_ordcertif_goods;
+CREATE OR REPLACE PROCEDURE set_ordcertif_goods(
+        p_id_ord_certif_goods INT,
+        p_id_ord_certif_ori INT,
+	p_good_description VARCHAR(256),
+	p_good_references VARCHAR(160),
+        p_doc_references VARCHAR(256),
+	p_weight_qty FLOAT,
+	p_id_unit_weight INT
+)
+AS
+$$
+BEGIN
+    IF p_id_ord_certif_goods IS NULL OR p_id_ord_certif_goods = 0 THEN
+        INSERT INTO ord_certif_goods (
+		    "id_ord_certif_ori",
+                    "good_description",
+		    "good_references",
+		    "doc_references",
+		    "weight_qty",
+		    "id_unit_weight"
+        ) VALUES (
+			p_id_ord_certif_ori,
+                        p_good_description,
+			p_good_references,
+                        p_doc_references,
+			p_weight_qty,
+			p_id_unit_weight
+        );
+    ELSE
+        UPDATE ord_certif_goods
+        SET
+			"id_ord_certif_ori" = p_id_ord_certif_ori,
+                        "good_description" = p_good_description,
+			"good_references" = p_good_references,
+                        "doc_references" = p_doc_references,
+			"weight_qty" = p_weight_qty,
+			"id_unit_weight" = p_id_unit_weight
+        WHERE "id_ord_certif_goods" = p_id_ord_certif_goods;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 
 DROP FUNCTION IF EXISTS get_certiftransp_mode;
 CREATE OR REPLACE FUNCTION get_certiftransp_mode(
