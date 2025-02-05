@@ -428,8 +428,6 @@ const setOrdCertifGoods = async (req, res) => {
         id_unit_weight,
       } = req.body;
   
-console.log("WEIGHT QUANTITY => ", weight_qty);
-
       // Validate required fields
       if (!id_ord_certif_ori || !good_description || !good_references || !weight_qty || !id_unit_weight) {
         return res.status(400).json({ message: 'Missing required fields.' });
@@ -664,6 +662,45 @@ const getCertifTranspMode = async (req, res) => {
       });
     }
   };
+
+  const renameOrder = async (req, res) => {
+    try {
+      const { p_id_order, p_order_title, p_idlogin_modify } = req.body;
+      
+      // Validate input parameters
+      if (!p_id_order || !p_order_title || !p_idlogin_modify) {
+        return res.status(400).json({
+          message: 'Les champs p_id_order, p_order_title et p_idlogin_modify sont requis.',
+        });
+      }
+  
+      // Log the input values
+      console.log("Renaming order with:", { p_id_order, p_order_title, p_idlogin_modify });
+  
+      // Execute the stored procedure
+      const result = await sequelize.query(
+        `CALL rename_order(:p_id_order, :p_order_title, :p_idlogin_modify)`,
+        {
+          replacements: { p_id_order, p_order_title, p_idlogin_modify },
+          type: QueryTypes.RAW,
+        }
+      );
+  
+      // Log the procedure result (Sequelize may return an empty array for CALL statements)
+      console.log("Procedure rename_order result:", result);
+  
+      res.status(200).json({
+        message: 'Commande renommée avec succès.',
+      });
+    } catch (error) {
+      console.error('Erreur lors du renommage de la commande:', error);
+      res.status(500).json({
+        message: 'Erreur lors du renommage de la commande.',
+        error: error.message || 'Erreur inconnue.',
+        details: error.original || error,
+      });
+    }
+  };
   
 module.exports = {
   executeAddOrder,
@@ -678,5 +715,6 @@ module.exports = {
   getOrdersForCustomer,
   getCertifTranspMode,
   setOrdCertifTranspMode,
-  cancelOrder
+  cancelOrder,
+  renameOrder
 };

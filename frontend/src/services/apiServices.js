@@ -612,6 +612,27 @@ export const addOrUpdateGoods = async (goodsData) => {
   }
 };
 
+export const renameOrder = async (payload) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/rename`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to rename order');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (renameOrder):', error);
+    throw error;
+  }
+};
+
 export const getOrdersForCustomer = async ({ idOrderList = null, idCustAccountList = null, idOrderStatusList = null, idLogin }) => {
   try {
     if (!idLogin) {

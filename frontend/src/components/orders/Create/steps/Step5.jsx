@@ -1,24 +1,61 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import './Step5.css';
 
 // On suppose que Step5 peut importer addRecipient, fetchRecipients
-import { addRecipient, fetchRecipients } from '../../../../services/apiServices';
+import { addRecipient, fetchRecipients, renameOrder } from '../../../../services/apiServices';
+import { useSelector } from 'react-redux';
 
 const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handleChange }) => {
   console.log('Step5 => recipients:', values.recipients);
 
   // Valeur fixe pour le Demandeur (Société)
-  const fixedExporterName = 'INDIGO TRADING FZCO';
+
+  const user = useSelector((state) => state.auth.user);
+  const idLogin = user?.id_login_user;
+  const idCustAccount = user?.id_cust_account;
+  const companyName = user?.companyname;
+
 
   // État local pour gérer l'édition du libellé de commande
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const [orderLabel, setOrderLabel] = useState(values.orderLabel || '');
 
-  const saveOrderLabel = () => {
-    setIsEditingLabel(false);
+  console.log("Label", values.orderLabel)
+
+  useEffect(() => {
+    setOrderLabel(values.orderLabel || '');
+  }, [values.orderLabel]);
+
+
+  console.log(values)
+  const saveOrderLabel = async () => {
+    // We assume values.orderId is present and values.id_login_user holds the current user ID
+    if (!values.orderId || !idLogin) {
+      console.error('Missing orderId or id_login_user in values.');
+      return;
+    }
+
+    try {
+      const payload = {
+        p_id_order: values.orderId,
+        p_order_title: orderLabel,
+        p_idlogin_modify: idLogin, // or pass the current user ID
+      };
+      const response = await renameOrder(payload);
+      console.log('Rename order API response:', response);
+      setIsEditingLabel(false);
+      // Update parent's state with the new order label
+      if (handleChange) {
+        handleChange('orderLabel', orderLabel);
+      }
+    } catch (error) {
+      console.error('Error renaming order:', error);
+      // Optionally, you can show an error message here
+    }
   };
+
 
   // -------------------- SECTION 2/7 : DESTINATAIRE --------------------
   const recipients = values.recipients || [];
@@ -179,7 +216,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
                 className="step5-clickable"
                 onClick={() =>
                   openSecondModal({
-                    name: fixedExporterName,
+                    name: companyName,
                     address: '123 Rue Principale, Ville, Pays',
                     address2: 'Suite 456',
                     contact: 'M. Vladimir Outof\nManager',
@@ -188,10 +225,10 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
                   })
                 }
               >
-                {fixedExporterName}
+                {companyName}
               </span>
             ) : (
-              fixedExporterName
+              companyName
             )}
           </span>
         </div>

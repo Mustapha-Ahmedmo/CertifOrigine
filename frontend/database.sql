@@ -3254,6 +3254,34 @@ END;
 $$;
 
 
+DROP PROCEDURE IF EXISTS rename_order;
+CREATE OR REPLACE PROCEDURE rename_order(
+    p_id_order INT,
+    p_order_title VARCHAR,
+    p_idlogin_modify INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    
+    UPDATE "ORDER"
+    SET
+        ORDER_TITLE = p_order_title,
+        LASTMODIFIED = NOW(),
+        IDLOGIN_MODIFY = p_idlogin_modify
+    WHERE
+        ID_ORDER = p_id_order;
+
+    
+    CALL set_histo_order(
+        p_id_order,
+        p_idlogin_modify,
+        2
+    );
+END;
+$$;
+
+
 
 DROP PROCEDURE IF EXISTS submit_order;
 
