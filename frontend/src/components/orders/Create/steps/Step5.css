@@ -335,6 +335,37 @@
   text-decoration: underline;
 }
 
+.step5-country-selection {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px; /* Espacement entre les deux */
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.step5-form-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 250px; /* Pour éviter que ça devienne trop petit */
+}
+
+.step5-form-group label {
+  white-space: nowrap; /* Empêche le label de se casser en plusieurs lignes */
+}
+
+.step5-form-group select {
+  flex: 1;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  width: 100%;
+  max-width: 300px;
+}
+
+
 /* Responsive */
 @media screen and (max-width: 768px) {
   .step5-title {
@@ -380,6 +411,62 @@
     margin-bottom: 10px;
   }
 }
+
+.step5-country-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px; /* Espacement entre les deux champs */
+}
+
+.step5-form-group {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.step5-form-group label {
+  width: 180px; /* Largeur fixe pour que les labels soient alignés */
+  font-weight: bold;
+}
+
+.step5-form-group select {
+  flex: 1;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.step5-form-group.transport-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px; /* Réduit l'espace entre les checkboxes */
+}
+
+.step5-form-group.transport-modes label {
+  display: flex;
+  align-items: center;
+  gap: 5px; /* Réduit l'espace entre la case à cocher et le texte */
+  font-size: 14px;
+}
+
+.step5-form-group.transport-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px; /* Réduit encore plus l'espace entre les checkboxes */
+}
+
+.step5-form-group.transport-modes label {
+  display: flex;
+  align-items: center;
+  gap: 3px; /* Réduit l'espace entre la case à cocher et le texte */
+  font-size: 14px;
+}
+
+
 
 @media screen and (max-width: 480px) {
   .step5-title {

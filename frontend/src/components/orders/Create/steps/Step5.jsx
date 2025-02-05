@@ -268,12 +268,6 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
             )}
           </span>
         </div>
-        {/* Bouton "Enregistrer" en bas à droite */}
-        <div className="step5-save-button-container">
-          <button type="button" className="step5-save-exporter-button" onClick={handleSaveExporter}>
-            Enregistrer
-          </button>
-        </div>
       </div>
 
       {/* Titre et bouton "Modifier" pour Certificat d'origine */}
@@ -303,13 +297,6 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
                 </option>
               ))}
             </select>
-            <button
-              type="button"
-              style={{ marginTop: '10px' }}
-              onClick={() => setShowNewRecipientModal(true)}
-            >
-              + Ajouter un destinataire
-            </button>
           </div>
           {selectedRecipient && (
             <div className="step5-field-value step5-destinaire-box">
@@ -322,6 +309,13 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
                 .join(', ')}
             </div>
           )}
+            <button
+              type="button"
+              style={{ marginTop: '10px' }}
+              onClick={() => setShowNewRecipientModal(true)}
+            >
+              + Ajouter un destinataire
+            </button>
         </div>
 
         {/* 3/7 Description de la marchandise */}
@@ -366,34 +360,39 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
         {/* 4/7 Origine et Destination des Marchandises */}
         <div className="step5-recap-section">
           <h5>4/7 Origine et Destination des Marchandises</h5>
-          <div className="step5-form-group" style={{ marginBottom: '10px' }}>
-            <label style={{ marginRight: '10px' }}>Pays d'origine :</label>
-            <select value={values.goodsOrigin || ''} onChange={handleChangeCountryOrigin}>
-              <option value="">-- Sélectionnez un pays --</option>
-              {countries.map((country) => (
-                <option key={country.id_country} value={country.symbol_fr}>
-                  {country.symbol_fr}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="step5-form-group">
-            <label style={{ marginRight: '10px' }}>Pays de destination :</label>
-            <select value={values.goodsDestination || ''} onChange={handleChangeCountryDestination}>
-              <option value="">-- Sélectionnez un pays --</option>
-              {countries.map((country) => (
-                <option key={country.id_country} value={country.symbol_fr}>
-                  {country.symbol_fr}
-                </option>
-              ))}
-            </select>
+          <div className="step5-country-selection">
+            <div className="step5-form-group">
+              <label>Pays d'origine :</label>
+              <select value={values.goodsOrigin || ''} onChange={handleChangeCountryOrigin}>
+                <option value="">-- Sélectionnez un pays --</option>
+                {countries.map((country) => (
+                  <option key={country.id_country} value={country.symbol_fr}>
+                    {country.symbol_fr}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="step5-form-group">
+              <label>Pays de destination :</label>
+              <select value={values.goodsDestination || ''} onChange={handleChangeCountryDestination}>
+                <option value="">-- Sélectionnez un pays --</option>
+                {countries.map((country) => (
+                  <option key={country.id_country} value={country.symbol_fr}>
+                    {country.symbol_fr}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
+
+
 
         {/* 5/7 Transport */}
         <div className="step5-recap-section">
           <h5>5/7 Transport</h5>
-          <div className="step5-form-group">
+          <div className="step5-form-group transport-modes">
             {values.transportModes ? (
               Object.keys(values.transportModes).map((modeKey) => (
                 <label key={modeKey} style={{ marginRight: '10px' }}>
