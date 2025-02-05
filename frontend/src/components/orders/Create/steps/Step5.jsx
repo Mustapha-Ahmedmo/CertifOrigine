@@ -28,6 +28,34 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
   const [selectedRecipientId, setSelectedRecipientId] = useState(safeValues.selectedRecipientId || '');
   // État local pour gérer temporairement les modes de transport
 const [tempTransportModes, setTempTransportModes] = useState(values.transportModes || {});
+// Pour "Copies certifiées"
+const [isEditingCopies, setIsEditingCopies] = useState(false);
+const [copies, setCopies] = useState(values.copies || '');
+useEffect(() => {
+  setCopies(values.copies || '');
+}, [values.copies]);
+
+const saveCopies = () => {
+  if (handleChange) {
+    handleChange('copies', copies);
+  }
+  setIsEditingCopies(false);
+};
+
+// Pour "Remarques"
+const [isEditingRemarks, setIsEditingRemarks] = useState(false);
+const [remarks, setRemarks] = useState(values.remarks || '');
+useEffect(() => {
+  setRemarks(values.remarks || '');
+}, [values.remarks]);
+
+const saveRemarks = () => {
+  if (handleChange) {
+    handleChange('remarks', remarks);
+  }
+  setIsEditingRemarks(false);
+};
+
 
 // Synchroniser cet état local si values.transportModes change
 useEffect(() => {
@@ -438,7 +466,7 @@ useEffect(() => {
           <h5>4/7 Origine et Destination des Marchandises</h5>
           <div className="step5-country-selection">
             <div className="step5-form-group">
-              <label>Pays d'origine :</label>
+              <label style={{ fontSize: '13px' }}>Pays d'origine :</label>
               <select value={values.goodsOrigin || ''} onChange={handleChangeCountryOrigin}>
                 <option value="">-- Sélectionnez un pays --</option>
                 {countries.map((country) => (
@@ -450,7 +478,7 @@ useEffect(() => {
             </div>
             
             <div className="step5-form-group">
-              <label>Pays de destination :</label>
+              <label style={{ fontSize: '13px' }}>Pays de destination :</label>
               <select value={values.goodsDestination || ''} onChange={handleChangeCountryDestination}>
                 <option value="">-- Sélectionnez un pays --</option>
                 {countries.map((country) => (
@@ -503,18 +531,72 @@ useEffect(() => {
         </div>
 
 
+       
         {/* 6/7 Autres */}
-        <div className="step5-recap-section">
-          <h5>6/7 Autres</h5>
-          <div className="step5-recap-item">
-            <span className="step5-recap-label">Copies certifiées :</span>
-            <span className="step5-recap-value">{values.copies || 'Non spécifié'}</span>
-          </div>
-          <div className="step5-recap-item">
-            <span className="step5-recap-label">Remarques :</span>
-            <span className="step5-recap-value">{values.remarks || 'Aucune remarque'}</span>
-          </div>
+
+      <div className="step5-recap-section">
+        <h5>6/7 Autres</h5>
+        <div className="step5-recap-item">
+          <span className="step5-recap-label">Copies certifiées :</span>
+          {/* On ajoute ici la classe step5-fixed-field pour avoir l'encadré gris */}
+          <span className="step5-recap-value step5-fixed-field">
+            {isEditingCopies ? (
+              <div className="step5-editable-field">
+                <input
+                  type="number"
+                  value={copies}
+                  onChange={(e) => setCopies(e.target.value)}
+                  className="step5-editable-input step5-white-input"
+                />
+                <div className="step5-save-container">
+                  <button type="button" className="step5-save-button" onClick={saveCopies}>
+                    Enregistrer
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="step5-editable-display">
+                <span>{copies || 'Non spécifié'}</span>
+                <FontAwesomeIcon
+                  icon={faPencilAlt}
+                  className="step5-pencil-icon"
+                  onClick={() => setIsEditingCopies(true)}
+                />
+              </div>
+            )}
+          </span>
         </div>
+        <div className="step5-recap-item">
+          <span className="step5-recap-label">Remarques :</span>
+          <span className="step5-recap-value step5-fixed-field">
+            {isEditingRemarks ? (
+              <div className="step5-editable-field">
+                <textarea
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  className="step5-editable-input step5-white-input"
+                />
+                <div className="step5-save-container">
+                  <button type="button" className="step5-save-button" onClick={saveRemarks}>
+                    Enregistrer
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="step5-editable-display">
+                <span>{remarks || 'Aucune remarque'}</span>
+                <FontAwesomeIcon
+                  icon={faPencilAlt}
+                  className="step5-pencil-icon"
+                  onClick={() => setIsEditingRemarks(true)}
+                />
+              </div>
+            )}
+          </span>
+        </div>
+      </div>
+
+
       </div>
 
       <h4 className="step5-main-title">Pièce justificatives & annexes</h4>

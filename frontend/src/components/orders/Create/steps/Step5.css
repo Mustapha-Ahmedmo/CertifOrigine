@@ -81,6 +81,7 @@
   width: 180px;
   font-weight: bold;
   color: #333;
+  font-size: 13px;
 }
 
 .step5-field-value {
@@ -396,10 +397,6 @@
     width: 100%;
   }
 
-  .step5-field-label {
-    width: 100%;
-    margin-bottom: 5px;
-  }
 
   .step5-action-buttons {
     flex-direction: column;
@@ -464,6 +461,12 @@
   align-items: center;
   gap: 3px; /* Réduit l'espace entre la case à cocher et le texte */
   font-size: 14px;
+}
+.step5-fixed-field {
+  background-color: #e0e0e0; /* Un gris clair */
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
 
