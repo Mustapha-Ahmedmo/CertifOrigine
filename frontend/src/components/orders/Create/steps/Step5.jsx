@@ -63,13 +63,6 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
     }
     alert('Les informations du demandeur/expéditeur ont été enregistrées.');
   };
-
-  const handleSaveExporter = () => {
-    if (handleChange) {
-      handleChange('orderLabel', orderLabel);
-    }
-    alert('Les informations du demandeur/expéditeur ont été enregistrées.');
-  };
   
   // -------------------- SECTION 2/7 : DESTINATAIRE --------------------
   const recipients = values.recipients || [];
