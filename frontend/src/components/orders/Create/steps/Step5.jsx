@@ -22,6 +22,31 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const [orderLabel, setOrderLabel] = useState(values.orderLabel || '');
 
+  // État local pour gérer temporairement les modes de transport
+const [tempTransportModes, setTempTransportModes] = useState(values.transportModes || {});
+
+// Synchroniser cet état local si values.transportModes change
+useEffect(() => {
+  setTempTransportModes(values.transportModes || {});
+}, [values.transportModes]);
+
+// Fonction pour mettre à jour l'état local lors du clic sur une case
+const handleCheckboxChange = (modeKey, checked) => {
+  setTempTransportModes((prev) => ({
+    ...prev,
+    [modeKey]: checked,
+  }));
+};
+
+// Fonction pour enregistrer les modifications dans le state global (via handleChange)
+const handleTransportModesSave = () => {
+  if (handleChange) {
+    handleChange('transportModes', tempTransportModes);
+  }
+  alert('Modes de transport enregistrés');
+};
+
+
   console.log("Label", values.orderLabel)
 
   useEffect(() => {
@@ -393,13 +418,13 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
         <div className="step5-recap-section">
           <h5>5/7 Transport</h5>
           <div className="step5-form-group transport-modes">
-            {values.transportModes ? (
-              Object.keys(values.transportModes).map((modeKey) => (
+            {tempTransportModes && Object.keys(tempTransportModes).length > 0 ? (
+              Object.keys(tempTransportModes).map((modeKey) => (
                 <label key={modeKey} style={{ marginRight: '10px' }}>
                   <input
                     type="checkbox"
-                    checked={values.transportModes[modeKey]}
-                    onChange={(e) => handleTransportModeChange(modeKey, e.target.checked)}
+                    checked={tempTransportModes[modeKey]}
+                    onChange={(e) => handleCheckboxChange(modeKey, e.target.checked)}
                   />
                   {modeKey.charAt(0).toUpperCase() + modeKey.slice(1)}
                 </label>
@@ -408,7 +433,24 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
               <p>Aucun mode de transport disponible.</p>
             )}
           </div>
+          {/* Bouton pour enregistrer les modifications */}
+          <button
+          type="button"
+          onClick={handleTransportModesSave}
+          style={{
+            backgroundColor: '#28a745', // vert bootstrap par exemple
+            color: '#fff',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          Enregistrer
+        </button>
+
         </div>
+
 
         {/* 6/7 Autres */}
         <div className="step5-recap-section">
