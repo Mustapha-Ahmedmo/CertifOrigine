@@ -314,7 +314,7 @@ useEffect(() => {
       <h3 className="step5-title">Récapitulatif</h3>
 
       {/* Titre "Désignation de la commande" */}
-      <h4 className="step5-main-title">Désignation de la commande</h4>
+      <h4 className="step5-main-title">Désignation commande</h4>
 
       {/* 1/7 Demandeur / Expediteur */}
       <div className="step5-designation-commande">

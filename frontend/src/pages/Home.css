@@ -175,6 +175,21 @@
   white-space: normal; /* Permet au texte de s'étendre sur plusieurs lignes si nécessaire */
 }
 
+.submit-green {
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submit-green:hover {
+  background-color: #218838;
+}
+
+
 /* Media Queries pour la Responsivité */
 @media (min-width: 769px) {
   /* Sur desktop, afficher les onglets et masquer la dropdown */

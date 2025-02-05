@@ -252,10 +252,19 @@ const OrderTable = ({ title, orders, refreshOrders }) => {
                         className="home-icon-button home-minimal-button"
                         title="Annuler"
                         onClick={() => handleCancelClick(order.id_order)}
+                        style={{
+                          backgroundColor: '#f44336', // Couleur de fond rouge
+                          color: '#fff',             // Texte en blanc
+                          border: 'none',
+                          padding: '8px 16px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.3s ease'
+                        }}
                       >
                         <FontAwesomeIcon /> Cancel
                       </button>
-                                            <button className="home-submit-button home-minimal-button">
+                                            <button className="home-submit-button home-minimal-button submit-green">
                                             {title.includes('paiement') ? 'Payer' : 'Soumettre'}
                                           </button>
                     </>) : (
