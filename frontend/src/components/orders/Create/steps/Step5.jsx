@@ -8,7 +8,8 @@ import { addRecipient, fetchRecipients, renameOrder } from '../../../../services
 import { useSelector } from 'react-redux';
 
 const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handleChange }) => {
-  console.log('Step5 => recipients:', values.recipients);
+  const safeValues = { ...values, recipients: values.recipients || [] };
+
 
   // Valeur fixe pour le Demandeur (Société)
 
@@ -16,12 +17,15 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
   const idLogin = user?.id_login_user;
   const idCustAccount = user?.id_cust_account;
   const companyName = user?.companyname;
+  const customerAccountId = user?.id_cust_account; // Customer Account ID
 
 
   // État local pour gérer l'édition du libellé de commande
   const [isEditingLabel, setIsEditingLabel] = useState(false);
-  const [orderLabel, setOrderLabel] = useState(values.orderLabel || '');
 
+  const [orderLabel, setOrderLabel] = useState(safeValues.orderLabel || '');
+  const [localRecipients, setLocalRecipients] = useState(safeValues.recipients);
+  const [selectedRecipientId, setSelectedRecipientId] = useState(safeValues.selectedRecipientId || '');
   // État local pour gérer temporairement les modes de transport
 const [tempTransportModes, setTempTransportModes] = useState(values.transportModes || {});
 
@@ -49,9 +53,56 @@ const handleTransportModesSave = () => {
 
   console.log("Label", values.orderLabel)
 
+
+    // Other local state for modals and form fields (new recipient, new merchandise, etc.)
+    const [showNewRecipientModal, setShowNewRecipientModal] = useState(false);
+    const [newRecipientLocal, setNewRecipientLocal] = useState({
+      receiverName: '',
+      receiverAddress: '',
+      receiverAddress2: '',
+      receiverPostalCode: '',
+      receiverCity: '',
+      receiverCountry: '',
+      receiverPhone: '',
+    });
+
+    
+
   useEffect(() => {
     setOrderLabel(values.orderLabel || '');
   }, [values.orderLabel]);
+
+
+// Fetch recipients if not present locally and if we have a customerAccountId
+useEffect(() => {
+  const loadRecipients = async () => {
+    if ((!localRecipients || localRecipients.length === 0) && customerAccountId) {
+      try {
+        const response = await fetchRecipients({ idListCA: customerAccountId });
+        console.log("Fetched recipients in Step5:", response.data);
+        setLocalRecipients(response.data);
+        // Also update the parent's state if needed:
+        if (handleChange) {
+          handleChange('recipients', response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching recipients in Step5:", error);
+      }
+    }
+  };
+  loadRecipients();
+}, [customerAccountId, localRecipients, handleChange]);
+
+  // If no recipient is selected yet, choose the first one from localRecipients
+  useEffect(() => {
+    if ((!selectedRecipientId || selectedRecipientId === "") && localRecipients.length > 0) {
+      const defaultId = localRecipients[0].id_recipient_account;
+      setSelectedRecipientId(String(defaultId));
+      if (handleChange) {
+        handleChange('selectedRecipientId', defaultId);
+      }
+    }
+  }, [selectedRecipientId, localRecipients, handleChange]);
 
 
   console.log(values)
@@ -88,30 +139,26 @@ const handleTransportModesSave = () => {
     }
     alert('Les informations du demandeur/expéditeur ont été enregistrées.');
   };
-  
-  // -------------------- SECTION 2/7 : DESTINATAIRE --------------------
-  const recipients = values.recipients || [];
-  const [selectedRecipientId, setSelectedRecipientId] = useState(values.selectedRecipientId || '');
-  const [showNewRecipientModal, setShowNewRecipientModal] = useState(false);
 
-  // Champs pour le nouveau destinataire (identiques à Step2)
-  const [newRecipientLocal, setNewRecipientLocal] = useState({
-    receiverName: '',
-    receiverAddress: '',
-    receiverAddress2: '',
-    receiverPostalCode: '',
-    receiverCity: '',
-    receiverCountry: '',
-    receiverPhone: '',
-  });
+  
+
+
+
+  // Compute the currently selected recipient
+  const selectedRecipient = values.recipients
+    ? values.recipients.find(
+      (r) => String(r.id_recipient_account) === String(selectedRecipientId)
+    )
+    : null;
 
   const handleRecipientChange = (e) => {
-    setSelectedRecipientId(e.target.value);
+    const newSelected = e.target.value;
+    setSelectedRecipientId(newSelected);
+    // Optionally, update parent's state so that the selected recipient can be used elsewhere
+    if (handleChange) {
+      handleChange('selectedRecipientId', newSelected);
+    }
   };
-
-  const selectedRecipient = recipients.find(
-    (r) => String(r.id_recipient_account) === String(selectedRecipientId)
-  );
 
   const handleNewRecipientChange = (field, value) => {
     setNewRecipientLocal((prev) => ({ ...prev, [field]: value }));
@@ -121,7 +168,7 @@ const handleTransportModesSave = () => {
     try {
       const newRecipientData = {
         idRecipientAccount: null,
-        idCustAccount: values.customerAccountId, // Même clé que Step2
+        idCustAccount: customerAccountId,
         recipientName: newRecipientLocal.receiverName,
         address1: newRecipientLocal.receiverAddress,
         address2: newRecipientLocal.receiverAddress2,
@@ -130,7 +177,7 @@ const handleTransportModesSave = () => {
         statutFlag: 1,
         activationDate: new Date().toISOString(),
         deactivationDate: new Date('9999-12-31').toISOString(),
-        idLoginInsert: values?.id_login_user || 1,
+        idLoginInsert: idLogin || 1,
         idLoginModify: null,
         trade_registration_num: newRecipientLocal.receiverPhone,
         city_symbol_fr_recipient: newRecipientLocal.receiverCity,
@@ -138,20 +185,20 @@ const handleTransportModesSave = () => {
       };
 
       const recipientResponse = await addRecipient(newRecipientData);
-      console.log(recipientResponse);
+      console.log('New recipient creation response:', recipientResponse);
       const newRecipientId = recipientResponse?.newRecipientId;
       console.log('New recipient ID =', newRecipientId);
-      console.log('New recipient created successfully!');
 
-      const updatedRecipientsResponse = await fetchRecipients({
-        idListCA: values.customerAccountId,
-      });
-      console.log('Liste mise à jour des destinataires:', updatedRecipientsResponse.data);
-      values.recipients = updatedRecipientsResponse.data;
-
+      // Fetch updated recipients and update parent state
+      const updatedRecipientsResponse = await fetchRecipients({ idListCA: customerAccountId });
+      console.log('Updated recipients:', updatedRecipientsResponse.data);
+      if (handleChange) {
+        handleChange('recipients', updatedRecipientsResponse.data);
+      }
       setSelectedRecipientId(String(newRecipientId));
-      values.selectedRecipientId = newRecipientId;
-
+      if (handleChange) {
+        handleChange('selectedRecipientId', newRecipientId);
+      }
       setShowNewRecipientModal(false);
       setNewRecipientLocal({
         receiverName: '',
@@ -166,6 +213,10 @@ const handleTransportModesSave = () => {
       console.error('Error creating new recipient:', error);
     }
   };
+
+  // -------------------- SECTION 2/7 : DESTINATAIRE --------------------
+  const recipients = values.recipients || [];
+
 
   // -------------------- SECTION 3/7 : DESCRIPTION DE LA MARCHANDISE --------------------
   const [showNewMerchModal, setShowNewMerchModal] = useState(false);
@@ -313,7 +364,7 @@ const handleTransportModesSave = () => {
               onChange={handleRecipientChange}
             >
               <option value="">-- Sélectionnez un destinataire --</option>
-              {recipients.map((recipient) => (
+              {localRecipients.map((recipient) => (
                 <option
                   key={recipient.id_recipient_account}
                   value={recipient.id_recipient_account}
@@ -465,7 +516,7 @@ const handleTransportModesSave = () => {
           </div>
         </div>
       </div>
-      
+
       <h4 className="step5-main-title">Pièce justificatives & annexes</h4>
       {/* 7/7 Pièce Justificatives dans un rectangle gris avec titre en orange */}
       <div className="step5-designation-commande">
