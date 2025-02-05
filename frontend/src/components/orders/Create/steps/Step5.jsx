@@ -57,6 +57,20 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
   };
 
 
+  const handleSaveExporter = () => {
+    if (handleChange) {
+      handleChange('orderLabel', orderLabel);
+    }
+    alert('Les informations du demandeur/expéditeur ont été enregistrées.');
+  };
+
+  const handleSaveExporter = () => {
+    if (handleChange) {
+      handleChange('orderLabel', orderLabel);
+    }
+    alert('Les informations du demandeur/expéditeur ont été enregistrées.');
+  };
+  
   // -------------------- SECTION 2/7 : DESTINATAIRE --------------------
   const recipients = values.recipients || [];
   const [selectedRecipientId, setSelectedRecipientId] = useState(values.selectedRecipientId || '');
@@ -261,16 +275,17 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
             )}
           </span>
         </div>
+        {/* Bouton "Enregistrer" en bas à droite */}
+        <div className="step5-save-button-container">
+          <button type="button" className="step5-save-exporter-button" onClick={handleSaveExporter}>
+            Enregistrer
+          </button>
+        </div>
       </div>
 
       {/* Titre et bouton "Modifier" pour Certificat d'origine */}
       <div className="step5-designation-header">
         <h4>Contenu du Certificat d'origine</h4>
-        {!isModal && (
-          <button type="button" className="step5-modifier-button">
-            Modifier
-          </button>
-        )}
       </div>
 
       {/* Section Contenu du Certificat d'origine */}
@@ -297,7 +312,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
             </select>
             <button
               type="button"
-              style={{ marginLeft: '10px' }}
+              style={{ marginTop: '10px' }}
               onClick={() => setShowNewRecipientModal(true)}
             >
               + Ajouter un destinataire
@@ -416,10 +431,11 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
           </div>
         </div>
       </div>
-
+      
+      <h4 className="step5-main-title">Pièce justificatives & annexes</h4>
       {/* 7/7 Pièce Justificatives dans un rectangle gris avec titre en orange */}
       <div className="step5-designation-commande">
-        <h5 className="step5-sub-title">7/7 Pièce Justificatives</h5>
+        <h5 className="step5-sub-title">7/7 Pièce Justificatives & annexes</h5>
         <div className="step5-pieces-justificatives-rectangle">
           {values.documents && values.documents.length > 0 ? (
             <div className="step5-table-responsive">
