@@ -119,6 +119,18 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Vérification que le port de chargement est renseigné
+  if (!safeValues.loadingPort) {
+    setErrorMessage("Veuillez sélectionner un port de chargement.");
+    return;
+  }
+
+  // Vérification que le port de déchargement est renseigné
+  if (!safeValues.dischargingPort) {
+    setErrorMessage("Veuillez sélectionner un port de déchargement.");
+    return;
+  }
+
     // Validate transport modes: at least one must be selected.
     const isTransportSelected = Object.keys(safeValues.transportModes).some(
       (key) => safeValues.transportModes[key]
@@ -459,6 +471,47 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
 
       <hr />
       <div className="section-title">4/8 Modes de transport</div>
+
+      {/* --- Listes déroulantes pour Port de chargement et Port de déchargement --- */}
+      <div className="form-group-row">
+        <div className="form-group">
+          <label>
+            Port de chargement <span className="required">*</span>
+          </label>
+          <select
+            value={safeValues.loadingPort || ''}
+            onChange={(e) => handleChange('loadingPort', e.target.value)}
+            required
+          >
+            <option value="">-- Sélectionnez un pays --</option>
+            {countries.map((country) => (
+              <option key={country.id_country} value={country.symbol_fr}>
+                {country.symbol_fr}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="form-group">
+          <label>
+            Port de déchargement <span className="required">*</span>
+          </label>
+          <select
+            value={safeValues.dischargingPort || ''}
+            onChange={(e) => handleChange('dischargingPort', e.target.value)}
+            required
+          >
+            <option value="">-- Sélectionnez un pays --</option>
+            {countries.map((country) => (
+              <option key={country.id_country} value={country.symbol_fr}>
+                {country.symbol_fr}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+
+
       <div className="form-group">
         <label>Modes de transport</label>
         <div className="transport-options">
