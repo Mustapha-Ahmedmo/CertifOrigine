@@ -33,6 +33,10 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
   const [selectedRecipientId, setSelectedRecipientId] = useState(safeValues.selectedRecipientId || '');
   // État local pour gérer temporairement les modes de transport
 const [tempTransportModes, setTempTransportModes] = useState(values.transportModes || {});
+const [merchandises, setMerchandises] = useState(values.merchandises || []);
+useEffect(() => {
+  setMerchandises(values.merchandises || []);
+}, [values.merchandises]);
 // Pour "Copies certifiées"
 const [isEditingCopies, setIsEditingCopies] = useState(false);
 const [copies, setCopies] = useState(values.copies || '');
@@ -61,6 +65,18 @@ const saveRemarks = () => {
   setIsEditingRemarks(false);
 };
 
+const handleDeleteMerchandise = (indexToDelete) => {
+  console.log("Suppression de la marchandise à l'index :", indexToDelete);
+  const updatedMerchandises = merchandises.filter((_, i) => i !== indexToDelete);
+  setMerchandises(updatedMerchandises);
+  if (handleChange) {
+    handleChange('merchandises', updatedMerchandises);
+  }
+  console.log("Nouvelle liste :", updatedMerchandises);
+};
+
+
+
 
 // Synchroniser cet état local si values.transportModes change
 useEffect(() => {
@@ -80,7 +96,7 @@ useEffect(() => {
     if (handleChange) {
       handleChange('transportModes', tempTransportModes);
     }
-    alert('Modes de transport enregistrés');
+    alert('Contenu du Certificat enregistré');
   };
 
 
@@ -472,25 +488,15 @@ useEffect(() => {
                 </option>
               ))}
             </select>
-            <button type="button" style={{ marginTop: '10px' }} onClick={() => setShowNewRecipientModal(true)}>
-              + Ajouter un destinataire
-            </button>
           </div>
-          {selectedRecipient && (
-            <div className="step5-field-value step5-destinaire-box">
-              {[
-                selectedRecipient.address_1,
-                selectedRecipient.address_2,
-                selectedRecipient.address_3,
-              ]
-                .filter(Boolean)
-                .join(', ')}
-            </div>
-          )}
-          {/* New: A button to submit the selected recipient to update the order */}
-          <div className="step5-recipient-submit">
-            <button type="button" onClick={handleRecipientSubmit}>
-              Valider destinataire
+          {/* Bouton placé dans un conteneur sans label pour être aligné à gauche */}
+          <div style={{ marginTop: '10px' }}>
+            <button
+              type="button"
+              className="step5-add-merch-button"
+              onClick={() => setShowNewRecipientModal(true)}
+            >
+              + Ajouter un destinataire
             </button>
           </div>
         </div>
@@ -498,7 +504,7 @@ useEffect(() => {
         {/* 3/7 Description de la marchandise */}
         <div className="step5-recap-section">
           <h5>3/7 Description de la marchandise</h5>
-          {values.merchandises && values.merchandises.length > 0 ? (
+          {merchandises && merchandises.length > 0 ? (
             <div className="step5-table-responsive">
               <table className="step5-merchandise-table">
                 <thead>
@@ -507,15 +513,32 @@ useEffect(() => {
                     <th>Référence / HSCODE</th>
                     <th>Quantité</th>
                     <th>Unité</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {values.merchandises.map((item, index) => (
+                  {merchandises.map((item, index) => (
                     <tr key={index}>
                       <td>{item.designation || 'Non spécifié'}</td>
                       <td>{item.boxReference || 'Non spécifié'}</td>
                       <td>{item.quantity || 'Non spécifié'}</td>
                       <td>{item.unit || 'Non spécifié'}</td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteMerchandise(index)}
+                          style={{
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            color: 'red',
+                            fontSize: '16px'
+                          }}
+                          title="Supprimer cette marchandise"
+                        >
+                          ❌
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -524,6 +547,7 @@ useEffect(() => {
           ) : (
             <p>Aucune marchandise ajoutée.</p>
           )}
+
           <button
             type="button"
             className="step5-add-merch-button"
@@ -534,13 +558,13 @@ useEffect(() => {
           </button>
         </div>
 
-        {/* 4/7 Origine et Destination des Marchandises */}
+
         <div className="step5-recap-section">
           <h5>4/7 Origine et Destination des Marchandises</h5>
           <div className="step5-country-selection">
             <div className="step5-form-group">
-              <label style={{ fontSize: '13px' }}>Pays d'origine :</label>
-              <select value={values.goodsOrigin || ''} onChange={handleChangeCountryOrigin}>
+              <label>Pays d'origine :</label>
+              <select className="step5-dropdown" value={values.goodsOrigin || ''} onChange={handleChangeCountryOrigin}>
                 <option value="">-- Sélectionnez un pays --</option>
                 {countries.map((country) => (
                   <option key={country.id_country} value={country.symbol_fr}>
@@ -551,8 +575,8 @@ useEffect(() => {
             </div>
 
             <div className="step5-form-group">
-              <label style={{ fontSize: '13px' }}>Pays de destination :</label>
-              <select value={values.goodsDestination || ''} onChange={handleChangeCountryDestination}>
+              <label>Pays de destination :</label>
+              <select className="step5-dropdown" value={values.goodsDestination || ''} onChange={handleChangeCountryDestination}>
                 <option value="">-- Sélectionnez un pays --</option>
                 {countries.map((country) => (
                   <option key={country.id_country} value={country.symbol_fr}>
@@ -563,45 +587,94 @@ useEffect(() => {
             </div>
           </div>
         </div>
+
 
 
 
         {/* 5/7 Transport */}
         <div className="step5-recap-section">
           <h5>5/7 Transport</h5>
-          <div className="step5-form-group transport-modes">
-            {tempTransportModes && Object.keys(tempTransportModes).length > 0 ? (
-              Object.keys(tempTransportModes).map((modeKey) => (
-                <label key={modeKey} style={{ marginRight: '10px' }}>
-                  <input
-                    type="checkbox"
-                    checked={tempTransportModes[modeKey]}
-                    onChange={(e) => handleCheckboxChange(modeKey, e.target.checked)}
-                  />
-                  {modeKey.charAt(0).toUpperCase() + modeKey.slice(1)}
-                </label>
-              ))
-            ) : (
-              <p>Aucun mode de transport disponible.</p>
-            )}
-          </div>
-          {/* Bouton pour enregistrer les modifications */}
-          <button
-            type="button"
-            onClick={handleTransportModesSave}
-            style={{
-              backgroundColor: '#28a745', // vert bootstrap par exemple
-              color: '#fff',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Enregistrer
-          </button>
 
+          <div className="step5-form-group">
+            <label>Port de chargement :</label>
+            <select
+              className="step5-dropdown"
+              value={values.loadingPort || ''}
+              onChange={(e) => handleChange('loadingPort', e.target.value)}
+            >
+              <option value="">-- Sélectionnez un pays --</option>
+              {countries.map((country) => (
+                <option key={country.id_country} value={country.symbol_fr}>
+                  {country.symbol_fr}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="step5-form-group">
+            <label>Port de déchargement :</label>
+            <select
+              className="step5-dropdown"
+              value={values.dischargingPort || ''}
+              onChange={(e) => handleChange('dischargingPort', e.target.value)}
+            >
+              <option value="">-- Sélectionnez un pays --</option>
+              {countries.map((country) => (
+                <option key={country.id_country} value={country.symbol_fr}>
+                  {country.symbol_fr}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="step5-form-group">
+            <label>Modes de transport :</label>
+            <div className="transport-options">
+              {tempTransportModes && Object.keys(tempTransportModes).length > 0 ? (
+                Object.keys(tempTransportModes).map((modeKey) => (
+                  <label key={modeKey} style={{ marginRight: '10px' }}>
+                    <input
+                      type="checkbox"
+                      checked={tempTransportModes[modeKey]}
+                      onChange={(e) => handleCheckboxChange(modeKey, e.target.checked)}
+                    />
+                    {modeKey.charAt(0).toUpperCase() + modeKey.slice(1)}
+                  </label>
+                ))
+              ) : (
+                <p>Aucun mode de transport disponible.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Ajout du champ "Remarques sur le transport" */}
+          <div className="step5-form-group">
+            <label>Remarques sur le transport :</label>
+            <span className="step5-recap-value">
+              {values.transportRemarks || "Aucune remarque"}
+            </span>
+          </div>
+
+          <div className="step5-form-group">
+            <button
+              type="button"
+              onClick={handleTransportModesSave}
+              style={{
+                backgroundColor: '#28a745',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Enregistrer
+            </button>
+          </div>
         </div>
+
+
+
 
 
        
@@ -668,6 +741,22 @@ useEffect(() => {
           </span>
         </div>
       </div>
+      <div className="step5-form-group">
+    <button
+      type="button"
+      onClick={handleTransportModesSave}
+      style={{
+        backgroundColor: '#28a745',
+        color: '#fff',
+        border: 'none',
+        padding: '8px 16px',
+        borderRadius: '4px',
+        cursor: 'pointer'
+      }}
+    >
+      Enregistrer
+    </button>
+  </div>
 
 
       </div>

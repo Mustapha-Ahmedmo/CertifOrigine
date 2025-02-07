@@ -336,13 +336,6 @@
   text-decoration: underline;
 }
 
-.step5-country-selection {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px; /* Espacement entre les deux */
-  align-items: center;
-  flex-wrap: wrap;
-}
 
 .step5-form-group {
   display: flex;
@@ -354,6 +347,9 @@
 
 .step5-form-group label {
   white-space: nowrap; /* Empêche le label de se casser en plusieurs lignes */
+  font-size: 13px;
+  font-weight: bold;
+
 }
 
 .step5-form-group select {
@@ -364,6 +360,33 @@
   border-radius: 3px;
   width: 100%;
   max-width: 300px;
+}
+
+
+.step5-form-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 250px;
+}
+
+.step5-form-group label {
+  width: 180px; /* Tous les labels auront exactement 180px de largeur */
+  font-size: 13px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.step5-form-group select {
+  flex: 1;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
 }
 
 
@@ -422,10 +445,6 @@
   width: 100%;
 }
 
-.step5-form-group label {
-  width: 180px; /* Largeur fixe pour que les labels soient alignés */
-  font-weight: bold;
-}
 
 .step5-form-group select {
   flex: 1;
@@ -447,7 +466,8 @@
   display: flex;
   align-items: center;
   gap: 5px; /* Réduit l'espace entre la case à cocher et le texte */
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: bold;
 }
 
 .step5-form-group.transport-modes {
