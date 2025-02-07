@@ -349,27 +349,38 @@ const getCertifGoodsInfo = async (req, res) => {
 };
 
 const executeAddCertifOrder = async (req, res) => {
-    try {
-        const {
-            idOrder,
-            idRecipientAccount,
-            idCountryOrigin,
-            idCountryDestination,
-            notes,
-            copyCount,
-            idLoginInsert,
-            transportRemarks
-        } = req.body;
+  try {
+    const {
+      idOrder,
+      idRecipientAccount,
+      idCountryOrigin,
+      idCountryDestination,
+      notes,
+      copyCount,
+      idLoginInsert,
+      transportRemarks,
+      idCountryPortLoading,     // New: Port loading country ID
+      idCountryPortDischarge    // New: Port discharge country ID
+    } = req.body;
 
-        // Validate required fields
-        if (!idOrder || !idRecipientAccount || !idCountryOrigin || !idCountryDestination || !idLoginInsert) {
-            return res.status(400).json({
-                message: "Les champs idOrder, idRecipientAccount, idCountryOrigin, idCountryDestination et idLoginInsert sont requis."
-            });
-        }
+    // Validate required fields including the new ports
+    if (
+      !idOrder ||
+      !idRecipientAccount ||
+      !idCountryOrigin ||
+      !idCountryDestination ||
+      !idLoginInsert ||
+      !idCountryPortLoading ||
+      !idCountryPortDischarge
+    ) {
+      return res.status(400).json({
+        message:
+          "Les champs idOrder, idRecipientAccount, idCountryOrigin, idCountryDestination, idLoginInsert, idCountryPortLoading et idCountryPortDischarge sont requis."
+      });
+    }
 
-        const result = await sequelize.query(
-            `SELECT add_certif_wrapper(
+    const result = await sequelize.query(
+      `SELECT add_certif_wrapper(
                 :p_id_order,
                 :p_id_recipient_account,
                 :p_id_country_origin,
@@ -377,43 +388,48 @@ const executeAddCertifOrder = async (req, res) => {
                 :p_notes,
                 :p_copy_count,
                 :p_idlogin_insert,
-                :p_transport_remarks
+                :p_transport_remarks,
+                :p_id_country_port_loading,
+                :p_id_country_port_discharge
             ) AS new_certif_id`,
-            {
-                replacements: {
-                    p_id_order: idOrder,
-                    p_id_recipient_account: idRecipientAccount,
-                    p_id_country_origin: idCountryOrigin,
-                    p_id_country_destination: idCountryDestination,
-                    p_notes: notes || '',
-                    p_copy_count: copyCount || 1,
-                    p_idlogin_insert: idLoginInsert,
-                    p_transport_remarks: transportRemarks || ''
-                },
-                type: sequelize.QueryTypes.SELECT
-            }
-        );
+      {
+        replacements: {
+          p_id_order: idOrder,
+          p_id_recipient_account: idRecipientAccount,
+          p_id_country_origin: idCountryOrigin,
+          p_id_country_destination: idCountryDestination,
+          p_notes: notes || '',
+          p_copy_count: copyCount || 1,
+          p_idlogin_insert: idLoginInsert,
+          p_transport_remarks: transportRemarks || '',
+          p_id_country_port_loading: idCountryPortLoading,
+          p_id_country_port_discharge: idCountryPortDischarge,
+        },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
 
-        const newCertifId = result[0]?.new_certif_id;
+    const newCertifId = result[0]?.new_certif_id;
 
-        if (!newCertifId) {
-            return res.status(500).json({
-                message: "Erreur lors de la création du certificat d'origine. Aucune ID de certificat retournée."
-            });
-        }
-
-        res.status(201).json({
-            message: "Certificat d'origine créé avec succès.",
-            newCertifId
-        });
-    } catch (error) {
-        console.error("Erreur lors de la création du certificat d'origine:", error);
-        res.status(500).json({
-            message: "Erreur lors de la création du certificat d'origine.",
-            error: error.message || "Erreur inconnue.",
-            details: error.original || error
-        });
+    if (!newCertifId) {
+      return res.status(500).json({
+        message:
+          "Erreur lors de la création du certificat d'origine. Aucune ID de certificat retournée."
+      });
     }
+
+    res.status(201).json({
+      message: "Certificat d'origine créé avec succès.",
+      newCertifId,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la création du certificat d'origine:", error);
+    res.status(500).json({
+      message: "Erreur lors de la création du certificat d'origine.",
+      error: error.message || "Erreur inconnue.",
+      details: error.original || error,
+    });
+  }
 };
 
 const setOrdCertifGoods = async (req, res) => {
@@ -775,6 +791,48 @@ const getCertifTranspMode = async (req, res) => {
     }
   };
   
+  const getFilesRepoTypeofInfo = async (req, res) => {
+    try {
+      // Read parameters from the query string
+      const {
+        p_id_files_repo_typeof_list,
+        p_id_files_repo_typeof_first,
+        p_id_files_repo_typeof_last,
+        p_ismandatory
+      } = req.query;
+      
+      const result = await sequelize.query(
+        `SELECT * FROM get_files_repo_typeof_info(
+            :p_id_files_repo_typeof_list,
+            :p_id_files_repo_typeof_first,
+            :p_id_files_repo_typeof_last,
+            :p_ismandatory
+        )`,
+        {
+          replacements: {
+            p_id_files_repo_typeof_list: p_id_files_repo_typeof_list || null,
+            p_id_files_repo_typeof_first: p_id_files_repo_typeof_first ? parseInt(p_id_files_repo_typeof_first, 10) : null,
+            p_id_files_repo_typeof_last: p_id_files_repo_typeof_last ? parseInt(p_id_files_repo_typeof_last, 10) : null,
+            p_ismandatory: p_ismandatory !== undefined ? (p_ismandatory === 'true') : null,
+          },
+          type: QueryTypes.SELECT,
+        }
+      );
+  
+      res.status(200).json({
+        message: 'File repository types retrieved successfully.',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Error retrieving file repo types:', error);
+      res.status(500).json({
+        message: 'Error retrieving file repository types.',
+        error: error.message || 'Unknown error.',
+        details: error.original || error,
+      });
+    }
+  };
+  
   
 module.exports = {
   executeAddOrder,
@@ -791,5 +849,6 @@ module.exports = {
   setOrdCertifTranspMode,
   cancelOrder,
   renameOrder,
-  updateCertif
+  updateCertif,
+  getFilesRepoTypeofInfo
 };

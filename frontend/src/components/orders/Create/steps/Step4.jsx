@@ -1,152 +1,176 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { getFilesRepoTypeofInfo } from '../../../../services/apiServices';
+import './Step4.css';
 
 const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
-  // Liste des pièces justificatives disponibles
-  const fakeJustificativePieces = [
-    'Certificat sanitaire',
-    'Agrément d’exploitation',
-    'Bill of loading',
-    'Airway Bill',
-    'Facture fournisseur',
-    'Patente industrie',
-    'Autre',
-  ];
+  // State for certified copies and the general remark (one for the whole step)
+  const [copies, setCopies] = useState(values.copies || 1);
+  const [generalRemark, setGeneralRemark] = useState(values.generalRemark || '');
 
-  const [selectedJustificative, setSelectedJustificative] = useState('');
-  const [justificativeRemarks, setJustificativeRemarks] = useState('');
-  const [documents, setDocuments] = useState(values.documents || []);
-  const [selectedFile, setSelectedFile] = useState(null);
+  // State to hold the file uploads for each file type
+  // For mandatory uploads, keys are the file type IDs, and values are the File objects.
+  const [mandatoryUploads, setMandatoryUploads] = useState({});
+  // For optional uploads, keys are the file type IDs, and values are the File objects.
+  const [optionalUploads, setOptionalUploads] = useState({});
 
+  // State for file repository types (fetched from the backend)
+  const [mandatoryFileTypes, setMandatoryFileTypes] = useState([]);
+  const [optionalFileTypes, setOptionalFileTypes] = useState([]);
+
+  // Fetch the file types on component mount
+  useEffect(() => {
+    const fetchFileTypes = async () => {
+      try {
+        // Fetch mandatory file types (IDs between 500 and 649, where p_ismandatory is true)
+        const mandatoryResponse = await getFilesRepoTypeofInfo({
+          p_id_files_repo_typeof_first: 500,
+          p_id_files_repo_typeof_last: 649,
+          p_ismandatory: true,
+        });
+        console.log("Mandatory file types:", mandatoryResponse.data);
+        setMandatoryFileTypes(mandatoryResponse.data);
+
+        // Fetch optional file types (IDs between 500 and 649, where p_ismandatory is false)
+        const optionalResponse = await getFilesRepoTypeofInfo({
+          p_id_files_repo_typeof_first: 500,
+          p_id_files_repo_typeof_last: 649,
+          p_ismandatory: false,
+        });
+        console.log("Optional file types:", optionalResponse.data);
+        setOptionalFileTypes(optionalResponse.data);
+      } catch (error) {
+        console.error("Error fetching file types:", error);
+      }
+    };
+
+    fetchFileTypes();
+  }, []);
+
+  // Handler for mandatory file input changes
+  const handleMandatoryFileChange = (fileTypeId, e) => {
+    const file = e.target.files[0];
+    setMandatoryUploads(prev => ({
+      ...prev,
+      [fileTypeId]: file,
+    }));
+  };
+
+  // Handler for optional file input changes
+  const handleOptionalFileChange = (fileTypeId, e) => {
+    const file = e.target.files[0];
+    setOptionalUploads(prev => ({
+      ...prev,
+      [fileTypeId]: file,
+    }));
+  };
+
+  // Form submission handler
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (selectedJustificative) {
-      const newDocument = {
-        type: 'justificative',
-        name: selectedJustificative,
-        remarks: justificativeRemarks,
-        file: selectedFile,
-      };
-
-      const updatedDocuments = [...documents, newDocument];
-
-      // Mettre à jour l'état local
-      setDocuments(updatedDocuments);
-
-      // Mettre à jour les valeurs globales
-      handleChange('documents', updatedDocuments);
-    } else {
-      // Si aucun document n'est sélectionné, transmettre l'état actuel
-      handleChange('documents', documents);
+    // Ensure every mandatory file type has an uploaded file
+    for (let ft of mandatoryFileTypes) {
+      if (!mandatoryUploads[ft.id_files_repo_typeof]) {
+        alert(`Le document obligatoire "${ft.txt_description_fr}" est manquant.`);
+        return;
+      }
     }
 
-    // Passer à l'étape suivante
-    nextStep();
-  };
+    // Build the documents array from mandatory uploads
+    const mandatoryDocs = mandatoryFileTypes.map(ft => ({
+      type: 'justificative',
+      fileTypeId: ft.id_files_repo_typeof,
+      fileTypeDescription: ft.txt_description_fr,
+      file: mandatoryUploads[ft.id_files_repo_typeof],
+    }));
 
-  const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
+    // Build the documents array from optional uploads (only include those with a file)
+    const optionalDocs = optionalFileTypes.reduce((acc, ft) => {
+      if (optionalUploads[ft.id_files_repo_typeof]) {
+        acc.push({
+          type: 'justificative',
+          fileTypeId: ft.id_files_repo_typeof,
+          fileTypeDescription: ft.txt_description_fr,
+          file: optionalUploads[ft.id_files_repo_typeof],
+        });
+      }
+      return acc;
+    }, []);
+
+    const allDocuments = [...mandatoryDocs, ...optionalDocs];
+
+    // Pass the documents, copies, and the general remark to the parent component
+    handleChange('documents', allDocuments);
+    handleChange('copies', copies);
+    handleChange('generalRemark', generalRemark);
+
+    nextStep();
   };
 
   return (
     <form onSubmit={handleSubmit} className="step-form">
-      <h3>Étape 2: Pièces justificatives</h3>
+      <h3>Étape 4: Pièces justificatives</h3>
 
-      {/* Section pour les pièces justificatives */}
-      <div className="form-inline-group">
-        <label>Choisir une pièce justificative</label>
-        <select
-          value={selectedJustificative}
-          onChange={(e) => setSelectedJustificative(e.target.value)}
-        >
-          <option value="">-- Sélectionnez une pièce --</option>
-          {fakeJustificativePieces.map((piece, index) => (
-            <option key={index} value={piece}>
-              {piece}
-            </option>
-          ))}
-        </select>
-
-        {/* Bouton "Choisir le fichier" */}
-        <label htmlFor="file-upload" className="upload-button">
-          Choisir le fichier
-        </label>
-        <input
-          id="file-upload"
-          type="file"
-          onChange={handleFileChange}
-          className="file-input"
-        />
-      </div>
-
-      {/* Afficher le nom du fichier sélectionné */}
-      {selectedFile && <p>Fichier sélectionné : {selectedFile.name}</p>}
-
+      {/* Number of Certified Copies */}
       <div className="form-group">
-        <label>Remarques</label>
-        <textarea
-          value={justificativeRemarks}
-          onChange={(e) => setJustificativeRemarks(e.target.value)}
-          placeholder="Ajouter des remarques"
+        <label>Nombre de copies certifiées</label>
+        <input
+          type="number"
+          value={copies}
+          onChange={(e) => setCopies(e.target.value)}
+          min="1"
+          required
         />
       </div>
 
-      <div className="step-actions">
-        <button type="button" onClick={prevStep}>
-          Retour
-        </button>
-        <button type="submit" className="next-button">
-          Suivant
-        </button>
+      {/* Mandatory Documents Section */}
+      <h4>Documents obligatoires</h4>
+      {mandatoryFileTypes.map(ft => (
+        <div key={ft.id_files_repo_typeof} className="document-row">
+          <div className="document-label">
+            {ft.txt_description_fr} - {ft.txt_description_eng}
+          </div>
+          <div className="document-input">
+            <input
+              type="file"
+              onChange={(e) => handleMandatoryFileChange(ft.id_files_repo_typeof, e)}
+              required
+            />
+          </div>
+        </div>
+      ))}
+
+      {/* Optional Documents Section */}
+      <h4>Documents optionnels</h4>
+      {optionalFileTypes.map(ft => (
+        <div key={ft.id_files_repo_typeof} className="document-row">
+          <div className="document-label">
+            {ft.txt_description_fr} - {ft.txt_description_eng}
+          </div>
+          <div className="document-input">
+            <input
+              type="file"
+              onChange={(e) => handleOptionalFileChange(ft.id_files_repo_typeof, e)}
+            />
+          </div>
+        </div>
+      ))}
+
+      {/* General Remark */}
+      <div className="form-group">
+        <label>Remarques générales</label>
+        <textarea
+          value={generalRemark}
+          onChange={(e) => setGeneralRemark(e.target.value)}
+          placeholder="Ajouter des remarques générales pour les pièces justificatives"
+        />
       </div>
 
-      {/* Styles en ligne */}
-      <style jsx>{`
-        .form-inline-group {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 15px;
-        }
-        .form-inline-group select {
-          flex-grow: 1;
-          padding: 5px;
-        }
-        .upload-button {
-          padding: 5px 10px;
-          font-size: 0.875rem;
-          background-color: white;
-          color: black;
-          border: 1px solid #ced4da;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: background-color 0.3s ease;
-        }
-        .upload-button:hover {
-          background-color: #e9ecef;
-        }
-        .file-input {
-          display: none;
-        }
-        .form-group {
-          margin-bottom: 20px;
-        }
-        .step-actions {
-          display: flex;
-          justify-content: space-between;
-        }
-        .next-button {
-          background-color: #28a745;
-          color: white;
-          padding: 8px 12px;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-        .next-button:hover {
-          background-color: #218838;
-        }
-      `}</style>
+      {/* Form Actions */}
+      <div className="step-actions">
+        <button type="button" onClick={prevStep}>Retour</button>
+        <button type="submit" className="next-button">Suivant</button>
+      </div>
     </form>
   );
 };

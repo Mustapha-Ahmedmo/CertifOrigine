@@ -2552,6 +2552,10 @@ CREATE OR REPLACE PROCEDURE add_certif(
     p_copy_count INT,
     p_idlogin_insert INT,
     p_transport_remarks VARCHAR(160),
+
+    p_id_country_port_loading INT,
+    p_id_country_port_discharge INT,
+
     INOUT p_id_ord_certif_ori INT
 )
 LANGUAGE plpgsql
@@ -2568,7 +2572,9 @@ BEGIN
         COPY_COUNT,
         IDLOGIN_INSERT,
         INSERTDATE,
-		TRANSPORT_REMARKS
+		TRANSPORT_REMARKS,
+		ID_COUNTRY_PORT_LOADING,
+		ID_COUNTRY_PORT_DISCHARGE
     ) VALUES (
         p_id_order,
         p_id_recipient_account,
@@ -2578,13 +2584,14 @@ BEGIN
         p_copy_count,
         p_idlogin_insert,
         CURRENT_TIMESTAMP,
-		p_transport_remarks
+		p_transport_remarks,
+		p_id_country_port_loading,
+		p_id_country_port_discharge
     )
     RETURNING ID_ORD_CERTIF_ORI INTO p_id_ord_certif_ori;
 
 END;
 $$;
-
 
 CREATE OR REPLACE PROCEDURE rem_certif(
     p_id_order INT,
@@ -2619,12 +2626,13 @@ CREATE OR REPLACE FUNCTION add_certif_wrapper(
     p_notes TEXT,
     p_copy_count INT,
     p_idlogin_insert INT,
-    p_transport_remarks VARCHAR(160)
+    p_transport_remarks VARCHAR(160),
+    p_id_country_port_loading INT,
+    p_id_country_port_discharge INT
 ) RETURNS INT AS $$
 DECLARE
     v_id_ord_certif_ori INT;
 BEGIN
-    -- Call the existing procedure with INOUT parameter
     CALL add_certif(
         p_id_order,
         p_id_recipient_account,
@@ -2634,10 +2642,11 @@ BEGIN
         p_copy_count,
         p_idlogin_insert,
         p_transport_remarks,
+        p_id_country_port_loading,
+        p_id_country_port_discharge,
         v_id_ord_certif_ori
     );
 
-    -- Return the newly created certificat ID
     RETURN v_id_ord_certif_ori;
 END;
 $$ LANGUAGE plpgsql;
@@ -3527,6 +3536,76 @@ $$;
 
 
 
+DROP PROCEDURE IF EXISTS set_order_files;
+
+CREATE OR REPLACE PROCEDURE set_order_files(
+    p_id_order INT,
+    p_idfiles_repo_typeof INT,
+    p_file_origin_name VARCHAR(160),
+    p_file_guid VARCHAR(64),
+    p_file_path VARCHAR(256),
+    p_typeof_order INT,
+    p_idlogin_insert INT,
+    INOUT p_id INT
+)
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    CALL set_files_repo(
+        p_idfiles_repo_typeof,
+        p_file_origin_name,
+        p_file_guid,
+        p_file_path,
+        p_idlogin_insert,
+        p_id
+    );
+
+    -- vérification de l'existence de l'élément dans ORDER_FILES avant insertion
+    IF NOT EXISTS (
+        SELECT 1
+        FROM ORDER_FILES
+        WHERE id_files_repo = p_id
+        AND deactivation_date > CURRENT_DATE
+    ) THEN
+        -- si l'élément n'existe pas, on insère l'entrée dans ORDER_FILES
+        INSERT INTO ORDER_FILES (ID_FILES_REPO, ID_ORDER, TYPEoF_ORDER)
+        VALUES (p_id, p_id_order, p_typeof_order);
+    END IF;
+
+END;
+$$;
+
+
+
+DROP PROCEDURE IF EXISTS del_order_files;
+
+CREATE OR REPLACE PROCEDURE del_order_files(
+    p_id_order_files INT
+)
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    v_id_files_repo INT;
+BEGIN
+    -- récupérer l'ID du fichier dans la table files_repo
+    SELECT id_files_repo
+    INTO v_id_files_repo
+    FROM order_files
+    WHERE id_order_files = p_id_order_files;
+
+    -- appel de la procédure pour désactiver l'entrée dans files_repo
+    CALL del_files_repo(v_id_files_repo);
+
+    -- mise à jour de la date de désactivation dans order_files
+    UPDATE order_files
+    SET
+        deactivation_date = CURRENT_TIMESTAMP - INTERVAL '1 day'
+    WHERE id_order_files = p_id_order_files;
+END;
+$$;
+
 
 
 
@@ -3570,3 +3649,7 @@ CALL add_files_repo_typeof(1, 'Licence zone franche', 'Free zone license', TRUE)
 CALL add_files_repo_typeof(50, 'Numéro Identification Fiscale (NIF)', 'Tax Identification Number (TIN)', TRUE);
 CALL add_files_repo_typeof(51, 'Numéro Immatriculation RCS', 'Registration number', FALSE);
 
+
+CALL add_files_repo_typeof(500, 'Certificat d''origine - Facture Commerciale', 'Certificate of origin - Commercial Invoice', TRUE);
+CALL add_files_repo_typeof(501, 'Certificat d''origine - Liste de colisage', 'Certificate of origin - Packing List', TRUE);
+CALL add_files_repo_typeof(502, 'Certificat d''origine - Certificat de poids', 'Certificate of origin - Weight Certificate', FALSE);

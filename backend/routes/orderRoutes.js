@@ -1,5 +1,5 @@
 const express = require('express');
-const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif } = require('../controllers/OrderController');
+const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo } = require('../controllers/OrderController');
 
 const router = express.Router();
 router.post('/create', executeAddOrder);
@@ -27,5 +27,7 @@ router.post('/certif-transpmode', setOrdCertifTranspMode);
 router.post('/rename', renameOrder);
 
 router.post('/update-certif', updateCertif);
+
+router.get('/files-repo-typeof', getFilesRepoTypeofInfo);
 
 module.exports = router;

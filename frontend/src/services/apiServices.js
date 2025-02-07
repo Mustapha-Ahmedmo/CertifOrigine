@@ -797,3 +797,24 @@ export const updateCertificate = async (certData) => {
     throw error;
   }
 };
+
+export const getFilesRepoTypeofInfo = async (params) => {
+  try {
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(`${API_URL}/orders/files-repo-typeof?${queryString}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch file repository types');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getFilesRepoTypeofInfo):', error);
+    throw error;
+  }
+};

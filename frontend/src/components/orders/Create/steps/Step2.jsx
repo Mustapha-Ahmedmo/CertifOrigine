@@ -207,6 +207,8 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
       idCountryOrigin: getCountryId(safeValues.goodsOrigin),
       idCountryDestination: getCountryId(safeValues.goodsDestination),
       notes: safeValues.remarks,
+      idCountryPortLoading: getCountryId(safeValues.loadingPort),
+      idCountryPortDischarge: getCountryId(safeValues.dischargingPort),
       copyCount: safeValues.copies,
       idLoginInsert: auth?.user?.id_login_user || 1,
       transportRemarks: safeValues.transportRemarks,
