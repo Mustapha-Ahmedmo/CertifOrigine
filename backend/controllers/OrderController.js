@@ -701,6 +701,80 @@ const getCertifTranspMode = async (req, res) => {
       });
     }
   };
+
+  const updateCertif = async (req, res) => {
+    try {
+      console.log("Received request body:", req.body); // Debug: Log the entire body
+
+      const {
+        p_id_ord_certif_ori,
+        p_id_recipient_account,
+        p_id_country_origin,
+        p_id_country_destination,
+        p_notes,
+        p_copy_count,
+        p_idlogin_modify,
+        p_transport_remains,
+      } = req.body;
+  
+      // Validate required fields (adjust the validation as needed)
+      if (
+        !p_id_ord_certif_ori ||
+        !p_id_recipient_account ||
+        !p_id_country_origin ||
+        !p_id_country_destination ||
+        !p_idlogin_modify
+      ) {
+        return res.status(400).json({
+          message: 'Certains champs requis sont manquants pour la mise à jour du certificat.',
+        });
+      }
+  
+             // Call the stored procedure
+             await sequelize.query(
+              `CALL upd_certif(
+                  :p_id_ord_certif_ori,
+                  :p_id_recipient_account,
+                  :p_id_country_origin,
+                  :p_id_country_destination,
+                  :p_id_country_port_loading,
+                  :p_id_country_port_discharge,
+                  :p_notes,
+                  :p_copy_count,
+                  :p_idlogin_modify,
+                  :p_transport_remains
+              )`,
+              {
+                  replacements: {
+                      p_id_ord_certif_ori,
+                      p_id_recipient_account,
+                      p_id_country_origin,
+                      p_id_country_destination,
+                      p_id_country_port_loading: 1, // Explicitly pass value
+                      p_id_country_port_discharge: 1, // Explicitly pass value
+                      p_notes: p_notes || '',
+                      p_copy_count,
+                      p_idlogin_modify,
+                      p_transport_remains: p_transport_remains || '',
+                  },
+                  type: QueryTypes.RAW,
+              }
+          );
+  
+  
+      res.status(200).json({
+        message: 'Certificat mis à jour avec succès.',
+      });
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du certificat:', error);
+      res.status(500).json({
+        message: 'Erreur lors de la mise à jour du certificat.',
+        error: error.message || 'Erreur inconnue.',
+        details: error.original || error,
+      });
+    }
+  };
+  
   
 module.exports = {
   executeAddOrder,
@@ -716,5 +790,6 @@ module.exports = {
   getCertifTranspMode,
   setOrdCertifTranspMode,
   cancelOrder,
-  renameOrder
+  renameOrder,
+  updateCertif
 };

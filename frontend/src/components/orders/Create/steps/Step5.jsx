@@ -4,11 +4,12 @@ import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import './Step5.css';
 
 // On suppose que Step5 peut importer addRecipient, fetchRecipients
-import { addRecipient, fetchRecipients, renameOrder } from '../../../../services/apiServices';
+import { addRecipient, fetchCountries, fetchRecipients, getOrdersForCustomer, renameOrder, updateCertificate } from '../../../../services/apiServices';
 import { useSelector } from 'react-redux';
 
 const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handleChange }) => {
   const safeValues = { ...values, recipients: values.recipients || [] };
+  const [countries, setCountries] = useState([]);
 
 
   // Valeur fixe pour le Demandeur (Société)
@@ -19,6 +20,10 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
   const companyName = user?.companyname;
   const customerAccountId = user?.id_cust_account; // Customer Account ID
 
+    // Extract query params (certifId and orderId)
+    const params = new URLSearchParams(location.search);
+    const certifId = params.get('certifId');
+    const orderId = params.get('orderId');
 
   // État local pour gérer l'édition du libellé de commande
   const [isEditingLabel, setIsEditingLabel] = useState(false);
@@ -62,64 +67,79 @@ useEffect(() => {
   setTempTransportModes(values.transportModes || {});
 }, [values.transportModes]);
 
-// Fonction pour mettre à jour l'état local lors du clic sur une case
-const handleCheckboxChange = (modeKey, checked) => {
-  setTempTransportModes((prev) => ({
-    ...prev,
-    [modeKey]: checked,
-  }));
-};
+  // Fonction pour mettre à jour l'état local lors du clic sur une case
+  const handleCheckboxChange = (modeKey, checked) => {
+    setTempTransportModes((prev) => ({
+      ...prev,
+      [modeKey]: checked,
+    }));
+  };
 
-// Fonction pour enregistrer les modifications dans le state global (via handleChange)
-const handleTransportModesSave = () => {
-  if (handleChange) {
-    handleChange('transportModes', tempTransportModes);
-  }
-  alert('Modes de transport enregistrés');
-};
+  // Fonction pour enregistrer les modifications dans le state global (via handleChange)
+  const handleTransportModesSave = () => {
+    if (handleChange) {
+      handleChange('transportModes', tempTransportModes);
+    }
+    alert('Modes de transport enregistrés');
+  };
 
 
   console.log("Label", values.orderLabel)
 
 
-    // Other local state for modals and form fields (new recipient, new merchandise, etc.)
-    const [showNewRecipientModal, setShowNewRecipientModal] = useState(false);
-    const [newRecipientLocal, setNewRecipientLocal] = useState({
-      receiverName: '',
-      receiverAddress: '',
-      receiverAddress2: '',
-      receiverPostalCode: '',
-      receiverCity: '',
-      receiverCountry: '',
-      receiverPhone: '',
-    });
+  // Other local state for modals and form fields (new recipient, new merchandise, etc.)
+  const [showNewRecipientModal, setShowNewRecipientModal] = useState(false);
+  const [newRecipientLocal, setNewRecipientLocal] = useState({
+    receiverName: '',
+    receiverAddress: '',
+    receiverAddress2: '',
+    receiverPostalCode: '',
+    receiverCity: '',
+    receiverCountry: '',
+    receiverPhone: '',
+  });
 
-    
+
 
   useEffect(() => {
     setOrderLabel(values.orderLabel || '');
   }, [values.orderLabel]);
 
 
-// Fetch recipients if not present locally and if we have a customerAccountId
-useEffect(() => {
-  const loadRecipients = async () => {
-    if ((!localRecipients || localRecipients.length === 0) && customerAccountId) {
+  useEffect(() => {
+    const loadCountries = async () => {
       try {
-        const response = await fetchRecipients({ idListCA: customerAccountId });
-        console.log("Fetched recipients in Step5:", response.data);
-        setLocalRecipients(response.data);
-        // Also update the parent's state if needed:
-        if (handleChange) {
-          handleChange('recipients', response.data);
-        }
+        const response = await fetchCountries();
+        // Assuming the response is an object with a 'data' property or directly an array
+        const countriesData = response.data || response;
+        setCountries(countriesData);
       } catch (error) {
-        console.error("Error fetching recipients in Step5:", error);
+        console.error('Error fetching countries in Step5:', error);
       }
-    }
-  };
-  loadRecipients();
-}, [customerAccountId, localRecipients, handleChange]);
+    };
+    loadCountries();
+  }, []);
+
+
+  // Fetch recipients if not present locally and if we have a customerAccountId
+  useEffect(() => {
+    const loadRecipients = async () => {
+      if ((!localRecipients || localRecipients.length === 0) && customerAccountId) {
+        try {
+          const response = await fetchRecipients({ idListCA: customerAccountId });
+          console.log("Fetched recipients in Step5:", response.data);
+          setLocalRecipients(response.data);
+          // Also update the parent's state if needed:
+          if (handleChange) {
+            handleChange('recipients', response.data);
+          }
+        } catch (error) {
+          console.error("Error fetching recipients in Step5:", error);
+        }
+      }
+    };
+    loadRecipients();
+  }, [customerAccountId, localRecipients, handleChange]);
 
   // If no recipient is selected yet, choose the first one from localRecipients
   useEffect(() => {
@@ -168,7 +188,7 @@ useEffect(() => {
     alert('Les informations du demandeur/expéditeur ont été enregistrées.');
   };
 
-  
+
 
 
 
@@ -185,6 +205,58 @@ useEffect(() => {
     // Optionally, update parent's state so that the selected recipient can be used elsewhere
     if (handleChange) {
       handleChange('selectedRecipientId', newSelected);
+    }
+  };
+
+  // New: Handler for submitting the recipient change (update the order with the new recipient)
+  const handleRecipientSubmit = async () => {
+    if (!safeValues.orderId || !selectedRecipientId || !idLogin) {
+      console.error('Missing orderId, selectedRecipientId, or id_login_user.');
+      return;
+    }
+    try {
+
+      const ordersResponse = await getOrdersForCustomer({
+        idCustAccountList: idCustAccount,
+        idLogin,
+      });
+      const orders = ordersResponse.data || [];
+
+          // Filter to get the order that matches the current orderId
+    const currentOrder = orders.find(order => order.id_order == orderId);
+    if (!currentOrder) {
+      console.error('Order not found.');
+      return;
+    }
+
+        // Assume that the certificate data is stored in a property like certData in the order
+    // (Adjust the property names based on your actual API response)
+    const certData = currentOrder.certData || currentOrder;
+    
+    // Build the update payload using the certificate data from the current order
+    const certUpdateData = {
+      p_id_ord_certif_ori: certData.id_ord_certif_ori, // Use the certificate ID from the order
+      p_id_recipient_account: selectedRecipientId,       // New recipient ID
+      p_id_country_origin: certData.id_country_origin,
+      p_id_country_destination: certData.id_country_destination,
+      p_id_country_port_loading: certData.id_country_port_loading,
+      p_id_country_port_discharge: certData.id_country_port_discharge,
+      p_notes: certData.notes || '',
+      p_copy_count: certData.copy_count || safeValues.copies,
+      p_idlogin_modify: idLogin,
+      p_transport_remains: safeValues.transportRemarks || '',
+    };
+    
+    
+      const response = await updateCertificate(certUpdateData);
+      console.log('Certificate updated:', response);
+      alert('Le destinataire et autres informations du certificat ont été mis à jour.');
+      if (handleChange) {
+        handleChange('selectedRecipientId', selectedRecipientId);
+      }
+    } catch (error) {
+      console.error('Error updating order recipient:', error);
+      alert("Erreur lors de la mise à jour du destinataire.");
     }
   };
 
@@ -227,6 +299,9 @@ useEffect(() => {
       if (handleChange) {
         handleChange('selectedRecipientId', newRecipientId);
       }
+      setLocalRecipients(updatedRecipientsResponse.data);
+
+   
       setShowNewRecipientModal(false);
       setNewRecipientLocal({
         receiverName: '',
@@ -283,8 +358,6 @@ useEffect(() => {
   };
 
   // -------------------- SECTION 4/7 : ORIGINE ET DESTINATION DES MARCHANDISES --------------------
-  const countries = values.countries || [];
-
   const handleChangeCountryOrigin = (e) => {
     if (handleChange) {
       handleChange('goodsOrigin', e.target.value);
@@ -382,6 +455,7 @@ useEffect(() => {
       {/* Section Contenu du Certificat d'origine */}
       <div className="step5-contenu-certificat">
         {/* 2/7 Destinataire */}
+        {/* Recipient Section */}
         <div className="step5-recap-section">
           <h5>2/7 Destinataire</h5>
           <div className="step5-form-group">
@@ -393,14 +467,14 @@ useEffect(() => {
             >
               <option value="">-- Sélectionnez un destinataire --</option>
               {localRecipients.map((recipient) => (
-                <option
-                  key={recipient.id_recipient_account}
-                  value={recipient.id_recipient_account}
-                >
+                <option key={recipient.id_recipient_account} value={recipient.id_recipient_account}>
                   {recipient.recipient_name}
                 </option>
               ))}
             </select>
+            <button type="button" style={{ marginTop: '10px' }} onClick={() => setShowNewRecipientModal(true)}>
+              + Ajouter un destinataire
+            </button>
           </div>
           {selectedRecipient && (
             <div className="step5-field-value step5-destinaire-box">
@@ -413,13 +487,12 @@ useEffect(() => {
                 .join(', ')}
             </div>
           )}
-            <button
-              type="button"
-              style={{ marginTop: '10px' }}
-              onClick={() => setShowNewRecipientModal(true)}
-            >
-              + Ajouter un destinataire
+          {/* New: A button to submit the selected recipient to update the order */}
+          <div className="step5-recipient-submit">
+            <button type="button" onClick={handleRecipientSubmit}>
+              Valider destinataire
             </button>
+          </div>
         </div>
 
         {/* 3/7 Description de la marchandise */}
@@ -476,7 +549,7 @@ useEffect(() => {
                 ))}
               </select>
             </div>
-            
+
             <div className="step5-form-group">
               <label style={{ fontSize: '13px' }}>Pays de destination :</label>
               <select value={values.goodsDestination || ''} onChange={handleChangeCountryDestination}>
@@ -514,19 +587,19 @@ useEffect(() => {
           </div>
           {/* Bouton pour enregistrer les modifications */}
           <button
-          type="button"
-          onClick={handleTransportModesSave}
-          style={{
-            backgroundColor: '#28a745', // vert bootstrap par exemple
-            color: '#fff',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Enregistrer
-        </button>
+            type="button"
+            onClick={handleTransportModesSave}
+            style={{
+              backgroundColor: '#28a745', // vert bootstrap par exemple
+              color: '#fff',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Enregistrer
+          </button>
 
         </div>
 
@@ -692,11 +765,17 @@ useEffect(() => {
             </div>
             <div className="form-group">
               <label>Pays *</label>
-              <input
-                type="text"
+              <select
                 value={newRecipientLocal.receiverCountry}
                 onChange={(e) => handleNewRecipientChange('receiverCountry', e.target.value)}
-              />
+              >
+                <option value="">-- Sélectionnez un pays --</option>
+                {countries.map((country) => (
+                  <option key={country.id_country} value={country.symbol_fr}>
+                    {country.symbol_fr}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
               <label>Numéro de téléphone *</label>

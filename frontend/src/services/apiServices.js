@@ -774,3 +774,26 @@ export const cancelOrder = async (payload) => {
     throw error;
   }
 };
+
+export const updateCertificate = async (certData) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/update-certif`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(certData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update certificate');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (updateCertificate):', error);
+    throw error;
+  }
+};

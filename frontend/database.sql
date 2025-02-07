@@ -221,6 +221,43 @@ CREATE TABLE "ORDER" (
 );
 
 
+CREATE TABLE ORD_CERTIF_ORI (
+    ID_ORD_CERTIF_ORI INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_ORDER INT NOT NULL,                                -- Non nullable
+    ID_RECIPIENT_ACCOUNT INT,
+    ID_COUNTRY_ORIGIN INT NOT NULL,                       -- Non nullable
+    ID_COUNTRY_DESTINATION INT NOT NULL,                  -- Non nullable
+    TRANSPORT_REMARKS VARCHAR(160) NULL,                  -- Nullable
+    NOTES VARCHAR(256) NULL,                              -- Nullable
+    COPY_COUNT INT DEFAULT 0 NOT NULL,                    -- Non nullable avec valeur par défaut
+    EQUIVALENT_AMOUNT REAL DEFAULT 1 NOT NULL,            -- Non nullable
+    INSERTDATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Non nullable avec valeur par défaut
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
+    IDLOGIN_INSERT INT NOT NULL,                          -- Non nullable
+    DATE_VALIDATION TIMESTAMP,
+    LASTMODIFIED TIMESTAMP NULL,                          -- Nullable
+    IDLOGIN_MODIFY INT NULL,                              -- Nullable
+    
+	
+    ID_COUNTRY_PORT_LOADING INT NULL,                       -- nullable
+    ID_COUNTRY_PORT_DISCHARGE INT NULL,                  -- nullable
+	
+	
+	
+	TYPEoF INT DEFAULT 1,
+    FOREIGN KEY (ID_ORDER) REFERENCES "ORDER"(ID_ORDER),
+    FOREIGN KEY (ID_RECIPIENT_ACCOUNT) REFERENCES RECIPIENT_ACCOUNT(ID_RECIPIENT_ACCOUNT),
+    FOREIGN KEY (ID_COUNTRY_ORIGIN) REFERENCES COUNTRY(ID_COUNTRY),
+    FOREIGN KEY (ID_COUNTRY_DESTINATION) REFERENCES COUNTRY(ID_COUNTRY),
+    FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+
+	FOREIGN KEY (ID_COUNTRY_PORT_LOADING) REFERENCES COUNTRY(ID_COUNTRY),
+    FOREIGN KEY (ID_COUNTRY_PORT_DISCHARGE) REFERENCES COUNTRY(ID_COUNTRY)
+
+
+);
+
 CREATE TABLE GLOBAL_SETTINGS (
     ID_GLOBAL_SETTINGS INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     CODE INT NOT NULL,                                -- Non nullable
@@ -320,30 +357,6 @@ CREATE TABLE RECIPIENT_ACCOUNT (
 );
 
 
-CREATE TABLE ORD_CERTIF_ORI (
-    ID_ORD_CERTIF_ORI INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    ID_ORDER INT NOT NULL,                                -- Non nullable
-    ID_RECIPIENT_ACCOUNT INT,
-    ID_COUNTRY_ORIGIN INT NOT NULL,                       -- Non nullable
-    ID_COUNTRY_DESTINATION INT NOT NULL,                  -- Non nullable
-    TRANSPORT_REMARKS VARCHAR(160) NULL,                  -- Nullable
-    NOTES VARCHAR(256) NULL,                              -- Nullable
-    COPY_COUNT INT DEFAULT 0 NOT NULL,                    -- Non nullable avec valeur par défaut
-    EQUIVALENT_AMOUNT REAL DEFAULT 1 NOT NULL,            -- Non nullable
-    INSERTDATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Non nullable avec valeur par défaut
-    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
-    IDLOGIN_INSERT INT NOT NULL,                          -- Non nullable
-    DATE_VALIDATION TIMESTAMP,
-    LASTMODIFIED TIMESTAMP NULL,                          -- Nullable
-    IDLOGIN_MODIFY INT NULL,                              -- Nullable
-    TYPEoF INT DEFAULT 1,
-    FOREIGN KEY (ID_ORDER) REFERENCES "ORDER"(ID_ORDER),
-    FOREIGN KEY (ID_RECIPIENT_ACCOUNT) REFERENCES RECIPIENT_ACCOUNT(ID_RECIPIENT_ACCOUNT),
-    FOREIGN KEY (ID_COUNTRY_ORIGIN) REFERENCES COUNTRY(ID_COUNTRY),
-    FOREIGN KEY (ID_COUNTRY_DESTINATION) REFERENCES COUNTRY(ID_COUNTRY),
-    FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
-    FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER)
-);
 
 
 CREATE TABLE ORD_CERTIF_GOODS (
@@ -3466,6 +3479,49 @@ BEGIN
         SET DEACTIVATION_DATE = CURRENT_TIMESTAMP - INTERVAL '1 day'
         WHERE ID_ORD_CERTIF_ORI = p_id_ord_certif_ori  AND deactivation_date > CURRENT_DATE
 AND ID_ORD_CERTIF_TRANSP_MODE NOT IN (SELECT unnest(ids_garder));
+END;
+$$;
+
+
+
+DROP PROCEDURE IF EXISTS upd_certif;
+CREATE OR REPLACE PROCEDURE upd_certif(
+    p_id_ord_certif_ori INT,
+    p_id_recipient_account INT,
+    p_id_country_origin INT,
+    p_id_country_destination INT,
+    p_id_country_port_loading INT,
+    p_id_country_port_discharge INT,
+
+    p_notes TEXT,
+    p_copy_count INT,
+    p_idlogin_modify INT,
+    p_transport_remains VARCHAR(160)
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM ORD_CERTIF_ORI
+        WHERE ID_ORD_CERTIF_ORI = p_id_ord_certif_ori
+    ) THEN
+        UPDATE ORD_CERTIF_ORI
+        SET 
+            ID_RECIPIENT_ACCOUNT = p_id_recipient_account,
+            ID_COUNTRY_ORIGIN = p_id_country_origin,
+            ID_COUNTRY_DESTINATION = p_id_country_destination,
+			ID_COUNTRY_PORT_LOADING =    p_id_country_port_loading,
+			ID_COUNTRY_PORT_DISCHARGE = p_id_country_port_discharge,
+
+            NOTES = p_notes,
+            COPY_COUNT = p_copy_count,
+            IDLOGIN_MODIFY = p_idlogin_modify,
+            LASTMODIFIED = CURRENT_TIMESTAMP,
+            TRANSPORT_REMARKS = p_transport_remains
+        WHERE ID_ORD_CERTIF_ORI = p_id_ord_certif_ori;
+    ELSE
+        RAISE EXCEPTION 'Certificat avec ID % introuvable', p_id_ord_certif_ori;
+    END IF;
 END;
 $$;
 
