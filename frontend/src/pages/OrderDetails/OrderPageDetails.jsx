@@ -163,7 +163,6 @@ const OrderDetailsPage = () => {
 
   return (
     <div className="order-details-page">
-      <h2>Détails de la Commande</h2>
       {/* Render the synthesis using the existing Step5 component */}
       <Step5
         prevStep={() => {}}

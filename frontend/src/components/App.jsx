@@ -29,6 +29,7 @@ import HeaderLayout from '../components/HeaderLayout';
 // Pages du dashboard
 import Home from '../pages/Home';
 import HomeOperateur from '../pages/HomeOperateur';
+import OpOrderDetails from '../pages/OpOrderDetails';
 import ToComplete from '../components/orders/ToComplete';
 import ToValidateOP from '../components/orders/ToValidateOP';
 import ToPay from '../components/orders/ToPay';
@@ -38,6 +39,7 @@ import CreateOrder from '../components/orders/Create/CreateOrder';
 import OperateurLayout from './OperateurLayout';
 import ContactsList from '../pages/ContactsList';
 import RegisterContact from '../pages/RegisterContact';
+
 
 // Gestion de l'inactivité
 import InactivityHandler from './InactivityHandler';
@@ -98,6 +100,7 @@ const App = () => {
             <Route path="inscriptions" element={<Inscriptions />} />
             <Route path="clientvalides" element={<ClientsValides />} />
             <Route path="operatorslist" element={<OperatorsList />} />
+            <Route path="oporderdetails" element={<OpOrderDetails />} />
           </Route>
         </Route>
 

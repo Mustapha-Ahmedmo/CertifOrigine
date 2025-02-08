@@ -11,6 +11,8 @@ import './HomeOperateur.css';
 import Step5 from '../components/orders/Create/steps/Step5';
 import ClientProfile from '../pages/ClientProfile';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+
 
 const HomeOperateur = () => {
   const [activeTab, setActiveTab] = useState('visa');
@@ -28,6 +30,14 @@ const HomeOperateur = () => {
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
+
+  const navigate = useNavigate();
+  const goToOrderDetails = (order) => {
+    const certifId = order.values.certifId || '';
+    navigate(`/dashboard/operator/oporderdetails?orderId=${order.id}&certifId=${certifId}`);
+  };
+
+
 
   const openModal = (values) => {
     setModalValues(values);
@@ -214,7 +224,7 @@ const HomeOperateur = () => {
                       <td>
                         <button
                           className="icon-button minimal-button"
-                          onClick={() => openModal(order.values)}
+                          onClick={() => goToOrderDetails(order)}
                         >
                           <FontAwesomeIcon icon={faEye} title="Vérifier" />
                           <span className="button-text">Vérifier</span>
@@ -304,28 +314,7 @@ const HomeOperateur = () => {
         )}
       </div>
 
-      {/* Modal principal */}
-      {showModal && modalValues && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <Step5
-              values={modalValues}
-              isModal={true}
-              handleSubmit={() => console.log('Soumis')}
-              openSecondModal={openSecondModal}
-            />
-
-            <div className="modal-actions">
-              <button onClick={() => console.log('Rejeté')} className="reject-button">
-                Rejeter
-              </button>
-              <button onClick={() => console.log('Validé')} className="validate-button">
-                Valider
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       {/* Modal secondaire */}
       {showSecondModal && secondModalContent && (
