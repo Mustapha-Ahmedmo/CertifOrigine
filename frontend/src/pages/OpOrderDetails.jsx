@@ -6,7 +6,8 @@ import {
   fetchCountries,
   getOrdersForCustomer,
   getCertifGoodsInfo,
-  getCertifTranspMode
+  getCertifTranspMode,
+  getOrderOpInfo
 } from '../services/apiServices';
 import './OpOrderDetails.css';
 
@@ -21,6 +22,7 @@ const OpOrderDetails = () => {
   // les informations du customer (exportateur) qui a passé la commande.
   const user = useSelector((state) => state.auth.user);
   const idLogin = user?.id_login_user;
+  const isOpUser = user?.isopuser;
   // Pour l'opérateur, on ne se base pas sur son idCustAccount pour récupérer la commande.
   // Nous utiliserons uniquement orderId (via idOrderList) pour filtrer la commande.
 
@@ -78,11 +80,20 @@ const OpOrderDetails = () => {
 
         // 3. Récupérer les détails de la commande
         if (orderId) {
-          // Pour s'assurer de récupérer la commande précise, nous passons idOrderList.
-          const ordersResponse = await getOrdersForCustomer({
-            idOrderList: orderId,  // Ceci force la recherche par orderId
-            idLogin: idLogin,
-          });
+          let ordersResponse;
+  
+          if (isOpUser) {
+            // For operator users, force lookup using orderId
+            ordersResponse = await getOrderOpInfo({
+              p_id_order_list: orderId,  // Force the search by orderId
+              p_idlogin: idLogin,
+            });
+          } else {
+            // For non-operator users, use a default lookup (or other filters)
+            ordersResponse = await getOrdersForCustomer({
+              idLogin: idLogin,
+            });
+          }
           const orders = ordersResponse.data || ordersResponse;
           // Forcer la comparaison en chaîne de caractères
           const order = orders.find(o => String(o.id_order) === String(orderId));

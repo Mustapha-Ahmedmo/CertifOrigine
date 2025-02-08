@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboardList,
@@ -12,6 +12,7 @@ import Step5 from '../components/orders/Create/steps/Step5';
 import ClientProfile from '../pages/ClientProfile';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { getOrderOpInfo } from '../services/apiServices';
 
 
 const HomeOperateur = () => {
@@ -24,8 +25,9 @@ const HomeOperateur = () => {
   // Nouveaux états pour la modal de paiement
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentOrder, setPaymentOrder] = useState(null);
-
+  const [orders, setOrders] = useState([]);
   const user = useSelector((state) => state.auth.user);
+  const operatorId = user?.id_login_user;
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -33,8 +35,8 @@ const HomeOperateur = () => {
 
   const navigate = useNavigate();
   const goToOrderDetails = (order) => {
-    const certifId = order.values.certifId || '';
-    navigate(`/dashboard/operator/oporderdetails?orderId=${order.id}&certifId=${certifId}`);
+    const certifId = order.id_ord_certif_ori || '';
+    navigate(`/dashboard/operator/oporderdetails?orderId=${order.id_order}&certifId=${certifId}`);
   };
 
 
@@ -71,75 +73,41 @@ const HomeOperateur = () => {
     setShowPaymentModal(false);
   };
 
-  // Données d'exemple
-  const ordersVisa = [
-    {
-      id: 1,
-      date: '01/08/2024',
-      orderNumber: 'O-06789/24',
-      client: 'INDIGO TRADING FZCO',
-      designation: 'Pneu Bridgestone',
-      submissionDate: '02/08/2024',
-      values: {
-        exporterName: 'INDIGO TRADING FZCO SARL',
-        exporterAddress: 'DJIBOUTI FREE ZONE Po Box 2520',
-        exporterAddress2: 'REP. DE DJIBOUTI',
-        exporterActivity: 'Construction ',
-        exporterStatut: 'Actif ',
-        exporterContact: 'M. Vladimir Outof\nManager\noutof@indigotrading.ru\nTel: +253-77 016463',
-        orderLabel: 'Pneu Bridgestone',
-        receiverName: 'Good Construction Private Limited',
-        receiverAddress: 'Jackros, Gerji',
-        receiverCity: 'Addis Ababa',
-        receiverPostalCode: '75001',
-        receiverCountry: 'Ethiopie',
-        receiverPhone: '+251-11 646 3290',
-        goodsOrigin: 'Emirates Arabes Unis',
-        goodsDestination: 'Ethiopie',
-        transportModes: { air: false, mer: false, terre: true, multimodal: false },
-        transportRemarks: 'Transport urgent.',
-        merchandises: [
-          { designation: 'Produit A', boxReference: 'REF001', quantity: 10, unit: 'Kg' },
-          { designation: 'Produit B', boxReference: 'REF002', quantity: 5, unit: 'L' },
-        ],
-        copies: 1,
-        remarks: 'Commande prioritaire.',
-        isCommitted: true,
-        documents: [
-          { name: 'Borderau_changement.pdf', type: 'justificative', remarks: 'Facture originale', file: null },
-        ],
-      },
-    },
-  ];
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        // Build params; if you do not wish to filter by order or customer, pass null
+        const params = {
+          p_id_order_list: null,
+          p_id_custaccount_list: null,
+          p_id_orderstatus_list: null,
+          p_idlogin: operatorId,
+        };
+        const result = await getOrderOpInfo(params);
+        // Depending on your API response structure, adjust here.
+        // For example, if your response returns { data: [...] } or just the array directly:
+        const loadedOrders = result.data || result;
+        setOrders(loadedOrders);
+      } catch (error) {
+        console.error('Error loading orders for operator:', error);
+      }
+    };
 
-  const ordersValidation = [];
-  const ordersPayment = [
-    {
-      id: 1,
-      date: '14/10/2024',
-      orderNumber: 'O-06789/24',
-      client: 'INDIGO TRADING FZCO',
-      invoiceNumber: 'F2024/123',
-      designation: 'Produit G',
-      validationDate: '16/10/2024',
-      amount: '53 000 FDJ'
-    },
-  ];
+    if (operatorId) {
+      loadOrders();
+    }
+  }, [operatorId]);
 
-  // Options dropdown COMMANDES (mobile)
+
+
+  const ordersVisa = orders.filter(order => order.id_order_status === 1);
+  const ordersValidation = orders.filter(order => order.id_order_status === 2);
+  const ordersPayment = orders.filter(order => order.id_order_status === 3);
+
   const commandsOptions = [
-    {
-      value: 'visa',
-      label: `Mes commandes à soumettre (${ordersVisa.length})`,
-    },
-    {
-      value: 'validation',
-      label: `Mes commandes en attente de la CCD (${ordersValidation.length})`,
-    },
-    {
-      value: 'payment',
-      label: `Mes commandes en attente de paiement (${ordersPayment.length})`,
-    },
+    { value: 'visa', label: `Mes commandes à soumettre (${ordersVisa.length})` },
+    { value: 'validation', label: `Mes commandes en attente de la CCD (${ordersValidation.length})` },
+    { value: 'payment', label: `Mes commandes en attente de paiement (${ordersPayment.length})` },
   ];
 
   const handleCommandsDropdownChange = (e) => {
@@ -215,10 +183,10 @@ const HomeOperateur = () => {
                 </thead>
                 <tbody>
                   {ordersVisa.map((order) => (
-                    <tr key={order.id}>
-                      <td>{order.date}</td>
-                      <td>{order.orderNumber}</td>
-                      <td>{order.client}</td>
+                    <tr key={order.id_order}>
+                      <td>{order.insertdate_order}</td>
+                      <td>{order.id_order}</td>
+                      <td>{order.recipient_name}</td>
                       <td>{order.designation}</td>
                       <td>{order.submissionDate}</td>
                       <td>

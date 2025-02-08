@@ -893,3 +893,26 @@ export const getOrderFilesInfo = async (params) => {
     throw error;
   }
 };
+
+
+export const getOrderOpInfo = async (params) => {
+  try {
+    // Build the query string from the params object
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(`${API_URL}/orders/op-info?${queryString}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to retrieve operator orders info');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getOrderOpInfo):', error);
+    throw error;
+  }
+};

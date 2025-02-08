@@ -975,6 +975,58 @@ const getCertifTranspMode = async (req, res) => {
   };
   
 
+
+  const getOrderOpInfoController = async (req, res) => {
+    try {
+      // Extract parameters from query
+      let { p_id_order_list, p_id_custaccount_list, p_id_orderstatus_list, p_idlogin } = req.query;
+  
+      // Convert p_idlogin to an integer if provided; otherwise, return an error.
+      if (!p_idlogin) {
+        return res.status(400).json({
+          message: "Le paramètre p_idlogin est requis."
+        });
+      }
+      p_idlogin = parseInt(p_idlogin, 10);
+  
+      // If the parameters are provided as the string "null" or are missing, set them to null.
+      p_id_order_list = (!p_id_order_list || p_id_order_list === 'null') ? null : p_id_order_list;
+      p_id_custaccount_list = (!p_id_custaccount_list || p_id_custaccount_list === 'null') ? null : p_id_custaccount_list;
+      p_id_orderstatus_list = (!p_id_orderstatus_list || p_id_orderstatus_list === 'null') ? null : p_id_orderstatus_list;
+  
+      // Execute the stored function via a SELECT query.
+      const orders = await sequelize.query(
+        `SELECT * FROM get_order_op_info(
+            :p_id_order_list,
+            :p_id_custaccount_list,
+            :p_id_orderstatus_list,
+            :p_idlogin
+        )`,
+        {
+          replacements: {
+            p_id_order_list,
+            p_id_custaccount_list,
+            p_id_orderstatus_list,
+            p_idlogin,
+          },
+          type: QueryTypes.SELECT,
+        }
+      );
+  
+      res.status(200).json({
+        message: 'Orders retrieved successfully.',
+        data: orders,
+      });
+    } catch (error) {
+      console.error('Error retrieving operator orders:', error);
+      res.status(500).json({
+        message: 'Error retrieving orders for operator.',
+        error: error.message || 'Unknown error.',
+        details: error.original || error,
+      });
+    }
+  };
+
 module.exports = {
   executeAddOrder,
   getTransmodeInfo,
@@ -994,5 +1046,6 @@ module.exports = {
   getFilesRepoTypeofInfo,
   setOrderFiles,  // NEW export
   delOrderFiles ,
-  getOrderFilesInfoController
+  getOrderFilesInfoController,
+  getOrderOpInfoController
 };
