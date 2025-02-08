@@ -4,7 +4,7 @@ import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import './Step5.css';
 
 // On suppose que Step5 peut importer addRecipient, fetchRecipients
-import { addRecipient, fetchCountries, fetchRecipients, getOrderFilesInfo, getOrdersForCustomer, renameOrder, updateCertificate } from '../../../../services/apiServices';
+import { addRecipient, fetchCountries, fetchRecipients, getOrderFilesInfo, getOrdersForCustomer, renameOrder, updateCertificate, getUnitWeightInfo } from '../../../../services/apiServices';
 import { useSelector } from 'react-redux';
 
 const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handleChange }) => {
@@ -21,6 +21,8 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
   const idCustAccount = user?.id_cust_account;
   const companyName = user?.companyname;
   const customerAccountId = user?.id_cust_account; // Customer Account ID
+  const [unitWeights, setUnitWeights] = useState([]);
+
 
 
 
@@ -48,6 +50,21 @@ const [copies, setCopies] = useState(values.copies || '');
 useEffect(() => {
   setCopies(values.copies || '');
 }, [values.copies]);
+
+useEffect(() => {
+  const fetchUnitWeights = async () => {
+    try {
+      // Appel à l'API pour récupérer les unités de poids.
+      const response = await getUnitWeightInfo(null, true);
+      // On suppose que la réponse contient les données dans response.data.
+      setUnitWeights(response.data || []);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des unités de poids:', error);
+    }
+  };
+  fetchUnitWeights();
+}, []);
+
 
 const saveCopies = () => {
   if (handleChange) {
@@ -968,12 +985,20 @@ useEffect(() => {
             </div>
             <div className="form-group">
               <label>Unité</label>
-              <input
-                type="text"
+              <select
                 value={newMerchLocal.unit}
                 onChange={(e) => handleNewMerchChange('unit', e.target.value)}
-              />
+              >
+                {unitWeights
+                  .filter((unit) => unit.id_unit_weight >= 1)
+                  .map((unit) => (
+                    <option key={unit.id_unit_weight} value={unit.symbol_fr}>
+                      {unit.symbol_fr}
+                    </option>
+                  ))}
+              </select>
             </div>
+
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px', gap: '10px' }}>
               <button type="button" onClick={() => setShowNewMerchModal(false)}>
                 Annuler
