@@ -102,7 +102,7 @@ const OpOrderDetails = () => {
               ...prev,
               // Pour le nom de l'exportateur, utilisez la propriété renvoyée par l'API.
               // Vérifiez que l'API retourne bien "exporterName" ou "exporter_company".
-              exporterName: order.exporterName || order.exporter_company || 'Non spécifié',
+              exporterName: order.cust_name || order.exporter_company || 'Non spécifié',
               orderLabel: order.order_title || '',
               merchandises: order.merchandises || [],
               goodsOrigin: order.id_country_origin && countryMap[order.id_country_origin]

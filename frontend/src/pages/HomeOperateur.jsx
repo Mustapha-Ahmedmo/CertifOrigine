@@ -186,7 +186,7 @@ const HomeOperateur = () => {
                     <tr key={order.id_order}>
                       <td>{order.insertdate_order}</td>
                       <td>{order.id_order}</td>
-                      <td>{order.recipient_name}</td>
+                      <td>{order.cust_name}</td>
                       <td>{order.designation}</td>
                       <td>{order.submissionDate}</td>
                       <td>

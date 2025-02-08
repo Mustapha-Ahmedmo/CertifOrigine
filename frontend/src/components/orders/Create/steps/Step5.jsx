@@ -30,12 +30,13 @@ const API_URL = import.meta.env.VITE_API_URL;
     // Extract query params (certifId and orderId)
     const params = new URLSearchParams(location.search);
     const certifId = params.get('certifId');
-    const orderId = params.get('orderId');
+    const orderId = params.get('orderId') ||values.orderId;
 
+    
   // État local pour gérer l'édition du libellé de commande
   const [isEditingLabel, setIsEditingLabel] = useState(false);
 
-  const [orderLabel, setOrderLabel] = useState(safeValues.orderLabel || '');
+  const [orderLabel, setOrderLabel] = useState(values.orderName || '');
   const [localRecipients, setLocalRecipients] = useState(safeValues.recipients);
   const [selectedRecipientId, setSelectedRecipientId] = useState(safeValues.selectedRecipientId || '');
   // État local pour gérer temporairement les modes de transport
@@ -127,7 +128,6 @@ useEffect(() => {
   };
 
 
-  console.log("Label", values.orderLabel)
 
 
   // Other local state for modals and form fields (new recipient, new merchandise, etc.)
@@ -437,7 +437,7 @@ useEffect(() => {
         // Prepare parameters for the function.
         // Here we pass the current orderId. You may add more parameters as needed.
         const queryParams = {
-          p_id_order_list: orderId,
+          p_id_order_list: orderId || values.orderId,
           p_isactive: true,
           p_id_custaccount: customerAccountId,
         };
@@ -452,8 +452,7 @@ useEffect(() => {
     if (orderId) {
       loadDocumentsInfo();
     }
-  }, [orderId]);
-
+  }, [orderId, values.orderId]);
 
   // -------------------- RENDU DU COMPOSANT --------------------
   return (
