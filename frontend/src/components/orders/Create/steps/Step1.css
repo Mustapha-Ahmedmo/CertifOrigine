@@ -4,6 +4,18 @@ html, body {
   box-sizing: border-box;
 }
 
+.exporter-name-container {
+  background-color: #e3f2fd; /* Bleu très léger */
+  padding: 6px 15px; /* Réduit la hauteur et augmente la largeur */
+  border-radius: 4px; /* Coins légèrement arrondis */
+  display: inline-block; /* S'adapte au contenu */
+  margin-top: 5px;
+  min-width: 200px; /* Largeur minimale pour allonger la forme */
+  text-align: center; /* Centrer le texte */
+}
+
+
+
 *, *::before, *::after {
   box-sizing: inherit;
 }
@@ -17,18 +29,38 @@ html, body {
 
 h3 {
   font-size: 24px;
-  color: #0056b3;
+  color: #C39408;
   margin-bottom: 20px;
   text-transform: uppercase;
 }
 
 .section-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
-  color: #DCAF26;
+  color: #DCAF26; /* Couleur du texte */
   text-transform: uppercase;
-  margin: 30px 0 10px;
+  margin: 20px 0 10px;
+  position: relative;
+  padding-left: 30px; /* Espace pour la flèche */
 }
+
+.section-title::before {
+  content: '➔'; /* Petite flèche */
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg); /* Rotation de la flèche */
+  font-size: 14px;
+  color: #ffffff;
+  background-color: #FFC107; /* Fond orange */
+  border-radius: 50%; /* Forme circulaire */
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 
 .exporter-name {
   font-size: 16px;
@@ -45,7 +77,7 @@ h3 {
 
 .form-group label {
   font-size: 14px;
-  color: #333;
+  color: #606060;
   font-weight: bold;
   margin-bottom: 5px;
 }
@@ -53,13 +85,31 @@ h3 {
 .form-group input,
 .form-group select,
 .form-group textarea {
-  padding: 10px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  width: 100%;
-  box-sizing: border-box;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #f7f7f7; /* Fond gris clair */
+    color: grey; /* Texte en gris foncé */
+    
 }
+
+/* Style pour les placeholders */
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #999; /* Placeholder en gris */
+    font-style: italic; /* Optionnel */
+}
+
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #999; /* Placeholder en gris */
+  font-style: italic; /* Optionnel : pour différencier le placeholder du texte saisi */
+}
+
 
 .form-group input:focus,
 .form-group select:focus,
@@ -115,7 +165,7 @@ button {
 }
 
 .submit-button {
-  background-color: #0056b3;
+  background-color: #C39408;
   color: white;
 }
 
@@ -224,8 +274,13 @@ textarea {
   background-color: #ffffff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
-  padding-left: 250px;
+  margin-left: 270px; /* Espace entre le menu et le conteneur */
+  margin-right: 20px; /* Optionnel : espace à droite si nécessaire */
+  max-width: calc(100% - 290px); /* Ajustement pour éviter qu'il dépasse sur petits écrans */
+  transition: all 0.3s ease-in-out; /* Transition fluide */
 }
+
+
 
 @media (max-width: 768px) {
   html, body {
@@ -255,10 +310,7 @@ textarea {
     font-size: 20px !important;
   }
 
-  .section-title {
-    font-size: 16px !important;
-    margin: 20px 0 10px !important;
-  }
+  
 
   button {
     font-size: 14px !important;

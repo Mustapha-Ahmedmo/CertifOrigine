@@ -176,7 +176,7 @@ const CreateOrder = () => {
           <div key={step} className={`step-item ${currentStep >= step ? 'completed' : ''}`}>
             <div className="step-circle">{currentStep > step ? '✔️' : step}</div>
             <div className="step-label">
-              {step === 1 && 'ÉTAPE1\nCRÉATION D\'UNE COMMANDE'}
+              {step === 1 && 'ÉTAPE1\nDÉTAILS DU CERTIFICAT D\'ORIGINE'}
               {step === 2 && 'ÉTAPE2\nPIECE JUSTIFICATIVE'}
               {step === 3 && 'ÉTAPE3\nNOMBRE DE COPIE CERTIFIÉ'}
             </div>

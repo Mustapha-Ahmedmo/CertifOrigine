@@ -284,10 +284,13 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
 
   return (
     <form onSubmit={handleSubmit} className="step-form">
-      <h3>{t('step1.title')}</h3>
+      {/* <h3>{t('step1.title')}</h3> */}
+
 
       <div className="section-title">{t('step1.exporterTitle')}</div>
-      <p className="exporter-name">{user?.companyname}</p>
+      <div className="exporter-name-container">
+        <p className="exporter-name">{user?.companyname}</p>
+      </div>
       <hr />
 
       <div className="section-title">{t('step1.receiverTitle')}</div>
@@ -535,14 +538,14 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         </div>
       </div>
 
-      {/* Display the joined selected transport mode labels */}
+      {/* Display the joined selected transport mode labels 
       <div className="selected-transport-modes">
         <strong>Modes sélectionnés :</strong>{' '}
         {Object.keys(safeValues.transportModes)
           .filter((key) => safeValues.transportModes[key])
           .map((key) => key.charAt(0).toUpperCase() + key.slice(1))
           .join(', ') || 'Aucun mode sélectionné'}
-      </div>
+      </div>*/}
 
       <div className="form-group">
         <label>Remarques sur le transport</label>
@@ -602,7 +605,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         </div>
 
         <div className="form-group">
-          <label>Référence document justificatif</label>
+          <label>Référence doc. justificatif</label>
           <input
             type="text"
             value={safeValues.reference}
@@ -683,7 +686,6 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
       <hr />
       <div className="section-title">8/8 REMARQUES</div>
       <div className="form-group">
-        <label>Remarques</label>
         <textarea
           value={safeValues.remarks}
           onChange={(e) => handleChange('remarks', e.target.value)}

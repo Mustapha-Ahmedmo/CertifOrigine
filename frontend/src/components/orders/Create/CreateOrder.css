@@ -5,7 +5,6 @@
   background-color: #ffffff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
-  padding-left: 250px;
 }
 
 .steps-progress {
@@ -90,7 +89,7 @@
 
 .add-button,
 .next-button {
-  background-color: #0056b3;
+  background-color: #C39408;
   color: white;
   padding: 12px 20px;
   border: none;
