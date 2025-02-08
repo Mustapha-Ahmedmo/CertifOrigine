@@ -3535,6 +3535,85 @@ END;
 $$;
 
 
+DROP FUNCTION IF EXISTS get_order_files_info;
+CREATE OR REPLACE FUNCTION get_order_files_info(
+    p_id_order_files_list TEXT,
+    p_id_order_list TEXT,
+    p_id_files_repo_list TEXT,
+    p_id_files_repo_typeof_list TEXT,
+    p_isactive BOOLEAN,
+	p_id_custaccount INT,
+    p_id_list_orderstatus TEXT
+)
+RETURNS TABLE(
+    id_order_files INT,
+    id_order INT,
+    order_title VARCHAR(32),
+    typeof INT,
+    typeof_order INT,
+    id_files_repo INT,
+    id_files_repo_typeof INT,
+    file_origin_name VARCHAR(160),
+    file_guid VARCHAR(64),
+    file_path VARCHAR(256),
+    insertdate TIMESTAMP,
+    idlogin_insert INT,
+    lastmodified TIMESTAMP,
+    idlogin_modify INT,
+    deactivation_date TIMESTAMP,
+    txt_description_fr VARCHAR(64),
+    txt_description_eng VARCHAR(64)
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT
+        of."id_order_files",
+        of."id_order",
+        o."order_title",
+        o."typeof",
+        of."id_files_repo",
+        of."typeof_order",
+        fr."idfiles_repo_typeof",
+        fr."file_origin_name",
+        fr."file_guid",
+        fr."file_path",
+        fr."insertdate",
+        fr."idlogin_insert",
+        fr."lastmodified",
+        fr."idlogin_modify",
+        fr."deactivation_date",
+	ft."txt_description_fr",
+	ft."txt_description_eng"
+    --TXT_DESCRIPTION_FR VARCHAR(64) NOT NULL,       -- Non nullable
+    --TXT_DESCRIPTION_ENG VARCHAR(64) NOT NULL       -- Non nullable
+    FROM
+        order_files of
+    JOIN 
+        "ORDER" o ON of."id_order" = o."id_order"
+    JOIN 
+        files_repo fr ON of."id_files_repo" = fr."id_files_repo" 
+    JOIN
+        files_repo_typeof ft ON fr."idfiles_repo_typeof" = ft."id_files_repo_typeof"
+    WHERE 
+        (p_id_order_files_list IS NULL OR of."id_order_files" = ANY (string_to_array(p_id_order_files_list, ',')::INT[]))
+    AND 
+        (p_id_order_list IS NULL OR of."id_order" = ANY (string_to_array(p_id_order_list, ',')::INT[]))
+    AND 
+        (p_id_files_repo_list IS NULL OR of."id_files_repo" = ANY (string_to_array(p_id_files_repo_list, ',')::INT[]))
+    AND 
+        (p_id_files_repo_typeof_list IS NULL OR fr."idfiles_repo_typeof" = ANY (string_to_array(p_id_files_repo_typeof_list, ',')::INT[]))
+    AND
+        (p_id_custaccount IS NULL OR o."id_cust_account" = p_id_custaccount)
+    AND
+        (p_id_list_orderstatus IS NULL OR o."id_order_status" = ANY (string_to_array(p_id_list_orderstatus, ',')::INT[]))
+    AND (
+        p_isactive IS NULL
+        OR (p_isactive IS NOT TRUE AND of."deactivation_date" <= CURRENT_DATE)
+        OR (p_isactive IS TRUE AND of."deactivation_date" > CURRENT_DATE)
+    );
+END;
+$$ LANGUAGE plpgsql;
 
 DROP PROCEDURE IF EXISTS set_order_files;
 

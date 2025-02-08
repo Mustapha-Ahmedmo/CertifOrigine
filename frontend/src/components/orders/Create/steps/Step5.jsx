@@ -4,13 +4,15 @@ import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import './Step5.css';
 
 // On suppose que Step5 peut importer addRecipient, fetchRecipients
-import { addRecipient, fetchCountries, fetchRecipients, getOrdersForCustomer, renameOrder, updateCertificate } from '../../../../services/apiServices';
+import { addRecipient, fetchCountries, fetchRecipients, getOrderFilesInfo, getOrdersForCustomer, renameOrder, updateCertificate } from '../../../../services/apiServices';
 import { useSelector } from 'react-redux';
 
 const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handleChange }) => {
   const safeValues = { ...values, recipients: values.recipients || [] };
   const [countries, setCountries] = useState([]);
 
+  // Local state for file info (documents)
+  const [documentsInfo, setDocumentsInfo] = useState([]);
 
   // Valeur fixe pour le Demandeur (Société)
 
@@ -20,6 +22,9 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
   const companyName = user?.companyname;
   const customerAccountId = user?.id_cust_account; // Customer Account ID
 
+
+
+const API_URL = import.meta.env.VITE_API_URL;
     // Extract query params (certifId and orderId)
     const params = new URLSearchParams(location.search);
     const certifId = params.get('certifId');
@@ -75,7 +80,12 @@ const handleDeleteMerchandise = (indexToDelete) => {
   console.log("Nouvelle liste :", updatedMerchandises);
 };
 
-
+const handleFileClick = (file) => {
+  // Construct the file URL
+  const fileUrl = `${API_URL}/files/commandes/${new Date().getFullYear()}/${file.file_guid}`;
+  // Open in a new browser tab
+  window.open(fileUrl, '_blank');
+};
 
 
 // Synchroniser cet état local si values.transportModes change
@@ -396,6 +406,37 @@ useEffect(() => {
 
   // -------------------- SECTION 6/7 : AUTRES --------------------
   // Les valeurs (copies et remarques) sont déjà renseignées dans values (Step2)
+
+
+
+
+
+  // =======================================================================
+  // NEW: Retrieve file information for the current order using getOrderFilesInfo
+  // =======================================================================
+  useEffect(() => {
+    const loadDocumentsInfo = async () => {
+      try {
+        // Prepare parameters for the function.
+        // Here we pass the current orderId. You may add more parameters as needed.
+        const queryParams = {
+          p_id_order_list: orderId,
+          p_isactive: true,
+          p_id_custaccount: customerAccountId,
+        };
+        const result = await getOrderFilesInfo(queryParams);
+        // Update our state with the retrieved documents info
+        setDocumentsInfo(result);
+      } catch (error) {
+        console.error('Error retrieving documents info:', error);
+      }
+    };
+
+    if (orderId) {
+      loadDocumentsInfo();
+    }
+  }, [orderId]);
+
 
   // -------------------- RENDU DU COMPOSANT --------------------
   return (
@@ -766,24 +807,34 @@ useEffect(() => {
       <div className="step5-designation-commande">
         <h5 className="step5-sub-title">7/7 Pièce Justificatives & annexes</h5>
         <div className="step5-pieces-justificatives-rectangle">
-          {values.documents && values.documents.length > 0 ? (
+          {documentsInfo && documentsInfo.length > 0 ? (
             <div className="step5-table-responsive">
               <table className="step5-document-table">
                 <thead>
                   <tr>
                     <th>Nom</th>
                     <th>Type</th>
-                    <th>Remarque</th>
                     <th>Fichier</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {values.documents.map((doc, index) => (
+                  {documentsInfo.map((doc, index) => (
                     <tr key={index}>
-                      <td>{doc.name}</td>
+                      <td>{doc.txt_description_fr}</td>
                       <td>{doc.type === 'justificative' ? 'Justificative' : 'Annexe'}</td>
-                      <td>{doc.remarks || 'Aucune remarque'}</td>
-                      <td>{doc.file ? doc.file.name : 'Aucun fichier'}</td>
+                  {/* 3) Clickable link */}
+                  <td>
+                    {doc.file_guid ? (
+                          <span
+                          onClick={() => handleFileClick(doc)}
+                          style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
+                        >
+                          {doc.file_origin_name || 'Télécharger le fichier'}
+                        </span>
+                    ) : (
+                      "Aucun fichier"
+                    )}
+                  </td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,27 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { getFilesRepoTypeofInfo } from '../../../../services/apiServices';
+import { useSelector } from 'react-redux';
+import { getFilesRepoTypeofInfo, setOrderFiles } from '../../../../services/apiServices';
 import './Step4.css';
 
 const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
-  // State for certified copies and the general remark (one for the whole step)
+  // Extract query parameters (e.g. certifId and orderId)
+  const params = new URLSearchParams(window.location.search);
+  const certifId = params.get('certifId');
+  const orderId = values.orderId; // Assume the order ID is passed in values
+
+  // Get user data from Redux
+  const user = useSelector((state) => state.auth.user);
+  const idloginInsert = user?.id_login_user;
+
+  // Local state for copies and general remark
   const [copies, setCopies] = useState(values.copies || 1);
   const [generalRemark, setGeneralRemark] = useState(values.generalRemark || '');
 
-  // State to hold the file uploads for each file type
-  // For mandatory uploads, keys are the file type IDs, and values are the File objects.
+  // State for holding file uploads (objects keyed by file type ID)
   const [mandatoryUploads, setMandatoryUploads] = useState({});
-  // For optional uploads, keys are the file type IDs, and values are the File objects.
   const [optionalUploads, setOptionalUploads] = useState({});
 
   // State for file repository types (fetched from the backend)
   const [mandatoryFileTypes, setMandatoryFileTypes] = useState([]);
   const [optionalFileTypes, setOptionalFileTypes] = useState([]);
 
-  // Fetch the file types on component mount
+  // Fetch file types on mount
   useEffect(() => {
     const fetchFileTypes = async () => {
       try {
-        // Fetch mandatory file types (IDs between 500 and 649, where p_ismandatory is true)
+        // Fetch mandatory file types (IDs between 500 and 649, where p_ismandatory = true)
         const mandatoryResponse = await getFilesRepoTypeofInfo({
           p_id_files_repo_typeof_first: 500,
           p_id_files_repo_typeof_last: 649,
@@ -30,7 +38,7 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
         console.log("Mandatory file types:", mandatoryResponse.data);
         setMandatoryFileTypes(mandatoryResponse.data);
 
-        // Fetch optional file types (IDs between 500 and 649, where p_ismandatory is false)
+        // Fetch optional file types (IDs between 500 and 649, where p_ismandatory = false)
         const optionalResponse = await getFilesRepoTypeofInfo({
           p_id_files_repo_typeof_first: 500,
           p_id_files_repo_typeof_last: 649,
@@ -46,49 +54,37 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
     fetchFileTypes();
   }, []);
 
-  // Handler for mandatory file input changes
+  // Handlers for file input changes
   const handleMandatoryFileChange = (fileTypeId, e) => {
     const file = e.target.files[0];
-    setMandatoryUploads(prev => ({
-      ...prev,
-      [fileTypeId]: file,
-    }));
+    setMandatoryUploads(prev => ({ ...prev, [fileTypeId]: file }));
   };
 
-  // Handler for optional file input changes
   const handleOptionalFileChange = (fileTypeId, e) => {
     const file = e.target.files[0];
-    setOptionalUploads(prev => ({
-      ...prev,
-      [fileTypeId]: file,
-    }));
+    setOptionalUploads(prev => ({ ...prev, [fileTypeId]: file }));
   };
-
-  // Form submission handler
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Ensure every mandatory file type has an uploaded file
+  
+    // Ensure all mandatory file types have a file uploaded
     for (let ft of mandatoryFileTypes) {
       if (!mandatoryUploads[ft.id_files_repo_typeof]) {
         alert(`Le document obligatoire "${ft.txt_description_fr}" est manquant.`);
         return;
       }
     }
-
-    // Build the documents array from mandatory uploads
-    const mandatoryDocs = mandatoryFileTypes.map(ft => ({
-      type: 'justificative',
+  
+    // Build arrays for mandatory and optional docs as before
+    const mandatoryDocs = mandatoryFileTypes.map((ft) => ({
       fileTypeId: ft.id_files_repo_typeof,
       fileTypeDescription: ft.txt_description_fr,
       file: mandatoryUploads[ft.id_files_repo_typeof],
     }));
-
-    // Build the documents array from optional uploads (only include those with a file)
+  
     const optionalDocs = optionalFileTypes.reduce((acc, ft) => {
       if (optionalUploads[ft.id_files_repo_typeof]) {
         acc.push({
-          type: 'justificative',
           fileTypeId: ft.id_files_repo_typeof,
           fileTypeDescription: ft.txt_description_fr,
           file: optionalUploads[ft.id_files_repo_typeof],
@@ -96,17 +92,39 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
       }
       return acc;
     }, []);
-
-    const allDocuments = [...mandatoryDocs, ...optionalDocs];
-
-    // Pass the documents, copies, and the general remark to the parent component
-    handleChange('documents', allDocuments);
-    handleChange('copies', copies);
-    handleChange('generalRemark', generalRemark);
-
-    nextStep();
+  
+    const allDocs = [...mandatoryDocs, ...optionalDocs];
+  
+    try {
+      // Loop through each document and upload it
+      for (const doc of allDocs) {
+        const orderFileData = {
+          uploadType: 'commandes', // this must be included as a text field
+          p_id_order: orderId,
+          p_idfiles_repo_typeof: doc.fileTypeId,
+          p_file_origin_name: doc.file.name,
+          p_typeof_order: 0,
+          p_idlogin_insert: idloginInsert,
+          file: doc.file,
+        };
+  
+        await setOrderFiles(orderFileData);
+      }
+  
+      // Save additional data into global state as needed
+      handleChange('documents', allDocs);
+      handleChange('copies', copies);
+      handleChange('generalRemark', generalRemark);
+      if (certifId) handleChange('certifId', certifId);
+      if (orderId) handleChange('orderId', orderId);
+  
+      nextStep();
+    } catch (error) {
+      console.error("Erreur lors de l'upload des fichiers:", error);
+      alert("Erreur lors de l'upload des fichiers. Veuillez réessayer.");
+    }
   };
-
+  
   return (
     <form onSubmit={handleSubmit} className="step-form">
       <h3>Étape 4: Pièces justificatives</h3>
@@ -125,7 +143,7 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
 
       {/* Mandatory Documents Section */}
       <h4>Documents obligatoires</h4>
-      {mandatoryFileTypes.map(ft => (
+      {mandatoryFileTypes.map((ft) => (
         <div key={ft.id_files_repo_typeof} className="document-row">
           <div className="document-label">
             {ft.txt_description_fr} - {ft.txt_description_eng}
@@ -142,7 +160,7 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
 
       {/* Optional Documents Section */}
       <h4>Documents optionnels</h4>
-      {optionalFileTypes.map(ft => (
+      {optionalFileTypes.map((ft) => (
         <div key={ft.id_files_repo_typeof} className="document-row">
           <div className="document-label">
             {ft.txt_description_fr} - {ft.txt_description_eng}

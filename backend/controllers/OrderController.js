@@ -832,8 +832,149 @@ const getCertifTranspMode = async (req, res) => {
       });
     }
   };
+  const setOrderFiles = async (req, res) => {
+    try {
+      // Debug: log the request body so we can see if p_id_order and others are present.
+      console.log("Request body in setOrderFiles:", req.body);
   
+      const {
+        p_id_order,
+        p_idfiles_repo_typeof,
+        p_file_origin_name,
+        p_typeof_order,
+        p_idlogin_insert
+      } = req.body;
   
+      // Extract file details from req.file (populated by multer)
+      const p_file_guid = req.file ? req.file.filename : null;
+      const p_file_path = req.file ? req.file.path : null;
+      // Validate that p_id_order exists.
+      if (!p_id_order) {
+        return res.status(400).json({ message: "Le champ p_id_order est requis." });
+      }
+  
+      // Call the stored procedure.
+      await sequelize.query(
+        `CALL set_order_files(
+          :p_id_order,
+          :p_idfiles_repo_typeof,
+          :p_file_origin_name,
+          :p_file_guid,
+          :p_file_path,
+          :p_typeof_order,
+          :p_idlogin_insert,
+          null
+        )`,
+        {
+          replacements: {
+            p_id_order: p_id_order, // Ensure this key is set
+            p_idfiles_repo_typeof,  // shorthand for p_idfiles_repo_typeof: p_idfiles_repo_typeof
+            p_file_origin_name,     // same here
+            p_file_guid,
+            p_file_path,
+            p_typeof_order,
+            p_idlogin_insert
+          },
+          type: QueryTypes.RAW,
+        }
+      );
+  
+      res.status(200).json({ message: 'Fichier ajouté/mis à jour avec succès.' });
+    } catch (error) {
+      console.error("Erreur dans setOrderFiles:", error);
+      res.status(500).json({
+        message: "Erreur lors de l'ajout/mise à jour du fichier de commande.",
+        error: error.message || "Erreur inconnue.",
+        details: error.original || error,
+      });
+    }
+  };
+  
+
+  const delOrderFiles = async (req, res) => {
+    try {
+      const { p_id_order_files } = req.body;
+      if (!p_id_order_files) {
+        return res.status(400).json({
+          message: "L'ID du fichier de commande est requis pour la suppression."
+        });
+      }
+  
+      await sequelize.query(
+        `CALL del_order_files(:p_id_order_files)`,
+        {
+          replacements: { p_id_order_files },
+          type: QueryTypes.RAW,
+        }
+      );
+  
+      res.status(200).json({
+        message: "Fichier de commande supprimé avec succès."
+      });
+    } catch (error) {
+      console.error("Erreur lors de la suppression du fichier de commande:", error);
+      res.status(500).json({
+        message: "Erreur lors de la suppression du fichier de commande.",
+        error: error.message || "Erreur inconnue.",
+        details: error.original || error,
+      });
+    }
+  };
+
+  const getOrderFilesInfoController = async (req, res) => {
+    try {
+      // Extract parameters from query string (or adjust to where you get them)
+      const {
+        p_id_order_files_list,
+        p_id_order_list,
+        p_id_files_repo_list,
+        p_id_files_repo_typeof_list,
+        p_isactive,
+        p_id_custaccount,
+        p_id_list_orderstatus,
+      } = req.query;
+  
+      // Prepare replacements for the SQL query.
+      // For Boolean and numeric parameters, we convert the values as needed.
+      const replacements = {
+        p_id_order_files_list: p_id_order_files_list || null,
+        p_id_order_list: p_id_order_list || null,
+        p_id_files_repo_list: p_id_files_repo_list || null,
+        p_id_files_repo_typeof_list: p_id_files_repo_typeof_list || null,
+        p_isactive: typeof p_isactive !== 'undefined' ? (p_isactive.toLowerCase() === 'true') : null,
+        p_id_custaccount: p_id_custaccount ? parseInt(p_id_custaccount, 10) : null,
+        p_id_list_orderstatus: p_id_list_orderstatus || null,
+      };
+  
+      // Execute the SQL query that calls your stored function
+      const filesInfo = await sequelize.query(
+        `SELECT * FROM get_order_files_info(
+            :p_id_order_files_list,
+            :p_id_order_list,
+            :p_id_files_repo_list,
+            :p_id_files_repo_typeof_list,
+            :p_isactive,
+            :p_id_custaccount,
+            :p_id_list_orderstatus
+        )`,
+        {
+          replacements,
+          type: QueryTypes.SELECT,
+        }
+      );
+  
+      // Return the result as JSON
+      res.status(200).json(filesInfo);
+    } catch (error) {
+      console.error('Error retrieving order files info:', error);
+      res.status(500).json({
+        message: 'Failed to retrieve order files info',
+        error: error.message,
+      });
+    }
+  };
+  
+
 module.exports = {
   executeAddOrder,
   getTransmodeInfo,
@@ -850,5 +991,8 @@ module.exports = {
   cancelOrder,
   renameOrder,
   updateCertif,
-  getFilesRepoTypeofInfo
+  getFilesRepoTypeofInfo,
+  setOrderFiles,  // NEW export
+  delOrderFiles ,
+  getOrderFilesInfoController
 };

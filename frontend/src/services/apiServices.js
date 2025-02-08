@@ -818,3 +818,78 @@ export const getFilesRepoTypeofInfo = async (params) => {
     throw error;
   }
 };
+
+export const setOrderFiles = async (orderFileData) => {
+  try {
+    const formData = new FormData();
+    
+    // Append all keys from orderFileData into FormData
+    for (const key in orderFileData) {
+      if (orderFileData.hasOwnProperty(key)) {
+        formData.append(key, orderFileData[key]);
+      }
+    }
+    
+    const response = await fetch(`${API_URL}/orders/order-files`, {
+      method: 'POST',
+      headers: {
+        // Do not set Content-Type manually for FormData!
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to set order files');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (setOrderFiles):', error);
+    throw error;
+  }
+};
+
+
+export const delOrderFiles = async (p_id_order_files) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/order-files/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ p_id_order_files }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete order file');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (delOrderFiles):', error);
+    throw error;
+  }
+};
+
+export const getOrderFilesInfo = async (params) => {
+  try {
+    // Build a query string from the params object
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(`${API_URL}/orders/order-files-info?${queryString}`, {
+      method: 'GET',
+      headers: {
+         'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      }
+    });
+    if (!response.ok) {
+       const errorData = await response.json();
+       throw new Error(errorData.message || 'Failed to retrieve order files info');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getOrderFilesInfo):', error);
+    throw error;
+  }
+};

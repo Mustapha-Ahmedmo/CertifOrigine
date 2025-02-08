@@ -1,5 +1,6 @@
 const express = require('express');
-const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo } = require('../controllers/OrderController');
+const upload = require('../src/middleware/upload'); // Use your existing multer middleware
+const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController } = require('../controllers/OrderController');
 
 const router = express.Router();
 router.post('/create', executeAddOrder);
@@ -29,5 +30,20 @@ router.post('/rename', renameOrder);
 router.post('/update-certif', updateCertif);
 
 router.get('/files-repo-typeof', getFilesRepoTypeofInfo);
+
+//router.post('/order-files', upload.single('file'), setOrderFiles);
+router.post('/order-files', (req, res, next) => {
+    console.log('Before Multer:', req.body);
+    next();
+  }, 
+  upload.single('file'),
+  (req, res, next) => {
+    console.log('After Multer:', req.body);
+    next();
+  },
+  setOrderFiles);
+router.post('/order-files/delete', delOrderFiles); // New: Delete order files
+
+router.get('/order-files-info', getOrderFilesInfoController);
 
 module.exports = router;
