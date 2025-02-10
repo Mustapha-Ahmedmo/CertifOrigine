@@ -105,9 +105,9 @@ const HomeOperateur = () => {
   const ordersPayment = orders.filter(order => order.id_order_status === 3);
 
   const commandsOptions = [
-    { value: 'visa', label: `Mes commandes à soumettre (${ordersVisa.length})` },
-    { value: 'validation', label: `Mes commandes en attente de la CCD (${ordersValidation.length})` },
-    { value: 'payment', label: `Mes commandes en attente de paiement (${ordersPayment.length})` },
+    { value: 'visa', label: `Nouvelles commandes (${ordersVisa.length})` },
+    { value: 'validation', label: `Commandes en cours de traitement (${ordersValidation.length})` },
+    { value: 'payment', label: `Commandes en attente de paiement (${ordersPayment.length})` },
   ];
 
   const handleCommandsDropdownChange = (e) => {
@@ -145,21 +145,21 @@ const HomeOperateur = () => {
           onClick={() => handleTabClick('visa')}
         >
           <FontAwesomeIcon icon={faClipboardList} className="tab-icon" />
-          Mes commandes à soumettre ({ordersVisa.length})
+          Nouvelles commandes ({ordersVisa.length})
         </div>
         <div
           className={`tab-item ${activeTab === 'validation' ? 'active' : ''}`}
           onClick={() => handleTabClick('validation')}
         >
           <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" />
-          Mes commandes en attente de la CCD ({ordersValidation.length})
+          Commandes en cours de traitement ({ordersValidation.length})
         </div>
         <div
           className={`tab-item ${activeTab === 'payment' ? 'active' : ''}`}
           onClick={() => handleTabClick('payment')}
         >
           <FontAwesomeIcon icon={faDollarSign} className="tab-icon" />
-          Mes commandes en attente de paiement ({ordersPayment.length})
+          Commandes en attente de paiement ({ordersPayment.length})
         </div>
       </div>
 

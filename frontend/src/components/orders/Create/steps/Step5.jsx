@@ -818,10 +818,10 @@ useEffect(() => {
 
       </div>
 
-      <h4 className="step5-main-title">Pièce justificatives & annexes</h4>
+      <h4 className="step5-main-title">Pièce justificatives</h4>
       {/* 7/7 Pièce Justificatives dans un rectangle gris avec titre en orange */}
       <div className="step5-designation-commande">
-        <h5 className="step5-sub-title">7/7 Pièce Justificatives & annexes</h5>
+        <h5 className="step5-sub-title">7/7 Pièce Justificatives</h5>
         <div className="step5-pieces-justificatives-rectangle">
           {documentsInfo && documentsInfo.length > 0 ? (
             <div className="step5-table-responsive">

@@ -350,6 +350,23 @@
     max-width: 300px;
     box-sizing: border-box;
   }
+
+  .step5-reject-button {
+    background-color: #d9534f; /* Rouge pour indiquer le rejet */
+    color: white;
+    padding: 12px 25px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    margin-left: 15px; /* Pour espacer les boutons */
+    transition: background-color 0.3s ease;
+  }
+  
+  .step5-reject-button:hover {
+    background-color: #c9302c;
+  }
+  
   
   @media screen and (max-width: 768px) {
     .step5-title {

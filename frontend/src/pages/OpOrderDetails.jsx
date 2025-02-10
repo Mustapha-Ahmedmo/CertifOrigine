@@ -357,12 +357,26 @@ const OpOrderDetails = () => {
           </div>
         </div>
 
-        {/* Bouton d'action */}
         <div className="step5-submit-section">
-          <button type="button" className="step5-next-button" onClick={() => console.log('Soumis')}>
-            Soumettre
+          {/* Bouton Valider */}
+          <button
+            type="button"
+            className="step5-next-button"
+            onClick={handleValidate}
+          >
+            Valider
+          </button>
+
+          {/* Bouton Rejeter */}
+          <button
+            type="button"
+            className="step5-reject-button"
+            onClick={handleReject}
+          >
+            Rejeter
           </button>
         </div>
+
       </form>
     </div>
   );
