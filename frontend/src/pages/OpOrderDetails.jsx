@@ -7,13 +7,16 @@ import {
   getOrdersForCustomer,
   getCertifGoodsInfo,
   getCertifTranspMode,
-  getOrderOpInfo
+  getOrderOpInfo,
+  getOrderFilesInfo
 } from '../services/apiServices';
 import './OpOrderDetails.css';
 
 const OpOrderDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
+const API_URL = import.meta.env.VITE_API_URL;
   const params = new URLSearchParams(location.search);
   const orderId = params.get('orderId');
   const certifId = params.get('certifId');
@@ -25,6 +28,10 @@ const OpOrderDetails = () => {
   const isOpUser = user?.isopuser;
   // Pour l'opérateur, on ne se base pas sur son idCustAccount pour récupérer la commande.
   // Nous utiliserons uniquement orderId (via idOrderList) pour filtrer la commande.
+
+
+
+  const [documentsInfo, setDocumentsInfo] = useState([]);
 
   // État local pour stocker les données de la commande
   const [formData, setFormData] = useState({
@@ -81,7 +88,7 @@ const OpOrderDetails = () => {
         // 3. Récupérer les détails de la commande
         if (orderId) {
           let ordersResponse;
-  
+
           if (isOpUser) {
             // For operator users, force lookup using orderId
             ordersResponse = await getOrderOpInfo({
@@ -106,11 +113,11 @@ const OpOrderDetails = () => {
               orderLabel: order.order_title || '',
               merchandises: order.merchandises || [],
               goodsOrigin: order.id_country_origin && countryMap[order.id_country_origin]
-                          ? countryMap[order.id_country_origin]
-                          : 'Non spécifié',
+                ? countryMap[order.id_country_origin]
+                : 'Non spécifié',
               goodsDestination: order.id_country_destination && countryMap[order.id_country_destination]
-                          ? countryMap[order.id_country_destination]
-                          : 'Non spécifié',
+                ? countryMap[order.id_country_destination]
+                : 'Non spécifié',
               loadingPort: order.loadingPort || '',
               dischargingPort: order.dischargingPort || '',
               transportRemarks: order.transport_remarks || '',
@@ -155,6 +162,15 @@ const OpOrderDetails = () => {
     loadData();
   }, [orderId, certifId, idLogin]);
 
+
+const handleFileClick = (file) => {
+  // Construct the file URL
+  const fileUrl = `${API_URL}/files/commandes/${new Date().getFullYear()}/${file.file_guid}`;
+  // Open in a new browser tab
+  window.open(fileUrl, '_blank');
+};
+
+
   const handleValidate = () => {
     console.log('Commande validée :', orderId);
     navigate('/operator-dashboard');
@@ -164,6 +180,30 @@ const OpOrderDetails = () => {
     console.log('Commande rejetée :', orderId);
     navigate('/operator-dashboard');
   };
+
+  useEffect(() => {
+    const loadDocumentsInfo = async () => {
+      try {
+        // Prepare parameters for the function.
+        // Here we pass the current orderId. You may add more parameters as needed.
+        const queryParams = {
+          p_id_order_list: orderId,
+          p_isactive: true,
+          // p_id_custaccount: customerAccountId,
+        };
+        const result = await getOrderFilesInfo(queryParams);
+        // Update our state with the retrieved documents info
+        setDocumentsInfo(result);
+      } catch (error) {
+        console.error('Error retrieving documents info:', error);
+      }
+    };
+
+    if (orderId) {
+      loadDocumentsInfo();
+    }
+  }, [orderId]);
+
 
   if (loading) {
     return <div className="op-form">Chargement…</div>;
@@ -325,24 +365,34 @@ const OpOrderDetails = () => {
         <div className="step5-designation-commande">
           <h5 className="step5-sub-title">7/7 Pièce Justificatives & annexes</h5>
           <div className="step5-pieces-justificatives-rectangle">
-            {formData.documents && formData.documents.length > 0 ? (
+            {documentsInfo && documentsInfo.length > 0 ? (
               <div className="step5-table-responsive">
                 <table className="step5-document-table">
                   <thead>
                     <tr>
                       <th>Nom</th>
                       <th>Type</th>
-                      <th>Remarque</th>
                       <th>Fichier</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {formData.documents.map((doc, index) => (
+                    {documentsInfo.map((doc, index) => (
                       <tr key={index}>
-                        <td>{doc.name}</td>
+                        <td>{doc.txt_description_fr}</td>
                         <td>{doc.type === 'justificative' ? 'Justificative' : 'Annexe'}</td>
-                        <td>{doc.remarks || 'Aucune remarque'}</td>
-                        <td>{doc.file ? doc.file.name : 'Aucun fichier'}</td>
+                        {/* 3) Clickable link */}
+                        <td>
+                          {doc.file_guid ? (
+                            <span
+                              onClick={() => handleFileClick(doc)}
+                              style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
+                            >
+                              {doc.file_origin_name || 'Télécharger le fichier'}
+                            </span>
+                          ) : (
+                            "Aucun fichier"
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
