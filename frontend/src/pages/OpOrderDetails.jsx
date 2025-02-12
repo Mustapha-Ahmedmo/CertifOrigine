@@ -95,6 +95,8 @@ const API_URL = import.meta.env.VITE_API_URL;
               p_id_order_list: orderId,  // Force the search by orderId
               p_idlogin: idLogin,
             });
+
+            console.log(ordersResponse)
           } else {
             // For non-operator users, use a default lookup (or other filters)
             ordersResponse = await getOrdersForCustomer({
@@ -118,8 +120,12 @@ const API_URL = import.meta.env.VITE_API_URL;
               goodsDestination: order.id_country_destination && countryMap[order.id_country_destination]
                 ? countryMap[order.id_country_destination]
                 : 'Non spécifié',
-              loadingPort: order.loadingPort || '',
-              dischargingPort: order.dischargingPort || '',
+              loadingPort: order.id_country_port_loading && countryMap[order.id_country_port_loading]
+              ? countryMap[order.id_country_port_loading]
+              : 'Non spécifié',
+              dischargingPort: order.id_country_port_discharge && countryMap[order.id_country_port_discharge]
+              ? countryMap[order.id_country_port_discharge]
+              : 'Non spécifié',
               transportRemarks: order.transport_remarks || '',
               receiverName: order.recipient_name || 'N/A',
               receiverAddress: order.address_1 || 'N/A',
