@@ -10,96 +10,164 @@ import {
   getCertifGoodsInfo,
   getTransmodeInfo,
   getUnitWeightInfo,
-  setOrdCertifTranspMode
+  setOrdCertifTranspMode,
 } from '../../../../services/apiServices';
 import { useSelector } from 'react-redux';
 
+// Si vous utilisez FontAwesome pour les icônes
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEdit, faTimes } from '@fortawesome/free-solid-svg-icons';
+
 const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} }) => {
   const { t } = useTranslation();
+
+  // Destinataire : nouveau / existant
   const [isNewDestinataire, setIsNewDestinataire] = useState(false);
+  const [selectedRecipient, setSelectedRecipient] = useState('');
+
+  // Données chargées (pays, destinataires, etc.)
+  const [recipients, setRecipients] = useState([]);
+  const [countries, setCountries] = useState([]);
+  const [transportModes, setTransportModes] = useState([]);
+  const [unitWeights, setUnitWeights] = useState([]);
+
+  // État de chargement/erreur
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
-  const [recipients, setRecipients] = useState([]); // State for actual recipients
-  const [selectedRecipient, setSelectedRecipient] = useState(''); // Selected recipient ID
-  const [selectedFakeCompany, setSelectedFakeCompany] = useState('');
 
-  const [countries, setCountries] = useState([]); // State for countries
-  const [transportModes, setTransportModes] = useState([]); // State for transport modes (from API)
-  const [unitWeights, setUnitWeights] = useState([]); // State for unit weights
+  // Contrôle d’édition par marchandise (lignes sans tableau)
+  const [merchEditStates, setMerchEditStates] = useState([]);
 
-  const [loading, setLoading] = useState(true); // Loading state
-  const [error, setError] = useState(null); // Error state
+  // Accordéon : une seule section ouverte
+  const [openSections, setOpenSections] = useState({
+    section1: true,
+    section2: false,
+    section3: false,
+    section4: false,
+    section5: false,
+    section6: false,
+    section7: false,
+    section8: false,
+  });
 
-  // Extract query params (certifId and orderId)
+  // Fonction pour ouvrir/fermer une section (en fermant les autres)
+  const toggleSection = (sectionKey) => {
+    setOpenSections((prev) => {
+      const isCurrentlyOpen = prev[sectionKey];
+      // Ferme tout
+      const allClosed = Object.keys(prev).reduce((acc, key) => {
+        acc[key] = false;
+        return acc;
+      }, {});
+      // Ouvre/ferme la section cliquée
+      allClosed[sectionKey] = !isCurrentlyOpen;
+      return allClosed;
+    });
+  };
+
+  // Champs obligatoires si nouveau destinataire vs. existant
+  const fieldsForNewRecipient = [
+    'receiverName',
+    'receiverAddress',
+    'receiverPostalCode',
+    'receiverCity',
+    'receiverCountry',
+    'receiverPhone',
+  ];
+  const fieldsForExistingRecipient = ['selectedRecipientId'];
+
+  // Champs obligatoires (hors section2 dynamique)
+  const requiredFieldsBySectionBase = {
+    section1: [],
+    // section2 dépend de isNewDestinataire
+    section3: ['goodsOrigin', 'goodsDestination'],
+    section4: ['loadingPort', 'dischargingPort', 'transportModes'],
+    section5: ['merchandises'], // Au moins 1
+    section6: ['copies'],
+    section7: ['isCommitted'],
+    section8: [],
+  };
+
+  // Récup info user
+  const auth = useSelector((state) => state.auth);
+  const user = auth?.user;
+  const customerAccountId = user?.id_cust_account;
+
+  // Query params
   const params = new URLSearchParams(location.search);
   const certifId = params.get('certifId');
   const orderId = params.get('orderId');
 
-  const auth = useSelector((state) => state.auth); // Access user data from Redux
-  const user = useSelector((state) => state.auth.user);
-  const customerAccountId = auth?.user?.id_cust_account; // Customer Account ID
-
+  // Chargement initial
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
 
-        // If certifId exists, fetch goods data and populate values.merchandises
         if (certifId) {
+          // Récup marchandises existantes
           const goodsResponse = await getCertifGoodsInfo(certifId);
           const fetchedGoods = goodsResponse.data || [];
-          handleChange('merchandises', fetchedGoods.map((good) => ({
-            designation: good.goodDescription,
-            boxReference: good.goodReferences,
-            quantity: good.quantity,
-            unit: good.unit || 'N/A',
-          })));
+          // On remplit le formData
+          handleChange(
+            'merchandises',
+            fetchedGoods.map((good) => ({
+              designation: good.goodDescription,
+              boxReference: good.goodReferences,
+              quantity: good.quantity,
+              unit: good.unit || 'N/A',
+              reference: '',
+            }))
+          );
+          // On init merchEditStates pour chaque marchandise => faux (read-only)
+          setMerchEditStates(fetchedGoods.map(() => false));
         }
 
-        // Fetch countries
+        // Pays
         const fetchedCountries = await fetchCountries();
         setCountries(fetchedCountries);
 
-        // Fetch transport modes
+        // Modes transport
         const fetchedTransportModes = await getTransmodeInfo(null, true);
         setTransportModes(fetchedTransportModes.data);
 
-        // Fetch unit weights and filter out any unit with id less than 1
+        // Unités de poids
         const fetchedUnitWeights = await getUnitWeightInfo(null, true);
         const filteredUnitWeights = (fetchedUnitWeights.data || []).filter(
           (unit) => unit.id_unit_weight >= 1
         );
         setUnitWeights(filteredUnitWeights);
 
-        // Optionally, set a default unit if not already set:
+        // Unité par défaut ?
         if (!values.unit && filteredUnitWeights.length > 0) {
-          // Assume the unit with id 1 exists:
-          const defaultUnit = filteredUnitWeights.find(unit => unit.id_unit_weight === 1);
+          const defaultUnit = filteredUnitWeights.find((u) => u.id_unit_weight === 1);
           if (defaultUnit) {
             handleChange('unit', defaultUnit.symbol_fr);
           }
         }
 
-        // Fetch recipients if no certifId and a customerAccountId exists
+        // Destinataires (si pas de certifId)
         if (!certifId && customerAccountId) {
-          const recipientFetched = await fetchRecipients({
-            idListCA: customerAccountId,
-          });
+          const recipientFetched = await fetchRecipients({ idListCA: customerAccountId });
           setRecipients(recipientFetched.data);
           handleChange('recipients', recipientFetched.data);
           console.log(recipientFetched);
         }
 
         setLoading(false);
-      } catch (error) {
-        console.error('Error loading data:', error);
+      } catch (err) {
+        console.error('Error loading data:', err);
         setLoading(false);
+        setError('Erreur lors du chargement des données.');
       }
     };
 
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [certifId, customerAccountId]);
 
-  // Use safeValues as fallback
+  // Valeurs par défaut
   const safeValues = values || {
     goodsOrigin: '',
     goodsDestination: '',
@@ -107,48 +175,111 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
     remarks: '',
     copies: 1,
     isCommitted: false,
-    transportModes: {} // Initialize as an object
+    transportModes: {},
   };
 
-  // Compute a joined string of selected transport mode labels directly from form data.
-  const selectedTransportModes = Object.keys(safeValues.transportModes)
-    .filter(key => safeValues.transportModes[key])
-    .map(key => key.charAt(0).toUpperCase() + key.slice(1))
-    .join(', ') || 'Aucun mode sélectionné';
+  // Calcul du nombre de champs manquants par section
+  const getMissingFieldsCount = (sectionKey) => {
+    const config = { ...requiredFieldsBySectionBase };
+    const section2Fields = isNewDestinataire
+      ? fieldsForNewRecipient
+      : fieldsForExistingRecipient;
+    config.section2 = section2Fields;
 
+    const fields = config[sectionKey] || [];
+    let missingCount = 0;
+
+    fields.forEach((fieldName) => {
+      if (fieldName === 'transportModes') {
+        // Au moins un mode coché
+        const isTransportSelected = Object.keys(safeValues.transportModes || {}).some(
+          (key) => safeValues.transportModes[key]
+        );
+        if (!isTransportSelected) missingCount += 1;
+      } else if (fieldName === 'merchandises') {
+        // Au moins 1 marchandise
+        if (!safeValues.merchandises || safeValues.merchandises.length === 0) {
+          missingCount += 1;
+        }
+      } else if (!safeValues[fieldName]) {
+        missingCount += 1;
+      }
+    });
+
+    return missingCount;
+  };
+
+  // Ajoute une marchandise vide et met son état en "édition"
+  const createEmptyMerchLine = () => {
+    const newItem = {
+      designation: '',
+      boxReference: '',
+      quantity: 0,
+      unit: 'kg',
+      reference: '',
+    };
+    const updated = [...safeValues.merchandises, newItem];
+    handleChange('merchandises', updated);
+
+    // On met la nouvelle ligne en mode éditable
+    setMerchEditStates((prev) => [...prev, true]);
+  };
+
+  // Bascule le mode édition d'une ligne
+  const toggleLineEdit = (index) => {
+    setMerchEditStates((prev) => {
+      const newEditStates = [...prev];
+      newEditStates[index] = !newEditStates[index];
+      return newEditStates;
+    });
+  };
+
+  // Supprime la marchandise
+  const removeMerchandise = (index) => {
+    const updated = safeValues.merchandises.filter((_, i) => i !== index);
+    handleChange('merchandises', updated);
+
+    const newStates = merchEditStates.filter((_, i) => i !== index);
+    setMerchEditStates(newStates);
+  };
+
+  // Gère le changement d'un champ d'une marchandise
+  const handleMerchChange = (index, field, newValue) => {
+    const updated = [...safeValues.merchandises];
+    updated[index] = {
+      ...updated[index],
+      [field]: newValue,
+    };
+    handleChange('merchandises', updated);
+  };
+
+  // Envoi (création certif + ajout marchandises)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Vérification que le port de chargement est renseigné
-  if (!safeValues.loadingPort) {
-    setErrorMessage("Veuillez sélectionner un port de chargement.");
-    return;
-  }
-
-  // Vérification que le port de déchargement est renseigné
-  if (!safeValues.dischargingPort) {
-    setErrorMessage("Veuillez sélectionner un port de déchargement.");
-    return;
-  }
-
-    // Validate transport modes: at least one must be selected.
-    const isTransportSelected = Object.keys(safeValues.transportModes).some(
+    // Vérifs
+    if (!safeValues.loadingPort) {
+      setErrorMessage('Veuillez sélectionner un port de chargement.');
+      return;
+    }
+    if (!safeValues.dischargingPort) {
+      setErrorMessage('Veuillez sélectionner un port de déchargement.');
+      return;
+    }
+    const isTransportSelected = Object.keys(safeValues.transportModes || {}).some(
       (key) => safeValues.transportModes[key]
     );
     if (!isTransportSelected) {
       setErrorMessage('Veuillez sélectionner au moins un mode de transport.');
       return;
     }
-
-    // Validate merchandise: at least one must be added.
     if (safeValues.merchandises.length === 0) {
       setErrorMessage('Veuillez ajouter au moins une marchandise.');
       return;
     }
 
+    // Gérer la création / sélection destinataire
     let recipientId = selectedRecipient;
-
-    // If user wants to create a new recipient (destinataire)
     if (isNewDestinataire) {
       try {
         const newRecipientData = {
@@ -158,49 +289,40 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
           address1: safeValues.receiverAddress,
           address2: safeValues.receiverAddress2,
           address3: safeValues.receiverPostalCode,
-          idCity: 1, // Or correct city ID
+          idCity: 1,
           statutFlag: 1,
           activationDate: new Date().toISOString(),
           deactivationDate: new Date('9999-12-31').toISOString(),
-          idLoginInsert: auth?.user?.id_login_user || 1,
+          idLoginInsert: user?.id_login_user || 1,
           idLoginModify: null,
         };
-    
-        // 2) Création du nouveau destinataire
         const recipientResponse = await addRecipient(newRecipientData);
-        console.log('New recipient created successfully!', recipientResponse);
-    
-        // Récupérer l'ID du nouveau destinataire
+        console.log('Nouveau destinataire créé !', recipientResponse);
+
         recipientId = recipientResponse?.newRecipientId;
-        console.log('New recipient ID =', recipientId);
-    
-        // 3) Re-fetch de la liste complète des destinataires
-        const updatedRecipientsResponse = await fetchRecipients({
-          idListCA: customerAccountId, // Paramètre pour récupérer la liste
-        });
-        console.log('Liste mise à jour des destinataires:', updatedRecipientsResponse.data);
-    
-        // 4) Mise à jour du state local et de values
+        console.log('Nouvel ID destinataire =', recipientId);
+
+        // Re-fetch destinataires
+        const updatedRecipientsResponse = await fetchRecipients({ idListCA: customerAccountId });
         setRecipients(updatedRecipientsResponse.data);
         handleChange('recipients', updatedRecipientsResponse.data);
-    
-        // 5) (Optionnel) Pré-sélection de ce nouveau destinataire si tu le souhaites
+
         setSelectedRecipient(recipientId);
         handleChange('selectedRecipientId', recipientId);
-    
-      } catch (error) {
-        console.error('Error creating new recipient:', error);
-        setErrorMessage("Erreur lors de la création du nouveau destinataire. Veuillez réessayer.");
+      } catch (err) {
+        console.error('Erreur creation recipient :', err);
+        setErrorMessage('Erreur lors de la création du nouveau destinataire.');
         return;
       }
     }
-    
 
+    // Mapping pays -> id
     const getCountryId = (countryName) => {
-      const foundCountry = countries.find(country => country.symbol_fr === countryName);
-      return foundCountry ? foundCountry.id_country : null;
+      const found = countries.find((c) => c.symbol_fr === countryName);
+      return found ? found.id_country : null;
     };
 
+    // On crée le certificat
     const certData = {
       idOrder: safeValues.orderId,
       idRecipientAccount: recipientId,
@@ -210,497 +332,598 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
       idCountryPortLoading: getCountryId(safeValues.loadingPort),
       idCountryPortDischarge: getCountryId(safeValues.dischargingPort),
       copyCount: safeValues.copies,
-      idLoginInsert: auth?.user?.id_login_user || 1,
+      idLoginInsert: user?.id_login_user || 1,
       transportRemarks: safeValues.transportRemarks,
     };
 
-    const certResponse = await createCertificate(certData);
-    console.log('Certificate created successfully:', certResponse);
+    try {
+      const certResponse = await createCertificate(certData);
+      console.log('createCertificate OK :', certResponse);
 
-    for (const merchandise of safeValues.merchandises) {
-      try {
-        const normalizeText = (text) => text.toLowerCase().trim();
+      if (!certResponse.newCertifId) {
+        // Si pour une raison newCertifId est absent
+        throw new Error("La réponse du serveur ne contient pas 'newCertifId'.");
+      }
+
+      // Ajout marchandises
+      for (const merchandise of safeValues.merchandises) {
+        // Vérification avant d'appeler addOrUpdateGoods
+        if (!merchandise.boxReference || !merchandise.designation) {
+          throw new Error(
+            "Les champs 'Référence / HSCODE' et 'Nature de la marchandise' sont obligatoires."
+          );
+        }
+
+        // Trouver l'unité
+        const normalizeText = (txt) => (txt || '').toLowerCase().trim();
         const matchedUnit = unitWeights.find(
-          (unit) => normalizeText(unit.symbol_fr) === normalizeText(merchandise.unit)
+          (u) => normalizeText(u.symbol_fr) === normalizeText(merchandise.unit)
         );
+        if (!matchedUnit) {
+          throw new Error(
+            `Unité '${merchandise.unit}' inconnue. Veuillez sélectionner une unité valide.`
+          );
+        }
+
         const goodsData = {
           idOrdCertifOri: certResponse.newCertifId,
           goodDescription: merchandise.designation,
           goodReferences: merchandise.boxReference,
           weight_qty: merchandise.quantity,
-          idUnitWeight: matchedUnit ? matchedUnit.id_unit_weight : null,
+          idUnitWeight: matchedUnit.id_unit_weight, // non-null
         };
-        console.log("Merchandise =>", merchandise);
+
         await addOrUpdateGoods(goodsData);
-      } catch (error) {
-        console.error('Error adding goods:', error);
-        setErrorMessage("Erreur lors de l'ajout des marchandises. Veuillez réessayer.");
-        return;
       }
-    }
 
-    // For each selected transport mode, call setOrdCertifTranspMode
-    const selectedModeKeys = Object.keys(safeValues.transportModes || {}).filter(
-      (key) => safeValues.transportModes[key]
-    );
-
-    for (const key of selectedModeKeys) {
-      const matched = transportModes.find(
-        (tm) => tm.symbol_eng.toLowerCase() === key
+      // Ajout modes de transport
+      const selectedModeKeys = Object.keys(safeValues.transportModes || {}).filter(
+        (k) => safeValues.transportModes[k]
       );
-      if (matched) {
-        const result = await setOrdCertifTranspMode({
-          id_ord_certif_transp_mode: null,
-          id_ord_certif_ori: certResponse.newCertifId,
-          id_transport_mode: matched.id_transport_mode,
-        });
-        console.log('Transport mode set:', result);
+      for (const key of selectedModeKeys) {
+        const matched = transportModes.find((tm) => tm.symbol_eng.toLowerCase() === key);
+        if (matched) {
+          await setOrdCertifTranspMode({
+            id_ord_certif_transp_mode: null,
+            id_ord_certif_ori: certResponse.newCertifId,
+            id_transport_mode: matched.id_transport_mode,
+          });
+        }
       }
+
+      setErrorMessage('');
+      nextStep();
+    } catch (err) {
+      console.error('Erreur lors de la création du certificat ou marchandises:', err);
+      setErrorMessage(err.message || "Une erreur est survenue lors de l'enregistrement.");
     }
-
-    setErrorMessage('');
-    nextStep();
   };
 
-  const addMerchandise = () => {
-    if (!safeValues.designation || !safeValues.quantity || !safeValues.boxReference) return;
-    const newMerchandise = {
-      designation: safeValues.designation,
-      boxReference: safeValues.boxReference,
-      quantity: safeValues.quantity,
-      unit: safeValues.unit,
-    };
-    handleMerchandiseChange(newMerchandise);
-    handleChange('designation', '');
-    handleChange('quantity', '');
-    handleChange('boxReference', '');
-    handleChange('unit', 'kg');
-  };
-
-  const removeMerchandise = (index) => {
-    const updatedMerchandises = safeValues.merchandises.filter((_, i) => i !== index);
-    handleChange('merchandises', updatedMerchandises);
-  };
+  // Rendu si en chargement
+  if (loading) return <div>Chargement en cours...</div>;
+  if (error) return <div className="error-message">{error}</div>;
 
   return (
     <form onSubmit={handleSubmit} className="step-form">
-      {/* <h3>{t('step1.title')}</h3> */}
-
-
-      <div className="section-title">{t('step1.exporterTitle')}</div>
-      <div className="exporter-name-container">
-        <p className="exporter-name">{user?.companyname}</p>
+      {/* SECTION 1/8 : DEMANDEUR */}
+      <div className="collapsible-section">
+        <div className="collapsible-header" onClick={() => toggleSection('section1')}>
+          <span className="section-title">
+            1/8 DEMANDEUR {openSections.section1 ? '▼' : '►'}
+            {` (champs manquants : ${getMissingFieldsCount('section1')})`}
+          </span>
+        </div>
+        {openSections.section1 && (
+          <div className="collapsible-content">
+            <div className="exporter-name-container">
+              <p className="exporter-name">{user?.companyname}</p>
+            </div>
+          </div>
+        )}
       </div>
       <hr />
 
-      <div className="section-title">{t('step1.receiverTitle')}</div>
-      <div className="form-group form-group-radio">
-        <label>
-          <input
-            type="radio"
-            name="destinataire"
-            value="choisir"
-            defaultChecked
-            onChange={() => setIsNewDestinataire(false)}
-          />{' '}
-          {t('step1.chooseReceiver')}
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="destinataire"
-            value="saisir"
-            onChange={() => setIsNewDestinataire(true)}
-          />{' '}
-          {t('step1.enterNewReceiver')}
-        </label>
-      </div>
-
-      {!isNewDestinataire && (
-        <div className="form-group">
-          <label>Choisir une entreprise *</label>
-          <select
-            value={selectedRecipient}
-            onChange={(e) => {
-              const selectedId = e.target.value;
-              setSelectedRecipient(selectedId);
-              handleChange('selectedRecipientId', selectedId);
-
-              // Find the selected recipient and update form data accordingly
-              const recipient = recipients.find(
-                (r) => r.id_recipient_account.toString() === selectedId
-              );
-              if (recipient) {
-                handleChange('receiverName', recipient.recipient_name);
-                handleChange('receiverAddress', recipient.address_1);
-                handleChange('receiverAddress2', recipient.address_2);
-                handleChange('receiverPostalCode', recipient.address_3);
-                handleChange('receiverCity', recipient.city_symbol_fr_recipient);
-                handleChange('receiverCountry', recipient.country_symbol_fr_recipient);
-                handleChange('receiverPhone', recipient.trade_registration_num);
-              }
-            }}
-            required
-          >
-            <option value="">-- Sélectionnez une entreprise --</option>
-            {recipients.map((recipient) => (
-              <option
-                key={recipient.id_recipient_account}
-                value={recipient.id_recipient_account}
-              >
-                {recipient.recipient_name}
-              </option>
-            ))}
-          </select>
+      {/* SECTION 2/8 : DESTINATAIRE */}
+      <div className="collapsible-section">
+        <div className="collapsible-header" onClick={() => toggleSection('section2')}>
+          <span className="section-title">
+            2/8 DESTINATAIRE {openSections.section2 ? '▼' : '►'}
+            {` (champs manquants : ${getMissingFieldsCount('section2')})`}
+          </span>
         </div>
-      )}
-
-      {isNewDestinataire && (
-        <>
-          <div className="form-group-row">
-            <div className="form-group">
-              <label>{t('step1.companyName')} *</label>
-              <input
-                type="text"
-                value={safeValues.receiverName}
-                onChange={(e) => handleChange('receiverName', e.target.value)}
-                required
-              />
+        {openSections.section2 && (
+          <div className="collapsible-content">
+            <div className="form-group form-group-radio">
+              <label>
+                <input
+                  type="radio"
+                  name="destinataire"
+                  value="choisir"
+                  defaultChecked
+                  onChange={() => setIsNewDestinataire(false)}
+                />{' '}
+                {t('step1.chooseReceiver')}
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="destinataire"
+                  value="saisir"
+                  onChange={() => setIsNewDestinataire(true)}
+                />{' '}
+                {t('step1.enterNewReceiver')}
+              </label>
             </div>
+
+            {!isNewDestinataire && (
+              <div className="form-group">
+                <label>Choisir une entreprise *</label>
+                <select
+                  value={selectedRecipient}
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    setSelectedRecipient(selectedId);
+                    handleChange('selectedRecipientId', selectedId);
+
+                    // Trouver le destinataire dans la liste
+                    const r = recipients.find(
+                      (rec) => rec.id_recipient_account.toString() === selectedId
+                    );
+                    if (r) {
+                      handleChange('receiverName', r.recipient_name);
+                      handleChange('receiverAddress', r.address_1);
+                      handleChange('receiverAddress2', r.address_2);
+                      handleChange('receiverPostalCode', r.address_3);
+                      handleChange('receiverCity', r.city_symbol_fr_recipient);
+                      handleChange('receiverCountry', r.country_symbol_fr_recipient);
+                      handleChange('receiverPhone', r.trade_registration_num);
+                    }
+                  }}
+                  required
+                >
+                  <option value="">-- Sélectionnez une entreprise --</option>
+                  {recipients.map((recipient) => (
+                    <option
+                      key={recipient.id_recipient_account}
+                      value={recipient.id_recipient_account}
+                    >
+                      {recipient.recipient_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {isNewDestinataire && (
+              <>
+                <div className="form-group-row">
+                  <div className="form-group">
+                    <label>{t('step1.companyName')} *</label>
+                    <input
+                      type="text"
+                      value={safeValues.receiverName || ''}
+                      onChange={(e) => handleChange('receiverName', e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group-row">
+                  <div className="form-group">
+                    <label>{t('step1.address')} *</label>
+                    <input
+                      type="text"
+                      value={safeValues.receiverAddress || ''}
+                      onChange={(e) => handleChange('receiverAddress', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('step1.addressNext')}</label>
+                    <input
+                      type="text"
+                      value={safeValues.receiverAddress2 || ''}
+                      onChange={(e) => handleChange('receiverAddress2', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group-row">
+                  <div className="form-group">
+                    <label>{t('step1.postalCode')} *</label>
+                    <input
+                      type="text"
+                      value={safeValues.receiverPostalCode || ''}
+                      onChange={(e) => handleChange('receiverPostalCode', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('step1.city')} *</label>
+                    <input
+                      type="text"
+                      value={safeValues.receiverCity || ''}
+                      onChange={(e) => handleChange('receiverCity', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('step1.country')} *</label>
+                    <select
+                      value={safeValues.receiverCountry || ''}
+                      onChange={(e) => handleChange('receiverCountry', e.target.value)}
+                      required
+                    >
+                      <option value="">-- Sélectionnez un pays --</option>
+                      {countries.map((country) => (
+                        <option key={country.id_country} value={country.symbol_fr}>
+                          {country.symbol_fr}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Numéro de téléphone *</label>
+                  <input
+                    type="tel"
+                    value={safeValues.receiverPhone || ''}
+                    onChange={(e) => handleChange('receiverPhone', e.target.value)}
+                    required
+                  />
+                </div>
+              </>
+            )}
           </div>
+        )}
+      </div>
+      <hr />
 
-          <div className="form-group-row">
+      {/* SECTION 3/8 : ORIGINE */}
+      <div className="collapsible-section">
+        <div className="collapsible-header" onClick={() => toggleSection('section3')}>
+          <span className="section-title">
+            3/8 ORIGINE {openSections.section3 ? '▼' : '►'}
+            {` (champs manquants : ${getMissingFieldsCount('section3')})`}
+          </span>
+        </div>
+        {openSections.section3 && (
+          <div className="collapsible-content">
             <div className="form-group">
-              <label>{t('step1.address')} *</label>
-              <input
-                type="text"
-                value={safeValues.receiverAddress}
-                onChange={(e) => handleChange('receiverAddress', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t('step1.addressNext')}</label>
-              <input
-                type="text"
-                value={safeValues.receiverAddress2}
-                onChange={(e) => handleChange('receiverAddress2', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="form-group-row">
-            <div className="form-group">
-              <label>{t('step1.postalCode')} *</label>
-              <input
-                type="text"
-                value={safeValues.receiverPostalCode}
-                onChange={(e) => handleChange('receiverPostalCode', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t('step1.city')} *</label>
-              <input
-                type="text"
-                value={safeValues.receiverCity}
-                onChange={(e) => handleChange('receiverCity', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t('step1.country')} *</label>
+              <label>Pays d'origine de la marchandise *</label>
               <select
-                value={safeValues.receiverCountry}
-                onChange={(e) => handleChange('receiverCountry', e.target.value)}
+                value={safeValues.goodsOrigin || ''}
+                onChange={(e) => handleChange('goodsOrigin', e.target.value)}
                 required
               >
                 <option value="">-- Sélectionnez un pays --</option>
-                {countries.map((country) => (
-                  <option key={country.id_country} value={country.symbol_fr}>
-                    {country.symbol_fr}
+                {countries.map((c) => (
+                  <option key={c.id_country} value={c.symbol_fr}>
+                    {c.symbol_fr}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Pays de destination de la marchandise *</label>
+              <select
+                value={safeValues.goodsDestination || ''}
+                onChange={(e) => handleChange('goodsDestination', e.target.value)}
+                required
+              >
+                <option value="">-- Sélectionnez un pays --</option>
+                {countries.map((c) => (
+                  <option key={c.id_country} value={c.symbol_fr}>
+                    {c.symbol_fr}
                   </option>
                 ))}
               </select>
             </div>
           </div>
+        )}
+      </div>
+      <hr />
 
-          <div className="form-group">
-            <label>Numéro de téléphone *</label>
-            <input
-              type="tel"
-              value={safeValues.receiverPhone}
-              onChange={(e) => handleChange('receiverPhone', e.target.value)}
-              required
-            />
+      {/* SECTION 4/8 : TRANSPORT */}
+      <div className="collapsible-section">
+        <div className="collapsible-header" onClick={() => toggleSection('section4')}>
+          <span className="section-title">
+            4/8 MODES DE TRANSPORT {openSections.section4 ? '▼' : '►'}
+            {` (champs manquants : ${getMissingFieldsCount('section4')})`}
+          </span>
+        </div>
+        {openSections.section4 && (
+          <div className="collapsible-content">
+            <div className="form-group-row">
+              <div className="form-group">
+                <label>
+                  Port de chargement <span className="required">*</span>
+                </label>
+                <select
+                  value={safeValues.loadingPort || ''}
+                  onChange={(e) => handleChange('loadingPort', e.target.value)}
+                  required
+                >
+                  <option value="">-- Sélectionnez un pays --</option>
+                  {countries.map((c) => (
+                    <option key={c.id_country} value={c.symbol_fr}>
+                      {c.symbol_fr}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>
+                  Port de déchargement <span className="required">*</span>
+                </label>
+                <select
+                  value={safeValues.dischargingPort || ''}
+                  onChange={(e) => handleChange('dischargingPort', e.target.value)}
+                  required
+                >
+                  <option value="">-- Sélectionnez un pays --</option>
+                  {countries.map((c) => (
+                    <option key={c.id_country} value={c.symbol_fr}>
+                      {c.symbol_fr}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Modes de transport</label>
+              <div className="transport-options">
+                {transportModes.map((mode) => (
+                  <label key={mode.id_transport_mode}>
+                    <input
+                      type="checkbox"
+                      checked={
+                        safeValues.transportModes[mode.symbol_eng.toLowerCase()] || false
+                      }
+                      onChange={(e) =>
+                        handleChange('transportModes', {
+                          ...safeValues.transportModes,
+                          [mode.symbol_eng.toLowerCase()]: e.target.checked,
+                        })
+                      }
+                    />{' '}
+                    {mode.symbol_fr}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Remarques sur le transport</label>
+              <textarea
+                value={safeValues.transportRemarks || ''}
+                onChange={(e) => handleChange('transportRemarks', e.target.value)}
+              />
+            </div>
           </div>
-        </>
-      )}
-
+        )}
+      </div>
       <hr />
-      <div className="section-title">3/8 Origine de la marchandise</div>
-      <div className="form-group">
-        <label>Pays d'origine de la marchandise *</label>
-        <select
-          value={safeValues.goodsOrigin}
-          onChange={(e) => handleChange('goodsOrigin', e.target.value)}
-          required
-        >
-          <option value="">-- Sélectionnez un pays --</option>
-          {countries.map((country) => (
-            <option key={country.id_country} value={country.symbol_fr}>
-              {country.symbol_fr}
-            </option>
-          ))}
-        </select>
-      </div>
 
-      <div className="form-group">
-        <label>Pays de destination de la marchandise *</label>
-        <select
-          value={safeValues.goodsDestination}
-          onChange={(e) => handleChange('goodsDestination', e.target.value)}
-          required
-        >
-          <option value="">-- Sélectionnez un pays --</option>
-          {countries.map((country) => (
-            <option key={country.id_country} value={country.symbol_fr}>
-              {country.symbol_fr}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* SECTION 5/8 : MARCHANDISES (Lignes, pas de tableau) */}
+      <div className="collapsible-section">
+        <div className="collapsible-header" onClick={() => toggleSection('section5')}>
+          <span className="section-title">
+            5/8 MARCHANDISES {openSections.section5 ? '▼' : '►'}
+            {` (champs manquants : ${getMissingFieldsCount('section5')})`}
+          </span>
+        </div>
+        {openSections.section5 && (
+          <div className="collapsible-content">
+            {/* Bouton Ajouter la marchandise */}
+            <div style={{ marginBottom: '15px' }}>
+              <button type="button" onClick={createEmptyMerchLine}>
+                Ajouter la marchandise
+              </button>
+            </div>
 
+            {/* Chaque marchandise = une ligne */}
+            {safeValues.merchandises.map((m, index) => {
+              const isEditable = merchEditStates[index] || false;
+              return (
+                <div
+                  key={index}
+                  style={{
+                    backgroundColor: '#f7f7f7',
+                    margin: '10px 0',
+                    padding: '10px',
+                    borderRadius: '5px',
+                  }}
+                >
+                  <div className="form-group-row" style={{ alignItems: 'center' }}>
+                    <div className="form-group">
+                      <label>Référence / HSCODE</label>
+                      <input
+                        type="text"
+                        disabled={!isEditable}
+                        value={m.boxReference}
+                        onChange={(e) => handleMerchChange(index, 'boxReference', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Nature de la marchandise</label>
+                      <input
+                        type="text"
+                        disabled={!isEditable}
+                        value={m.designation}
+                        onChange={(e) => handleMerchChange(index, 'designation', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Quantité</label>
+                      <input
+                        type="number"
+                        disabled={!isEditable}
+                        value={m.quantity}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          handleMerchChange(index, 'quantity', val);
+                        }}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Unité</label>
+                      <select
+                        disabled={!isEditable}
+                        value={m.unit}
+                        onChange={(e) => handleMerchChange(index, 'unit', e.target.value)}
+                      >
+                        {unitWeights.map((u) => (
+                          <option key={u.id_unit_weight} value={u.symbol_fr}>
+                            {u.symbol_fr}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Référence doc. justificatif</label>
+                      <input
+                        type="text"
+                        disabled={!isEditable}
+                        value={m.reference || ''}
+                        onChange={(e) => handleMerchChange(index, 'reference', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group button-group-inline" style={{ marginTop: '24px' }}>
+                      <button
+                        type="button"
+                        style={{ backgroundColor: '#6c757d', color: '#fff', marginRight: '5px' }}
+                        onClick={() => toggleLineEdit(index)}
+                      >
+                        <FontAwesomeIcon icon={faEdit} style={{ marginRight: '5px' }} />
+                        {isEditable ? 'Terminer' : 'Modifier'}
+                      </button>
+
+                      <button
+                        type="button"
+                        style={{ backgroundColor: '#dc3545', color: '#fff' }}
+                        onClick={() => removeMerchandise(index)}
+                      >
+                        <FontAwesomeIcon icon={faTimes} style={{ marginRight: '5px' }} />
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
       <hr />
-      <div className="section-title">4/8 Modes de transport</div>
 
-      {/* --- Listes déroulantes pour Port de chargement et Port de déchargement --- */}
-      <div className="form-group-row">
-        <div className="form-group">
-          <label>
-            Port de chargement <span className="required">*</span>
-          </label>
-          <select
-            value={safeValues.loadingPort || ''}
-            onChange={(e) => handleChange('loadingPort', e.target.value)}
-            required
-          >
-            <option value="">-- Sélectionnez un pays --</option>
-            {countries.map((country) => (
-              <option key={country.id_country} value={country.symbol_fr}>
-                {country.symbol_fr}
-              </option>
-            ))}
-          </select>
+      {/* SECTION 6/8 : NOMBRE DE COPIES */}
+      <div className="collapsible-section">
+        <div className="collapsible-header" onClick={() => toggleSection('section6')}>
+          <span className="section-title">
+            6/8 NOMBRE DE COPIES {openSections.section6 ? '▼' : '►'}
+            {` (champs manquants : ${getMissingFieldsCount('section6')})`}
+          </span>
         </div>
-        <div className="form-group">
-          <label>
-            Port de déchargement <span className="required">*</span>
-          </label>
-          <select
-            value={safeValues.dischargingPort || ''}
-            onChange={(e) => handleChange('dischargingPort', e.target.value)}
-            required
-          >
-            <option value="">-- Sélectionnez un pays --</option>
-            {countries.map((country) => (
-              <option key={country.id_country} value={country.symbol_fr}>
-                {country.symbol_fr}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-
-
-      <div className="form-group">
-        <label>Modes de transport</label>
-        <div className="transport-options">
-          {transportModes.map((mode) => (
-            <label key={mode.id_transport_mode}>
+        {openSections.section6 && (
+          <div className="collapsible-content">
+            <div className="form-group">
+              <label>Combien de copies certifiées ?</label>
               <input
-                type="checkbox"
-                checked={safeValues.transportModes[mode.symbol_eng.toLowerCase()] || false}
-                onChange={(e) =>
-                  handleChange('transportModes', {
-                    ...safeValues.transportModes,
-                    [mode.symbol_eng.toLowerCase()]: e.target.checked,
-                  })
-                }
-              />{' '}
-              {mode.symbol_fr}
-            </label>
-          ))}
-        </div>
+                type="number"
+                value={safeValues.copies || 1}
+                onChange={(e) => handleChange('copies', e.target.value)}
+                min="1"
+                required
+              />
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Display the joined selected transport mode labels 
-      <div className="selected-transport-modes">
-        <strong>Modes sélectionnés :</strong>{' '}
-        {Object.keys(safeValues.transportModes)
-          .filter((key) => safeValues.transportModes[key])
-          .map((key) => key.charAt(0).toUpperCase() + key.slice(1))
-          .join(', ') || 'Aucun mode sélectionné'}
-      </div>*/}
-
-      <div className="form-group">
-        <label>Remarques sur le transport</label>
-        <textarea
-          value={safeValues.transportRemarks}
-          onChange={(e) => handleChange('transportRemarks', e.target.value)}
-        />
-      </div>
-
       <hr />
-      <div className="section-title">5/8 Déscription des marchandises</div>
-      <div className="form-group-row">
-        <div className="form-group">
-          <label>Référence / HSCODE</label>
-          <input
-            type="text"
-            value={safeValues.boxReference}
-            onChange={(e) => handleChange('boxReference', e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label>Nature de la marchandise</label>
-          <input
-            type="text"
-            value={safeValues.designation}
-            onChange={(e) => handleChange('designation', e.target.value)}
-          />
-        </div>
 
-        <div className="form-group">
-          <label>Quantité</label>
-          <input
-            type="number"
-            value={safeValues.quantity}
-            onChange={(e) => {
-              // Convert the typed string to a float, fallback to 0 if it's not valid.
-              const floatValue = parseFloat(e.target.value) || 0;
-              handleChange('quantity', floatValue);
-            }}
-          />
+      {/* SECTION 7/8 : ENGAGEMENT */}
+      <div className="collapsible-section">
+        <div className="collapsible-header" onClick={() => toggleSection('section7')}>
+          <span className="section-title">
+            7/8 ENGAGEMENT {openSections.section7 ? '▼' : '►'}
+            {` (champs manquants : ${getMissingFieldsCount('section7')})`}
+          </span>
         </div>
-
-        <div className="form-group">
-          <label>Unité</label>
-          <select
-            value={safeValues.unit}
-            onChange={(e) => handleChange('unit', e.target.value)}
-          >
-            {unitWeights
-              .filter((unit) => unit.id_unit_weight >= 1)
-              .map((unit) => (
-                <option key={unit.id_unit_weight} value={unit.symbol_fr}>
-                  {unit.symbol_fr}
-                </option>
-              ))}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Référence doc. justificatif</label>
-          <input
-            type="text"
-            value={safeValues.reference}
-            onChange={(e) => handleChange('reference', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group button-group-inline">
-          <button type="button" onClick={addMerchandise}>
-            Ajouter la marchandise
-          </button>
-        </div>
+        {openSections.section7 && (
+          <div className="collapsible-content">
+            <p>
+              En validant ces conditions générales d'utilisation vous demandez la délivrance
+              du certificat d'origine pour les marchandises figurant en case 6, dont l'origine
+              est indiquée en case 3.
+            </p>
+            <p>
+              Vous vous engagez à ce que tous les éléments et renseignements fournis ainsi que
+              les éventuelles pièces justificatives présentées soient exactes, que les marchandises
+              auxquelles se rapportent ces renseignements soient celles pour lesquelles le certificat
+              d'origine est demandé et que ces marchandises remplissent les conditions prévues par
+              la réglementation relative à la définition de la notion d'origine des marchandises.
+            </p>
+            <div className="form-group">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={safeValues.isCommitted || false}
+                  onChange={(e) => handleChange('isCommitted', e.target.checked)}
+                />{' '}
+                Je certifie m'engager dans les conditions décrites ci-dessus
+              </label>
+            </div>
+          </div>
+        )}
       </div>
-
-      {safeValues.merchandises && safeValues.merchandises.length > 0 && (
-        <div className="dashboard-table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Désignation</th>
-                <th>Référence</th>
-                <th>Quantité</th>
-                <th>Unité</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {safeValues.merchandises.map((merchandise, index) => (
-                <tr key={index}>
-                  <td>{merchandise.designation}</td>
-                  <td>{merchandise.boxReference}</td>
-                  <td>{merchandise.quantity}</td>
-                  <td>{merchandise.unit}</td>
-                  <td>
-                    <button type="button" onClick={() => removeMerchandise(index)}>❌</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
       <hr />
-      <div className="section-title">6/8 Nombre de copie certifié</div>
-      <div className="form-group">
-        <input
-          type="number"
-          value={safeValues.copies}
-          onChange={(e) => handleChange('copies', e.target.value)}
-          min="1"
-          required
-        />
+
+      {/* SECTION 8/8 : REMARQUES */}
+      <div className="collapsible-section">
+        <div className="collapsible-header" onClick={() => toggleSection('section8')}>
+          <span className="section-title">
+            8/8 REMARQUES {openSections.section8 ? '▼' : '►'}
+            {` (champs manquants : ${getMissingFieldsCount('section8')})`}
+          </span>
+        </div>
+        {openSections.section8 && (
+          <div className="collapsible-content">
+            <div className="form-group">
+              <textarea
+                value={safeValues.remarks || ''}
+                onChange={(e) => handleChange('remarks', e.target.value)}
+                placeholder="Ajouter une remarque"
+              />
+            </div>
+            <div className="character-counter">
+              Caractère(s) restant(s) : {300 - (safeValues.remarks?.length ?? 0)}
+            </div>
+          </div>
+        )}
       </div>
 
-      <hr />
-      <div className="section-title">7/8 Engagement</div>
-      <p>
-        En validant ces conditions générales d'utilisation vous demandez la délivrance du certificat d'origine
-        pour les marchandises figurant en case 6, dont l'origine est indiquée en case 3.
-      </p>
-      <p>
-        Vous vous engagez à ce que tous les éléments et renseignements fournis ainsi que les éventuelles pièces
-        justificatives présentées soient exactes, que les marchandises auxquelles se rapportent ces renseignements
-        soient celles pour lesquelles le certificat d'origine est demandé et que ces marchandises remplissent les
-        conditions prévues par la réglementation relative à la définition de la notion d'origine des marchandises.
-      </p>
-      <div className="form-group">
-        <label>
-          <input
-            type="checkbox"
-            checked={safeValues.isCommitted}
-            onChange={(e) => handleChange('isCommitted', e.target.checked)}
-          /> Je certifie m'engager dans les conditions décrites ci-dessus
-        </label>
-      </div>
-
-      <hr />
-      <div className="section-title">8/8 REMARQUES</div>
-      <div className="form-group">
-        <textarea
-          value={safeValues.remarks}
-          onChange={(e) => handleChange('remarks', e.target.value)}
-          placeholder="Ajouter une remarque"
-        />
-      </div>
-      <div className="character-counter">
-        Caractère(s) restant(s) : {300 - (safeValues.remarks ? safeValues.remarks.length : 0)}
-      </div>
-
+      {/* Erreur globale */}
       {errorMessage && <p className="error-message">{errorMessage}</p>}
 
       <div className="button-group">
-        <button type="button" className="previous-button">Retour</button>
-        <button type="submit" className="submit-button">Enregistrer et continuer</button>
+        <button type="button" className="previous-button">
+          Retour
+        </button>
+        <button type="submit" className="submit-button">
+          Enregistrer et continuer
+        </button>
       </div>
     </form>
   );

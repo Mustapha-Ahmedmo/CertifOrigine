@@ -1,32 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import Step1 from './steps/Step1';
 import Step2 from './steps/Step2';
-import Step3 from './steps/Step3';
-import Step4 from './steps/Step4';
+// Remarquez que votre "Step4" correspond à l'étape 3 dans la frise
+import Step4 from './steps/Step4'; 
+// Votre "Step5" correspond à l'étape 4 (Récap) dans la frise
 import Step5 from './steps/Step5';
+
 import { generatePDF } from '../GeneratePDF';
 import './CreateOrder.css';
 import { createOrder } from '../../../services/apiServices';
 import { useSelector } from 'react-redux';
 
 const CreateOrder = () => {
-
-  const auth = useSelector((state) => state.auth); // Access user data from Redux
-  const customerAccountId = auth?.user?.id_cust_account; // Customer Account ID from the logged-in user
+  // Récupération de l'utilisateur depuis Redux
+  const auth = useSelector((state) => state.auth);
+  const customerAccountId = auth?.user?.id_cust_account;
   const customerLoginId = auth?.user?.id_login_user;
 
+  // Query params (optionnel, si vous en avez besoin)
   const params = new URLSearchParams(location.search);
   const existingOrderId = params.get('orderId');
   const existingCertifId = params.get('certifId');
 
+  // Gestion des étapes
   const [currentStep, setCurrentStep] = useState(1);
+
+  // state global du formulaire
   const [formData, setFormData] = useState({
     orderId: existingOrderId || null,
     certifId: existingCertifId || null,
     orderName: '',
     merchandises: [],
     remarks: '',
-    transportModes: {  // Ajout des modes de transport ici
+    transportModes: {
       air: false,
       mer: false,
       terre: false,
@@ -49,60 +55,26 @@ const CreateOrder = () => {
     receiverCountry: '',
   });
 
-  useEffect(() => {
-    const loadExistingData = async () => {
-      try {
-        if (existingOrderId) {
-          // 1. Fetch the order from the server
-          const order = await getOrderById(existingOrderId);
-          // Populate formData with order info
-          setFormData((prev) => ({
-            ...prev,
-            orderId: existingOrderId,
-            orderName: order.orderTitle || '',
-          }));
-        }
-  
-        if (existingCertifId) {
-          // 2. Fetch the certificate from the server
-          const cert = await getCertificateById(existingCertifId);
-          // Populate formData with certificate info
-          setFormData((prev) => ({
-            ...prev,
-            certifId: existingCertifId,
-            merchandises: cert.merchandises || [],
-            goodsOrigin: cert.goodsOrigin || '',
-            goodsDestination: cert.goodsDestination || '',
-            // etc...
-          }));
-        }
-      } catch (err) {
-        console.error('Error loading existing order/cert data:', err);
-      }
-    };
-  
-    loadExistingData();
-  }, [existingOrderId, existingCertifId]);
-
+  // Debug : surveille les changements de formData
   useEffect(() => {
     console.log('formData updated:', formData);
   }, [formData]);
 
+  // Fonctions de navigation
   const nextStep = () => {
-    setCurrentStep((prevStep) => (prevStep < 5 ? prevStep + 1 : prevStep));
+    setCurrentStep((prev) => (prev < 4 ? prev + 1 : prev));
   };
-
   const prevStep = () => {
-    setCurrentStep((prevStep) => (prevStep > 1 ? prevStep - 1 : prevStep));
+    setCurrentStep((prev) => (prev > 1 ? prev - 1 : prev));
   };
 
-  const handleChange = (input, value) => {
+  // Handlers génériques
+  const handleChange = (field, value) => {
     setFormData((prevState) => ({
       ...prevState,
-      [input]: value,
+      [field]: value,
     }));
   };
-
   const handleMerchandiseChange = (newMerchandise) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -110,24 +82,23 @@ const CreateOrder = () => {
     }));
   };
 
+  // Soumission finale (exemple)
   const handleSubmit = () => {
     console.log('Order Submitted:', formData);
     generatePDF(formData);
   };
 
+  // Création de la commande (étape 1)
   const createEmptyOrder = async () => {
     try {
-      const { orderName } = formData; // Extract the order name from formData
-
-      const response = await createOrder(orderName, customerAccountId, customerLoginId); // Provide necessary IDs like customer and login IDs
-      const { newOrderId } = response; // Extract the newly created orderId from the response
+      const { orderName } = formData; 
+      const response = await createOrder(orderName, customerAccountId, customerLoginId);
+      const { newOrderId } = response;
 
       if (newOrderId) {
-        setFormData((prevState) => ({
-          ...prevState,
-          orderId: newOrderId, // Store the orderId for subsequent steps
-        }));
-        nextStep(); // Proceed to the next step
+        // On stocke l'ID créé
+        setFormData((prev) => ({ ...prev, orderId: newOrderId }));
+        nextStep();
       } else {
         console.error('Order creation failed: No orderId returned');
       }
@@ -136,16 +107,16 @@ const CreateOrder = () => {
     }
   };
 
+  // Rendu conditionnel du contenu de chaque étape
   const renderStep = () => {
     switch (currentStep) {
       case 1:
         return (
           <Step1
-            nextStep={createEmptyOrder} // Use createEmptyOrder for Step 1 submission
+            nextStep={createEmptyOrder}
             handleChange={handleChange}
             values={formData}
           />
-
         );
       case 2:
         return (
@@ -154,15 +125,26 @@ const CreateOrder = () => {
             handleMerchandiseChange={handleMerchandiseChange}
             handleChange={handleChange}
             values={formData}
-          />);
-
+          />
+        );
       case 3:
+        // Correspond à votre composant Step4.jsx, nommé "Étape 3 : Pièces justificatives"
         return (
-          <Step4 nextStep={nextStep} prevStep={prevStep} handleChange={handleChange} values={formData} />
+          <Step4
+            nextStep={nextStep}
+            prevStep={prevStep}
+            handleChange={handleChange}
+            values={formData}
+          />
         );
       case 4:
+        // Correspond à Step5.jsx, "Étape 4 : Récapitulatif"
         return (
-          <Step5 prevStep={prevStep} values={formData} handleSubmit={handleSubmit} />
+          <Step5
+            prevStep={prevStep}
+            values={formData}
+            handleSubmit={handleSubmit}
+          />
         );
       default:
         return null;
@@ -171,18 +153,46 @@ const CreateOrder = () => {
 
   return (
     <div className="create-order-container">
-      <div className="steps-progress">
-        {[1, 2,].map((step) => (
-          <div key={step} className={`step-item ${currentStep >= step ? 'completed' : ''}`}>
-            <div className="step-circle">{currentStep > step ? '✔️' : step}</div>
-            <div className="step-label">
-              {step === 1 && 'ÉTAPE1\nDÉTAILS DU CERTIFICAT D\'ORIGINE'}
-              {step === 2 && 'ÉTAPE2\nPIECE JUSTIFICATIVE'}
-              {step === 3 && 'ÉTAPE3\nNOMBRE DE COPIE CERTIFIÉ'}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* FRISE D'ÉTAPES : on a 4 étapes au total */}
+      <nav className="steps-progress-nav">
+        <ul className="steps-nav-list">
+          {[1, 2, 3, 4].map((step) => {
+            // On détermine si c'est l'étape active
+            const isActive = currentStep === step;
+
+            return (
+              <li key={step} className={`step-tab ${isActive ? 'active' : ''}`}>
+                {step === 1 && (
+                  <>
+                    <div className="step-tab-title">Étape 1</div>
+                    <div className="step-tab-subtitle">Création de la commande</div>
+                  </>
+                )}
+                {step === 2 && (
+                  <>
+                    <div className="step-tab-title">Étape 2</div>
+                    <div className="step-tab-subtitle">Contenu du certificat d'origine</div>
+                  </>
+                )}
+                {step === 3 && (
+                  <>
+                    <div className="step-tab-title">Étape 3</div>
+                    <div className="step-tab-subtitle">Pièces justificatives</div>
+                  </>
+                )}
+                {step === 4 && (
+                  <>
+                    <div className="step-tab-title">Étape 4</div>
+                    <div className="step-tab-subtitle">Récapitulatif</div>
+                  </>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* Contenu de l'étape */}
       <div className="step-content">{renderStep()}</div>
     </div>
   );

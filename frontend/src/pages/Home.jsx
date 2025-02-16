@@ -7,6 +7,7 @@ import {
   faCheckCircle,
   faPlus,
   faEye,
+  faUndo, // <-- Icône ajouté pour l'onglet "retourné"
 } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
@@ -16,17 +17,23 @@ import './Home.css';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState('visa');
+  // États pour stocker les différentes listes de commandes
   const [ordersVisa, setOrdersVisa] = useState([]);
   const [ordersValidation, setOrdersValidation] = useState([]);
   const [ordersPayment, setOrdersPayment] = useState([]);
+  // Nouvel état pour les commandes "retournées par la CDD"
+  const [ordersReturned, setOrdersReturned] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Récupération des infos utilisateur
   const user = useSelector((state) => state.auth.user);
   const idLogin = user?.id_login_user;
   const idCustAccount = user?.id_cust_account;
   const navigate = useNavigate();
 
+  // Fonction pour récupérer et classer les commandes
   const fetchOrders = async () => {
     if (!idLogin || !idCustAccount) return;
     try {
@@ -38,10 +45,13 @@ const Home = () => {
       console.log(response);
       const allOrders = response.data || [];
 
-      // Categorize orders based on status
-      setOrdersVisa(allOrders.filter(order => order.id_order_status === 1)); // À soumettre
-      setOrdersValidation(allOrders.filter(order => order.id_order_status === 2)); // En attente de validation
-      setOrdersPayment(allOrders.filter(order => order.id_order_status === 3)); // En attente de paiement
+      // Filtrage selon id_order_status
+      setOrdersVisa(allOrders.filter((order) => order.id_order_status === 1));         // À soumettre
+      setOrdersValidation(allOrders.filter((order) => order.id_order_status === 2));  // En attente de validation
+      setOrdersPayment(allOrders.filter((order) => order.id_order_status === 3));     // En attente de paiement
+
+      // Nouvel onglet : Retournées par la CDD (statut = 4, à adapter si besoin)
+      setOrdersReturned(allOrders.filter((order) => order.id_order_status === 4));
     } catch (err) {
       console.error('Error fetching orders:', err);
       setError(err.message || 'Erreur lors de la récupération des commandes.');
@@ -50,10 +60,12 @@ const Home = () => {
     }
   };
 
+  // Au montage ou quand idLogin/idCustAccount changent, on recharge les commandes
   useEffect(() => {
     fetchOrders();
   }, [idLogin, idCustAccount]);
 
+  // Gère le changement d'onglet (desktop) ou de sélection (mobile)
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
@@ -62,6 +74,7 @@ const Home = () => {
     setActiveTab(e.target.value);
   };
 
+  // Tableau d'options pour les onglets et le dropdown
   const options = [
     {
       value: 'visa',
@@ -78,8 +91,31 @@ const Home = () => {
       label: `Mes commandes en attente de paiement (${ordersPayment.length})`,
       title: `Mes commandes en attente de paiement (${ordersPayment.length})`,
     },
+    // Nouvelle option pour les commandes retournées
+    {
+      value: 'returned',
+      label: `Mes commandes retournées par la CDD (${ordersReturned.length})`,
+      title: `Mes commandes retournées par la CDD (${ordersReturned.length})`,
+    },
   ];
 
+  // Choix d'icônes pour chaque onglet
+  const getIconForTab = (tabValue) => {
+    switch (tabValue) {
+      case 'visa':
+        return faClipboardList;
+      case 'validation':
+        return faCheckCircle;
+      case 'payment':
+        return faDollarSign;
+      case 'returned':
+        return faUndo;
+      default:
+        return faClipboardList; // fallback
+    }
+  };
+
+  // Gérer les états de chargement et d'erreur
   if (loading) {
     return <div className="loading">Chargement des commandes...</div>;
   }
@@ -97,7 +133,7 @@ const Home = () => {
         Bienvenue <span className="home-highlight-text">{user?.companyname}</span>
       </div>
 
-      {/* Dropdown for mobile */}
+      {/* Dropdown pour mobile */}
       <div className="home-dropdown-container">
         <select className="home-dropdown" value={activeTab} onChange={handleDropdownChange}>
           {options.map((option) => (
@@ -108,7 +144,7 @@ const Home = () => {
         </select>
       </div>
 
-      {/* Tabs for desktop */}
+      {/* Tabs pour desktop */}
       <div className="home-tabs-container">
         {options.map((option) => (
           <div
@@ -116,12 +152,13 @@ const Home = () => {
             className={`home-tab-item ${activeTab === option.value ? 'home-active' : ''}`}
             onClick={() => handleTabClick(option.value)}
           >
-            <FontAwesomeIcon icon={option.value === 'visa' ? faClipboardList : option.value === 'validation' ? faCheckCircle : faDollarSign} className="home-tab-icon" />
+            <FontAwesomeIcon icon={getIconForTab(option.value)} className="home-tab-icon" />
             {option.label}
           </div>
         ))}
       </div>
 
+      {/* Contenu pour chaque onglet */}
       <div className="home-dashboard-grid">
         {activeTab === 'visa' && (
           <OrderTable
@@ -144,20 +181,31 @@ const Home = () => {
             refreshOrders={fetchOrders}
           />
         )}
+        {/* Nouvel onglet : commandes retournées par la CDD */}
+        {activeTab === 'returned' && (
+          <OrderTable
+            title="Commandes retournées par la CDD"
+            orders={ordersReturned}
+            refreshOrders={fetchOrders}
+          />
+        )}
       </div>
     </div>
   );
 };
 
+// Composant OrderTable (inchangé)
 const OrderTable = ({ title, orders, refreshOrders }) => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const currentUserId = user?.id_login_user;
 
+  // Gère le clic sur "Détails"
   const handleDetailsClick = (orderId, certifId) => {
     navigate(`/dashboard/order-details?orderId=${orderId}&certifId=${certifId}`);
   };
 
+  // Gère l'annulation
   const handleCancelClick = async (orderId) => {
     try {
       const payload = {
@@ -166,7 +214,7 @@ const OrderTable = ({ title, orders, refreshOrders }) => {
       };
       const response = await cancelOrder(payload);
       console.log('Order cancelled:', response);
-      // Refresh the orders list after cancellation
+      // Actualise la liste après annulation
       refreshOrders && refreshOrders();
     } catch (error) {
       console.error('Error cancelling order:', error);
@@ -244,30 +292,31 @@ const OrderTable = ({ title, orders, refreshOrders }) => {
                     )}
                   </td>
 
-                  {/* Action Column */}
+                  {/* Action */}
                   <td>
                     {(order.id_order_status === 1 || order.id_order_status === 6) ? (
                       <>
-                      <button
-                        className="home-icon-button home-minimal-button"
-                        title="Annuler"
-                        onClick={() => handleCancelClick(order.id_order)}
-                        style={{
-                          backgroundColor: '#f44336', // Couleur de fond rouge
-                          color: '#fff',             // Texte en blanc
-                          border: 'none',
-                          padding: '8px 16px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.3s ease'
-                        }}
-                      >
-                        <FontAwesomeIcon /> Cancel
-                      </button>
-                                            <button className="home-submit-button home-minimal-button submit-green">
-                                            {title.includes('paiement') ? 'Payer' : 'Soumettre'}
-                                          </button>
-                    </>) : (
+                        <button
+                          className="home-icon-button home-minimal-button"
+                          title="Annuler"
+                          onClick={() => handleCancelClick(order.id_order)}
+                          style={{
+                            backgroundColor: '#f44336',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '8px 16px',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.3s ease'
+                          }}
+                        >
+                          <FontAwesomeIcon /> Cancel
+                        </button>
+                        <button className="home-submit-button home-minimal-button submit-green">
+                          {title.includes('paiement') ? 'Payer' : 'Soumettre'}
+                        </button>
+                      </>
+                    ) : (
                       <button className="home-submit-button home-minimal-button">
                         {title.includes('paiement') ? 'Payer' : 'Soumettre'}
                       </button>
