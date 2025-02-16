@@ -1277,7 +1277,7 @@ ${message}
 
     // Send email to company
     await sendEmail(
-      'contact@ccd.dj', // Your company email
+      email// 'contact@ccd.dj', // Your company email
       `[Contact] ${subject}`,
       companyEmailText
     );
