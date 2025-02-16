@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom'; // <-- Import Link
 import './ContactUs.css';
 import { sendContactForm } from '../services/apiServices';
 
@@ -33,9 +34,9 @@ const ContactUs = () => {
     try {
       // Transform formData to match backend requirements
       const transformedData = {
-        name: `${formData.firstName} ${formData.lastName}`.trim(), // Combine first and last name
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
         email: formData.email,
-        subject: formData.companyName || 'Nouveau message de contact', // Use company name as subject or default value
+        subject: formData.companyName || 'Nouveau message de contact',
         message: formData.message,
       };
   
@@ -44,7 +45,7 @@ const ContactUs = () => {
         throw new Error('Tous les champs sont obligatoires : nom, email, sujet et message.');
       }
   
-      // Send the transformed data to the backend
+      // Send the data
       const response = await sendContactForm(transformedData);
   
       if (response.message) {
@@ -64,12 +65,13 @@ const ContactUs = () => {
         <h1>Contactez-nous</h1>
         <p>
           Cette prestation s’adresse aux entreprises locales et de zones franches opérant
-          légalement à Djibouti et impliquées dans des opérations d’import-export. <br /><br />
+          légalement à Djibouti et impliquées dans des opérations d’import-export.
+          <br /><br />
           Pour plus d’informations sur les conditions de délivrances ou de légalisation ainsi
           que les tarifs, prière de contacter :
         </p>
 
-        {/* Bloc du responsable produit inséré directement ici */}
+        {/* Bloc du responsable produit */}
         <div className="responsable-section">
           <p><strong>Le responsable produit :</strong></p>
           <p><strong>Nom :</strong> Mme Fathia Hassan Ali</p>
@@ -125,17 +127,24 @@ const ContactUs = () => {
           <button type="submit" className="send-message-btn" disabled={loading}>
             {loading ? 'Envoi en cours...' : 'Envoyer'}
           </button>
+
+          {/* Messages de succès ou d'erreur */}
           {successMessage && <p className="success-message">{successMessage}</p>}
           {error && <p className="error-message">{error}</p>}
         </form>
       </div>
 
-      {/* Nouveau bloc en bas à droite */}
+      {/* Footer info (en bas à droite) */}
       <div className="footer-info">
         <p>
           Chambre de Commerce de Djibouti . Place Djibouti .
           Tel : +253-21351070 . Email : <a href="mailto:ccd@ccd.dj">ccd@ccd.dj</a>
         </p>
+      </div>
+
+      {/* Nouveau lien pour revenir à la page de connexion, en bas à gauche */}
+      <div className="back-to-login-container">
+        <Link to="/login">Revenir à la page de connexion</Link>
       </div>
     </div>
   );

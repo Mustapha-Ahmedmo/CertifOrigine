@@ -157,8 +157,9 @@ const Register = () => {
       setFormData((prev) => ({
         ...prev,
         companyType: value,
-        isFreeZoneCompany: value === 'zoneFranche',
+        isFreeZoneCompany: (value == 'zoneFranche') ? true : ((value == 'autre') ?  false : null),
         isOtherCompany: value === 'autre',
+
       }));
       return;
     }
@@ -194,6 +195,8 @@ const Register = () => {
       { name: 'patenteFile', file: formData.patenteFile },
       { name: 'rchFile', file: formData.rchFile },
     ];
+
+    if (formData.isFreeZoneCompany != null){
     for (const { name, file } of filesToValidate) {
       if (file && !validateFileType(file)) {
         setSnackbarMessage(`Seulement les fichiers JPEG, JPG, PNG et PDF sont autorisés pour ${name}.`);
@@ -202,7 +205,7 @@ const Register = () => {
         return;
       }
     }
-
+  }
     // Vérification du numéro fixe
     if (!isValidLocalNumber(formData.phoneFixedNumber)) {
       setSnackbarMessage('Le numéro de téléphone fixe est invalide (6 à 15 chiffres).');
@@ -530,8 +533,10 @@ const Register = () => {
                   <option value="" disabled hidden>
                     Type d'entreprise
                   </option>
+                  <option value="autre">Entreprise</option>
                   <option value="zoneFranche">Entreprise en zone franche</option>
-                  <option value="autre">Autre Entreprise</option>
+                  <option value="autres">Autre </option>
+                  
                 </select>
                 <span className="register-client-required-asterisk">*</span>
               </div>

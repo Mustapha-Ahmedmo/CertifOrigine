@@ -802,6 +802,13 @@ const executeAddSubscription = async (req, res) => {
       //     INOUT p_id_cust_account
       //   )
       // We initialize p_id_cust_account with null.
+
+      let in_free_zone_value = null;
+if (req.body.in_free_zone === 'true') {
+  in_free_zone_value = true;
+} else if (req.body.in_free_zone === 'false') {
+  in_free_zone_value = false;
+}
       const subscriptionResult = await sequelize.query(
         `CALL add_Subscription(
           :p_legal_form, 
@@ -836,7 +843,7 @@ const executeAddSubscription = async (req, res) => {
             p_legal_form: legal_form,
             p_cust_name: cust_name,
             p_trade_registration_num: trade_registration_num,
-            p_in_free_zone: in_free_zone,
+            p_in_free_zone: in_free_zone_value,
             p_identification_number: identification_number,
             p_register_number: register_number,
             p_full_address: full_address,

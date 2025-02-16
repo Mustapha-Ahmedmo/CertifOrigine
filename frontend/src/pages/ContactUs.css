@@ -124,6 +124,34 @@ button.send-message-btn:hover {
   text-decoration: underline;
 }
 
+.back-to-login-container {
+  position: absolute;
+  bottom: 2rem;
+  left: 2rem;
+  color: #C39408; /* match your theme color */
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.back-to-login-container a {
+  color: #C39408;
+  text-decoration: none;
+}
+
+.back-to-login-container a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive: for small screens, position it statically and center or left as you wish */
+@media (max-width: 768px) {
+  .back-to-login-container {
+    position: static;
+    margin-top: 1rem;
+    text-align: center; /* or left, depending on your preference */
+  }
+}
+
+
 /* ----------------------------------------------------------------- */
 /* ----------------------- Media Queries --------------------------- */
 /* ----------------------------------------------------------------- */
