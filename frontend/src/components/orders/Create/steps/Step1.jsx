@@ -18,8 +18,7 @@ const Step1 = ({ nextStep, handleChange, values }) => {
 
   return (
     <form onSubmit={handleSubmit} className="step1-form">
-      <h3>Étape 1: Création d'une commande</h3>
-
+      
       <div className="form-group">
         <label htmlFor="orderName">Nom de la commande *</label>
         <input

@@ -80,6 +80,7 @@ h3 {
   color: #606060;
   font-weight: bold;
   margin-bottom: 5px;
+  margin-top: 20px;
 }
 
 .form-group input,
@@ -278,6 +279,74 @@ textarea {
   margin-right: 20px; /* Optionnel : espace à droite si nécessaire */
   max-width: calc(100% - 290px); /* Ajustement pour éviter qu'il dépasse sur petits écrans */
   transition: all 0.3s ease-in-out; /* Transition fluide */
+}
+
+/* ******************************
+   SECTION 5/8 MARCHANDISES
+****************************** */
+
+/* Le bouton "Ajouter la marchandise" */
+.add-merchandise-btn {
+  background-color: #007bff; /* Bleu bootstrap-like */
+  color: #fff;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 15px; /* Un peu d'espace en dessous */
+  margin-top: 10px; /* Séparation par rapport au titre */
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.add-merchandise-btn:hover {
+  background-color: #0069d9; /* Un bleu un peu plus foncé au survol */
+}
+
+/* Conteneur d'une marchandise (ligne grisée) */
+.merch-line {
+  background-color: #f7f7f7;
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+/* Conteneur des boutons d'action (icônes) */
+.merch-actions {
+  display: flex;
+  flex-direction: row; /* côte à côte */
+  gap: 8px; /* petit espace entre les deux boutons */
+  margin-left: 10px; /* un peu d'espace à gauche si souhaité */
+}
+
+/* Bouton icône pour modifier/supprimer */
+.merch-icon-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 4px;
+  background-color: #6c757d; /* Gris par défaut */
+  color: #fff;
+  cursor: pointer;
+  display: flex; /* pour centrer l'icône */
+  align-items: center;
+  justify-content: center;
+  font-size: 16px; /* taille de l'icône */
+  transition: background-color 0.3s ease;
+}
+
+/* Surligné au survol */
+.merch-icon-btn:hover {
+  background-color: #5a6268;
+}
+
+/* Spécifique pour le bouton "Supprimer" */
+.merch-icon-delete {
+  background-color: #dc3545 !important ; /* Rouge */
+}
+
+.merch-icon-delete:hover {
+  background-color: #c82333;
 }
 
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import './Step1.css';
+import './Step1.css'; // 
+// Import des services
 import {
   addOrUpdateGoods,
   addRecipient,
@@ -12,31 +13,32 @@ import {
   getUnitWeightInfo,
   setOrdCertifTranspMode,
 } from '../../../../services/apiServices';
+
 import { useSelector } from 'react-redux';
 
-// Si vous utilisez FontAwesome pour les icônes
+// FontAwesome (optionnel si vous utilisez ces icônes)
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faEdit, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} }) => {
   const { t } = useTranslation();
 
-  // Destinataire : nouveau / existant
+  // État : destinataire nouveau / existant
   const [isNewDestinataire, setIsNewDestinataire] = useState(false);
   const [selectedRecipient, setSelectedRecipient] = useState('');
 
-  // Données chargées (pays, destinataires, etc.)
+  // État(s) chargement + data
   const [recipients, setRecipients] = useState([]);
   const [countries, setCountries] = useState([]);
   const [transportModes, setTransportModes] = useState([]);
   const [unitWeights, setUnitWeights] = useState([]);
 
-  // État de chargement/erreur
+  // Loading / Erreur
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Contrôle d’édition par marchandise (lignes sans tableau)
+  // Contrôle d’édition par marchandise (true = édition, false = validé)
   const [merchEditStates, setMerchEditStates] = useState([]);
 
   // Accordéon : une seule section ouverte
@@ -51,22 +53,17 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
     section8: false,
   });
 
-  // Fonction pour ouvrir/fermer une section (en fermant les autres)
-  const toggleSection = (sectionKey) => {
-    setOpenSections((prev) => {
-      const isCurrentlyOpen = prev[sectionKey];
-      // Ferme tout
-      const allClosed = Object.keys(prev).reduce((acc, key) => {
-        acc[key] = false;
-        return acc;
-      }, {});
-      // Ouvre/ferme la section cliquée
-      allClosed[sectionKey] = !isCurrentlyOpen;
-      return allClosed;
-    });
-  };
+  // Récupération du user
+  const auth = useSelector((state) => state.auth);
+  const user = auth?.user;
+  const customerAccountId = user?.id_cust_account;
 
-  // Champs obligatoires si nouveau destinataire vs. existant
+  // Query params
+  const params = new URLSearchParams(location.search);
+  const certifId = params.get('certifId');
+  const orderId = params.get('orderId');
+
+  // Champs obligatoires si destinataire nouveau ou existant
   const fieldsForNewRecipient = [
     'receiverName',
     'receiverAddress',
@@ -77,7 +74,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
   ];
   const fieldsForExistingRecipient = ['selectedRecipientId'];
 
-  // Champs obligatoires (hors section2 dynamique)
+  // Champs obligatoires par section
   const requiredFieldsBySectionBase = {
     section1: [],
     // section2 dépend de isNewDestinataire
@@ -89,27 +86,17 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
     section8: [],
   };
 
-  // Récup info user
-  const auth = useSelector((state) => state.auth);
-  const user = auth?.user;
-  const customerAccountId = user?.id_cust_account;
-
-  // Query params
-  const params = new URLSearchParams(location.search);
-  const certifId = params.get('certifId');
-  const orderId = params.get('orderId');
-
   // Chargement initial
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
 
+        // Si certifId => on récupère ses marchandises
         if (certifId) {
-          // Récup marchandises existantes
           const goodsResponse = await getCertifGoodsInfo(certifId);
           const fetchedGoods = goodsResponse.data || [];
-          // On remplit le formData
+          // On stocke dans values.merchandises
           handleChange(
             'merchandises',
             fetchedGoods.map((good) => ({
@@ -120,26 +107,28 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
               reference: '',
             }))
           );
-          // On init merchEditStates pour chaque marchandise => faux (read-only)
+          // On init l'état d'édition (ici on les met en non-éditable par défaut)
           setMerchEditStates(fetchedGoods.map(() => false));
         }
 
-        // Pays
+        // Récupère les pays
         const fetchedCountries = await fetchCountries();
         setCountries(fetchedCountries);
 
-        // Modes transport
+        // Récup modes transport
         const fetchedTransportModes = await getTransmodeInfo(null, true);
         setTransportModes(fetchedTransportModes.data);
 
-        // Unités de poids
+        // Récup unités de poids
         const fetchedUnitWeights = await getUnitWeightInfo(null, true);
         const filteredUnitWeights = (fetchedUnitWeights.data || []).filter(
-          (unit) => unit.id_unit_weight >= 1
+          (u) => u.id_unit_weight >= 1
         );
         setUnitWeights(filteredUnitWeights);
+        
 
-        // Unité par défaut ?
+
+        // Unité par défaut si besoin
         if (!values.unit && filteredUnitWeights.length > 0) {
           const defaultUnit = filteredUnitWeights.find((u) => u.id_unit_weight === 1);
           if (defaultUnit) {
@@ -152,7 +141,6 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
           const recipientFetched = await fetchRecipients({ idListCA: customerAccountId });
           setRecipients(recipientFetched.data);
           handleChange('recipients', recipientFetched.data);
-          console.log(recipientFetched);
         }
 
         setLoading(false);
@@ -167,37 +155,51 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [certifId, customerAccountId]);
 
-  // Valeurs par défaut
+  // Valeurs "safe"
   const safeValues = values || {
     goodsOrigin: '',
     goodsDestination: '',
     merchandises: [],
     remarks: '',
-    copies: 1,
+    copies: values.copies ?? '',
     isCommitted: false,
     transportModes: {},
   };
 
-  // Calcul du nombre de champs manquants par section
+  // Fonction pour fermer/ouvrir une section à la fois
+  const toggleSection = (sectionKey) => {
+    setOpenSections((prev) => {
+      const isCurrentlyOpen = prev[sectionKey];
+      const allClosed = Object.keys(prev).reduce((acc, key) => {
+        acc[key] = false;
+        return acc;
+      }, {});
+      allClosed[sectionKey] = !isCurrentlyOpen;
+      return allClosed;
+    });
+  };
+
+  // Calcule le nombre de champs manquants pour une section
   const getMissingFieldsCount = (sectionKey) => {
     const config = { ...requiredFieldsBySectionBase };
+    // Section2 dépend de isNewDestinataire
     const section2Fields = isNewDestinataire
       ? fieldsForNewRecipient
       : fieldsForExistingRecipient;
     config.section2 = section2Fields;
 
-    const fields = config[sectionKey] || [];
     let missingCount = 0;
+    const fields = config[sectionKey] || [];
 
     fields.forEach((fieldName) => {
       if (fieldName === 'transportModes') {
-        // Au moins un mode coché
         const isTransportSelected = Object.keys(safeValues.transportModes || {}).some(
-          (key) => safeValues.transportModes[key]
+          (k) => safeValues.transportModes[k]
         );
-        if (!isTransportSelected) missingCount += 1;
+        if (!isTransportSelected) {
+          missingCount += 1;
+        }
       } else if (fieldName === 'merchandises') {
-        // Au moins 1 marchandise
         if (!safeValues.merchandises || safeValues.merchandises.length === 0) {
           missingCount += 1;
         }
@@ -209,41 +211,55 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
     return missingCount;
   };
 
-  // Ajoute une marchandise vide et met son état en "édition"
+  // Ajoute une marchandise vide => en mode édition
   const createEmptyMerchLine = () => {
     const newItem = {
       designation: '',
       boxReference: '',
-      quantity: 0,
-      unit: 'kg',
+      quantity: '',
+      unit: 'kilo',
       reference: '',
     };
     const updated = [...safeValues.merchandises, newItem];
     handleChange('merchandises', updated);
-
-    // On met la nouvelle ligne en mode éditable
+    // On rend la nouvelle ligne éditable
     setMerchEditStates((prev) => [...prev, true]);
   };
 
-  // Bascule le mode édition d'une ligne
+  // Bascule l'édition
   const toggleLineEdit = (index) => {
     setMerchEditStates((prev) => {
-      const newEditStates = [...prev];
-      newEditStates[index] = !newEditStates[index];
-      return newEditStates;
+      const newStates = [...prev];
+      newStates[index] = !newStates[index];
+      return newStates;
     });
   };
 
-  // Supprime la marchandise
+  // Valider la ligne
+  const validateLine = (index) => {
+    const merch = safeValues.merchandises[index];
+    // Vérif min : référence + nature
+    if (!merch.boxReference || !merch.designation) {
+      setErrorMessage("Veuillez remplir la référence/HSCODE et la nature avant de valider.");
+      return;
+    }
+    // Tout va bien => on la passe en mode non-éditable
+    setMerchEditStates((prev) => {
+      const newStates = [...prev];
+      newStates[index] = false;
+      return newStates;
+    });
+  };
+
+  // Supprime une marchandise
   const removeMerchandise = (index) => {
     const updated = safeValues.merchandises.filter((_, i) => i !== index);
     handleChange('merchandises', updated);
-
     const newStates = merchEditStates.filter((_, i) => i !== index);
     setMerchEditStates(newStates);
   };
 
-  // Gère le changement d'un champ d'une marchandise
+  // Gère le changement d'un champ (référence, désignation, etc.)
   const handleMerchChange = (index, field, newValue) => {
     const updated = [...safeValues.merchandises];
     updated[index] = {
@@ -253,11 +269,11 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
     handleChange('merchandises', updated);
   };
 
-  // Envoi (création certif + ajout marchandises)
+  // Soumission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Vérifs
+    // Vérifs de base
     if (!safeValues.loadingPort) {
       setErrorMessage('Veuillez sélectionner un port de chargement.');
       return;
@@ -267,7 +283,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
       return;
     }
     const isTransportSelected = Object.keys(safeValues.transportModes || {}).some(
-      (key) => safeValues.transportModes[key]
+      (k) => safeValues.transportModes[k]
     );
     if (!isTransportSelected) {
       setErrorMessage('Veuillez sélectionner au moins un mode de transport.');
@@ -278,7 +294,15 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
       return;
     }
 
-    // Gérer la création / sélection destinataire
+    // Vérifier que toutes les lignes ne sont pas en édition
+    if (merchEditStates.some((st) => st === true)) {
+      setErrorMessage(
+        "Certaines lignes de marchandise ne sont pas validées. Cliquez sur 'Valider' avant de continuer."
+      );
+      return;
+    }
+
+    // Gérer la création d'un nouveau destinataire si besoin
     let recipientId = selectedRecipient;
     if (isNewDestinataire) {
       try {
@@ -297,12 +321,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
           idLoginModify: null,
         };
         const recipientResponse = await addRecipient(newRecipientData);
-        console.log('Nouveau destinataire créé !', recipientResponse);
-
         recipientId = recipientResponse?.newRecipientId;
-        console.log('Nouvel ID destinataire =', recipientId);
-
-        // Re-fetch destinataires
         const updatedRecipientsResponse = await fetchRecipients({ idListCA: customerAccountId });
         setRecipients(updatedRecipientsResponse.data);
         handleChange('recipients', updatedRecipientsResponse.data);
@@ -316,53 +335,43 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
       }
     }
 
-    // Mapping pays -> id
+    // Convert pays -> id
     const getCountryId = (countryName) => {
       const found = countries.find((c) => c.symbol_fr === countryName);
       return found ? found.id_country : null;
     };
 
-    // On crée le certificat
-    const certData = {
-      idOrder: safeValues.orderId,
-      idRecipientAccount: recipientId,
-      idCountryOrigin: getCountryId(safeValues.goodsOrigin),
-      idCountryDestination: getCountryId(safeValues.goodsDestination),
-      notes: safeValues.remarks,
-      idCountryPortLoading: getCountryId(safeValues.loadingPort),
-      idCountryPortDischarge: getCountryId(safeValues.dischargingPort),
-      copyCount: safeValues.copies,
-      idLoginInsert: user?.id_login_user || 1,
-      transportRemarks: safeValues.transportRemarks,
-    };
-
     try {
+      // createCertificate
+      const certData = {
+        idOrder: safeValues.orderId,
+        idRecipientAccount: recipientId,
+        idCountryOrigin: getCountryId(safeValues.goodsOrigin),
+        idCountryDestination: getCountryId(safeValues.goodsDestination),
+        notes: safeValues.remarks,
+        idCountryPortLoading: getCountryId(safeValues.loadingPort),
+        idCountryPortDischarge: getCountryId(safeValues.dischargingPort),
+        copyCount: safeValues.copies,
+        idLoginInsert: user?.id_login_user || 1,
+        transportRemarks: safeValues.transportRemarks,
+      };
       const certResponse = await createCertificate(certData);
-      console.log('createCertificate OK :', certResponse);
 
       if (!certResponse.newCertifId) {
-        // Si pour une raison newCertifId est absent
         throw new Error("La réponse du serveur ne contient pas 'newCertifId'.");
       }
 
-      // Ajout marchandises
+      // Ajouter les marchandises
       for (const merchandise of safeValues.merchandises) {
-        // Vérification avant d'appeler addOrUpdateGoods
         if (!merchandise.boxReference || !merchandise.designation) {
-          throw new Error(
-            "Les champs 'Référence / HSCODE' et 'Nature de la marchandise' sont obligatoires."
-          );
+          throw new Error("Référence/HSCODE et Nature sont obligatoires pour chaque marchandise.");
         }
-
-        // Trouver l'unité
         const normalizeText = (txt) => (txt || '').toLowerCase().trim();
         const matchedUnit = unitWeights.find(
           (u) => normalizeText(u.symbol_fr) === normalizeText(merchandise.unit)
         );
         if (!matchedUnit) {
-          throw new Error(
-            `Unité '${merchandise.unit}' inconnue. Veuillez sélectionner une unité valide.`
-          );
+          throw new Error(`Unité '${merchandise.unit}' inconnue.`);
         }
 
         const goodsData = {
@@ -370,13 +379,12 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
           goodDescription: merchandise.designation,
           goodReferences: merchandise.boxReference,
           weight_qty: merchandise.quantity,
-          idUnitWeight: matchedUnit.id_unit_weight, // non-null
+          idUnitWeight: matchedUnit.id_unit_weight,
         };
-
         await addOrUpdateGoods(goodsData);
       }
 
-      // Ajout modes de transport
+      // setOrdCertifTranspMode
       const selectedModeKeys = Object.keys(safeValues.transportModes || {}).filter(
         (k) => safeValues.transportModes[k]
       );
@@ -399,7 +407,6 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
     }
   };
 
-  // Rendu si en chargement
   if (loading) return <div>Chargement en cours...</div>;
   if (error) return <div className="error-message">{error}</div>;
 
@@ -410,7 +417,6 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         <div className="collapsible-header" onClick={() => toggleSection('section1')}>
           <span className="section-title">
             1/8 DEMANDEUR {openSections.section1 ? '▼' : '►'}
-            {` (champs manquants : ${getMissingFieldsCount('section1')})`}
           </span>
         </div>
         {openSections.section1 && (
@@ -465,7 +471,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
                     setSelectedRecipient(selectedId);
                     handleChange('selectedRecipientId', selectedId);
 
-                    // Trouver le destinataire dans la liste
+                    // Trouver le destinataire
                     const r = recipients.find(
                       (rec) => rec.id_recipient_account.toString() === selectedId
                     );
@@ -558,9 +564,9 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
                       required
                     >
                       <option value="">-- Sélectionnez un pays --</option>
-                      {countries.map((country) => (
-                        <option key={country.id_country} value={country.symbol_fr}>
-                          {country.symbol_fr}
+                      {countries.map((c) => (
+                        <option key={c.id_country} value={c.symbol_fr}>
+                          {c.symbol_fr}
                         </option>
                       ))}
                     </select>
@@ -711,7 +717,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
       </div>
       <hr />
 
-      {/* SECTION 5/8 : MARCHANDISES (Lignes, pas de tableau) */}
+      {/* SECTION 5/8 : MARCHANDISES */}
       <div className="collapsible-section">
         <div className="collapsible-header" onClick={() => toggleSection('section5')}>
           <span className="section-title">
@@ -721,26 +727,16 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         </div>
         {openSections.section5 && (
           <div className="collapsible-content">
-            {/* Bouton Ajouter la marchandise */}
-            <div style={{ marginBottom: '15px' }}>
-              <button type="button" onClick={createEmptyMerchLine}>
-                Ajouter la marchandise
-              </button>
-            </div>
+            {/* Bouton pour ajouter une marchandise vide */}
+            <button type="button" className="add-merchandise-btn" onClick={createEmptyMerchLine}>
+              Ajouter la marchandise
+            </button>
 
-            {/* Chaque marchandise = une ligne */}
+            {/* Liste des marchandises */}
             {safeValues.merchandises.map((m, index) => {
               const isEditable = merchEditStates[index] || false;
               return (
-                <div
-                  key={index}
-                  style={{
-                    backgroundColor: '#f7f7f7',
-                    margin: '10px 0',
-                    padding: '10px',
-                    borderRadius: '5px',
-                  }}
-                >
+                <div key={index} className="merch-line">
                   <div className="form-group-row" style={{ alignItems: 'center' }}>
                     <div className="form-group">
                       <label>Référence / HSCODE</label>
@@ -753,7 +749,7 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
                     </div>
 
                     <div className="form-group">
-                      <label>Nature de la marchandise</label>
+                      <label>Nature</label>
                       <input
                         type="text"
                         disabled={!isEditable}
@@ -767,12 +763,22 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
                       <input
                         type="number"
                         disabled={!isEditable}
-                        value={m.quantity}
+                        value={m.quantity === '' ? '' : m.quantity}
                         onChange={(e) => {
-                          const val = parseFloat(e.target.value) || 0;
-                          handleMerchChange(index, 'quantity', val);
+                          // Si e.target.value est vide, on reste vide
+                          if (e.target.value === '') {
+                            handleMerchChange(index, 'quantity', '');
+                          } else {
+                            // Sinon on peut parser la valeur
+                            const parsed = parseFloat(e.target.value);
+                            // On peut vérifier que ce n’est pas NaN
+                            if (!isNaN(parsed)) {
+                              handleMerchChange(index, 'quantity', parsed);
+                            }
+                          }
                         }}
                       />
+
                     </div>
 
                     <div className="form-group">
@@ -800,23 +806,33 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
                       />
                     </div>
 
-                    <div className="form-group button-group-inline" style={{ marginTop: '24px' }}>
-                      <button
-                        type="button"
-                        style={{ backgroundColor: '#6c757d', color: '#fff', marginRight: '5px' }}
-                        onClick={() => toggleLineEdit(index)}
-                      >
-                        <FontAwesomeIcon icon={faEdit} style={{ marginRight: '5px' }} />
-                        {isEditable ? 'Terminer' : 'Modifier'}
-                      </button>
+                    <div className="merch-actions">
+                      {isEditable ? (
+                        // Bouton Valider
+                        <button
+                          type="button"
+                          className="merch-icon-btn merch-icon-validate"
+                          onClick={() => validateLine(index)}
+                        >
+                          <FontAwesomeIcon icon={faCheck} />
+                        </button>
+                      ) : (
+                        // Bouton Modifier
+                        <button
+                          type="button"
+                          className="merch-icon-btn"
+                          onClick={() => toggleLineEdit(index)}
+                        >
+                          <FontAwesomeIcon icon={faEdit} />
+                        </button>
+                      )}
 
                       <button
                         type="button"
-                        style={{ backgroundColor: '#dc3545', color: '#fff' }}
+                        className="merch-icon-btn merch-icon-delete"
                         onClick={() => removeMerchandise(index)}
                       >
-                        <FontAwesomeIcon icon={faTimes} style={{ marginRight: '5px' }} />
-                        Supprimer
+                        <FontAwesomeIcon icon={faTimes} />
                       </button>
                     </div>
                   </div>
@@ -842,8 +858,19 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
               <label>Combien de copies certifiées ?</label>
               <input
                 type="number"
-                value={safeValues.copies || 1}
-                onChange={(e) => handleChange('copies', e.target.value)}
+                value={safeValues.copies === '' ? '' : safeValues.copies}
+                onChange={(e) => {
+                  // Si vide, on stocke une chaîne vide
+                  if (e.target.value === '') {
+                    handleChange('copies', '');
+                  } else {
+                    // Sinon, on essaie de parser un nombre
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) {
+                      handleChange('copies', val);
+                    }
+                  }
+                }}
                 min="1"
                 required
               />
@@ -895,7 +922,6 @@ const Step2 = ({ nextStep, handleMerchandiseChange, handleChange, values = {} })
         <div className="collapsible-header" onClick={() => toggleSection('section8')}>
           <span className="section-title">
             8/8 REMARQUES {openSections.section8 ? '▼' : '►'}
-            {` (champs manquants : ${getMissingFieldsCount('section8')})`}
           </span>
         </div>
         {openSections.section8 && (
