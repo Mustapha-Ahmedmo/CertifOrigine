@@ -1,10 +1,15 @@
 /* create-order-container, etc. issu de votre code initial */
 .create-order-container {
+  width: 100%;
+  min-height: 100vh;
   padding: 20px;
   padding-top: 50px;
   background-color: #ffffff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
+  box-sizing: border-box;
+  /* Supprimez ou ajustez les marges si vous aviez des valeurs comme margin-left ou margin-right */
+ 
 }
 
 /* ========================================================================== */
@@ -113,7 +118,7 @@
 
 .add-button:hover,
 .next-button:hover {
-  background-color: #004494;
+  background-color: #c82333;
 }
 
 .merchandise-table {
@@ -145,4 +150,16 @@
 
 .merchandise-table td button:hover {
   background-color: #c82333;
+}
+
+
+/* Pour les écrans plus petits, on retire les marges et arrondis */
+@media screen and (max-width: 480px) {
+  .create-order-container {
+    width: 100%;
+    margin: 0;           /* pas de marge */
+    padding: 10px;       /* ajustez le padding selon vos besoins */
+    border-radius: 0;    /* retirer l'arrondi pour occuper toute la largeur */
+    box-shadow: none;    /* optionnel : retirer l'ombre si souhaité */
+  }
 }

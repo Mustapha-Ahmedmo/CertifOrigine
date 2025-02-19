@@ -3,7 +3,8 @@ import Step1 from './steps/Step1';
 import Step2 from './steps/Step2';
 import Step4 from './steps/Step4'; // Étape 3
 import Step5 from './steps/Step5'; // Étape 4
-import { generatePDF } from '../GeneratePDF';
+
+// --- Vos imports CSS et vos services comme avant ---
 import './CreateOrder.css';
 import { createOrder } from '../../../services/apiServices';
 import { useSelector } from 'react-redux';
@@ -13,6 +14,7 @@ import Box from '@mui/material/Box';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
+import Slide from '@mui/material/Slide';
 
 const CreateOrder = () => {
   // Récupération de l'utilisateur depuis Redux
@@ -25,10 +27,11 @@ const CreateOrder = () => {
   const existingOrderId = params.get('orderId');
   const existingCertifId = params.get('certifId');
 
-  // Gestion des étapes (1→4)
+  // Gestion des étapes globales (4 étapes)
   const [currentStep, setCurrentStep] = useState(1);
+  const [transitionDirection, setTransitionDirection] = useState('left');
 
-  // state global du formulaire
+  // État global du formulaire
   const [formData, setFormData] = useState({
     orderId: existingOrderId || null,
     certifId: existingCertifId || null,
@@ -58,16 +61,18 @@ const CreateOrder = () => {
     receiverCountry: '',
   });
 
-  // Juste pour debug
+  // Debug
   useEffect(() => {
     console.log('formData updated:', formData);
   }, [formData]);
 
-  // Fonctions de navigation
+  // Fonctions de navigation globales
   const nextStep = () => {
+    setTransitionDirection('left');
     setCurrentStep((prev) => (prev < 4 ? prev + 1 : prev));
   };
   const prevStep = () => {
+    setTransitionDirection('right');
     setCurrentStep((prev) => (prev > 1 ? prev - 1 : prev));
   };
 
@@ -85,7 +90,7 @@ const CreateOrder = () => {
   // Soumission finale
   const handleSubmit = () => {
     console.log('Order Submitted:', formData);
-    generatePDF(formData);
+    // Placez ici votre action finale, par exemple generatePDF(formData)
   };
 
   // Création de la commande (étape 1)
@@ -105,7 +110,7 @@ const CreateOrder = () => {
     }
   };
 
-  // Rendu conditionnel du contenu de chaque étape
+  // Rendu conditionnel du contenu de chaque étape globale
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -120,6 +125,7 @@ const CreateOrder = () => {
         return (
           <Step2
             nextStep={nextStep}
+            prevStep={prevStep}
             handleMerchandiseChange={handleMerchandiseChange}
             handleChange={handleChange}
             values={formData}
@@ -147,20 +153,21 @@ const CreateOrder = () => {
     }
   };
 
-  // ---- Définir le texte de nos 4 étapes ----
+  // Mise à jour de la barre d'étape (Stepper) pour refléter le nouveau processus
+  // On précise dans l'intitulé que l'étape 2 comporte 8 sections
   const steps = [
     "Étape 1 : Création de la commande",
-    "Étape 2 : Contenu du certificat d'origine",
+    "Étape 2 : Certificat d'origine ",
     "Étape 3 : Pièces justificatives",
     "Étape 4 : Récapitulatif",
   ];
 
   return (
     <div className="create-order-container">
-      {/* Material-UI Stepper */}
+      {/* Barre d'étape global (Stepper MUI) */}
       <Box sx={{ width: '100%', marginBottom: '20px' }}>
         <Stepper activeStep={currentStep - 1} alternativeLabel>
-          {steps.map((label, index) => (
+          {steps.map((label) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
             </Step>
@@ -168,10 +175,18 @@ const CreateOrder = () => {
         </Stepper>
       </Box>
 
-      {/* Contenu de l'étape courante */}
-      <div className="step-content">
-        {renderStep()}
-      </div>
+      {/* Transition Slide MUI pour animer le contenu de l'étape globale */}
+      <Slide
+        key={currentStep}
+        direction={transitionDirection}
+        in={true}
+        mountOnEnter
+        unmountOnExit
+      >
+        <div className="step-content">
+          {renderStep()}
+        </div>
+      </Slide>
     </div>
   );
 };
