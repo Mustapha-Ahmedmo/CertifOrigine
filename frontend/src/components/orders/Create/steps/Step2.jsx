@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './Step1.css'; // Conserve vos CSS existants
-// Import des services
 import {
   addOrUpdateGoods,
   addRecipient,
@@ -14,13 +13,38 @@ import {
   setOrdCertifTranspMode,
 } from '../../../../services/apiServices';
 import { useSelector } from 'react-redux';
-
-// FontAwesome (pour les icônes)
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faEdit, faTimes, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
-
-// Import MUI pour la transition
+import { faCheck, faEdit, faTimes } from '@fortawesome/free-solid-svg-icons';
 import Slide from '@mui/material/Slide';
+
+// Composants Material‑UI utilisés dans ce composant
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import FormControl from '@mui/material/FormControl';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import InputLabel from '@mui/material/InputLabel';
+import InputAdornment from '@mui/material/InputAdornment';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+
+const customFieldStyle = {
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': { borderColor: '#DDAF26' },
+    '&:hover fieldset': { borderColor: '#DDAF26' },
+    '&.Mui-focused fieldset': { borderColor: '#DDAF26' },
+  },
+  '& label.Mui-focused': { color: '#DDAF26' },
+};
+
+const customButtonStyle = {
+  backgroundColor: '#DDAF26',
+  '&:hover': { backgroundColor: '#DDAF26' },
+};
 
 const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, values = {} }) => {
   const { t } = useTranslation();
@@ -37,8 +61,8 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   const [errorMessage, setErrorMessage] = useState('');
   const [merchEditStates, setMerchEditStates] = useState([]);
 
-  // Pour la navigation multi-sections, on utilise currentSection
-  const totalSections = 8; // 1/8 à 8/8
+  // Navigation multi-sections
+  const totalSections = 8; // Sections de 1/8 à 8/8
   const [currentSection, setCurrentSection] = useState(0);
   const [slideDirection, setSlideDirection] = useState('left');
 
@@ -52,7 +76,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   const certifId = params.get('certifId');
   const orderId = params.get('orderId');
 
-  // Champs obligatoires pour destinataire selon le mode
+  // Champs obligatoires pour destinataire
   const fieldsForNewRecipient = [
     'receiverName',
     'receiverAddress',
@@ -63,8 +87,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   ];
   const fieldsForExistingRecipient = ['selectedRecipientId'];
 
-  // Définition des champs obligatoires par section (pour afficher le nombre de champs manquants)
-  // On définit ici un mapping des sections par index
+  // Mapping des champs obligatoires par section
   const sectionConfig = {
     0: [], // DEMANDEUR
     1: isNewDestinataire ? fieldsForNewRecipient : fieldsForExistingRecipient, // DESTINATAIRE
@@ -142,7 +165,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     transportModes: {},
   };
 
-  // Navigation entre les sections
+  // Navigation entre sections
   const nextSection = () => {
     setSlideDirection('left');
     if (currentSection < totalSections - 1) {
@@ -160,7 +183,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   };
 
   // Calcul du nombre de champs manquants pour la section courante
-  const getMissingFieldsCount = (sectionKey) => {
+  const getMissingFieldsCount = () => {
     const fields = sectionConfig[currentSection] || [];
     let missingCount = 0;
     fields.forEach((fieldName) => {
@@ -168,13 +191,9 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         const isTransportSelected = Object.keys(safeValues.transportModes || {}).some(
           (k) => safeValues.transportModes[k]
         );
-        if (!isTransportSelected) {
-          missingCount += 1;
-        }
+        if (!isTransportSelected) missingCount += 1;
       } else if (fieldName === 'merchandises') {
-        if (!safeValues.merchandises || safeValues.merchandises.length === 0) {
-          missingCount += 1;
-        }
+        if (!safeValues.merchandises || safeValues.merchandises.length === 0) missingCount += 1;
       } else if (!safeValues[fieldName]) {
         missingCount += 1;
       }
@@ -182,7 +201,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     return missingCount;
   };
 
-  // Gestion des marchandises (création, édition, validation, suppression)
+  // Gestion des marchandises
   const createEmptyMerchLine = () => {
     const newItem = {
       designation: '',
@@ -217,17 +236,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     });
   };
 
-    // Pour la navigation locale : si currentSection est 0, revenir à Step1 globalement
-    const onBack = () => {
-      if (currentSection === 0) {
-        prevStep(); // Appelle la fonction globale pour revenir à Step1
-      } else {
-        setSlideDirection('right');
-        setCurrentSection(currentSection - 1);
-      }
-    };
-  
-
   const removeMerchandise = (index) => {
     const updated = safeValues.merchandises.filter((_, i) => i !== index);
     handleChange('merchandises', updated);
@@ -241,10 +249,19 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     handleChange('merchandises', updated);
   };
 
-  // Soumission finale (inchangee)
+  // Navigation locale : retour à Step1 si currentSection est 0
+  const onBack = () => {
+    if (currentSection === 0) {
+      prevStep();
+    } else {
+      setSlideDirection('right');
+      setCurrentSection(currentSection - 1);
+    }
+  };
+
+  // Soumission finale
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!safeValues.loadingPort) {
       setErrorMessage('Veuillez sélectionner un port de chargement.');
       return;
@@ -295,7 +312,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         setSelectedRecipient(recipientId);
         handleChange('selectedRecipientId', recipientId);
       } catch (err) {
-        console.error('Erreur creation recipient :', err);
+        console.error('Erreur création destinataire :', err);
         setErrorMessage('Erreur lors de la création du nouveau destinataire.');
         return;
       }
@@ -367,7 +384,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   if (loading) return <div>Chargement en cours...</div>;
   if (error) return <div className="error-message">{error}</div>;
 
-  // Fonction qui retourne le contenu de la section selon currentSection
+  // Rendu des sections en fonction de currentSection
   const renderSection = () => {
     switch (currentSection) {
       case 0:
@@ -377,9 +394,16 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
               <span className="section-title">1/8 DEMANDEUR</span>
             </div>
             <div className="collapsible-content">
-              <div className="exporter-name-container">
-                <p className="exporter-name">{user?.companyname}</p>
-              </div>
+              <Box sx={{ p: 2 }}>
+                <TextField
+                  label="Nom de l'entreprise"
+                  variant="outlined"
+                  value={user?.companyname || ''}
+                  fullWidth
+                  disabled
+                  sx={{ ...customFieldStyle }}
+                />
+              </Box>
             </div>
           </div>
         );
@@ -388,42 +412,45 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           <div>
             <div className="collapsible-header">
               <span className="section-title">
-                2/8 DESTINATAIRE (champs manquants : {getMissingFieldsCount('section2')})
+                2/8 DESTINATAIRE (champs manquants : {getMissingFieldsCount()})
               </span>
             </div>
             <div className="collapsible-content">
-              <div className="form-group form-group-radio">
-                <label>
-                  <input
-                    type="radio"
-                    name="destinataire"
+              <FormControl component="fieldset" sx={{ mb: 2 }}>
+                <RadioGroup
+                  row
+                  defaultValue="choisir"
+                  onChange={(e) =>
+                    setIsNewDestinataire(e.target.value === 'saisir')
+                  }
+                >
+                  <FormControlLabel
                     value="choisir"
-                    defaultChecked
-                    onChange={() => setIsNewDestinataire(false)}
-                  />{' '}
-                  {t('step1.chooseReceiver')}
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="destinataire"
+                    control={<Radio sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }} />}
+                    label={t('step1.chooseReceiver')}
+                  />
+                  <FormControlLabel
                     value="saisir"
-                    onChange={() => setIsNewDestinataire(true)}
-                  />{' '}
-                  {t('step1.enterNewReceiver')}
-                </label>
-              </div>
+                    control={<Radio sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }} />}
+                    label={t('step1.enterNewReceiver')}
+                  />
+                </RadioGroup>
+              </FormControl>
               {!isNewDestinataire ? (
-                <div className="form-group">
-                  <label>Choisir une entreprise *</label>
-                  <select
+                <FormControl fullWidth variant="outlined" sx={{ mb: 2, ...customFieldStyle }}>
+                  <InputLabel id="destinataire-select-label">
+                    Choisir une entreprise *
+                  </InputLabel>
+                  <Select
+                    labelId="destinataire-select-label"
                     value={selectedRecipient}
                     onChange={(e) => {
                       const selectedId = e.target.value;
                       setSelectedRecipient(selectedId);
                       handleChange('selectedRecipientId', selectedId);
                       const r = recipients.find(
-                        (rec) => rec.id_recipient_account.toString() === selectedId
+                        (rec) =>
+                          rec.id_recipient_account.toString() === selectedId
                       );
                       if (r) {
                         handleChange('receiverName', r.recipient_name);
@@ -435,95 +462,101 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                         handleChange('receiverPhone', r.trade_registration_num);
                       }
                     }}
-                    required
+                    label="Choisir une entreprise *"
                   >
-                    <option value="">-- Sélectionnez une entreprise --</option>
+                    <MenuItem value="">
+                      <em>-- Sélectionnez une entreprise --</em>
+                    </MenuItem>
                     {recipients.map((recipient) => (
-                      <option
+                      <MenuItem
                         key={recipient.id_recipient_account}
                         value={recipient.id_recipient_account}
                       >
                         {recipient.recipient_name}
-                      </option>
+                      </MenuItem>
                     ))}
-                  </select>
-                </div>
+                  </Select>
+                </FormControl>
               ) : (
                 <>
-                  <div className="form-group-row">
-                    <div className="form-group">
-                      <label>{t('step1.companyName')} *</label>
-                      <input
-                        type="text"
-                        value={safeValues.receiverName || ''}
-                        onChange={(e) => handleChange('receiverName', e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="form-group-row">
-                    <div className="form-group">
-                      <label>{t('step1.address')} *</label>
-                      <input
-                        type="text"
-                        value={safeValues.receiverAddress || ''}
-                        onChange={(e) => handleChange('receiverAddress', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>{t('step1.addressNext')}</label>
-                      <input
-                        type="text"
-                        value={safeValues.receiverAddress2 || ''}
-                        onChange={(e) => handleChange('receiverAddress2', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="form-group-row">
-                    <div className="form-group">
-                      <label>{t('step1.postalCode')} *</label>
-                      <input
-                        type="text"
-                        value={safeValues.receiverPostalCode || ''}
-                        onChange={(e) => handleChange('receiverPostalCode', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>{t('step1.city')} *</label>
-                      <input
-                        type="text"
-                        value={safeValues.receiverCity || ''}
-                        onChange={(e) => handleChange('receiverCity', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>{t('step1.country')} *</label>
-                      <select
-                        value={safeValues.receiverCountry || ''}
-                        onChange={(e) => handleChange('receiverCountry', e.target.value)}
-                        required
-                      >
-                        <option value="">-- Sélectionnez un pays --</option>
-                        {countries.map((c) => (
-                          <option key={c.id_country} value={c.symbol_fr}>
-                            {c.symbol_fr}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label>Numéro de téléphone *</label>
-                    <input
-                      type="tel"
-                      value={safeValues.receiverPhone || ''}
-                      onChange={(e) => handleChange('receiverPhone', e.target.value)}
-                      required
+                  <TextField
+                    label={`${t('step1.companyName')} *`}
+                    fullWidth
+                    value={safeValues.receiverName || ''}
+                    onChange={(e) =>
+                      handleChange('receiverName', e.target.value)
+                    }
+                    sx={{ mb: 2, ...customFieldStyle }}
+                  />
+                  <TextField
+                    label={`${t('step1.address')} *`}
+                    fullWidth
+                    value={safeValues.receiverAddress || ''}
+                    onChange={(e) =>
+                      handleChange('receiverAddress', e.target.value)
+                    }
+                    sx={{ mb: 2, ...customFieldStyle }}
+                  />
+                  <TextField
+                    label={t('step1.addressNext')}
+                    fullWidth
+                    value={safeValues.receiverAddress2 || ''}
+                    onChange={(e) =>
+                      handleChange('receiverAddress2', e.target.value)
+                    }
+                    sx={{ mb: 2, ...customFieldStyle }}
+                  />
+                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                    <TextField
+                      label={`${t('step1.postalCode')} *`}
+                      fullWidth
+                      value={safeValues.receiverPostalCode || ''}
+                      onChange={(e) =>
+                        handleChange('receiverPostalCode', e.target.value)
+                      }
+                      sx={{ ...customFieldStyle }}
                     />
-                  </div>
+                    <TextField
+                      label={`${t('step1.city')} *`}
+                      fullWidth
+                      value={safeValues.receiverCity || ''}
+                      onChange={(e) =>
+                        handleChange('receiverCity', e.target.value)
+                      }
+                      sx={{ ...customFieldStyle }}
+                    />
+                  </Box>
+                  <FormControl fullWidth variant="outlined" sx={{ mb: 2, ...customFieldStyle }}>
+                    <InputLabel id="receiver-country-label">
+                      {t('step1.country')} *
+                    </InputLabel>
+                    <Select
+                      labelId="receiver-country-label"
+                      value={safeValues.receiverCountry || ''}
+                      onChange={(e) =>
+                        handleChange('receiverCountry', e.target.value)
+                      }
+                      label={`${t('step1.country')} *`}
+                    >
+                      <MenuItem value="">
+                        <em>-- Sélectionnez un pays --</em>
+                      </MenuItem>
+                      {countries.map((c) => (
+                        <MenuItem key={c.id_country} value={c.symbol_fr}>
+                          {c.symbol_fr}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    label="Numéro de téléphone *"
+                    fullWidth
+                    value={safeValues.receiverPhone || ''}
+                    onChange={(e) =>
+                      handleChange('receiverPhone', e.target.value)
+                    }
+                    sx={{ mb: 2, ...customFieldStyle }}
+                  />
                 </>
               )}
             </div>
@@ -534,40 +567,50 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           <div>
             <div className="collapsible-header">
               <span className="section-title">
-                3/8 ORIGINE (champs manquants : {getMissingFieldsCount('section3')})
+                3/8 ORIGINE (champs manquants : {getMissingFieldsCount()})
               </span>
             </div>
             <div className="collapsible-content">
-              <div className="form-group">
-                <label>Pays d'origine de la marchandise *</label>
-                <select
+              <FormControl fullWidth variant="outlined" sx={{ mb: 2, ...customFieldStyle }}>
+                <InputLabel id="goods-origin-label">
+                  Pays d'origine de la marchandise *
+                </InputLabel>
+                <Select
+                  labelId="goods-origin-label"
                   value={safeValues.goodsOrigin || ''}
                   onChange={(e) => handleChange('goodsOrigin', e.target.value)}
-                  required
+                  label="Pays d'origine de la marchandise *"
                 >
-                  <option value="">-- Sélectionnez un pays --</option>
+                  <MenuItem value="">
+                    <em>-- Sélectionnez un pays --</em>
+                  </MenuItem>
                   {countries.map((c) => (
-                    <option key={c.id_country} value={c.symbol_fr}>
+                    <MenuItem key={c.id_country} value={c.symbol_fr}>
                       {c.symbol_fr}
-                    </option>
+                    </MenuItem>
                   ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Pays de destination de la marchandise *</label>
-                <select
+                </Select>
+              </FormControl>
+              <FormControl fullWidth variant="outlined" sx={{ ...customFieldStyle }}>
+                <InputLabel id="goods-destination-label">
+                  Pays de destination de la marchandise *
+                </InputLabel>
+                <Select
+                  labelId="goods-destination-label"
                   value={safeValues.goodsDestination || ''}
                   onChange={(e) => handleChange('goodsDestination', e.target.value)}
-                  required
+                  label="Pays de destination de la marchandise *"
                 >
-                  <option value="">-- Sélectionnez un pays --</option>
+                  <MenuItem value="">
+                    <em>-- Sélectionnez un pays --</em>
+                  </MenuItem>
                   {countries.map((c) => (
-                    <option key={c.id_country} value={c.symbol_fr}>
+                    <MenuItem key={c.id_country} value={c.symbol_fr}>
                       {c.symbol_fr}
-                    </option>
+                    </MenuItem>
                   ))}
-                </select>
-              </div>
+                </Select>
+              </FormControl>
             </div>
           </div>
         );
@@ -576,73 +619,83 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           <div>
             <div className="collapsible-header">
               <span className="section-title">
-                4/8 MODES DE TRANSPORT (champs manquants : {getMissingFieldsCount('section4')})
+                4/8 MODES DE TRANSPORT (champs manquants : {getMissingFieldsCount()})
               </span>
             </div>
             <div className="collapsible-content">
-              <div className="form-group-row">
-                <div className="form-group">
-                  <label>
-                    Port de chargement <span className="required">*</span>
-                  </label>
-                  <select
+              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                <FormControl fullWidth variant="outlined" sx={{ ...customFieldStyle }}>
+                  <InputLabel id="loading-port-label">
+                    Port de chargement *
+                  </InputLabel>
+                  <Select
+                    labelId="loading-port-label"
                     value={safeValues.loadingPort || ''}
                     onChange={(e) => handleChange('loadingPort', e.target.value)}
-                    required
+                    label="Port de chargement *"
                   >
-                    <option value="">-- Sélectionnez un pays --</option>
+                    <MenuItem value="">
+                      <em>-- Sélectionnez un pays --</em>
+                    </MenuItem>
                     {countries.map((c) => (
-                      <option key={c.id_country} value={c.symbol_fr}>
+                      <MenuItem key={c.id_country} value={c.symbol_fr}>
                         {c.symbol_fr}
-                      </option>
+                      </MenuItem>
                     ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>
-                    Port de déchargement <span className="required">*</span>
-                  </label>
-                  <select
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth variant="outlined" sx={{ ...customFieldStyle }}>
+                  <InputLabel id="discharging-port-label">
+                    Port de déchargement *
+                  </InputLabel>
+                  <Select
+                    labelId="discharging-port-label"
                     value={safeValues.dischargingPort || ''}
                     onChange={(e) => handleChange('dischargingPort', e.target.value)}
-                    required
+                    label="Port de déchargement *"
                   >
-                    <option value="">-- Sélectionnez un pays --</option>
+                    <MenuItem value="">
+                      <em>-- Sélectionnez un pays --</em>
+                    </MenuItem>
                     {countries.map((c) => (
-                      <option key={c.id_country} value={c.symbol_fr}>
+                      <MenuItem key={c.id_country} value={c.symbol_fr}>
                         {c.symbol_fr}
-                      </option>
+                      </MenuItem>
                     ))}
-                  </select>
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Modes de transport</label>
-                <div className="transport-options">
+                  </Select>
+                </FormControl>
+              </Box>
+              <Box sx={{ mb: 2 }}>
+                <InputLabel sx={{ mb: 1 }}>Modes de transport</InputLabel>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
                   {transportModes.map((mode) => (
-                    <label key={mode.id_transport_mode}>
-                      <input
-                        type="checkbox"
-                        checked={safeValues.transportModes[mode.symbol_eng.toLowerCase()] || false}
-                        onChange={(e) =>
-                          handleChange('transportModes', {
-                            ...safeValues.transportModes,
-                            [mode.symbol_eng.toLowerCase()]: e.target.checked,
-                          })
-                        }
-                      />{' '}
-                      {mode.symbol_fr}
-                    </label>
+                    <FormControlLabel
+                      key={mode.id_transport_mode}
+                      control={
+                        <Radio
+                          sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }}
+                          checked={!!safeValues.transportModes[mode.symbol_eng.toLowerCase()]}
+                          onChange={(e) =>
+                            handleChange('transportModes', {
+                              ...safeValues.transportModes,
+                              [mode.symbol_eng.toLowerCase()]: e.target.checked,
+                            })
+                          }
+                        />
+                      }
+                      label={mode.symbol_fr}
+                    />
                   ))}
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Remarques sur le transport</label>
-                <textarea
-                  value={safeValues.transportRemarks || ''}
-                  onChange={(e) => handleChange('transportRemarks', e.target.value)}
-                />
-              </div>
+                </Box>
+              </Box>
+              <TextField
+                label="Remarques sur le transport"
+                fullWidth
+                multiline
+                value={safeValues.transportRemarks || ''}
+                onChange={(e) => handleChange('transportRemarks', e.target.value)}
+                sx={{ ...customFieldStyle }}
+              />
             </div>
           </div>
         );
@@ -651,105 +704,138 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           <div>
             <div className="collapsible-header">
               <span className="section-title">
-                5/8 MARCHANDISES (champs manquants : {getMissingFieldsCount('section5')})
+                5/8 MARCHANDISES (champs manquants : {getMissingFieldsCount()})
               </span>
             </div>
             <div className="collapsible-content">
-              <button type="button" className="add-merchandise-btn" onClick={createEmptyMerchLine}>
+              <Button
+                variant="contained"
+                onClick={createEmptyMerchLine}
+                sx={{ mb: 2, ...customButtonStyle }}
+              >
                 Ajouter la marchandise
-              </button>
+              </Button>
               {safeValues.merchandises.map((m, index) => {
                 const isEditable = merchEditStates[index] || false;
                 return (
-                  <div key={index} className="merch-line">
-                    <div className="form-group-row" style={{ alignItems: 'center' }}>
-                      <div className="form-group">
-                        <label>Référence / HSCODE</label>
-                        <input
-                          type="text"
-                          disabled={!isEditable}
-                          value={m.boxReference}
-                          onChange={(e) => handleMerchChange(index, 'boxReference', e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>Nature</label>
-                        <input
-                          type="text"
-                          disabled={!isEditable}
-                          value={m.designation}
-                          onChange={(e) => handleMerchChange(index, 'designation', e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>Quantité</label>
-                        <input
-                          type="number"
-                          disabled={!isEditable}
-                          value={m.quantity === '' ? '' : m.quantity}
-                          onChange={(e) => {
-                            if (e.target.value === '') {
-                              handleMerchChange(index, 'quantity', '');
-                            } else {
-                              const parsed = parseFloat(e.target.value);
-                              if (!isNaN(parsed)) {
-                                handleMerchChange(index, 'quantity', parsed);
-                              }
-                            }
-                          }}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>Unité</label>
-                        <select
-                          disabled={!isEditable}
-                          value={m.unit}
-                          onChange={(e) => handleMerchChange(index, 'unit', e.target.value)}
+                  <Box
+                    key={index}
+                    sx={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 2,
+                      alignItems: 'center',
+                      mb: 2,
+                      p: 2,
+                      border: '1px solid #ccc',
+                      borderRadius: '8px',
+                    }}
+                  >
+                    <TextField
+                      label="Référence / HSCODE"
+                      variant="outlined"
+                      fullWidth
+                      value={m.boxReference}
+                      onChange={(e) =>
+                        handleMerchChange(index, 'boxReference', e.target.value)
+                      }
+                      disabled={!isEditable}
+                      sx={{ ...customFieldStyle }}
+                    />
+                    <TextField
+                      label="Nature"
+                      variant="outlined"
+                      fullWidth
+                      value={m.designation}
+                      onChange={(e) =>
+                        handleMerchChange(index, 'designation', e.target.value)
+                      }
+                      disabled={!isEditable}
+                      sx={{ ...customFieldStyle }}
+                    />
+                    <FormControl variant="outlined" sx={{ width: '150px', ...customFieldStyle }}>
+                      <InputLabel htmlFor={`merch-qty-${index}`}>
+                        Quantité
+                      </InputLabel>
+                      <OutlinedInput
+                        id={`merch-qty-${index}`}
+                        type="number"
+                        value={m.quantity === '' ? '' : m.quantity}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleMerchChange(
+                            index,
+                            'quantity',
+                            val === '' ? '' : parseFloat(val)
+                          );
+                        }}
+                        label="Quantité"
+                        disabled={!isEditable}
+                        endAdornment={
+                          <InputAdornment position="end">
+                            {m.unit}
+                          </InputAdornment>
+                        }
+                      />
+                    </FormControl>
+                    <FormControl variant="outlined" sx={{ width: '150px', ...customFieldStyle }}>
+                      <InputLabel id={`merch-unit-label-${index}`}>
+                        Unité
+                      </InputLabel>
+                      <Select
+                        labelId={`merch-unit-label-${index}`}
+                        id={`merch-unit-${index}`}
+                        value={m.unit}
+                        label="Unité"
+                        onChange={(e) =>
+                          handleMerchChange(index, 'unit', e.target.value)
+                        }
+                        disabled={!isEditable}
+                      >
+                        {unitWeights.map((u) => (
+                          <MenuItem key={u.id_unit_weight} value={u.symbol_fr}>
+                            {u.symbol_fr}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <TextField
+                      label="Référence doc. justificatif"
+                      variant="outlined"
+                      fullWidth
+                      value={m.reference || ''}
+                      onChange={(e) =>
+                        handleMerchChange(index, 'reference', e.target.value)
+                      }
+                      disabled={!isEditable}
+                      sx={{ ...customFieldStyle }}
+                    />
+                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                      {isEditable ? (
+                        <IconButton
+                          color="success"
+                          onClick={() => validateLine(index)}
+                          sx={{ mb: 1 }}
                         >
-                          {unitWeights.map((u) => (
-                            <option key={u.id_unit_weight} value={u.symbol_fr}>
-                              {u.symbol_fr}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label>Référence doc. justificatif</label>
-                        <input
-                          type="text"
-                          disabled={!isEditable}
-                          value={m.reference || ''}
-                          onChange={(e) => handleMerchChange(index, 'reference', e.target.value)}
-                        />
-                      </div>
-                      <div className="merch-actions">
-                        {isEditable ? (
-                          <button
-                            type="button"
-                            className="merch-icon-btn merch-icon-validate"
-                            onClick={() => validateLine(index)}
-                          >
-                            <FontAwesomeIcon icon={faCheck} />
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="merch-icon-btn"
-                            onClick={() => toggleLineEdit(index)}
-                          >
-                            <FontAwesomeIcon icon={faEdit} />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          className="merch-icon-btn merch-icon-delete"
-                          onClick={() => removeMerchandise(index)}
+                          <FontAwesomeIcon icon={faCheck} />
+                        </IconButton>
+                      ) : (
+                        <IconButton
+                          color="primary"
+                          onClick={() => toggleLineEdit(index)}
+                          sx={{ mb: 1 }}
                         >
-                          <FontAwesomeIcon icon={faTimes} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                          <FontAwesomeIcon icon={faEdit} />
+                        </IconButton>
+                      )}
+                      <IconButton
+                        color="error"
+                        onClick={() => removeMerchandise(index)}
+                      >
+                        <FontAwesomeIcon icon={faTimes} />
+                      </IconButton>
+                    </Box>
+                  </Box>
                 );
               })}
             </div>
@@ -760,29 +846,28 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           <div>
             <div className="collapsible-header">
               <span className="section-title">
-                6/8 NOMBRE DE COPIES (champs manquants : {getMissingFieldsCount('section6')})
+                6/8 NOMBRE DE COPIES (champs manquants : {getMissingFieldsCount()})
               </span>
             </div>
             <div className="collapsible-content">
-              <div className="form-group">
-                <label>Combien de copies certifiées ?</label>
-                <input
-                  type="number"
-                  value={safeValues.copies === '' ? '' : safeValues.copies}
-                  onChange={(e) => {
-                    if (e.target.value === '') {
-                      handleChange('copies', '');
-                    } else {
-                      const val = parseFloat(e.target.value);
-                      if (!isNaN(val)) {
-                        handleChange('copies', val);
-                      }
+              <TextField
+                label="Combien de copies certifiées ?"
+                type="number"
+                fullWidth
+                value={safeValues.copies === '' ? '' : safeValues.copies}
+                onChange={(e) => {
+                  if (e.target.value === '') {
+                    handleChange('copies', '');
+                  } else {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) {
+                      handleChange('copies', val);
                     }
-                  }}
-                  min="1"
-                  required
-                />
-              </div>
+                  }
+                }}
+                InputProps={{ inputProps: { min: 1 } }}
+                sx={{ ...customFieldStyle }}
+              />
             </div>
           </div>
         );
@@ -791,32 +876,36 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           <div>
             <div className="collapsible-header">
               <span className="section-title">
-                7/8 ENGAGEMENT (champs manquants : {getMissingFieldsCount('section7')})
+                7/8 ENGAGEMENT (champs manquants : {getMissingFieldsCount()})
               </span>
             </div>
             <div className="collapsible-content">
-              <p>
-                En validant ces conditions générales d'utilisation vous demandez la délivrance
-                du certificat d'origine pour les marchandises figurant en case 6, dont l'origine
-                est indiquée en case 3.
-              </p>
-              <p>
-                Vous vous engagez à ce que tous les éléments et renseignements fournis ainsi que
-                les éventuelles pièces justificatives présentées soient exactes, que les marchandises
-                auxquelles se rapportent ces renseignements soient celles pour lesquelles le certificat
-                d'origine est demandé et que ces marchandises remplissent les conditions prévues par
-                la réglementation relative à la définition de la notion d'origine des marchandises.
-              </p>
-              <div className="form-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={safeValues.isCommitted || false}
-                    onChange={(e) => handleChange('isCommitted', e.target.checked)}
-                  />{' '}
-                  Je certifie m'engager dans les conditions décrites ci-dessus
-                </label>
-              </div>
+              <Box sx={{ mb: 2 }}>
+                <p>
+                  En validant ces conditions générales d'utilisation vous demandez la délivrance
+                  du certificat d'origine pour les marchandises figurant en case 6, dont l'origine
+                  est indiquée en case 3.
+                </p>
+                <p>
+                  Vous vous engagez à ce que tous les éléments et renseignements fournis ainsi que
+                  les éventuelles pièces justificatives présentées soient exactes, que les marchandises
+                  auxquelles se rapportent ces renseignements soient celles pour lesquelles le certificat
+                  d'origine est demandé et que ces marchandises remplissent les conditions prévues par
+                  la réglementation relative à la définition de la notion d'origine des marchandises.
+                </p>
+              </Box>
+              <FormControlLabel
+                control={
+                  <Radio
+                    sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }}
+                    checked={!!safeValues.isCommitted}
+                    onChange={(e) =>
+                      handleChange('isCommitted', e.target.checked)
+                    }
+                  />
+                }
+                label="Je certifie m'engager dans les conditions décrites ci-dessus"
+              />
             </div>
           </div>
         );
@@ -827,16 +916,17 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
               <span className="section-title">8/8 REMARQUES</span>
             </div>
             <div className="collapsible-content">
-              <div className="form-group">
-                <textarea
-                  value={safeValues.remarks || ''}
-                  onChange={(e) => handleChange('remarks', e.target.value)}
-                  placeholder="Ajouter une remarque"
-                />
-              </div>
-              <div className="character-counter">
+              <TextField
+                label="Ajouter une remarque"
+                fullWidth
+                multiline
+                value={safeValues.remarks || ''}
+                onChange={(e) => handleChange('remarks', e.target.value)}
+                sx={{ ...customFieldStyle }}
+              />
+              <Box sx={{ mt: 1 }}>
                 Caractère(s) restant(s) : {300 - (safeValues.remarks?.length ?? 0)}
-              </div>
+              </Box>
             </div>
           </div>
         );
@@ -847,7 +937,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
 
   return (
     <form onSubmit={handleSubmit} className="step-form">
-      {/* Utilisation de Slide pour animer la transition entre sections */}
       <Slide
         direction={slideDirection}
         in={true}
@@ -856,25 +945,22 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         key={currentSection}
         timeout={300}
       >
-        <div className="step-content">
-          {renderSection()}
-        </div>
+        <div className="step-content">{renderSection()}</div>
       </Slide>
-      <div
-  className="button-group"
-  style={{
-    marginTop: '20px',
-    justifyContent: 'space-between',
-  }}
->
-  <button type="button" className="previous-button" onClick={onBack}>
-    Retour
-  </button>
-  <button type="button" className="next-button" onClick={nextSection}>
-    {currentSection < totalSections - 1 ? 'Suivant' : 'Terminer'}
-  </button>
-</div>
-
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          mt: 2,
+        }}
+      >
+        <Button variant="outlined" onClick={onBack}>
+          Retour
+        </Button>
+        <Button variant="contained" onClick={nextSection} sx={customButtonStyle}>
+          {currentSection < totalSections - 1 ? 'Suivant' : 'Terminer'}
+        </Button>
+      </Box>
     </form>
   );
 };

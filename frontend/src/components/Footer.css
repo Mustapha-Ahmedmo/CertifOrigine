@@ -19,7 +19,7 @@ body {
   right: 0; /* Assure que le footer s'étend à droite */
   bottom: 0;
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Légère ombre pour la séparation */
-  z-index: 1000; /* Assure que le footer est au-dessus des autres éléments */
+  z-index: 10001; /* Assure que le footer est au-dessus des autres éléments */
   
 }
 

@@ -162,21 +162,21 @@ const Home = () => {
       <div className="home-dashboard-grid">
         {activeTab === 'visa' && (
           <OrderTable
-            title="Commandes à soumettre"
+            title=""
             orders={ordersVisa}
             refreshOrders={fetchOrders}
           />
         )}
         {activeTab === 'validation' && (
           <OrderTable
-            title="Commandes en attente de validation"
+            title=""
             orders={ordersValidation}
             refreshOrders={fetchOrders}
           />
         )}
         {activeTab === 'payment' && (
           <OrderTable
-            title="Commandes en attente de paiement"
+            title=""
             orders={ordersPayment}
             refreshOrders={fetchOrders}
           />
@@ -184,7 +184,7 @@ const Home = () => {
         {/* Nouvel onglet : commandes retournées par la CDD */}
         {activeTab === 'returned' && (
           <OrderTable
-            title="Commandes retournées par la CDD"
+            title=""
             orders={ordersReturned}
             refreshOrders={fetchOrders}
           />
