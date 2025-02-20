@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
-import './Step1.css';
+import Alert from '@mui/material/Alert';
+// Si votre fichier CSS global (ex: Step1.css ou CreateOrder.css) applique des styles aux messages d'erreur,
+// vous pouvez le commenter pour éviter les conflits.
+// import './Step1.css';
 
 const Step1 = ({ nextStep, handleChange, values }) => {
   const [errorMessage, setErrorMessage] = useState('');
@@ -39,9 +41,19 @@ const Step1 = ({ nextStep, handleChange, values }) => {
           }}
         />
         {errorMessage && (
-          <Typography variant="body2" color="error">
+          <Alert
+            severity="error"
+            sx={{
+              width: '100%',
+              mt: 2,
+              // Forcer l'override pour utiliser le style par défaut de MUI Alert
+              fontWeight: 'normal !important',
+              color: 'inherit !important',
+              backgroundColor: (theme) => theme.palette.error.light + ' !important',
+            }}
+          >
             {errorMessage}
-          </Typography>
+          </Alert>
         )}
         <Button
           variant="contained"

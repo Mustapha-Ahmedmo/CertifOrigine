@@ -31,6 +31,7 @@ import IconButton from '@mui/material/IconButton';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Alert from '@mui/material/Alert';
 
 const customFieldStyle = {
   '& .MuiOutlinedInput-root': {
@@ -89,7 +90,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
 
   // Mapping des champs obligatoires par section
   const sectionConfig = {
-    0: [], // DEMANDEUR
+    0: [], // DEMANDEUR (déjà rempli)
     1: isNewDestinataire ? fieldsForNewRecipient : fieldsForExistingRecipient, // DESTINATAIRE
     2: ['goodsOrigin', 'goodsDestination'], // ORIGINE
     3: ['loadingPort', 'dischargingPort', 'transportModes'], // TRANSPORT
@@ -97,6 +98,17 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     5: ['copies'], // NOMBRE DE COPIES
     6: ['isCommitted'], // ENGAGEMENT
     7: [] // REMARQUES
+  };
+
+  // Messages d'erreur spécifiques par section (en fonction de currentSection)
+  const errorMessages = {
+    1: "Veuillez choisir ou saisir un destinataire.",
+    2: "Veuillez choisir le pays d'origine et de destination de la marchandise.",
+    3: "Veuillez sélectionner les ports et au moins un mode de transport.",
+    4: "Veuillez ajouter et valider au moins une marchandise.",
+    5: "Veuillez renseigner le nombre de copies certifiées.",
+    6: "Veuillez certifier votre engagement.",
+    // Pour la section 8/8 (index 7) il n'y a pas de champ obligatoire.
   };
 
   // Chargement initial des données
@@ -165,23 +177,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     transportModes: {},
   };
 
-  // Navigation entre sections
-  const nextSection = () => {
-    setSlideDirection('left');
-    if (currentSection < totalSections - 1) {
-      setCurrentSection(currentSection + 1);
-    } else {
-      nextStep();
-    }
-  };
-
-  const prevSection = () => {
-    setSlideDirection('right');
-    if (currentSection > 0) {
-      setCurrentSection(currentSection - 1);
-    }
-  };
-
   // Calcul du nombre de champs manquants pour la section courante
   const getMissingFieldsCount = () => {
     const fields = sectionConfig[currentSection] || [];
@@ -199,6 +194,35 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       }
     });
     return missingCount;
+  };
+
+  // Navigation entre sections avec validation des champs obligatoires
+  const nextSection = () => {
+    // Pour toutes les sections sauf 1/8 (index 0) déjà remplies, on vérifie que tous les champs obligatoires sont remplis.
+    if (currentSection !== 0) {
+      const missing = getMissingFieldsCount();
+      if (missing > 0) {
+        // Si un message d'erreur spécifique existe pour la section courante, on l'utilise.
+        const msg = errorMessages[currentSection] || "Veuillez remplir tous les champs obligatoires de cette section.";
+        setErrorMessage(msg);
+        return;
+      }
+    }
+    // Si tous les champs sont remplis, on passe à la section suivante et on efface l'erreur.
+    setErrorMessage('');
+    setSlideDirection('left');
+    if (currentSection < totalSections - 1) {
+      setCurrentSection(currentSection + 1);
+    } else {
+      nextStep();
+    }
+  };
+
+  const prevSection = () => {
+    setSlideDirection('right');
+    if (currentSection > 0) {
+      setCurrentSection(currentSection - 1);
+    }
   };
 
   // Gestion des marchandises
@@ -411,18 +435,14 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         return (
           <div>
             <div className="collapsible-header">
-              <span className="section-title">
-                2/8 DESTINATAIRE (champs manquants : {getMissingFieldsCount()})
-              </span>
+              <span className="section-title">2/8 DESTINATAIRE</span>
             </div>
             <div className="collapsible-content">
               <FormControl component="fieldset" sx={{ mb: 2 }}>
                 <RadioGroup
                   row
                   defaultValue="choisir"
-                  onChange={(e) =>
-                    setIsNewDestinataire(e.target.value === 'saisir')
-                  }
+                  onChange={(e) => setIsNewDestinataire(e.target.value === 'saisir')}
                 >
                   <FormControlLabel
                     value="choisir"
@@ -449,8 +469,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       setSelectedRecipient(selectedId);
                       handleChange('selectedRecipientId', selectedId);
                       const r = recipients.find(
-                        (rec) =>
-                          rec.id_recipient_account.toString() === selectedId
+                        (rec) => rec.id_recipient_account.toString() === selectedId
                       );
                       if (r) {
                         handleChange('receiverName', r.recipient_name);
@@ -483,27 +502,21 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                     label={`${t('step1.companyName')} *`}
                     fullWidth
                     value={safeValues.receiverName || ''}
-                    onChange={(e) =>
-                      handleChange('receiverName', e.target.value)
-                    }
+                    onChange={(e) => handleChange('receiverName', e.target.value)}
                     sx={{ mb: 2, ...customFieldStyle }}
                   />
                   <TextField
                     label={`${t('step1.address')} *`}
                     fullWidth
                     value={safeValues.receiverAddress || ''}
-                    onChange={(e) =>
-                      handleChange('receiverAddress', e.target.value)
-                    }
+                    onChange={(e) => handleChange('receiverAddress', e.target.value)}
                     sx={{ mb: 2, ...customFieldStyle }}
                   />
                   <TextField
                     label={t('step1.addressNext')}
                     fullWidth
                     value={safeValues.receiverAddress2 || ''}
-                    onChange={(e) =>
-                      handleChange('receiverAddress2', e.target.value)
-                    }
+                    onChange={(e) => handleChange('receiverAddress2', e.target.value)}
                     sx={{ mb: 2, ...customFieldStyle }}
                   />
                   <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
@@ -511,18 +524,14 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       label={`${t('step1.postalCode')} *`}
                       fullWidth
                       value={safeValues.receiverPostalCode || ''}
-                      onChange={(e) =>
-                        handleChange('receiverPostalCode', e.target.value)
-                      }
+                      onChange={(e) => handleChange('receiverPostalCode', e.target.value)}
                       sx={{ ...customFieldStyle }}
                     />
                     <TextField
                       label={`${t('step1.city')} *`}
                       fullWidth
                       value={safeValues.receiverCity || ''}
-                      onChange={(e) =>
-                        handleChange('receiverCity', e.target.value)
-                      }
+                      onChange={(e) => handleChange('receiverCity', e.target.value)}
                       sx={{ ...customFieldStyle }}
                     />
                   </Box>
@@ -533,9 +542,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                     <Select
                       labelId="receiver-country-label"
                       value={safeValues.receiverCountry || ''}
-                      onChange={(e) =>
-                        handleChange('receiverCountry', e.target.value)
-                      }
+                      onChange={(e) => handleChange('receiverCountry', e.target.value)}
                       label={`${t('step1.country')} *`}
                     >
                       <MenuItem value="">
@@ -552,9 +559,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                     label="Numéro de téléphone *"
                     fullWidth
                     value={safeValues.receiverPhone || ''}
-                    onChange={(e) =>
-                      handleChange('receiverPhone', e.target.value)
-                    }
+                    onChange={(e) => handleChange('receiverPhone', e.target.value)}
                     sx={{ mb: 2, ...customFieldStyle }}
                   />
                 </>
@@ -566,51 +571,51 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         return (
           <div>
             <div className="collapsible-header">
-              <span className="section-title">
-                3/8 ORIGINE (champs manquants : {getMissingFieldsCount()})
-              </span>
+              <span className="section-title">3/8 ORIGINE</span>
             </div>
             <div className="collapsible-content">
-              <FormControl fullWidth variant="outlined" sx={{ mb: 2, ...customFieldStyle }}>
-                <InputLabel id="goods-origin-label">
-                  Pays d'origine de la marchandise *
-                </InputLabel>
-                <Select
-                  labelId="goods-origin-label"
-                  value={safeValues.goodsOrigin || ''}
-                  onChange={(e) => handleChange('goodsOrigin', e.target.value)}
-                  label="Pays d'origine de la marchandise *"
-                >
-                  <MenuItem value="">
-                    <em>-- Sélectionnez un pays --</em>
-                  </MenuItem>
-                  {countries.map((c) => (
-                    <MenuItem key={c.id_country} value={c.symbol_fr}>
-                      {c.symbol_fr}
+              <Box sx={{ mt: 2 }}>
+                <FormControl fullWidth variant="outlined" sx={{ mb: 2, ...customFieldStyle }}>
+                  <InputLabel id="goods-origin-label">
+                    Pays d'origine de la marchandise *
+                  </InputLabel>
+                  <Select
+                    labelId="goods-origin-label"
+                    value={safeValues.goodsOrigin || ''}
+                    onChange={(e) => handleChange('goodsOrigin', e.target.value)}
+                    label="Pays d'origine de la marchandise *"
+                  >
+                    <MenuItem value="">
+                      <em>-- Sélectionnez un pays --</em>
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl fullWidth variant="outlined" sx={{ ...customFieldStyle }}>
-                <InputLabel id="goods-destination-label">
-                  Pays de destination de la marchandise *
-                </InputLabel>
-                <Select
-                  labelId="goods-destination-label"
-                  value={safeValues.goodsDestination || ''}
-                  onChange={(e) => handleChange('goodsDestination', e.target.value)}
-                  label="Pays de destination de la marchandise *"
-                >
-                  <MenuItem value="">
-                    <em>-- Sélectionnez un pays --</em>
-                  </MenuItem>
-                  {countries.map((c) => (
-                    <MenuItem key={c.id_country} value={c.symbol_fr}>
-                      {c.symbol_fr}
+                    {countries.map((c) => (
+                      <MenuItem key={c.id_country} value={c.symbol_fr}>
+                        {c.symbol_fr}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth variant="outlined" sx={{ mt: 2, ...customFieldStyle }}>
+                  <InputLabel id="goods-destination-label">
+                    Pays de destination de la marchandise *
+                  </InputLabel>
+                  <Select
+                    labelId="goods-destination-label"
+                    value={safeValues.goodsDestination || ''}
+                    onChange={(e) => handleChange('goodsDestination', e.target.value)}
+                    label="Pays de destination de la marchandise *"
+                  >
+                    <MenuItem value="">
+                      <em>-- Sélectionnez un pays --</em>
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                    {countries.map((c) => (
+                      <MenuItem key={c.id_country} value={c.symbol_fr}>
+                        {c.symbol_fr}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
             </div>
           </div>
         );
@@ -618,12 +623,10 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         return (
           <div>
             <div className="collapsible-header">
-              <span className="section-title">
-                4/8 MODES DE TRANSPORT (champs manquants : {getMissingFieldsCount()})
-              </span>
+              <span className="section-title">4/8 MODES DE TRANSPORT</span>
             </div>
             <div className="collapsible-content">
-              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+              <Box sx={{ mt: 2, display: 'flex', gap: 2, mb: 2 }}>
                 <FormControl fullWidth variant="outlined" sx={{ ...customFieldStyle }}>
                   <InputLabel id="loading-port-label">
                     Port de chargement *
@@ -703,15 +706,13 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         return (
           <div>
             <div className="collapsible-header">
-              <span className="section-title">
-                5/8 MARCHANDISES (champs manquants : {getMissingFieldsCount()})
-              </span>
+              <span className="section-title">5/8 MARCHANDISES</span>
             </div>
             <div className="collapsible-content">
               <Button
                 variant="contained"
                 onClick={createEmptyMerchLine}
-                sx={{ mb: 2, ...customButtonStyle }}
+                sx={{ mt: 2, mb: 2, ...customButtonStyle }}
               >
                 Ajouter la marchandise
               </Button>
@@ -845,29 +846,29 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         return (
           <div>
             <div className="collapsible-header">
-              <span className="section-title">
-                6/8 NOMBRE DE COPIES (champs manquants : {getMissingFieldsCount()})
-              </span>
+              <span className="section-title">6/8 NOMBRE DE COPIES</span>
             </div>
             <div className="collapsible-content">
-              <TextField
-                label="Combien de copies certifiées ?"
-                type="number"
-                fullWidth
-                value={safeValues.copies === '' ? '' : safeValues.copies}
-                onChange={(e) => {
-                  if (e.target.value === '') {
-                    handleChange('copies', '');
-                  } else {
-                    const val = parseFloat(e.target.value);
-                    if (!isNaN(val)) {
-                      handleChange('copies', val);
+              <Box sx={{ mt: 2 }}>
+                <TextField
+                  label="Combien de copies certifiées ?"
+                  type="number"
+                  fullWidth
+                  value={safeValues.copies === '' ? '' : safeValues.copies}
+                  onChange={(e) => {
+                    if (e.target.value === '') {
+                      handleChange('copies', '');
+                    } else {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val)) {
+                        handleChange('copies', val);
+                      }
                     }
-                  }
-                }}
-                InputProps={{ inputProps: { min: 1 } }}
-                sx={{ ...customFieldStyle }}
-              />
+                  }}
+                  InputProps={{ inputProps: { min: 1 } }}
+                  sx={{ ...customFieldStyle }}
+                />
+              </Box>
             </div>
           </div>
         );
@@ -875,9 +876,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         return (
           <div>
             <div className="collapsible-header">
-              <span className="section-title">
-                7/8 ENGAGEMENT (champs manquants : {getMissingFieldsCount()})
-              </span>
+              <span className="section-title">7/8 ENGAGEMENT</span>
             </div>
             <div className="collapsible-content">
               <Box sx={{ mb: 2 }}>
@@ -888,7 +887,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                 </p>
                 <p>
                   Vous vous engagez à ce que tous les éléments et renseignements fournis ainsi que
-                  les éventuelles pièces justificatives présentées soient exactes, que les marchandises
+                  les éventuelles pièces justificatives présentées soient exacts, que les marchandises
                   auxquelles se rapportent ces renseignements soient celles pour lesquelles le certificat
                   d'origine est demandé et que ces marchandises remplissent les conditions prévues par
                   la réglementation relative à la définition de la notion d'origine des marchandises.
@@ -899,9 +898,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                   <Radio
                     sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }}
                     checked={!!safeValues.isCommitted}
-                    onChange={(e) =>
-                      handleChange('isCommitted', e.target.checked)
-                    }
+                    onChange={(e) => handleChange('isCommitted', e.target.checked)}
                   />
                 }
                 label="Je certifie m'engager dans les conditions décrites ci-dessus"
@@ -947,13 +944,13 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       >
         <div className="step-content">{renderSection()}</div>
       </Slide>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          mt: 2,
-        }}
-      >
+      {/* Affichage du message d'erreur spécifique via MUI Alert */}
+      {errorMessage && (
+        <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+          {errorMessage}
+        </Alert>
+      )}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
         <Button variant="outlined" onClick={onBack}>
           Retour
         </Button>
