@@ -39,7 +39,7 @@ import CreateOrder from '../components/orders/Create/CreateOrder';
 import OperateurLayout from './OperateurLayout';
 import ContactsList from '../pages/ContactsList';
 import RegisterContact from '../pages/RegisterContact';
-
+import DashboardClient from '../pages/DashboardClient';
 
 // Gestion de l'inactivité
 import InactivityHandler from './InactivityHandler';
@@ -81,6 +81,7 @@ const App = () => {
         >
           {/* Routes "client" */}
           <Route index element={<Home />} />
+          <Route path="dashboardclient" element={<DashboardClient />} />
           <Route path="to-complete" element={<ToComplete />} />
           <Route path="to-pay" element={<ToPay />} />
           <Route path="returned-orders" element={<ReturnedOrders />} />
