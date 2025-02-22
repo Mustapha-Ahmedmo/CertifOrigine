@@ -1,0 +1,132 @@
+/* Container for the entire page */
+.unit-type-page {
+    padding-left: 15%;
+    padding-right: 15%;
+    padding-top: 20px;
+    font-family: 'Poppins', sans-serif;
+    background-color: #f9f9f9;
+    min-height: 100vh;
+  }
+  
+  /* Header section with title and add button */
+  .unit-type-page .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  /* Add button styling */
+  .unit-type-page .add-button {
+    background-color: #4caf50;
+    border: none;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .unit-type-page .add-button:hover {
+    background-color: #45a049;
+  }
+  
+  /* Container for the table */
+  .unit-type-page .table-container {
+    overflow-x: auto;
+    background: #fff;
+    padding: 15px;
+    border-radius: 4px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  }
+  
+  /* Table styling */
+  .unit-type-page .unit-type-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .unit-type-page .unit-type-table th,
+  .unit-type-page .unit-type-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+  }
+  
+  .unit-type-page .unit-type-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+  
+  /* Icon buttons styling for actions */
+  .unit-type-page .icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-right: 5px;
+    font-size: 16px;
+    color: #555;
+    transition: color 0.3s ease;
+  }
+  
+  .unit-type-page .icon-button:hover {
+    color: #007bff;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 4px;
+    width: 400px;
+    max-width: 90%;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+  
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  .cancel-button {
+    background: #ccc;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  
+  .submit-button {
+    background: #4caf50;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    cursor: pointer;
+  }

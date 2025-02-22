@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import './OrderDetailsPage.css'; // Create this CSS file for page-specific styles
 import Step5 from '../../components/orders/Create/steps/Step5';
-import { fetchCountries, getCertifGoodsInfo, getCertifTranspMode, getOrdersForCustomer } from '../../services/apiServices';
+import { fetchCountries, getCertifGoodsInfo, getCertifTranspMode, getOrdersForCustomer, getTransmodeInfo } from '../../services/apiServices';
 import { useSelector } from 'react-redux';
 
 const OrderDetailsPage = () => {
@@ -15,6 +15,22 @@ const OrderDetailsPage = () => {
   const user = useSelector((state) => state.auth.user);
   const idLogin = user?.id_login_user;
   const idCustAccount = user?.id_cust_account;
+
+  const [transportModes, setTransportModes] = useState({});
+
+  useEffect(() => {
+    const fetchTransportModes = async () => {
+      try {
+        const fetchedTransportModes = await getTransmodeInfo(null, true);
+        setTransportModes(fetchedTransportModes.data);
+      } catch(error) {
+        console.error("Error fetching transport modes:", error);
+      }
+    };
+    fetchTransportModes();
+ }, []);
+
+ console.log(transportModes);
 
   // Declare all states at the top level
   const [formData, setFormData] = useState({
@@ -136,6 +152,7 @@ const OrderDetailsPage = () => {
             // Map the returned goods data to the structure expected by Step5.
             // For example, we assume each good contains: goodDescription, goodReferences, quantity, unit.
             const mappedGoods = (goodsResponse.data || []).map((good) => ({
+              id_ord_certif_goods: good.id_ord_certif_goods,  // add this property
               designation: good.good_description,
               boxReference: good.good_references,
               quantity: good.weight_qty, // Ensure that your API returns quantity; otherwise, adjust

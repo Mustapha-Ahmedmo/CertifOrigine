@@ -209,7 +209,6 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                 >
                   <FontAwesomeIcon icon={faUsers} className="icon" /> Clients
                 </span>
-
                 {openMenu.clients && (
                   <ul className="submenu">
                     <li>
@@ -244,7 +243,6 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                 </span>
                 {openMenu.operators && (
                   <ul className="submenu">
-                    {/* Lien vers la nouvelle page OperatorsList */}
                     <li>
                       <Link
                         to="/dashboard/operator/operatorslist"
@@ -258,6 +256,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                 )}
               </li>
 
+              {/* Sous-menu "Prestations de services" */}
               <li>
                 <span
                   className={`menu-title ${openMenu.services ? 'open' : ''}`}
@@ -265,6 +264,38 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                 >
                   <FontAwesomeIcon icon={faHandshake} className="icon" /> Prestations de services
                 </span>
+              </li>
+
+              {/* Nouveau sous-menu "Données de base" */}
+              <li>
+                <span
+                  className={`menu-title ${openMenu.baseData ? 'open' : ''}`}
+                  onClick={() => toggleSubMenu('baseData')}
+                >
+                  <FontAwesomeIcon icon={faCog} className="icon" /> Données de base
+                </span>
+                {openMenu.baseData && (
+                  <ul className="submenu">
+                    <li>
+                      <Link
+                        to="/dashboard/operator/document-type"
+                        className={activeLink === 'document-type' ? 'active' : ''}
+                        onClick={() => handleLinkClick('baseData', 'document-type')}
+                      >
+                        <FontAwesomeIcon icon={faFileContract} className="icon" /> Type de document
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/dashboard/operator/list-type"
+                        className={activeLink === 'list-type' ? 'active' : ''}
+                        onClick={() => handleLinkClick('baseData', 'list-type')}
+                      >
+                        <FontAwesomeIcon icon={faClipboardList} className="icon" /> Liste des unités
+                      </Link>
+                    </li>
+                  </ul>
+                )}
               </li>
             </ul>
           )}
@@ -305,10 +336,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
 
         {/* Bouton de déconnexion */}
         <li>
-          <button
-            className="menu-title logout-button"
-            onClick={handleLogout}
-          >
+          <button className="menu-title logout-button" onClick={handleLogout}>
             <FontAwesomeIcon icon={faSignOutAlt} className="icon" /> Se déconnecter
           </button>
         </li>

@@ -4,7 +4,7 @@ import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import './Step5.css';
 
 // On suppose que Step5 peut importer addRecipient, fetchRecipients
-import { addRecipient, fetchCountries, fetchRecipients, getOrderFilesInfo, getOrdersForCustomer, renameOrder, updateCertificate, getUnitWeightInfo } from '../../../../services/apiServices';
+import { addRecipient, fetchCountries, fetchRecipients, getOrderFilesInfo, getOrdersForCustomer, renameOrder, updateCertificate, getUnitWeightInfo, submitOrder, deleteCertifGoods, addOrUpdateGoods, getTransmodeInfo, setOrdCertifTranspMode, removeCertifTranspMode, removeSingleCertifTranspMode, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles } from '../../../../services/apiServices';
 import { useSelector } from 'react-redux';
 
 const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handleChange }) => {
@@ -23,16 +23,19 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
   const customerAccountId = user?.id_cust_account; // Customer Account ID
   const [unitWeights, setUnitWeights] = useState([]);
 
+  const [transpMode, settransportModes] = useState({});
 
 
 
-const API_URL = import.meta.env.VITE_API_URL;
-    // Extract query params (certifId and orderId)
-    const params = new URLSearchParams(location.search);
-    const certifId = params.get('certifId');
-    const orderId = params.get('orderId') ||values.orderId;
 
-    
+
+  const API_URL = import.meta.env.VITE_API_URL;
+  // Extract query params (certifId and orderId)
+  const params = new URLSearchParams(location.search);
+  const certifId = params.get('certifId');
+  const orderId = params.get('orderId') || values.orderId;
+
+
   // État local pour gérer l'édition du libellé de commande
   const [isEditingLabel, setIsEditingLabel] = useState(false);
 
@@ -40,76 +43,101 @@ const API_URL = import.meta.env.VITE_API_URL;
   const [localRecipients, setLocalRecipients] = useState(safeValues.recipients);
   const [selectedRecipientId, setSelectedRecipientId] = useState(safeValues.selectedRecipientId || '');
   // État local pour gérer temporairement les modes de transport
-const [tempTransportModes, setTempTransportModes] = useState(values.transportModes || {});
-const [merchandises, setMerchandises] = useState(values.merchandises || []);
-useEffect(() => {
-  setMerchandises(values.merchandises || []);
-}, [values.merchandises]);
-// Pour "Copies certifiées"
-const [isEditingCopies, setIsEditingCopies] = useState(false);
-const [copies, setCopies] = useState(values.copies || '');
-useEffect(() => {
-  setCopies(values.copies || '');
-}, [values.copies]);
+  const [tempTransportModes, setTempTransportModes] = useState(values.transportModes || {});
+  const [merchandises, setMerchandises] = useState(values.merchandises || []);
+  useEffect(() => {
+    setMerchandises(values.merchandises || []);
+  }, [values.merchandises]);
+  // Pour "Copies certifiées"
+  const [isEditingCopies, setIsEditingCopies] = useState(false);
+  const [copies, setCopies] = useState(values.copies || '');
+  useEffect(() => {
+    setCopies(values.copies || '');
+  }, [values.copies]);
 
-useEffect(() => {
-  const fetchUnitWeights = async () => {
+  useEffect(() => {
+    const fetchUnitWeights = async () => {
+      try {
+        // Appel à l'API pour récupérer les unités de poids.
+        const response = await getUnitWeightInfo(null, true);
+        // On suppose que la réponse contient les données dans response.data.
+        setUnitWeights(response.data || []);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des unités de poids:', error);
+      }
+    };
+    fetchUnitWeights();
+  }, []);
+
+
+  const saveCopies = () => {
+    if (handleChange) {
+      handleChange('copies', copies);
+    }
+    setIsEditingCopies(false);
+  };
+
+  // Pour "Remarques"
+  const [isEditingRemarks, setIsEditingRemarks] = useState(false);
+  const [remarks, setRemarks] = useState(values.remarks || '');
+  useEffect(() => {
+    setRemarks(values.remarks || '');
+  }, [values.remarks]);
+
+  const saveRemarks = () => {
+    if (handleChange) {
+      handleChange('remarks', remarks);
+    }
+    setIsEditingRemarks(false);
+  };
+
+  const handleDeleteMerchandise = async (indexToDelete) => {
     try {
-      // Appel à l'API pour récupérer les unités de poids.
-      const response = await getUnitWeightInfo(null, true);
-      // On suppose que la réponse contient les données dans response.data.
-      setUnitWeights(response.data || []);
+      const merchandiseToDelete = merchandises[indexToDelete];
+
+      console.log(merchandiseToDelete)
+      // Check if the merchandise item has an associated ID in the database
+      if (merchandiseToDelete.id_ord_certif_goods) {
+        await deleteCertifGoods(merchandiseToDelete.id_ord_certif_goods, idLogin, 0);
+        console.log("Merchandise deleted from DB");
+      }
+
+      // Remove the merchandise from the local state
+      const updatedMerchandises = merchandises.filter((_, i) => i !== indexToDelete);
+      setMerchandises(updatedMerchandises);
+      if (handleChange) {
+        handleChange('merchandises', updatedMerchandises);
+      }
     } catch (error) {
-      console.error('Erreur lors de la récupération des unités de poids:', error);
+      console.error("Error deleting merchandise:", error);
+      alert("Erreur lors de la suppression de la marchandise.");
     }
   };
-  fetchUnitWeights();
-}, []);
 
+  const handleFileClick = (file) => {
+    // Construct the file URL
+    const fileUrl = `${API_URL}/files/commandes/${new Date().getFullYear()}/${file.file_guid}`;
+    // Open in a new browser tab
+    window.open(fileUrl, '_blank');
+  };
 
-const saveCopies = () => {
-  if (handleChange) {
-    handleChange('copies', copies);
-  }
-  setIsEditingCopies(false);
-};
+  useEffect(() => {
+    const fetchTransportModes = async () => {
+      try {
+        const fetched = await getTransmodeInfo(null, true);
+        // Assume fetched.data is an object like { air: true, mer: false, terre: true, mixte: false }
+        settransportModes(fetched.data || {});
+      } catch (error) {
+        console.error("Error fetching transport modes:", error);
+      }
+    };
+    fetchTransportModes();
+  }, []);
 
-// Pour "Remarques"
-const [isEditingRemarks, setIsEditingRemarks] = useState(false);
-const [remarks, setRemarks] = useState(values.remarks || '');
-useEffect(() => {
-  setRemarks(values.remarks || '');
-}, [values.remarks]);
-
-const saveRemarks = () => {
-  if (handleChange) {
-    handleChange('remarks', remarks);
-  }
-  setIsEditingRemarks(false);
-};
-
-const handleDeleteMerchandise = (indexToDelete) => {
-  console.log("Suppression de la marchandise à l'index :", indexToDelete);
-  const updatedMerchandises = merchandises.filter((_, i) => i !== indexToDelete);
-  setMerchandises(updatedMerchandises);
-  if (handleChange) {
-    handleChange('merchandises', updatedMerchandises);
-  }
-  console.log("Nouvelle liste :", updatedMerchandises);
-};
-
-const handleFileClick = (file) => {
-  // Construct the file URL
-  const fileUrl = `${API_URL}/files/commandes/${new Date().getFullYear()}/${file.file_guid}`;
-  // Open in a new browser tab
-  window.open(fileUrl, '_blank');
-};
-
-
-// Synchroniser cet état local si values.transportModes change
-useEffect(() => {
-  setTempTransportModes(values.transportModes || {});
-}, [values.transportModes]);
+  // Synchroniser cet état local si values.transportModes change
+  useEffect(() => {
+    setTempTransportModes(values.transportModes || {});
+  }, [values.transportModes]);
 
   // Fonction pour mettre à jour l'état local lors du clic sur une case
   const handleCheckboxChange = (modeKey, checked) => {
@@ -128,6 +156,24 @@ useEffect(() => {
   };
 
 
+  const handleSubmitOrder = async () => {
+    if (!values.orderId || !idLogin) {
+      console.error('Missing orderId or idLogin.');
+      return;
+    }
+    try {
+      const response = await submitOrder(values.orderId, idLogin);
+      console.log('Order submitted successfully:', response);
+      alert('Commande soumise avec succès.');
+      // Optionally, call the parent's handleSubmit if needed:
+      if (handleSubmit) {
+        handleSubmit();
+      }
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      alert('Erreur lors de la soumission de la commande.');
+    }
+  };
 
 
   // Other local state for modals and form fields (new recipient, new merchandise, etc.)
@@ -265,32 +311,32 @@ useEffect(() => {
       });
       const orders = ordersResponse.data || [];
 
-          // Filter to get the order that matches the current orderId
-    const currentOrder = orders.find(order => order.id_order == orderId);
-    if (!currentOrder) {
-      console.error('Order not found.');
-      return;
-    }
+      // Filter to get the order that matches the current orderId
+      const currentOrder = orders.find(order => order.id_order == orderId);
+      if (!currentOrder) {
+        console.error('Order not found.');
+        return;
+      }
 
-        // Assume that the certificate data is stored in a property like certData in the order
-    // (Adjust the property names based on your actual API response)
-    const certData = currentOrder.certData || currentOrder;
-    
-    // Build the update payload using the certificate data from the current order
-    const certUpdateData = {
-      p_id_ord_certif_ori: certData.id_ord_certif_ori, // Use the certificate ID from the order
-      p_id_recipient_account: selectedRecipientId,       // New recipient ID
-      p_id_country_origin: certData.id_country_origin,
-      p_id_country_destination: certData.id_country_destination,
-      p_id_country_port_loading: certData.id_country_port_loading,
-      p_id_country_port_discharge: certData.id_country_port_discharge,
-      p_notes: certData.notes || '',
-      p_copy_count: certData.copy_count || safeValues.copies,
-      p_idlogin_modify: idLogin,
-      p_transport_remains: safeValues.transportRemarks || '',
-    };
-    
-    
+      // Assume that the certificate data is stored in a property like certData in the order
+      // (Adjust the property names based on your actual API response)
+      const certData = currentOrder.certData || currentOrder;
+
+      // Build the update payload using the certificate data from the current order
+      const certUpdateData = {
+        p_id_ord_certif_ori: certData.id_ord_certif_ori, // Use the certificate ID from the order
+        p_id_recipient_account: selectedRecipientId,       // New recipient ID
+        p_id_country_origin: certData.id_country_origin,
+        p_id_country_destination: certData.id_country_destination,
+        p_id_country_port_loading: certData.id_country_port_loading,
+        p_id_country_port_discharge: certData.id_country_port_discharge,
+        p_notes: certData.notes || '',
+        p_copy_count: certData.copy_count || safeValues.copies,
+        p_idlogin_modify: idLogin,
+        p_transport_remains: safeValues.transportRemarks || '',
+      };
+
+
       const response = await updateCertificate(certUpdateData);
       console.log('Certificate updated:', response);
       alert('Le destinataire et autres informations du certificat ont été mis à jour.');
@@ -344,7 +390,7 @@ useEffect(() => {
       }
       setLocalRecipients(updatedRecipientsResponse.data);
 
-   
+
       setShowNewRecipientModal(false);
       setNewRecipientLocal({
         receiverName: '',
@@ -377,17 +423,43 @@ useEffect(() => {
     setNewMerchLocal((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSaveNewMerch = () => {
+  // Updated: When adding a new merchandise, also save it in the database
+  const handleSaveNewMerch = async () => {
     try {
-      if (!values.merchandises) {
-        values.merchandises = [];
+      if (!newMerchLocal.designation || !newMerchLocal.boxReference || !newMerchLocal.quantity || !newMerchLocal.unit) {
+        alert("Veuillez remplir tous les champs de la marchandise.");
+        return;
       }
-      values.merchandises.push({
-        designation: newMerchLocal.designation,
-        boxReference: newMerchLocal.boxReference,
-        quantity: newMerchLocal.quantity,
-        unit: newMerchLocal.unit,
-      });
+      // Find the matching unit in unitWeights by comparing the unit symbol
+      const matchedUnit = unitWeights.find(unit => unit.symbol_fr === newMerchLocal.unit);
+      if (!matchedUnit) {
+        alert("Unité non valide.");
+        return;
+      }
+      // Build goodsData to save the merchandise in the database
+      const goodsData = {
+        idOrdCertifOri: certifId, // using certifId from query string
+        goodDescription: newMerchLocal.designation,
+        goodReferences: newMerchLocal.boxReference,
+        weight_qty: newMerchLocal.quantity,
+        idUnitWeight: matchedUnit.id_unit_weight,
+      };
+      // Call the API function to add or update goods
+      const apiResponse = await addOrUpdateGoods(goodsData);
+      console.log("Goods added/updated successfully:", apiResponse);
+
+      // Optionally, update the new merchandise with the generated id from the API
+      const newMerchandise = {
+        ...newMerchLocal,
+        id_ord_certif_goods: apiResponse.new_ord_certif_goods_id, // Adjust according to your API response
+      };
+      // Update local state: add the new merchandise to the list
+      const updatedMerchandises = [...merchandises, newMerchandise];
+      setMerchandises(updatedMerchandises);
+      if (handleChange) {
+        handleChange('merchandises', updatedMerchandises);
+      }
+      // Reset modal state
       setShowNewMerchModal(false);
       setNewMerchLocal({
         designation: '',
@@ -396,7 +468,8 @@ useEffect(() => {
         unit: '',
       });
     } catch (error) {
-      console.error('Error adding merchandise:', error);
+      console.error("Error adding/updating merchandise:", error);
+      alert("Erreur lors de l'ajout ou de la mise à jour de la marchandise.");
     }
   };
 
@@ -453,6 +526,101 @@ useEffect(() => {
       loadDocumentsInfo();
     }
   }, [orderId, values.orderId]);
+
+  console.log("tempTransportModes => ", tempTransportModes);
+
+
+  const [mandatoryFileTypes, setMandatoryFileTypes] = useState([]);
+
+  const [showNewDocumentModal, setShowNewDocumentModal] = useState(false);
+  const [newDocumentData, setNewDocumentData] = useState({
+    file: null,
+    selectedFileType: '',
+  });
+
+  // --------------------------
+  // DOCUMENT MODAL HANDLERS
+  // --------------------------
+  // Open new document modal when "Upload" is clicked
+  const handleShowNewDocumentModal = () => {
+    setShowNewDocumentModal(true);
+  };
+
+  // Save new document: upload the file and update documentsInfo state
+  const handleSaveNewDocument = async () => {
+    if (!newDocumentData.file || !newDocumentData.selectedFileType) {
+      alert("Veuillez sélectionner un fichier et un type de document.");
+      return;
+    }
+    try {
+      const orderFileData = {
+        uploadType: 'commandes',
+        p_id_order: orderId,
+        p_idfiles_repo_typeof: newDocumentData.selectedFileType,
+        p_file_origin_name: newDocumentData.file.name,
+        p_typeof_order: 0, // adjust if needed
+        p_idlogin_insert: idLogin,
+        file: newDocumentData.file,
+      };
+  
+      const response = await setOrderFiles(orderFileData);
+
+      const queryParams = {
+        p_id_order_list: orderId || values.orderId,
+        p_isactive: true,
+        p_id_custaccount: customerAccountId,
+      };
+      const newDocs = await getOrderFilesInfo(queryParams);
+      setDocumentsInfo(newDocs);
+  
+      alert("Document uploadé avec succès.");
+      setShowNewDocumentModal(false);
+      setNewDocumentData({ file: null, selectedFileType: '' });
+    } catch (error) {
+      console.error("Erreur lors de l'upload du document:", error);
+      alert("Erreur lors de l'upload du document.");
+    }
+  };
+
+  
+  useEffect(() => {
+    const fetchMandatoryFileTypes = async () => {
+      try {
+        const response = await getFilesRepoTypeofInfo({
+          p_id_files_repo_typeof_first: 500,
+          p_id_files_repo_typeof_last: 649,
+          p_ismandatory: null,
+          p_id_files_repo_typeof_list: null,
+        });
+        setMandatoryFileTypes(response.data || []);
+      } catch (error) {
+        console.error("Error fetching mandatory file types:", error);
+      }
+    };
+    fetchMandatoryFileTypes();
+  }, []);
+
+  const handleNewDocumentChange = (field, value) => {
+    setNewDocumentData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleDeleteDocument = async (docId) => {
+    try {
+      await delOrderFiles(docId);
+      // Re-fetch documents list
+      const queryParams = {
+        p_id_order_list: orderId || values.orderId,
+        p_isactive: true,
+        p_id_custaccount: customerAccountId,
+      };
+      const newDocs = await getOrderFilesInfo(queryParams);
+      setDocumentsInfo(newDocs);
+      alert("Document supprimé avec succès.");
+    } catch (error) {
+      console.error("Erreur lors de la suppression du document:", error);
+      alert("Erreur lors de la suppression du document.");
+    }
+  };
 
   // -------------------- RENDU DU COMPOSANT --------------------
   return (
@@ -687,17 +855,46 @@ useEffect(() => {
           <div className="step5-form-group">
             <label>Modes de transport :</label>
             <div className="transport-options">
-              {tempTransportModes && Object.keys(tempTransportModes).length > 0 ? (
-                Object.keys(tempTransportModes).map((modeKey) => (
-                  <label key={modeKey} style={{ marginRight: '10px' }}>
-                    <input
-                      type="checkbox"
-                      checked={tempTransportModes[modeKey]}
-                      onChange={(e) => handleCheckboxChange(modeKey, e.target.checked)}
-                    />
-                    {modeKey.charAt(0).toUpperCase() + modeKey.slice(1)}
-                  </label>
-                ))
+              {transpMode && transpMode.length > 0 ? (
+                transpMode.map((mode) => {
+                  // Use the French symbol (lowercased) as the key
+                  const key = mode.symbol_fr.toLowerCase();
+                  return (
+                    <label key={mode.id_transport_mode} style={{ marginRight: '10px' }}>
+                      <input
+                        type="checkbox"
+                        checked={tempTransportModes[key] === true}
+                        onChange={async (e) => {
+                          const checked = e.target.checked;
+                          // Update local state immediately
+                          setTempTransportModes(prev => ({ ...prev, [key]: checked }));
+                          if (checked) {
+                            // When checking, add the mode using setOrdCertifTranspMode
+                            try {
+                              await setOrdCertifTranspMode({
+                                id_ord_certif_transp_mode: null, // null to indicate insertion
+                                id_ord_certif_ori: certifId,       // certificate ID from query string
+                                id_transport_mode: mode.id_transport_mode,
+                              });
+                              console.log("Transport mode added:", mode);
+                            } catch (error) {
+                              console.error("Error adding transport mode:", error);
+                            }
+                          } else {
+                            // When unchecking, remove only this transport mode using removeSingleCertifTranspMode
+                            try {
+                              await removeSingleCertifTranspMode(certifId, mode.id_transport_mode, idLogin);
+                              console.log("Transport mode removed:", mode);
+                            } catch (error) {
+                              console.error("Error removing transport mode:", error);
+                            }
+                          }
+                        }}
+                      />
+                      {mode.symbol_fr}
+                    </label>
+                  );
+                })
               ) : (
                 <p>Aucun mode de transport disponible.</p>
               )}
@@ -734,86 +931,86 @@ useEffect(() => {
 
 
 
-       
+
         {/* 6/7 Autres */}
 
-      <div className="step5-recap-section">
-        <h5>6/7 Autres</h5>
-        <div className="step5-recap-item">
-          <span className="step5-recap-label">Copies certifiées :</span>
-          {/* On ajoute ici la classe step5-fixed-field pour avoir l'encadré gris */}
-          <span className="step5-recap-value step5-fixed-field">
-            {isEditingCopies ? (
-              <div className="step5-editable-field">
-                <input
-                  type="number"
-                  value={copies}
-                  onChange={(e) => setCopies(e.target.value)}
-                  className="step5-editable-input step5-white-input"
-                />
-                <div className="step5-save-container">
-                  <button type="button" className="step5-save-button" onClick={saveCopies}>
-                    Enregistrer
-                  </button>
+        <div className="step5-recap-section">
+          <h5>6/7 Autres</h5>
+          <div className="step5-recap-item">
+            <span className="step5-recap-label">Copies certifiées :</span>
+            {/* On ajoute ici la classe step5-fixed-field pour avoir l'encadré gris */}
+            <span className="step5-recap-value step5-fixed-field">
+              {isEditingCopies ? (
+                <div className="step5-editable-field">
+                  <input
+                    type="number"
+                    value={copies}
+                    onChange={(e) => setCopies(e.target.value)}
+                    className="step5-editable-input step5-white-input"
+                  />
+                  <div className="step5-save-container">
+                    <button type="button" className="step5-save-button" onClick={saveCopies}>
+                      Enregistrer
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="step5-editable-display">
-                <span>{copies || 'Non spécifié'}</span>
-                <FontAwesomeIcon
-                  icon={faPencilAlt}
-                  className="step5-pencil-icon"
-                  onClick={() => setIsEditingCopies(true)}
-                />
-              </div>
-            )}
-          </span>
-        </div>
-        <div className="step5-recap-item">
-          <span className="step5-recap-label">Remarques :</span>
-          <span className="step5-recap-value step5-fixed-field">
-            {isEditingRemarks ? (
-              <div className="step5-editable-field">
-                <textarea
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                  className="step5-editable-input step5-white-input"
-                />
-                <div className="step5-save-container">
-                  <button type="button" className="step5-save-button" onClick={saveRemarks}>
-                    Enregistrer
-                  </button>
+              ) : (
+                <div className="step5-editable-display">
+                  <span>{copies || 'Non spécifié'}</span>
+                  <FontAwesomeIcon
+                    icon={faPencilAlt}
+                    className="step5-pencil-icon"
+                    onClick={() => setIsEditingCopies(true)}
+                  />
                 </div>
-              </div>
-            ) : (
-              <div className="step5-editable-display">
-                <span>{remarks || 'Aucune remarque'}</span>
-                <FontAwesomeIcon
-                  icon={faPencilAlt}
-                  className="step5-pencil-icon"
-                  onClick={() => setIsEditingRemarks(true)}
-                />
-              </div>
-            )}
-          </span>
+              )}
+            </span>
+          </div>
+          <div className="step5-recap-item">
+            <span className="step5-recap-label">Remarques :</span>
+            <span className="step5-recap-value step5-fixed-field">
+              {isEditingRemarks ? (
+                <div className="step5-editable-field">
+                  <textarea
+                    value={remarks}
+                    onChange={(e) => setRemarks(e.target.value)}
+                    className="step5-editable-input step5-white-input"
+                  />
+                  <div className="step5-save-container">
+                    <button type="button" className="step5-save-button" onClick={saveRemarks}>
+                      Enregistrer
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="step5-editable-display">
+                  <span>{remarks || 'Aucune remarque'}</span>
+                  <FontAwesomeIcon
+                    icon={faPencilAlt}
+                    className="step5-pencil-icon"
+                    onClick={() => setIsEditingRemarks(true)}
+                  />
+                </div>
+              )}
+            </span>
+          </div>
         </div>
-      </div>
-      <div className="step5-form-group">
-    <button
-      type="button"
-      onClick={handleTransportModesSave}
-      style={{
-        backgroundColor: '#28a745',
-        color: '#fff',
-        border: 'none',
-        padding: '8px 16px',
-        borderRadius: '4px',
-        cursor: 'pointer'
-      }}
-    >
-      Enregistrer
-    </button>
-  </div>
+        <div className="step5-form-group">
+          <button
+            type="button"
+            onClick={handleTransportModesSave}
+            style={{
+              backgroundColor: '#28a745',
+              color: '#fff',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Enregistrer
+          </button>
+        </div>
 
 
       </div>
@@ -831,6 +1028,7 @@ useEffect(() => {
                     <th>Nom</th>
                     <th>Type</th>
                     <th>Fichier</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -838,19 +1036,29 @@ useEffect(() => {
                     <tr key={index}>
                       <td>{doc.txt_description_fr}</td>
                       <td>{doc.type === 'justificative' ? 'Justificative' : 'Annexe'}</td>
-                  {/* 3) Clickable link */}
-                  <td>
-                    {doc.file_guid ? (
+                      {/* 3) Clickable link */}
+                      <td>
+                        {doc.file_guid ? (
                           <span
-                          onClick={() => handleFileClick(doc)}
-                          style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
+                            onClick={() => handleFileClick(doc)}
+                            style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
+                          >
+                            {doc.file_origin_name || 'Télécharger le fichier'}
+                          </span>
+                        ) : (
+                          "Aucun fichier"
+                        )}
+                      </td>
+                      <td>
+             
+                        <button
+                          onClick={() => handleDeleteDocument(doc.id_order_files)}
+                          style={{ color: 'red' }}
+                          title="Supprimer"
                         >
-                          {doc.file_origin_name || 'Télécharger le fichier'}
-                        </span>
-                    ) : (
-                      "Aucun fichier"
-                    )}
-                  </td>
+                          ❌
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -859,7 +1067,7 @@ useEffect(() => {
           ) : (
             <p>Aucune pièce justificative ajoutée.</p>
           )}
-          <button type="button" className="step5-upload-button">
+          <button type="button" className="step5-upload-button" onClick={handleShowNewDocumentModal}>
             Upload
           </button>
         </div>
@@ -868,7 +1076,7 @@ useEffect(() => {
       {/* Actions */}
       {!isModal && (
         <div className="step5-submit-section">
-          <button type="button" className="step5-next-button" onClick={handleSubmit}>
+          <button type="button" className="step5-next-button" onClick={handleSubmitOrder}>
             Soumettre
           </button>
         </div>
@@ -1005,6 +1213,42 @@ useEffect(() => {
               <button type="button" onClick={handleSaveNewMerch}>
                 Enregistrer
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* Modal for new document upload */}
+      {showNewDocumentModal && (
+        <div className="modal-backdrop">
+          <div className="modal-content">
+            <h3>Ajouter une nouvelle pièce justificative</h3>
+            <div className="form-group">
+              <label>Télécharger le fichier</label>
+              <input
+                type="file"
+                onChange={(e) => handleNewDocumentChange('file', e.target.files[0])}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Type de document (obligatoire)</label>
+              <select
+                value={newDocumentData.selectedFileType}
+                onChange={(e) => handleNewDocumentChange('selectedFileType', e.target.value)}
+                required
+              >
+                {mandatoryFileTypes.map((type) => (
+                  <option key={type.id_files_repo_typeof} value={type.id_files_repo_typeof}>
+                    {type.txt_description_fr} - {type.txt_description_eng}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+              <button type="button" onClick={() => setShowNewDocumentModal(false)}>Annuler</button>
+              <button type="button" onClick={handleSaveNewDocument}>Enregistrer</button>
             </div>
           </div>
         </div>

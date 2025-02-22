@@ -1225,6 +1225,34 @@ const getCertifTranspMode = async (req, res) => {
     }
   };
 
+  const delFilesRepo = async (req, res) => {
+    try {
+      const { p_id_files_repo, p_mode } = req.body;
+      if (!p_id_files_repo) {
+        return res.status(400).json({ message: "L'ID du fichier est requis." });
+      }
+      await sequelize.query(
+        `CALL del_files_repo(:p_id_files_repo, :p_mode)`,
+        {
+          replacements: { 
+            p_id_files_repo, 
+            p_mode: p_mode || 0  // default to 0 if not provided
+          },
+          type: QueryTypes.RAW,
+        }
+      );
+      res.status(200).json({ message: "Fichier supprimé avec succès." });
+    } catch (error) {
+      console.error("Erreur lors de la suppression du fichier:", error);
+      res.status(500).json({
+        message: "Erreur lors de la suppression du fichier.",
+        error: error.message || "Erreur inconnue.",
+        details: error.original || error,
+      });
+    }
+  };
+  
+
 module.exports = {
   executeAddOrder,
   getTransmodeInfo,
@@ -1251,5 +1279,6 @@ module.exports = {
   submitOrder,
   remOrdCertifGoods,
   remOrdCertifTranspMode,
-  remSingleOrdCertifTranspMode
+  remSingleOrdCertifTranspMode,
+  delFilesRepo
 };

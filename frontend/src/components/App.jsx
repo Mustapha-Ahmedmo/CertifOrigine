@@ -45,6 +45,7 @@ import RegisterContact from '../pages/RegisterContact';
 import InactivityHandler from './InactivityHandler';
 import Step2 from './orders/Create/steps/Step2';
 import OrderDetailsPage from '../pages/OrderDetails/OrderPageDetails';
+import ListTypePage from '../pages/DonneeDeBase/unitTypePage';
 
 const App = () => {
   const dispatch = useDispatch();
@@ -101,6 +102,8 @@ const App = () => {
             <Route path="clientvalides" element={<ClientsValides />} />
             <Route path="operatorslist" element={<OperatorsList />} />
             <Route path="oporderdetails" element={<OpOrderDetails />} />
+
+            <Route path="list-type" element={<ListTypePage />} />
           </Route>
         </Route>
 

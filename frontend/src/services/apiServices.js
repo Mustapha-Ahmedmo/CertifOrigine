@@ -916,3 +916,137 @@ export const getOrderOpInfo = async (params) => {
     throw error;
   }
 };
+
+export const setUnitWeight = async (unitData) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/unit-weight`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(unitData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to set unit weight');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (setUnitWeight):', error);
+    throw error;
+  }
+};
+
+export const deleteUnitWeight = async (id_unit_weight) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/unit-weight/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ id_unit_weight }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete unit weight');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (deleteUnitWeight):', error);
+    throw error;
+  }
+};
+
+export const submitOrder = async (p_id_order, p_idlogin_modify) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/submit-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Include token if required
+      },
+      body: JSON.stringify({ p_id_order, p_idlogin_modify }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to submit order');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (submitOrder):', error);
+    throw error;
+  }
+};
+
+export const deleteCertifGoods = async (p_id_ord_certif_goods, p_idlogin_modify, p_mode = 0) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/certif-goods/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Include token if required
+      },
+      body: JSON.stringify({ p_id_ord_certif_goods, p_idlogin_modify, p_mode }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Échec de la suppression de la marchandise');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (deleteCertifGoods):', error);
+    throw error;
+  }
+};
+
+export const removeCertifTranspMode = async (p_id_ord_certif_ori, p_idlogin_modify) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/certif-transpmode/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Include JWT token if required
+      },
+      body: JSON.stringify({ p_id_ord_certif_ori, p_idlogin_modify })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to remove transport mode');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (removeCertifTranspMode):', error);
+    throw error;
+  }
+};
+
+export const removeSingleCertifTranspMode = async (p_id_ord_certif_ori, p_id_transport_mode, p_idlogin_modify) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/certif-transpmode/delete-single`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ p_id_ord_certif_ori, p_id_transport_mode, p_idlogin_modify }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to remove single transport mode');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (removeSingleCertifTranspMode):', error);
+    throw error;
+  }
+};

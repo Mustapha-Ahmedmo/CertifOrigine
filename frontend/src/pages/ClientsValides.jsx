@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { getCustAccountInfo } from '../services/apiServices';
-import { formatDate } from '../utils/dateUtils';
 import './Inscriptions.css'; // Même CSS
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';

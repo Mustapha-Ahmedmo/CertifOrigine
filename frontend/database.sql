@@ -1547,24 +1547,20 @@ $$;
 
 DROP PROCEDURE IF EXISTS del_files_repo;
 CREATE OR REPLACE PROCEDURE del_files_repo(
-    p_id_files_repo INT,
-    p_mode INT
+    p_id_files_repo INT
 )
 LANGUAGE plpgsql
 AS
 $$
 BEGIN
-    IF p_mode IS NULL OR p_mode = 0 THEN
-        UPDATE files_repo
-        SET
-            deactivation_date = CURRENT_TIMESTAMP - INTERVAL '1 day'
-        WHERE id_files_repo = p_id_files_repo;
-    ELSE
-        DELETE FROM files_repo
-        WHERE id_files_repo = p_id_files_repo;
-    END IF;
+    -- mise à jour de la date de désactivation dans files_repo
+    UPDATE files_repo
+    SET
+        deactivation_date = CURRENT_TIMESTAMP - INTERVAL '1 day'
+    WHERE id_files_repo = p_id_files_repo;
 END;
 $$;
+
 
 
 DROP PROCEDURE IF EXISTS set_cust_account_files;
@@ -3898,6 +3894,23 @@ $$;
 
 
 
+DROP PROCEDURE IF EXISTS rem_ordcertif_transpmode;
+CREATE OR REPLACE PROCEDURE rem_ordcertif_transpmode(
+    p_id_ord_certif_ori INT,
+    p_idlogin_modify INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    DELETE FROM ord_certif_transp_mode
+    WHERE id_ord_certif_ori = p_id_ord_certif_ori;
+
+    UPDATE ord_certif_ori
+    SET lastmodified = CURRENT_TIMESTAMP,
+        idlogin_modify = p_idlogin_modify
+    WHERE id_ord_certif_ori = p_id_ord_certif_ori;
+END;
+$$;
 
 DROP PROCEDURE IF EXISTS rem_ordcertif_goods;
 CREATE OR REPLACE PROCEDURE rem_ordcertif_goods(
@@ -3911,7 +3924,7 @@ BEGIN
     IF p_mode IS NULL OR p_mode = 0 THEN
         UPDATE ord_certif_goods
         SET
-            deactivation_date = CURRENT_TIMESTAMP - INTERVAL '1 day'
+            deactivation_date =f CURRENT_TIMESTAMP - INTERVAL '1 day'
         WHERE id_ord_certif_goods = p_id_ord_certif_goods;
     END IF;
 END;
