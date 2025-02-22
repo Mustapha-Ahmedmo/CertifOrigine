@@ -3977,7 +3977,7 @@ BEGIN
     IF p_mode IS NULL OR p_mode = 0 THEN
         UPDATE ord_certif_goods
         SET
-            deactivation_date =f CURRENT_TIMESTAMP - INTERVAL '1 day'
+            deactivation_date = CURRENT_TIMESTAMP - INTERVAL '1 day'
         WHERE id_ord_certif_goods = p_id_ord_certif_goods;
     END IF;
 END;
