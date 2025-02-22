@@ -1,37 +1,86 @@
 // Home.jsx
 import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faClipboardList,
-  faDollarSign,
-  faCheckCircle,
-  faPlus,
-  faEye,
-  faUndo, // <-- Icône ajouté pour l'onglet "retourné"
-} from '@fortawesome/free-solid-svg-icons';
+import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { getOrdersForCustomer, cancelOrder } from '../services/apiServices';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faClipboardList,
+  faCheckCircle,
+  faDollarSign,
+  faPlus,
+  faEye,
+  faUndo,
+} from '@fortawesome/free-solid-svg-icons';
+import { useTheme } from '@mui/material/styles';
+import AppBar from '@mui/material/AppBar';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import TablePagination from '@mui/material/TablePagination';
 import './Home.css';
 
+// Composant TabPanel pour l'affichage du contenu de chaque onglet
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`home-tabpanel-${index}`}
+      aria-labelledby={`home-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          <Typography component="div">{children}</Typography>
+        </Box>
+      )}
+    </div>
+  );
+}
+
+TabPanel.propTypes = {
+  children: PropTypes.node,
+  index: PropTypes.number.isRequired,
+  value: PropTypes.number.isRequired,
+};
+
+function a11yProps(index) {
+  return {
+    id: `home-tab-${index}`,
+    'aria-controls': `home-tabpanel-${index}`,
+  };
+}
+
 const Home = () => {
-  const [activeTab, setActiveTab] = useState('visa');
-  // États pour stocker les différentes listes de commandes
+  // États pour les commandes
   const [ordersVisa, setOrdersVisa] = useState([]);
   const [ordersValidation, setOrdersValidation] = useState([]);
   const [ordersPayment, setOrdersPayment] = useState([]);
-  // Nouvel état pour les commandes "retournées par la CDD"
   const [ordersReturned, setOrdersReturned] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Récupération des infos utilisateur
+  // État pour l'onglet actif (index)
+  const [tabIndex, setTabIndex] = useState(0);
+
   const user = useSelector((state) => state.auth.user);
   const idLogin = user?.id_login_user;
   const idCustAccount = user?.id_cust_account;
   const navigate = useNavigate();
+  const theme = useTheme();
 
   // Fonction pour récupérer et classer les commandes
   const fetchOrders = async () => {
@@ -42,84 +91,37 @@ const Home = () => {
         idCustAccountList: idCustAccount,
         idLogin,
       });
-      console.log(response);
       const allOrders = response.data || [];
-
-      // Filtrage selon id_order_status
-      setOrdersVisa(allOrders.filter((order) => order.id_order_status === 1));         // À soumettre
-      setOrdersValidation(allOrders.filter((order) => order.id_order_status === 2));  // En attente de validation
-      setOrdersPayment(allOrders.filter((order) => order.id_order_status === 3));     // En attente de paiement
-
-      // Nouvel onglet : Retournées par la CDD (statut = 4, à adapter si besoin)
+      setOrdersVisa(allOrders.filter((order) => order.id_order_status === 1));
+      setOrdersValidation(allOrders.filter((order) => order.id_order_status === 2));
+      setOrdersPayment(allOrders.filter((order) => order.id_order_status === 3));
       setOrdersReturned(allOrders.filter((order) => order.id_order_status === 4));
     } catch (err) {
       console.error('Error fetching orders:', err);
-      setError(err.message || 'Erreur lors de la récupération des commandes.');
+      setError(err.message || "Erreur lors de la récupération des commandes.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Au montage ou quand idLogin/idCustAccount changent, on recharge les commandes
   useEffect(() => {
     fetchOrders();
   }, [idLogin, idCustAccount]);
 
-  // Gère le changement d'onglet (desktop) ou de sélection (mobile)
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
-  };
-
-  const handleDropdownChange = (e) => {
-    setActiveTab(e.target.value);
-  };
-
-  // Tableau d'options pour les onglets et le dropdown
   const options = [
-    {
-      value: 'visa',
-      label: `Mes commandes à soumettre (${ordersVisa.length})`,
-      title: `Mes commandes à soumettre (${ordersVisa.length})`,
-    },
-    {
-      value: 'validation',
-      label: `Mes commandes en attente de la CCD (${ordersValidation.length})`,
-      title: `Mes commandes en attente de la CCD (${ordersValidation.length})`,
-    },
-    {
-      value: 'payment',
-      label: `Mes commandes en attente de paiement (${ordersPayment.length})`,
-      title: `Mes commandes en attente de paiement (${ordersPayment.length})`,
-    },
-    // Nouvelle option pour les commandes retournées
-    {
-      value: 'returned',
-      label: `Mes commandes retournées par la CDD (${ordersReturned.length})`,
-      title: `Mes commandes retournées par la CDD (${ordersReturned.length})`,
-    },
+    { value: 'visa', label: `Mes commandes à soumettre (${ordersVisa.length})` },
+    { value: 'validation', label: `Mes commandes en attente de la CCD (${ordersValidation.length})` },
+    { value: 'payment', label: `Mes commandes en attente de paiement (${ordersPayment.length})` },
+    { value: 'returned', label: `Mes commandes retournées par la CDD (${ordersReturned.length})` },
   ];
 
-  // Choix d'icônes pour chaque onglet
-  const getIconForTab = (tabValue) => {
-    switch (tabValue) {
-      case 'visa':
-        return faClipboardList;
-      case 'validation':
-        return faCheckCircle;
-      case 'payment':
-        return faDollarSign;
-      case 'returned':
-        return faUndo;
-      default:
-        return faClipboardList; // fallback
-    }
+  const handleTabChange = (event, newValue) => {
+    setTabIndex(newValue);
   };
 
-  // Gérer les états de chargement et d'erreur
   if (loading) {
     return <div className="loading">Chargement des commandes...</div>;
   }
-
   if (error) {
     return <div className="error-message">{error}</div>;
   }
@@ -132,80 +134,64 @@ const Home = () => {
       <div className="home-welcome-message">
         Bienvenue <span className="home-highlight-text">{user?.companyname}</span>
       </div>
-
-      {/* Dropdown pour mobile */}
-      <div className="home-dropdown-container">
-        <select className="home-dropdown" value={activeTab} onChange={handleDropdownChange}>
-          {options.map((option) => (
-            <option key={option.value} value={option.value} title={option.title}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Tabs pour desktop */}
+      {/* Conteneur centré pour les onglets et le tableau */}
       <div className="home-tabs-container">
-        {options.map((option) => (
-          <div
-            key={option.value}
-            className={`home-tab-item ${activeTab === option.value ? 'home-active' : ''}`}
-            onClick={() => handleTabClick(option.value)}
-          >
-            <FontAwesomeIcon icon={getIconForTab(option.value)} className="home-tab-icon" />
-            {option.label}
-          </div>
-        ))}
-      </div>
-
-      {/* Contenu pour chaque onglet */}
-      <div className="home-dashboard-grid">
-        {activeTab === 'visa' && (
-          <OrderTable
-            title=""
-            orders={ordersVisa}
-            refreshOrders={fetchOrders}
-          />
-        )}
-        {activeTab === 'validation' && (
-          <OrderTable
-            title=""
-            orders={ordersValidation}
-            refreshOrders={fetchOrders}
-          />
-        )}
-        {activeTab === 'payment' && (
-          <OrderTable
-            title=""
-            orders={ordersPayment}
-            refreshOrders={fetchOrders}
-          />
-        )}
-        {/* Nouvel onglet : commandes retournées par la CDD */}
-        {activeTab === 'returned' && (
-          <OrderTable
-            title=""
-            orders={ordersReturned}
-            refreshOrders={fetchOrders}
-          />
-        )}
+        <Box sx={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+          <AppBar position="static" color="default">
+            <Tabs
+              value={tabIndex}
+              onChange={handleTabChange}
+              indicatorColor="secondary"
+              textColor="inherit"
+              variant="fullWidth"
+              aria-label="Dashboard Tabs"
+            >
+              {options.map((option, index) => (
+                <Tab key={option.value} label={option.label} {...a11yProps(index)} />
+              ))}
+            </Tabs>
+          </AppBar>
+          <TabPanel value={tabIndex} index={0} dir={theme.direction}>
+            <OrderTable orders={ordersVisa} refreshOrders={fetchOrders} />
+          </TabPanel>
+          <TabPanel value={tabIndex} index={1} dir={theme.direction}>
+            <OrderTable orders={ordersValidation} refreshOrders={fetchOrders} />
+          </TabPanel>
+          <TabPanel value={tabIndex} index={2} dir={theme.direction}>
+            <OrderTable orders={ordersPayment} refreshOrders={fetchOrders} />
+          </TabPanel>
+          <TabPanel value={tabIndex} index={3} dir={theme.direction}>
+            <OrderTable orders={ordersReturned} refreshOrders={fetchOrders} />
+          </TabPanel>
+        </Box>
       </div>
     </div>
   );
 };
 
-// Composant OrderTable (inchangé)
-const OrderTable = ({ title, orders, refreshOrders }) => {
+// Composant OrderTable utilisant MUI pour styliser le tableau avec pagination
+const OrderTable = ({ orders, refreshOrders }) => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const currentUserId = user?.id_login_user;
 
-  // Gère le clic sur "Détails"
+  // État de pagination
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   const handleDetailsClick = (orderId, certifId) => {
     navigate(`/dashboard/order-details?orderId=${orderId}&certifId=${certifId}`);
   };
 
-  // Gère l'annulation
   const handleCancelClick = async (orderId) => {
     try {
       const payload = {
@@ -214,7 +200,6 @@ const OrderTable = ({ title, orders, refreshOrders }) => {
       };
       const response = await cancelOrder(payload);
       console.log('Order cancelled:', response);
-      // Actualise la liste après annulation
       refreshOrders && refreshOrders();
     } catch (error) {
       console.error('Error cancelling order:', error);
@@ -222,37 +207,39 @@ const OrderTable = ({ title, orders, refreshOrders }) => {
     }
   };
 
-  return (
-    <div className="home-dashboard-item">
-      <h3>{title}</h3>
-      <div className="home-dashboard-table-container">
-        <table className="home-dashboard-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>N° de Commande</th>
-              <th>Désignation</th>
-              <th>Certificat d'Origine</th>
-              <th>Facture Commerciale</th>
-              <th>Législation</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.length > 0 ? (
-              orders.map((order) => (
-                <tr key={order.id_order}>
-                  <td>{new Date(order.insertdate_order).toLocaleDateString()}</td>
-                  <td>{order.id_order || '-'}</td>
-                  <td>{order.order_title || '-'}</td>
+  // Slicing orders pour la pagination
+  const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-                  {/* Certificat d'Origine */}
-                  <td>
+  return (
+    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+      <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+        <Table stickyHeader aria-label="orders table" sx={{ minWidth: 800 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>N° de Commande</TableCell>
+              <TableCell>Désignation</TableCell>
+              <TableCell>Certificat d'Origine</TableCell>
+              <TableCell>Facture Commerciale</TableCell>
+              <TableCell>Législation</TableCell>
+              <TableCell>Action</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {paginatedOrders.length > 0 ? (
+              paginatedOrders.map((order) => (
+                <TableRow key={order.id_order} hover>
+                  <TableCell>{new Date(order.insertdate_order).toLocaleDateString()}</TableCell>
+                  <TableCell>{order.id_order || '-'}</TableCell>
+                  <TableCell>{order.order_title || '-'}</TableCell>
+                  <TableCell>
                     {order.id_ord_certif_ori ? (
                       <button
                         className="home-icon-button home-minimal-button"
                         title="Voir"
-                        onClick={() => handleDetailsClick(order.id_order, order.id_ord_certif_ori)}
+                        onClick={() =>
+                          handleDetailsClick(order.id_order, order.id_ord_certif_ori)
+                        }
                       >
                         <FontAwesomeIcon icon={faEye} />
                         <span className="home-button-text">Détails</span>
@@ -262,10 +249,8 @@ const OrderTable = ({ title, orders, refreshOrders }) => {
                         <FontAwesomeIcon icon={faPlus} />
                       </button>
                     )}
-                  </td>
-
-                  {/* Facture Commerciale */}
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     {order.id_ord_com_invoice ? (
                       <button className="home-icon-button home-minimal-button" title="Voir">
                         <FontAwesomeIcon icon={faEye} />
@@ -276,10 +261,8 @@ const OrderTable = ({ title, orders, refreshOrders }) => {
                         <FontAwesomeIcon icon={faPlus} />
                       </button>
                     )}
-                  </td>
-
-                  {/* Législation */}
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     {order.id_ord_legalization ? (
                       <button className="home-icon-button home-minimal-button" title="Voir">
                         <FontAwesomeIcon icon={faEye} />
@@ -290,50 +273,54 @@ const OrderTable = ({ title, orders, refreshOrders }) => {
                         <FontAwesomeIcon icon={faPlus} />
                       </button>
                     )}
-                  </td>
-
-                  {/* Action */}
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     {(order.id_order_status === 1 || order.id_order_status === 6) ? (
-                      <>
-                        <button
-                          className="home-icon-button home-minimal-button"
-                          title="Annuler"
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', alignItems: 'center' }}>
+                        <Button
+                          variant="contained"
+                          color="error"
+                          size="small"
                           onClick={() => handleCancelClick(order.id_order)}
-                          style={{
-                            backgroundColor: '#f44336',
-                            color: '#fff',
-                            border: 'none',
-                            padding: '8px 16px',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            transition: 'background-color 0.3s ease'
-                          }}
                         >
-                          <FontAwesomeIcon /> Cancel
-                        </button>
-                        <button className="home-submit-button home-minimal-button submit-green">
-                          {title.includes('paiement') ? 'Payer' : 'Soumettre'}
-                        </button>
-                      </>
+                          Supprimer
+                        </Button>
+                        <Button variant="contained" color="success" size="small">
+                          {order.id_order_status === 3 ? 'Payer' : 'Soumettre'}
+                        </Button>
+                      </Box>
                     ) : (
-                      <button className="home-submit-button home-minimal-button">
-                        {title.includes('paiement') ? 'Payer' : 'Soumettre'}
-                      </button>
+                      <Button variant="contained" color="primary" size="small">
+                        {order.id_order_status === 3 ? 'Payer' : 'Soumettre'}
+                      </Button>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             ) : (
-              <tr>
-                <td colSpan="7">Aucune commande trouvée.</td>
-              </tr>
+              <TableRow>
+                <TableCell colSpan={7}>Aucune commande trouvée.</TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <TablePagination
+        component="div"
+        count={orders.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        rowsPerPageOptions={[10, 25, 50, 100]}
+      />
+    </Paper>
   );
+};
+
+OrderTable.propTypes = {
+  orders: PropTypes.array.isRequired,
+  refreshOrders: PropTypes.func.isRequired,
 };
 
 export default Home;
