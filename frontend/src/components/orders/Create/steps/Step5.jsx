@@ -35,6 +35,41 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
   const certifId = params.get('certifId');
   const orderId = params.get('orderId') || values.orderId;
 
+  const [formData, setFormData] = useState({
+    orderId: orderId || null,
+    certifId: certifId || null,
+    orderName: '',
+    merchandises: [],
+    goodsOrigin: '',        // Will hold a country ID
+    goodsDestination: '',   // Will hold a country ID
+    transportModes: { air: false, mer: false, terre: false, mixte: false },
+    transportRemarks: '',
+    exporterName: 'INDIGO TRADING FZCO',
+    exporterCompany2: '',
+    exporterAddress: '',
+    exporterAddress2: '',
+    exporterPostalCode: '',
+    exporterCity: '',
+    exporterCountry: '',
+    receiverName: '',
+    receiverCompany2: '',
+    receiverAddress: '',
+    receiverAddress2: '',
+    receiverPostalCode: '',
+    receiverCity: '',
+    receiverCountry: '',
+    receiverPhone: '',
+    copies: '',
+    remarks: '',
+    isCommitted: false,
+    documents: [],
+    // New country/port fields (using country IDs)
+    loadingPort: '',        // Country ID for loading port
+    dischargingPort: '',    // Country ID for discharge port
+    // For recipient selection (if needed)
+    selectedRecipientId: '',
+  });
+
 
   // État local pour gérer l'édition du libellé de commande
   const [isEditingLabel, setIsEditingLabel] = useState(false);
@@ -146,6 +181,8 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
       [modeKey]: checked,
     }));
   };
+
+
 
   // Fonction pour enregistrer les modifications dans le state global (via handleChange)
   const handleTransportModesSave = () => {
@@ -346,6 +383,34 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
     } catch (error) {
       console.error('Error updating order recipient:', error);
       alert("Erreur lors de la mise à jour du destinataire.");
+    }
+  };
+  const handleCountryUpdateSubmit = async () => {
+    if (!values.orderId || !values.certifId || !values.selectedRecipientId) {
+      console.error("Missing required fields for country update");
+      return;
+    }
+    try {
+      const payload = {
+        p_id_ord_certif_ori: values.certifId, // Assuming certifId is stored here
+        p_id_recipient_account: values.selectedRecipientId, // This may remain unchanged
+        p_id_country_origin: parseInt(values.goodsOrigin, 10),
+        p_id_country_destination: parseInt(values.goodsDestination, 10),
+        p_id_country_port_loading: parseInt(values.loadingPort, 10),
+        p_id_country_port_discharge: parseInt(values.dischargingPort, 10),
+        p_notes: values.remarks || '',
+        p_copy_count: values.copies || 1,
+        p_idlogin_modify: idLogin,
+        p_transport_remains: values.transportRemarks || '',
+      };
+
+      console.log("Payload : ", payload)
+      const res = await updateCertificate(payload);
+      console.log("Certificate updated with country/port fields:", res);
+      alert("Les informations relatives aux pays et ports ont été mises à jour.");
+    } catch (error) {
+      console.error("Error updating country fields:", error);
+      alert("Erreur lors de la mise à jour des pays/ports.");
     }
   };
 
@@ -562,7 +627,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
         p_idlogin_insert: idLogin,
         file: newDocumentData.file,
       };
-  
+
       const response = await setOrderFiles(orderFileData);
 
       const queryParams = {
@@ -572,7 +637,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
       };
       const newDocs = await getOrderFilesInfo(queryParams);
       setDocumentsInfo(newDocs);
-  
+
       alert("Document uploadé avec succès.");
       setShowNewDocumentModal(false);
       setNewDocumentData({ file: null, selectedFileType: '' });
@@ -582,7 +647,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
     }
   };
 
-  
+
   useEffect(() => {
     const fetchMandatoryFileTypes = async () => {
       try {
@@ -789,10 +854,15 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
           <div className="step5-country-selection">
             <div className="step5-form-group">
               <label>Pays d'origine :</label>
-              <select className="step5-dropdown" value={values.goodsOrigin || ''} onChange={handleChangeCountryOrigin}>
+
+
+              <select
+                value={values.goodsOrigin}
+                onChange={(e) => handleChange('goodsOrigin', e.target.value)}
+              >
                 <option value="">-- Sélectionnez un pays --</option>
                 {countries.map((country) => (
-                  <option key={country.id_country} value={country.symbol_fr}>
+                  <option key={country.id_country} value={country.id_country}>
                     {country.symbol_fr}
                   </option>
                 ))}
@@ -801,10 +871,15 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
 
             <div className="step5-form-group">
               <label>Pays de destination :</label>
-              <select className="step5-dropdown" value={values.goodsDestination || ''} onChange={handleChangeCountryDestination}>
+
+
+              <select
+                value={values.goodsDestination}
+                onChange={(e) => handleChange('goodsDestination', e.target.value)}
+              >
                 <option value="">-- Sélectionnez un pays --</option>
                 {countries.map((country) => (
-                  <option key={country.id_country} value={country.symbol_fr}>
+                  <option key={country.id_country} value={country.id_country}>
                     {country.symbol_fr}
                   </option>
                 ))}
@@ -822,35 +897,52 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
 
           <div className="step5-form-group">
             <label>Port de chargement :</label>
+
             <select
-              className="step5-dropdown"
-              value={values.loadingPort || ''}
+              value={values.loadingPort}
               onChange={(e) => handleChange('loadingPort', e.target.value)}
             >
               <option value="">-- Sélectionnez un pays --</option>
               {countries.map((country) => (
-                <option key={country.id_country} value={country.symbol_fr}>
+                <option key={country.id_country} value={country.id_country}>
+                  {country.symbol_fr}
+                </option>
+              ))}
+            </select>
+
+          </div>
+
+          <div className="step5-form-group">
+            <label>Port de déchargement :</label>
+
+
+            <select
+              value={values.dischargingPort}
+              onChange={(e) => handleChange('dischargingPort', e.target.value)}
+            >
+              <option value="">-- Sélectionnez un pays --</option>
+              {countries.map((country) => (
+                <option key={country.id_country} value={country.id_country}>
                   {country.symbol_fr}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="step5-form-group">
-            <label>Port de déchargement :</label>
-            <select
-              className="step5-dropdown"
-              value={values.dischargingPort || ''}
-              onChange={(e) => handleChange('dischargingPort', e.target.value)}
-            >
-              <option value="">-- Sélectionnez un pays --</option>
-              {countries.map((country) => (
-                <option key={country.id_country} value={country.symbol_fr}>
-                  {country.symbol_fr}
-                </option>
-              ))}
-            </select>
-          </div>
+          <button
+            type="button"
+            onClick={handleCountryUpdateSubmit}
+            style={{
+              backgroundColor: '#28a745',
+              color: '#fff',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Enregistrer les pays/ports
+          </button>
 
           <div className="step5-form-group">
             <label>Modes de transport :</label>
@@ -1050,7 +1142,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
                         )}
                       </td>
                       <td>
-             
+
                         <button
                           onClick={() => handleDeleteDocument(doc.id_order_files)}
                           style={{ color: 'red' }}
