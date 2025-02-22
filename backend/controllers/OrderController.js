@@ -716,17 +716,17 @@ const getCertifTranspMode = async (req, res) => {
         details: error.original || error,
       });
     }
-  };
-
-  const updateCertif = async (req, res) => {
+  };const updateCertif = async (req, res) => {
     try {
       console.log("Received request body:", req.body); // Debug: Log the entire body
-
+  
       const {
         p_id_ord_certif_ori,
         p_id_recipient_account,
         p_id_country_origin,
         p_id_country_destination,
+        p_id_country_port_loading,
+        p_id_country_port_discharge,
         p_notes,
         p_copy_count,
         p_idlogin_modify,
@@ -739,6 +739,8 @@ const getCertifTranspMode = async (req, res) => {
         !p_id_recipient_account ||
         !p_id_country_origin ||
         !p_id_country_destination ||
+        !p_id_country_port_loading ||
+        !p_id_country_port_discharge ||
         !p_idlogin_modify
       ) {
         return res.status(400).json({
@@ -746,37 +748,45 @@ const getCertifTranspMode = async (req, res) => {
         });
       }
   
-             // Call the stored procedure
-             await sequelize.query(
-              `CALL upd_certif(
-                  :p_id_ord_certif_ori,
-                  :p_id_recipient_account,
-                  :p_id_country_origin,
-                  :p_id_country_destination,
-                  :p_id_country_port_loading,
-                  :p_id_country_port_discharge,
-                  :p_notes,
-                  :p_copy_count,
-                  :p_idlogin_modify,
-                  :p_transport_remains
-              )`,
-              {
-                  replacements: {
-                      p_id_ord_certif_ori,
-                      p_id_recipient_account,
-                      p_id_country_origin,
-                      p_id_country_destination,
-                      p_id_country_port_loading: 1, // Explicitly pass value
-                      p_id_country_port_discharge: 1, // Explicitly pass value
-                      p_notes: p_notes || '',
-                      p_copy_count,
-                      p_idlogin_modify,
-                      p_transport_remains: p_transport_remains || '',
-                  },
-                  type: QueryTypes.RAW,
-              }
-          );
+      // Optionally, convert values to integers if needed:
+      const certifIdInt = parseInt(p_id_ord_certif_ori, 10);
+      const recipientIdInt = parseInt(p_id_recipient_account, 10);
+      const originIdInt = parseInt(p_id_country_origin, 10);
+      const destinationIdInt = parseInt(p_id_country_destination, 10);
+      const portLoadingInt = parseInt(p_id_country_port_loading, 10);
+      const portDischargeInt = parseInt(p_id_country_port_discharge, 10);
+      const copyCountInt = parseInt(p_copy_count, 10) || 1;
   
+      // Call the stored procedure
+      await sequelize.query(
+        `CALL upd_certif(
+            :p_id_ord_certif_ori,
+            :p_id_recipient_account,
+            :p_id_country_origin,
+            :p_id_country_destination,
+            :p_id_country_port_loading,
+            :p_id_country_port_discharge,
+            :p_notes,
+            :p_copy_count,
+            :p_idlogin_modify,
+            :p_transport_remains
+        )`,
+        {
+          replacements: {
+            p_id_ord_certif_ori: certifIdInt,
+            p_id_recipient_account: recipientIdInt,
+            p_id_country_origin: originIdInt,
+            p_id_country_destination: destinationIdInt,
+            p_id_country_port_loading: portLoadingInt,
+            p_id_country_port_discharge: portDischargeInt,
+            p_notes: p_notes || '',
+            p_copy_count: copyCountInt,
+            p_idlogin_modify,
+            p_transport_remains: p_transport_remains || '',
+          },
+          type: QueryTypes.RAW,
+        }
+      );
   
       res.status(200).json({
         message: 'Certificat mis à jour avec succès.',
@@ -790,6 +800,7 @@ const getCertifTranspMode = async (req, res) => {
       });
     }
   };
+
   const getFilesRepoTypeofInfo = async (req, res) => {
     try {
       const {
