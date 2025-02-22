@@ -2163,6 +2163,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP PROCEDURE IF EXISTS del_unitweight;
+CREATE OR REPLACE PROCEDURE del_unitweight(
+    p_id_unit_weight INT
+)
+AS
+$$
+BEGIN
+    UPDATE unit_weight
+    SET deactivation_date = CURRENT_TIMESTAMP
+    WHERE id_unit_weight = p_id_unit_weight;
+END;
+$$ LANGUAGE plpgsql;
 
 DROP PROCEDURE IF EXISTS set_unitweight;
 CREATE OR REPLACE PROCEDURE set_unitweight(
@@ -3885,6 +3897,83 @@ END;
 $$;
 
 
+
+
+DROP PROCEDURE IF EXISTS rem_ordcertif_goods;
+CREATE OR REPLACE PROCEDURE rem_ordcertif_goods(
+    p_id_ord_certif_goods INT,
+    p_idlogin_modify INT,
+    p_mode INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF p_mode IS NULL OR p_mode = 0 THEN
+        UPDATE ord_certif_goods
+        SET
+            deactivation_date = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE id_ord_certif_goods = p_id_ord_certif_goods;
+    END IF;
+END;
+$$;
+
+
+
+DROP PROCEDURE IF EXISTS submit_order;
+
+CREATE OR REPLACE PROCEDURE submit_order(
+    p_id_order INT,
+    p_idlogin_modify INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    m_order_status INT;
+BEGIN
+    -- vérifier que la commande existe et a un statut valide
+    IF EXISTS (
+        SELECT 1 FROM "ORDER"
+        WHERE ID_ORDER = p_id_order
+        AND ID_ORDER_STATUS IN (1, 6)  -- 1: insert, 6: pending replace
+        AND TYPEOF >= 1
+    ) THEN
+        -- recupérer le statut actuel de la commande
+        SELECT ID_ORDER_STATUS INTO m_order_status
+        FROM "ORDER"
+        WHERE ID_ORDER = p_id_order;
+
+        -- mise a jour du statut de la commande
+        UPDATE "ORDER"
+        SET 
+            DATE_LAST_SUBMISSION = NOW(),
+            ID_ORDER_STATUS = CASE
+                                WHEN ID_ORDER_STATUS != 1 THEN 7  -- si le statut actuel n'est pas 1 (insert) mais 6 (pending replace), le mettre à 7 (replaced)
+                                ELSE 2  -- sinon statut  New 
+                              END,
+            LASTMODIFIED = NOW(),
+            IDLOGIN_MODIFY = p_idlogin_modify
+        WHERE 
+            ID_ORDER = p_id_order;
+
+        -- appel de la procedure set_histo_order avec l'action appropriée
+        IF m_order_status = 1 THEN
+            CALL set_histo_order(
+                p_id_order,
+                p_idlogin_modify,
+                9  -- ACTION 9 pour 'Soumission'
+            );
+        ELSE
+            CALL set_histo_order(
+                p_id_order,
+                p_idlogin_modify,
+                17  -- ACTION 17 pour 'Ordre remplacé'
+            );
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'La commande ne peut être soumise que si son statut est 1 (insert) ou 6 (pending replace) et que TYPEOF >= 1';
+    END IF;
+END;
+$$;
 
 
 call set_op_user(0, 0, 'M. Admin', 1, TRUE,

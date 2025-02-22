@@ -114,27 +114,27 @@ const executeGetCustUsersByAccount = async (req, res) => {
   try {
     // Extract query parameters. They come in as strings.
     let { custAccountId, statutflag, isactiveCA, isactiveCU, ismain_user } = req.query;
-    
+
     if (!custAccountId) {
       return res.status(400).json({
         message: 'Le paramètre "custAccountId" est requis pour récupérer les utilisateurs du compte client.'
       });
     }
-    
+
     // Convert string "null" to actual null, and convert booleans as needed.
     statutflag = statutflag !== undefined && statutflag !== 'null' ? parseInt(statutflag, 10) : null;
     isactiveCA = (isactiveCA === 'true' || isactiveCA === '1') ? true
-               : (isactiveCA === 'false' || isactiveCA === '0') ? false 
-               : null;
+      : (isactiveCA === 'false' || isactiveCA === '0') ? false
+        : null;
     isactiveCU = (isactiveCU === 'true' || isactiveCU === '1') ? true
-               : (isactiveCU === 'false' || isactiveCU === '0') ? false
-               : null;
+      : (isactiveCU === 'false' || isactiveCU === '0') ? false
+        : null;
     // Convert "null" string to null for p_ismain_user
-    ismain_user = (ismain_user === 'null' || ismain_user === null) 
-               ? null 
-               : ((ismain_user === 'true' || ismain_user === '1') ? true
-               : (ismain_user === 'false' || ismain_user === '0') ? false
-               : null);
+    ismain_user = (ismain_user === 'null' || ismain_user === null)
+      ? null
+      : ((ismain_user === 'true' || ismain_user === '1') ? true
+        : (ismain_user === 'false' || ismain_user === '0') ? false
+          : null);
 
     const replacements = {
       p_id_listCA: custAccountId, // Expecting a string for the CSV list
@@ -720,7 +720,7 @@ const executeAddSubscription = async (req, res) => {
       error: error.message || 'Erreur inconnue.',
     });
   }
-};const executeCreateSubscriptionWithFile = async (req, res) => {
+}; const executeCreateSubscriptionWithFile = async (req, res) => {
   try {
     const {
       uploadType, // 'inscriptions' or 'commandes'
@@ -1277,8 +1277,8 @@ ${message}
 
     // Send email to company
     await sendEmail(
-      email// 'contact@ccd.dj', // Your company email
-      `[Contact] ${subject}`,
+      email,// 'contact@ccd.dj', // Your company email
+        `[Contact] ${subject}`,
       companyEmailText
     );
 

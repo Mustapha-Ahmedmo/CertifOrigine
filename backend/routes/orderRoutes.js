@@ -1,6 +1,6 @@
 const express = require('express');
 const upload = require('../src/middleware/upload'); // Use your existing multer middleware
-const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController } = require('../controllers/OrderController');
+const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController, setUnitWeight, deleteUnitWeight, submitOrder, remOrdCertifGoods, remOrdCertifTranspMode, remSingleOrdCertifTranspMode } = require('../controllers/OrderController');
 
 const router = express.Router();
 router.post('/create', executeAddOrder);
@@ -47,5 +47,16 @@ router.post('/order-files/delete', delOrderFiles); // New: Delete order files
 router.get('/order-files-info', getOrderFilesInfoController);
 
 router.get('/op-info', getOrderOpInfoController);
+
+router.post('/unit-weight', setUnitWeight);
+router.post('/unit-weight/delete', deleteUnitWeight);
+
+router.post('/submit-order', submitOrder);
+
+
+router.post('/certif-goods/delete', remOrdCertifGoods);
+router.post('/certif-transpmode/delete', remOrdCertifTranspMode);
+router.post('/certif-transpmode/delete-single', remSingleOrdCertifTranspMode);
+
 
 module.exports = router;

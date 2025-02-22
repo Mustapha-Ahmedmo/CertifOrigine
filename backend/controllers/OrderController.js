@@ -295,7 +295,7 @@ const getCertifGoodsInfo = async (req, res) => {
         const {
             idOrdCertifOri, // Certificate ID
             idOrdCertifGoods = null, // Goods ID (optional)
-            isActiveOG = null, // Active status of goods (optional)
+            isActiveOG = "true", // Active status of goods (optional)
             isActiveUW = null, // Active status of unit weight (optional)
             idOrder = null, // Order ID (optional)
             idCustAccount = null, // Customer Account ID (optional)
@@ -790,30 +790,43 @@ const getCertifTranspMode = async (req, res) => {
       });
     }
   };
-  
   const getFilesRepoTypeofInfo = async (req, res) => {
     try {
-      // Read parameters from the query string
       const {
         p_id_files_repo_typeof_list,
         p_id_files_repo_typeof_first,
         p_id_files_repo_typeof_last,
         p_ismandatory
       } = req.query;
-      
+  
+      // Convert string "null" to actual null:
+      const repoTypeList = (p_id_files_repo_typeof_list && p_id_files_repo_typeof_list.toLowerCase() !== "null")
+        ? p_id_files_repo_typeof_list
+        : null;
+      const repoTypeFirst = (p_id_files_repo_typeof_first && p_id_files_repo_typeof_first.toLowerCase() !== "null")
+        ? parseInt(p_id_files_repo_typeof_first, 10)
+        : null;
+      const repoTypeLast = (p_id_files_repo_typeof_last && p_id_files_repo_typeof_last.toLowerCase() !== "null")
+        ? parseInt(p_id_files_repo_typeof_last, 10)
+        : null;
+      // p_ismandatory should be a boolean, so check similarly:
+      const isMandatory = (p_ismandatory && p_ismandatory.toLowerCase() !== "null")
+        ? (p_ismandatory === "true")
+        : null;
+  
       const result = await sequelize.query(
         `SELECT * FROM get_files_repo_typeof_info(
-            :p_id_files_repo_typeof_list,
-            :p_id_files_repo_typeof_first,
-            :p_id_files_repo_typeof_last,
-            :p_ismandatory
-        )`,
+              :p_id_files_repo_typeof_list,
+              :p_id_files_repo_typeof_first,
+              :p_id_files_repo_typeof_last,
+              :p_ismandatory
+          )`,
         {
           replacements: {
-            p_id_files_repo_typeof_list: p_id_files_repo_typeof_list || null,
-            p_id_files_repo_typeof_first: p_id_files_repo_typeof_first ? parseInt(p_id_files_repo_typeof_first, 10) : null,
-            p_id_files_repo_typeof_last: p_id_files_repo_typeof_last ? parseInt(p_id_files_repo_typeof_last, 10) : null,
-            p_ismandatory: p_ismandatory !== undefined ? (p_ismandatory === 'true') : null,
+            p_id_files_repo_typeof_list: repoTypeList,
+            p_id_files_repo_typeof_first: repoTypeFirst,
+            p_id_files_repo_typeof_last: repoTypeLast,
+            p_ismandatory: isMandatory,
           },
           type: QueryTypes.SELECT,
         }
@@ -1027,6 +1040,191 @@ const getCertifTranspMode = async (req, res) => {
     }
   };
 
+  const setUnitWeight = async (req, res) => {
+    try {
+      const { id_unit_weight, symbol_fr, symbol_eng } = req.body;
+  
+      // If id_unit_weight is not provided or zero, the procedure will insert a new record.
+      await sequelize.query(
+        `CALL set_unitweight(:p_id_unit_weight, :p_symbol_fr, :p_symbol_eng)`,
+        {
+          replacements: {
+            p_id_unit_weight: id_unit_weight || 0, // 0 triggers an insert in your procedure
+            p_symbol_fr: symbol_fr,
+            p_symbol_eng: symbol_eng,
+          },
+          type: QueryTypes.RAW,
+        }
+      );
+  
+      res.status(200).json({
+        message: "Unité de poids ajoutée/maj avec succès."
+      });
+    } catch (error) {
+      console.error('Erreur dans setUnitWeight:', error);
+      res.status(500).json({
+        message: "Erreur lors de l'ajout ou de la mise à jour de l'unité de poids.",
+        error: error.message || "Erreur inconnue."
+      });
+    }
+  };
+
+  const deleteUnitWeight = async (req, res) => {
+    try {
+      const { id_unit_weight } = req.body;
+      if (!id_unit_weight) {
+        return res.status(400).json({
+          message: "L'id de l'unité de poids est requis pour la suppression."
+        });
+      }
+  
+      await sequelize.query(
+        `CALL del_unitweight(:p_id_unit_weight)`,
+        {
+          replacements: {
+            p_id_unit_weight: id_unit_weight,
+          },
+          type: QueryTypes.RAW,
+        }
+      );
+  
+      res.status(200).json({
+        message: "Unité de poids désactivée (supprimée) avec succès."
+      });
+    } catch (error) {
+      console.error('Erreur dans deleteUnitWeight:', error);
+      res.status(500).json({
+        message: "Erreur lors de la suppression de l'unité de poids.",
+        error: error.message || "Erreur inconnue."
+      });
+    }
+  };
+  
+  const submitOrder = async (req, res) => {
+    try {
+      const { p_id_order, p_idlogin_modify } = req.body;
+  
+      // Validate input parameters
+      if (!p_id_order || !p_idlogin_modify) {
+        return res.status(400).json({
+          message: 'Les champs p_id_order et p_idlogin_modify sont requis.',
+        });
+      }
+  
+      // Call the stored procedure submit_order
+      await sequelize.query(
+        `CALL submit_order(:p_id_order, :p_idlogin_modify)`,
+        {
+          replacements: { p_id_order, p_idlogin_modify },
+          type: QueryTypes.RAW,
+        }
+      );
+  
+      res.status(200).json({
+        message: 'Commande soumise avec succès.',
+      });
+    } catch (error) {
+      console.error('Erreur lors de la soumission de la commande:', error);
+      res.status(500).json({
+        message: 'Erreur lors de la soumission de la commande.',
+        error: error.message || 'Erreur inconnue.',
+        details: error.original || error,
+      });
+    }
+  };
+
+  const remOrdCertifGoods = async (req, res) => {
+    try {
+      const { p_id_ord_certif_goods, p_idlogin_modify, p_mode } = req.body;
+      if (!p_id_ord_certif_goods || !p_idlogin_modify) {
+        return res.status(400).json({
+          message: 'Les champs p_id_ord_certif_goods et p_idlogin_modify sont requis.',
+        });
+      }
+      await sequelize.query(
+        `CALL rem_ordcertif_goods(:p_id_ord_certif_goods, :p_idlogin_modify, :p_mode)`,
+        {
+          replacements: {
+            p_id_ord_certif_goods,
+            p_idlogin_modify,
+            p_mode: p_mode || 0,
+          },
+          type: QueryTypes.RAW,
+        }
+      );
+      res.status(200).json({ message: 'Merchandise supprimée avec succès.' });
+    } catch (error) {
+      console.error('Erreur lors de la suppression de ord_certif_goods:', error);
+      res.status(500).json({
+        message: 'Erreur lors de la suppression de la marchandise.',
+        error: error.message || 'Erreur inconnue.',
+        details: error.original || error,
+      });
+    }
+  };
+
+  const remOrdCertifTranspMode = async (req, res) => {
+    try {
+      const { p_id_ord_certif_ori, p_idlogin_modify } = req.body;
+      if (!p_id_ord_certif_ori || !p_idlogin_modify) {
+        return res.status(400).json({
+          message: 'Les champs p_id_ord_certif_ori et p_idlogin_modify sont requis.',
+        });
+      }
+  
+      await sequelize.query(
+        `CALL rem_ordcertif_transpmode(:p_id_ord_certif_ori, :p_idlogin_modify)`,
+        {
+          replacements: { p_id_ord_certif_ori, p_idlogin_modify },
+          type: QueryTypes.RAW,
+        }
+      );
+  
+      res.status(200).json({ message: 'Mode de transport supprimé avec succès.' });
+    } catch (error) {
+      console.error('Erreur lors de la suppression du mode de transport:', error);
+      res.status(500).json({
+        message: 'Erreur lors de la suppression du mode de transport.',
+        error: error.message || 'Erreur inconnue.',
+        details: error.original || error,
+      });
+    }
+  };
+
+  const remSingleOrdCertifTranspMode = async (req, res) => {
+    try {
+      const { p_id_ord_certif_ori, p_id_transport_mode, p_idlogin_modify } = req.body;
+      if (!p_id_ord_certif_ori || !p_id_transport_mode || !p_idlogin_modify) {
+        return res.status(400).json({
+          message: 'Les champs p_id_ord_certif_ori, p_id_transport_mode et p_idlogin_modify sont requis.',
+        });
+      }
+      
+      await sequelize.query(
+        `CALL rem_single_ordcertif_transpmode(:p_id_ord_certif_ori, :p_id_transport_mode, :p_idlogin_modify)`,
+        {
+          replacements: { 
+            p_id_ord_certif_ori, 
+            p_id_transport_mode, 
+            p_idlogin_modify 
+          },
+          type: QueryTypes.RAW,
+        }
+      );
+  
+      res.status(200).json({
+        message: 'Le mode de transport a été supprimé avec succès.',
+      });
+    } catch (error) {
+      console.error('Erreur lors de la suppression du mode de transport:', error);
+      res.status(500).json({
+        message: 'Erreur lors de la suppression du mode de transport.',
+        error: error.message || 'Erreur inconnue.',
+        details: error.original || error,
+      });
+    }
+  };
+
 module.exports = {
   executeAddOrder,
   getTransmodeInfo,
@@ -1047,5 +1245,11 @@ module.exports = {
   setOrderFiles,  // NEW export
   delOrderFiles ,
   getOrderFilesInfoController,
-  getOrderOpInfoController
+  getOrderOpInfoController,
+  setUnitWeight,
+  deleteUnitWeight,
+  submitOrder,
+  remOrdCertifGoods,
+  remOrdCertifTranspMode,
+  remSingleOrdCertifTranspMode
 };
