@@ -1,347 +1,278 @@
-import React, { useEffect, useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faClipboardList,
-  faDollarSign,
-  faCheckCircle,
-  faEye,
-} from '@fortawesome/free-solid-svg-icons';
+// HomeOperateur.jsx
+import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import './HomeOperateur.css';
-import Step5 from '../components/orders/Create/steps/Step5';
-import ClientProfile from '../pages/ClientProfile';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { getOrderOpInfo } from '../services/apiServices';
+import { getOrderOpInfo, cancelOrder } from '../services/apiServices';
+import { useTheme } from '@mui/material/styles';
+import AppBar from '@mui/material/AppBar';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import TablePagination from '@mui/material/TablePagination';
+import './HomeOperateur.css';
+
+// Composant TabPanel pour l'affichage du contenu de chaque onglet
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`operator-tabpanel-${index}`}
+      aria-labelledby={`operator-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          <Typography component="div">{children}</Typography>
+        </Box>
+      )}
+    </div>
+  );
+}
+
+TabPanel.propTypes = {
+  children: PropTypes.node,
+  index: PropTypes.number.isRequired,
+  value: PropTypes.number.isRequired,
+};
+
+function a11yProps(index) {
+  return {
+    id: `operator-tab-${index}`,
+    'aria-controls': `operator-tabpanel-${index}`,
+  };
+}
 
 const HomeOperateur = () => {
-  // Set initial active tab to "new" (Nouvelles commandes)
-  const [activeTab, setActiveTab] = useState('new');
-  const [showModal, setShowModal] = useState(false);
-  const [modalValues, setModalValues] = useState(null);
-  const [showSecondModal, setShowSecondModal] = useState(false);
-  const [secondModalContent, setSecondModalContent] = useState(null);
-
-  // Nouveaux états pour la modal de paiement
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentOrder, setPaymentOrder] = useState(null);
+  // États pour les commandes
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // État pour l'onglet actif (0 pour "Nouvelles commandes", 1 pour "Commandes en attente de paiement")
+  const [tabIndex, setTabIndex] = useState(0);
+
   const user = useSelector((state) => state.auth.user);
   const operatorId = user?.id_login_user;
+  const navigate = useNavigate();
+  const theme = useTheme();
 
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
+  // Fonction pour charger les commandes pour l'opérateur
+  const fetchOrders = async () => {
+    if (!operatorId) return;
+    try {
+      setLoading(true);
+      const params = {
+        p_id_order_list: null,
+        p_id_custaccount_list: null,
+        p_id_orderstatus_list: null,
+        p_idlogin: operatorId,
+      };
+      const result = await getOrderOpInfo(params);
+      const loadedOrders = result.data || result;
+      setOrders(loadedOrders);
+    } catch (err) {
+      console.error('Error loading orders for operator:', err);
+      setError(err.message || "Erreur lors du chargement des commandes.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const navigate = useNavigate();
+  useEffect(() => {
+    if (operatorId) fetchOrders();
+  }, [operatorId]);
+
+  // Pour l'opérateur :
+  // Nouvelles commandes : filtre sur id_order_status === 2
+  // Commandes en attente de paiement : filtre sur id_order_status === 3
+  const ordersNew = orders.filter(order => order.id_order_status === 2);
+  const ordersPayment = orders.filter(order => order.id_order_status === 3);
+
+  const options = [
+    { value: 'new', label: `Nouvelles commandes (${ordersNew.length})` },
+    { value: 'payment', label: `Commandes en attente de paiement (${ordersPayment.length})` },
+  ];
+
+  const handleTabChange = (event, newValue) => {
+    setTabIndex(newValue);
+  };
+
+  // Navigation pour afficher les détails d'une commande
   const goToOrderDetails = (order) => {
     const certifId = order.id_ord_certif_ori || '';
     navigate(`/dashboard/operator/oporderdetails?orderId=${order.id_order}&certifId=${certifId}`);
   };
 
-  const openModal = (values) => {
-    setModalValues(values);
-    setShowModal(true);
-  };
-
-  const closeModal = () => {
-    setModalValues(null);
-    setShowModal(false);
-  };
-
-  const openSecondModal = (clientData) => {
-    setSecondModalContent(clientData);
-    setShowModal(false);
-    setShowSecondModal(true);
-  };
-
-  const closeSecondModal = () => {
-    setSecondModalContent(null);
-    setShowSecondModal(false);
-  };
-
-  // Fonction pour ouvrir la modal de paiement
-  const openPaymentModal = (order) => {
-    setPaymentOrder(order);
-    setShowPaymentModal(true);
-  };
-
-  const closePaymentModal = () => {
-    setPaymentOrder(null);
-    setShowPaymentModal(false);
-  };
-
-  useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        const params = {
-          p_id_order_list: null,
-          p_id_custaccount_list: null,
-          p_id_orderstatus_list: null,
-          p_idlogin: operatorId,
-        };
-        const result = await getOrderOpInfo(params);
-        const loadedOrders = result.data || result;
-        setOrders(loadedOrders);
-      } catch (error) {
-        console.error('Error loading orders for operator:', error);
-      }
-    };
-
-    if (operatorId) {
-      loadOrders();
-    }
-  }, [operatorId]);
-
-  // Previously ordersVisa (status 1) and ordersValidation (status 2) are merged:
-  // Now, "Nouvelles commandes" will check for orders with status id = 2.
-  const ordersNew = orders.filter(order => order.id_order_status === 2);
-  const ordersPayment = orders.filter(order => order.id_order_status === 3);
-
-  const commandsOptions = [
-    { value: 'new', label: `Nouvelles commandes (${ordersNew.length})` },
-    { value: 'payment', label: `Commandes en attente de paiement (${ordersPayment.length})` },
-  ];
-
-  const handleCommandsDropdownChange = (e) => {
-    setActiveTab(e.target.value);
-  };
+  if (loading) {
+    return <div className="loading">Chargement des commandes...</div>;
+  }
+  if (error) {
+    return <div className="error-message">{error}</div>;
+  }
 
   return (
-    <div className="home-operator-container">
+    // On ajoute une marge à gauche pour décaler le contenu (largeur du menu)
+    <div className="operator-home-container" style={{ marginLeft: '240px' }}>
       <Helmet>
         <title>Dashboard Opérateur</title>
       </Helmet>
-
-      <div className="welcome-message">
-        Bienvenue {user?.full_name || 'Utilisateur'}
+      {/* Section Bienvenue */}
+      <div className="welcome-message" style={{ textAlign: 'left', margin: '16px' }}>
+        Bienvenue <span className="home-highlight-text" style={{ textTransform: 'none', marginLeft: '8px' }}>
+          {user?.full_name || 'Utilisateur'}
+        </span>
       </div>
-
-      {/* Section COMMANDES */}
-      <div className="commands-title highlight-text">COMMANDES</div>
-
-      {/* Dropdown mobile pour COMMANDES */}
-      <div className="commands-dropdown-container">
-        <select className="commands-dropdown" value={activeTab} onChange={handleCommandsDropdownChange}>
-          {commandsOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+    
+    
+      {/* Onglets et tableau */}
+      <div className="operator-tabs-container" style={{ width: '100%' }}>
+        <Box sx={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+          <AppBar position="static" color="default">
+            <Tabs
+              value={tabIndex}
+              onChange={handleTabChange}
+              indicatorColor="secondary"
+              textColor="inherit"
+              variant="fullWidth"
+              aria-label="Operator Dashboard Tabs"
+            >
+              {options.map((option, index) => (
+                <Tab key={option.value} label={option.label} {...a11yProps(index)} />
+              ))}
+            </Tabs>
+          </AppBar>
+          <TabPanel value={tabIndex} index={0} dir={theme.direction}>
+            <OrderTable orders={ordersNew} refreshOrders={fetchOrders} goToOrderDetails={goToOrderDetails} />
+          </TabPanel>
+          <TabPanel value={tabIndex} index={1} dir={theme.direction}>
+            <OrderTable orders={ordersPayment} refreshOrders={fetchOrders} goToOrderDetails={goToOrderDetails} />
+          </TabPanel>
+        </Box>
       </div>
-
-      {/* Tabs desktop pour COMMANDES */}
-      <div className="tabs-container commands-tabs-container">
-        <div
-          className={`tab-item ${activeTab === 'new' ? 'active' : ''}`}
-          onClick={() => handleTabClick('new')}
-        >
-          <FontAwesomeIcon icon={faClipboardList} className="tab-icon" />
-          Nouvelles commandes ({ordersNew.length})
-        </div>
-        <div
-          className={`tab-item ${activeTab === 'payment' ? 'active' : ''}`}
-          onClick={() => handleTabClick('payment')}
-        >
-          <FontAwesomeIcon icon={faDollarSign} className="tab-icon" />
-          Commandes en attente de paiement ({ordersPayment.length})
-        </div>
-      </div>
-
-      <div className="dashboard-grid">
-        {activeTab === 'new' && (
-          <div className="dashboard-item">
-            <div className="dashboard-table-container">
-              <table className="dashboard-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>N° de Commande</th>
-                    <th>Client</th>
-                    <th>Désignation</th>
-                    <th>Date soumission</th>
-                    <th>Certificat d'Origine</th>
-                    <th>Facture Commerciale</th>
-                    <th>Légalisations</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ordersNew.map((order) => (
-                    <tr key={order.id_order}>
-                      <td>{order.insertdate_order}</td>
-                      <td>{order.id_order}</td>
-                      <td>{order.cust_name}</td>
-                      <td>{order.designation}</td>
-                      <td>{order.submissionDate}</td>
-                      <td>
-                        <button
-                          className="icon-button minimal-button"
-                          onClick={() => goToOrderDetails(order)}
-                        >
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Vérifier</span>
-                        </button>
-                      </td>
-                      <td></td>
-                      <td>
-                        <button className="icon-button minimal-button">
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Vérifier</span>
-                        </button>
-                      </td>
-                      <td>
-                        <button className="submit-button minimal-button">Facturer</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'payment' && (
-          <div className="dashboard-item">
-            <div className="dashboard-table-container">
-              <table className="dashboard-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>N° de commande</th>
-                    <th>Client</th>
-                    <th>N° de facture</th>
-                    <th>Désignation</th>
-                    <th>Date de validation</th>
-                    <th>Certificat d'origine</th>
-                    <th>Facture Commerciale</th>
-                    <th>Légalisation</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ordersPayment.map((order) => (
-                    <tr key={order.id}>
-                      <td>{order.date}</td>
-                      <td>{order.orderNumber}</td>
-                      <td>{order.client}</td>
-                      <td>{order.invoiceNumber}</td>
-                      <td>{order.designation}</td>
-                      <td>{order.validationDate}</td>
-                      <td>
-                        <button
-                          className="icon-button minimal-button"
-                          onClick={() => openModal(order.details)}
-                        >
-                          <FontAwesomeIcon icon={faEye} title="Voir" />
-                          <span className="button-text">Détails</span>
-                        </button>
-                      </td>
-                      <td></td>
-                      <td>
-                        <button className="icon-button minimal-button">
-                          <FontAwesomeIcon icon={faEye} title="Voir" />
-                          <span className="button-text">Détails</span>
-                        </button>
-                      </td>
-                      <td>
-                        <button
-                          className="submit-button minimal-button"
-                          onClick={() => openPaymentModal(order)}
-                        >
-                          Payer
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Modal secondaire */}
-      {showSecondModal && secondModalContent && (
-        <div className="modal-overlay" onClick={closeSecondModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <ClientProfile clientData={secondModalContent} closeModal={closeSecondModal} />
-          </div>
-        </div>
-      )}
-
-      {/* Modal de paiement */}
-      {showPaymentModal && paymentOrder && (
-        <div className="modal-overlay" onClick={closePaymentModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="payment-modal-header">
-              PAIEMENT DE LA COMMANDE N° {paymentOrder.orderNumber}
-            </div>
-            <div className="payment-modal-client-section">
-              <div className="payment-modal-client">
-                <div className="client-name">{paymentOrder.client}</div>
-                <div>DJIBOUTI FREE ZONE Po Box 2520</div>
-                <div>REP. DE DJIBOUTI</div>
-              </div>
-
-              <div className="payment-modal-fields">
-                <div>
-                  <label>Date de facture</label>
-                  <input type="date" defaultValue="2024-11-25" />
-                </div>
-                <div>
-                  <label>N° Facture</label>
-                  <input type="text" defaultValue={paymentOrder.invoiceNumber} />
-                </div>
-                <div>
-                  <label>Montant</label>
-                  <input type="text" defaultValue={paymentOrder.amount} />
-                </div>
-              </div>
-            </div>
-
-            <hr />
-
-            <div className="payment-modal-reglement">
-              <h4>Règlement de la facture</h4>
-              <div className="payment-modal-fields">
-                <div>
-                  <label>Date de paiement</label>
-                  <input type="date" defaultValue="2024-11-25" />
-                </div>
-                <div>
-                  <label>Moyen de paiement</label>
-                  <select defaultValue="Cash">
-                    <option value="Cash">Cash</option>
-                    <option value="Virement">Virement</option>
-                    <option value="Chèque">Chèque</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Information concernant le paiement</label>
-                  <input type="text" defaultValue="4*10K + 2*5K + 3*1K" />
-                </div>
-                <div className="payment-modal-checkbox">
-                  <label>
-                    <input type="checkbox" defaultChecked={true} />
-                    Générer le certificat d'origine et les copies conformes
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div className="modal-actions">
-              <button onClick={closePaymentModal} className="reject-button">FERMER</button>
-              <button onClick={() => toast.success('Paiement enregistré')} className="validate-button">
-                ENREGISTRER LE PAIEMENT
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
+};
+
+const OrderTable = ({ orders, refreshOrders, goToOrderDetails }) => {
+  const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
+  const currentUserId = user?.id_login_user;
+
+  // État de pagination
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleCancelClick = async (orderId) => {
+    try {
+      const payload = {
+        p_id_order: orderId,
+        p_idlogin_modify: currentUserId,
+      };
+      const response = await cancelOrder(payload);
+      console.log('Order cancelled:', response);
+      refreshOrders && refreshOrders();
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      alert("Erreur lors de l'annulation de la commande.");
+    }
+  };
+
+  const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  return (
+    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+      <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+        <Table stickyHeader aria-label="orders table" sx={{ minWidth: 800 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>N° de Commande</TableCell>
+              <TableCell>Client</TableCell>
+              <TableCell>Désignation</TableCell>
+              <TableCell>Date soumission</TableCell>
+              <TableCell>Certificat d'Origine</TableCell>
+              <TableCell>Facture Commerciale</TableCell>
+              <TableCell>Légalisations</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {paginatedOrders.length > 0 ? (
+              paginatedOrders.map((order) => (
+                <TableRow key={order.id_order} hover>
+                  <TableCell>{order.insertdate_order}</TableCell>
+                  <TableCell>{order.id_order}</TableCell>
+                  <TableCell>{order.cust_name}</TableCell>
+                  <TableCell>{order.designation}</TableCell>
+                  <TableCell>{order.submissionDate}</TableCell>
+                  <TableCell>
+                    <button
+                      className="icon-button minimal-button"
+                      onClick={() => goToOrderDetails(order)}
+                    >
+                      <FontAwesomeIcon icon={faEye} title="Vérifier" />
+                      <span className="button-text">Vérifier</span>
+                    </button>
+                  </TableCell>
+                  <TableCell></TableCell>
+                  <TableCell>
+                    <button className="icon-button minimal-button">
+                      <FontAwesomeIcon icon={faEye} title="Vérifier" />
+                      <span className="button-text">Vérifier</span>
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <button className="submit-button minimal-button">Facturer</button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={9}>Aucune commande trouvée.</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <TablePagination
+        component="div"
+        count={orders.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        rowsPerPageOptions={[10, 25, 50, 100]}
+      />
+    </Paper>
+  );
+};
+
+OrderTable.propTypes = {
+  orders: PropTypes.array.isRequired,
+  refreshOrders: PropTypes.func.isRequired,
+  goToOrderDetails: PropTypes.func.isRequired,
 };
 
 export default HomeOperateur;
