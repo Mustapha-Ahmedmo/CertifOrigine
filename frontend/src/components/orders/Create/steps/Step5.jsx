@@ -24,10 +24,10 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
   const [unitWeights, setUnitWeights] = useState([]);
 
   const [transpMode, settransportModes] = useState({});
+  const isModifiable = (values.orderStatus === 1 || values.orderStatus === 6);
 
 
-
-
+  console.log("isModifiable ", isModifiable);
 
   const API_URL = import.meta.env.VITE_API_URL;
   // Extract query params (certifId and orderId)
@@ -781,13 +781,14 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
           </div>
           {/* Bouton placé dans un conteneur sans label pour être aligné à gauche */}
           <div style={{ marginTop: '10px' }}>
-            <button
-              type="button"
-              className="step5-add-merch-button"
-              onClick={() => setShowNewRecipientModal(true)}
-            >
-              + Ajouter un destinataire
-            </button>
+            {isModifiable &&
+              <button
+                type="button"
+                className="step5-add-merch-button"
+                onClick={() => setShowNewRecipientModal(true)}
+              >
+                + Ajouter un destinataire
+              </button>}
           </div>
         </div>
 
@@ -837,15 +838,15 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
           ) : (
             <p>Aucune marchandise ajoutée.</p>
           )}
-
-          <button
-            type="button"
-            className="step5-add-merch-button"
-            style={{ marginTop: '10px' }}
-            onClick={() => setShowNewMerchModal(true)}
-          >
-            + Ajouter une marchandise
-          </button>
+          {isModifiable &&
+            <button
+              type="button"
+              className="step5-add-merch-button"
+              style={{ marginTop: '10px' }}
+              onClick={() => setShowNewMerchModal(true)}
+            >
+              + Ajouter une marchandise
+            </button>}
         </div>
 
 
@@ -928,22 +929,23 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
               ))}
             </select>
           </div>
+          {isModifiable &&
 
-          <button
-            type="button"
-            onClick={handleCountryUpdateSubmit}
-            style={{
-              backgroundColor: '#28a745',
-              color: '#fff',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Enregistrer les pays/ports
-          </button>
-
+            <button
+              type="button"
+              onClick={handleCountryUpdateSubmit}
+              style={{
+                backgroundColor: '#28a745',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Enregistrer les pays/ports
+            </button>
+          }
           <div className="step5-form-group">
             <label>Modes de transport :</label>
             <div className="transport-options">
@@ -1002,20 +1004,22 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
           </div>
 
           <div className="step5-form-group">
-            <button
-              type="button"
-              onClick={handleTransportModesSave}
-              style={{
-                backgroundColor: '#28a745',
-                color: '#fff',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Enregistrer
-            </button>
+            {isModifiable &&
+              <button
+                type="button"
+                onClick={handleTransportModesSave}
+                style={{
+                  backgroundColor: '#28a745',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Enregistrer
+              </button>
+            }
           </div>
         </div>
 
@@ -1041,9 +1045,11 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
                     className="step5-editable-input step5-white-input"
                   />
                   <div className="step5-save-container">
-                    <button type="button" className="step5-save-button" onClick={saveCopies}>
-                      Enregistrer
-                    </button>
+                    {isModifiable &&
+                      <button type="button" className="step5-save-button" onClick={saveCopies}>
+                        Enregistrer
+                      </button>
+                    }
                   </div>
                 </div>
               ) : (
@@ -1069,9 +1075,11 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
                     className="step5-editable-input step5-white-input"
                   />
                   <div className="step5-save-container">
-                    <button type="button" className="step5-save-button" onClick={saveRemarks}>
-                      Enregistrer
-                    </button>
+                    {isModifiable &&
+                      <button type="button" className="step5-save-button" onClick={saveRemarks}>
+                        Enregistrer
+                      </button>
+                    }
                   </div>
                 </div>
               ) : (
@@ -1088,6 +1096,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
           </div>
         </div>
         <div className="step5-form-group">
+        {isModifiable && 
           <button
             type="button"
             onClick={handleTransportModesSave}
@@ -1102,6 +1111,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
           >
             Enregistrer
           </button>
+}
         </div>
 
 
@@ -1159,18 +1169,22 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
           ) : (
             <p>Aucune pièce justificative ajoutée.</p>
           )}
-          <button type="button" className="step5-upload-button" onClick={handleShowNewDocumentModal}>
-            Upload
-          </button>
+          {isModifiable &&
+            <button type="button" className="step5-upload-button" onClick={handleShowNewDocumentModal}>
+              Upload
+            </button>
+          }
         </div>
       </div>
 
       {/* Actions */}
       {!isModal && (
         <div className="step5-submit-section">
-          <button type="button" className="step5-next-button" onClick={handleSubmitOrder}>
-            Soumettre
-          </button>
+          {isModifiable &&
+            <button type="button" className="step5-next-button" onClick={handleSubmitOrder}>
+              Soumettre
+            </button>
+          }
         </div>
       )}
 
@@ -1338,10 +1352,11 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
                 ))}
               </select>
             </div>
-            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-              <button type="button" onClick={() => setShowNewDocumentModal(false)}>Annuler</button>
-              <button type="button" onClick={handleSaveNewDocument}>Enregistrer</button>
-            </div>
+            {isModifiable &&
+              <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                <button type="button" onClick={() => setShowNewDocumentModal(false)}>Annuler</button>
+                <button type="button" onClick={handleSaveNewDocument}>Enregistrer</button>
+              </div>}
           </div>
         </div>
       )}

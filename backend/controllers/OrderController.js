@@ -1263,6 +1263,36 @@ const getCertifTranspMode = async (req, res) => {
     }
   };
   
+  const approveOrder = async (req, res) => {
+    try {
+      const { p_id_order, p_idlogin_modify } = req.body;
+  
+      // Validate input parameters
+      if (!p_id_order || !p_idlogin_modify) {
+        return res.status(400).json({
+          message: 'Les champs p_id_order et p_idlogin_modify sont requis.'
+        });
+      }
+  
+      // Call the stored procedure "approve_order"
+      await sequelize.query(
+        `CALL approve_order(:p_id_order, :p_idlogin_modify)`,
+        {
+          replacements: { p_id_order, p_idlogin_modify },
+          type: QueryTypes.RAW,
+        }
+      );
+  
+      res.status(200).json({ message: 'Commande approuvée avec succès.' });
+    } catch (error) {
+      console.error('Erreur lors de l\'approbation de la commande:', error);
+      res.status(500).json({
+        message: 'Erreur lors de l\'approbation de la commande.',
+        error: error.message || 'Erreur inconnue.',
+        details: error.original || error,
+      });
+    }
+  };
 
 module.exports = {
   executeAddOrder,
@@ -1291,5 +1321,6 @@ module.exports = {
   remOrdCertifGoods,
   remOrdCertifTranspMode,
   remSingleOrdCertifTranspMode,
-  delFilesRepo
+  delFilesRepo,
+  approveOrder
 };

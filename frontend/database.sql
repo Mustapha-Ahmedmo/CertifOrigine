@@ -3734,8 +3734,10 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     IF EXISTS (
-        SELECT 1 FROM ORD_CERTIF_ORI
-        WHERE ID_ORD_CERTIF_ORI = p_id_ord_certif_ori
+        SELECT 1 FROM ORD_CERTIF_ORI ori
+        INNER JOIN "ORDER" o ON  ori.id_order = o.id_order
+        WHERE ori.ID_ORD_CERTIF_ORI = p_id_ord_certif_ori 
+        AND o.id_order_status IN (1, 6)
     ) THEN
         UPDATE ORD_CERTIF_ORI
         SET 

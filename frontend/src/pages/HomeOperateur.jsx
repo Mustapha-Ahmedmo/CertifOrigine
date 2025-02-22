@@ -14,9 +14,9 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { getOrderOpInfo } from '../services/apiServices';
 
-
 const HomeOperateur = () => {
-  const [activeTab, setActiveTab] = useState('visa');
+  // Set initial active tab to "new" (Nouvelles commandes)
+  const [activeTab, setActiveTab] = useState('new');
   const [showModal, setShowModal] = useState(false);
   const [modalValues, setModalValues] = useState(null);
   const [showSecondModal, setShowSecondModal] = useState(false);
@@ -38,8 +38,6 @@ const HomeOperateur = () => {
     const certifId = order.id_ord_certif_ori || '';
     navigate(`/dashboard/operator/oporderdetails?orderId=${order.id_order}&certifId=${certifId}`);
   };
-
-
 
   const openModal = (values) => {
     setModalValues(values);
@@ -76,7 +74,6 @@ const HomeOperateur = () => {
   useEffect(() => {
     const loadOrders = async () => {
       try {
-        // Build params; if you do not wish to filter by order or customer, pass null
         const params = {
           p_id_order_list: null,
           p_id_custaccount_list: null,
@@ -84,8 +81,6 @@ const HomeOperateur = () => {
           p_idlogin: operatorId,
         };
         const result = await getOrderOpInfo(params);
-        // Depending on your API response structure, adjust here.
-        // For example, if your response returns { data: [...] } or just the array directly:
         const loadedOrders = result.data || result;
         setOrders(loadedOrders);
       } catch (error) {
@@ -98,15 +93,13 @@ const HomeOperateur = () => {
     }
   }, [operatorId]);
 
-
-
-  const ordersVisa = orders.filter(order => order.id_order_status === 1);
-  const ordersValidation = orders.filter(order => order.id_order_status === 2);
+  // Previously ordersVisa (status 1) and ordersValidation (status 2) are merged:
+  // Now, "Nouvelles commandes" will check for orders with status id = 2.
+  const ordersNew = orders.filter(order => order.id_order_status === 2);
   const ordersPayment = orders.filter(order => order.id_order_status === 3);
 
   const commandsOptions = [
-    { value: 'visa', label: `Nouvelles commandes (${ordersVisa.length})` },
-    { value: 'validation', label: `Commandes en cours de traitement (${ordersValidation.length})` },
+    { value: 'new', label: `Nouvelles commandes (${ordersNew.length})` },
     { value: 'payment', label: `Commandes en attente de paiement (${ordersPayment.length})` },
   ];
 
@@ -141,18 +134,11 @@ const HomeOperateur = () => {
       {/* Tabs desktop pour COMMANDES */}
       <div className="tabs-container commands-tabs-container">
         <div
-          className={`tab-item ${activeTab === 'visa' ? 'active' : ''}`}
-          onClick={() => handleTabClick('visa')}
+          className={`tab-item ${activeTab === 'new' ? 'active' : ''}`}
+          onClick={() => handleTabClick('new')}
         >
           <FontAwesomeIcon icon={faClipboardList} className="tab-icon" />
-          Nouvelles commandes ({ordersVisa.length})
-        </div>
-        <div
-          className={`tab-item ${activeTab === 'validation' ? 'active' : ''}`}
-          onClick={() => handleTabClick('validation')}
-        >
-          <FontAwesomeIcon icon={faCheckCircle} className="tab-icon" />
-          Commandes en cours de traitement ({ordersValidation.length})
+          Nouvelles commandes ({ordersNew.length})
         </div>
         <div
           className={`tab-item ${activeTab === 'payment' ? 'active' : ''}`}
@@ -164,7 +150,7 @@ const HomeOperateur = () => {
       </div>
 
       <div className="dashboard-grid">
-        {activeTab === 'visa' && (
+        {activeTab === 'new' && (
           <div className="dashboard-item">
             <div className="dashboard-table-container">
               <table className="dashboard-table">
@@ -182,7 +168,7 @@ const HomeOperateur = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {ordersVisa.map((order) => (
+                  {ordersNew.map((order) => (
                     <tr key={order.id_order}>
                       <td>{order.insertdate_order}</td>
                       <td>{order.id_order}</td>
@@ -213,12 +199,6 @@ const HomeOperateur = () => {
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
-
-        {activeTab === 'validation' && ordersValidation.length > 0 && (
-          <div className="dashboard-item">
-            {/* Afficher les commandes en validation si nécessaire */}
           </div>
         )}
 
@@ -282,8 +262,6 @@ const HomeOperateur = () => {
         )}
       </div>
 
-      
-
       {/* Modal secondaire */}
       {showSecondModal && secondModalContent && (
         <div className="modal-overlay" onClick={closeSecondModal}>
@@ -293,7 +271,7 @@ const HomeOperateur = () => {
         </div>
       )}
 
-      {/* Modal de paiement avec le même style que Certificat d'origine */}
+      {/* Modal de paiement */}
       {showPaymentModal && paymentOrder && (
         <div className="modal-overlay" onClick={closePaymentModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -355,7 +333,9 @@ const HomeOperateur = () => {
 
             <div className="modal-actions">
               <button onClick={closePaymentModal} className="reject-button">FERMER</button>
-              <button onClick={() => alert('Paiement enregistré')} className="validate-button">ENREGISTRER LE PAIEMENT</button>
+              <button onClick={() => toast.success('Paiement enregistré')} className="validate-button">
+                ENREGISTRER LE PAIEMENT
+              </button>
             </div>
           </div>
         </div>

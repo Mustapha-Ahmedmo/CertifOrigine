@@ -116,6 +116,7 @@ const OrderDetailsPage = () => {
           if (order) {
             setFormData((prev) => ({
               ...prev,
+              orderStatus: order.id_order_status,
               // Map order title to orderLabel for synthesis
               orderLabel: order.order_title || '',
               merchandises: order.merchandises || [],

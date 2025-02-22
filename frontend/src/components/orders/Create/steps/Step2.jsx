@@ -370,6 +370,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         idLoginInsert: user?.id_login_user || 1,
         transportRemarks: safeValues.transportRemarks,
       };
+
       const certResponse = await createCertificate(certData);
       if (!certResponse.newCertifId) {
         throw new Error("La réponse du serveur ne contient pas 'newCertifId'.");
@@ -1022,9 +1023,15 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         <Button variant="outlined" onClick={onBack}>
           Retour
         </Button>
-        <Button variant="contained" onClick={nextSection} sx={customButtonStyle}>
-          {currentSection < totalSections - 1 ? 'Suivant' : 'Terminer'}
-        </Button>
+        {currentSection < totalSections - 1 ? (
+          <Button variant="contained" onClick={nextSection} sx={customButtonStyle}>
+            Suivant
+          </Button>
+        ) : (
+          <Button variant="contained" type="submit" sx={customButtonStyle}>
+            Terminer
+          </Button>
+        )}
       </Box>
     </form>
   );
