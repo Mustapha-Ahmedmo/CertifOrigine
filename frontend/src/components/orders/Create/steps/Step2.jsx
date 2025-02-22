@@ -33,6 +33,10 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Alert from '@mui/material/Alert';
 
+// Nouveaux imports pour la section ENGAGEMENT
+import Typography from '@mui/material/Typography';
+import Checkbox from '@mui/material/Checkbox';
+
 const customFieldStyle = {
   '& .MuiOutlinedInput-root': {
     '& fieldset': { borderColor: '#DDAF26' },
@@ -198,11 +202,17 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
 
   // Navigation entre sections avec validation des champs obligatoires
   const nextSection = () => {
+    // Vérification spécifique pour la section 4 (MARCHANDISES)
+    if (currentSection === 4) {
+      if (merchEditStates.some((state) => state)) {
+        setErrorMessage("Certaines lignes de marchandise ne sont pas validées. Veuillez remplir tous les champs et cliquer sur 'Valider' avant de continuer.");
+        return;
+      }
+    }
     // Pour toutes les sections sauf 1/8 (index 0) déjà remplies, on vérifie que tous les champs obligatoires sont remplis.
     if (currentSection !== 0) {
       const missing = getMissingFieldsCount();
       if (missing > 0) {
-        // Si un message d'erreur spécifique existe pour la section courante, on l'utilise.
         const msg = errorMessages[currentSection] || "Veuillez remplir tous les champs obligatoires de cette section.";
         setErrorMessage(msg);
         return;
@@ -879,29 +889,87 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
               <span className="section-title">7/8 ENGAGEMENT</span>
             </div>
             <div className="collapsible-content">
-              <Box sx={{ mb: 2 }}>
-                <p>
-                  En validant ces conditions générales d'utilisation vous demandez la délivrance
-                  du certificat d'origine pour les marchandises figurant en case 6, dont l'origine
-                  est indiquée en case 3.
-                </p>
-                <p>
-                  Vous vous engagez à ce que tous les éléments et renseignements fournis ainsi que
-                  les éventuelles pièces justificatives présentées soient exacts, que les marchandises
-                  auxquelles se rapportent ces renseignements soient celles pour lesquelles le certificat
-                  d'origine est demandé et que ces marchandises remplissent les conditions prévues par
-                  la réglementation relative à la définition de la notion d'origine des marchandises.
-                </p>
+              <Box sx={{ mt: 3, mb: 2 }}>
+                <Typography variant="body2" align="justify" gutterBottom>
+                  <strong>Conditions Générales d'Utilisation – Création de Certificat d'Origine</strong>
+                </Typography>
+                <Typography variant="body2" align="justify" gutterBottom>
+                  En utilisant notre site pour créer un certificat d'origine, vous reconnaissez avoir pris connaissance et accepter sans réserve les présentes Conditions Générales d'Utilisation (CGU). Ces CGU régissent votre utilisation de notre formulaire en ligne et la création du certificat d'origine.
+                </Typography>
+                <Typography variant="body2" align="justify" gutterBottom>
+                  <strong>1. Objet</strong>
+                  <br />
+                  Les présentes conditions ont pour objet de définir les droits et obligations de l’utilisateur qui souhaite obtenir un certificat d'origine en remplissant l’intégralité du formulaire mis à disposition sur notre site. En soumettant vos informations, vous engagez votre responsabilité quant à leur exactitude et leur véracité.
+                </Typography>
+                <Typography variant="body2" align="justify" gutterBottom>
+                  <strong>2. Acceptation des CGU</strong>
+                  <br />
+                  En remplissant le formulaire et en cliquant sur le bouton de validation, vous déclarez accepter pleinement et sans réserve l’intégralité des présentes CGU. Si vous n’acceptez pas ces conditions, vous ne devez pas utiliser notre service de création de certificat d'origine.
+                </Typography>
+                <Typography variant="body2" align="justify" gutterBottom>
+                  <strong>3. Engagements et Obligations de l’Utilisateur</strong>
+                  <br />
+                  Exactitude des Informations : Vous garantissez que toutes les informations renseignées dans le formulaire sont complètes, exactes et à jour. Toute fausse déclaration ou omission volontaire pouvant entraîner des erreurs dans le certificat d'origine relève de votre seule responsabilité.
+                  <br />
+                  Authenticité : Vous vous engagez à fournir des données authentiques et vérifiables, notamment concernant l'origine, la destination, les caractéristiques des marchandises, ainsi que toute autre information requise pour l’établissement du certificat.
+                  <br />
+                  Mise à jour des Données : Vous vous engagez à actualiser vos informations en cas de changement, afin de garantir la conformité et la validité du certificat d'origine établi.
+                  <br />
+                  Respect de la Procédure : Vous acceptez de suivre la procédure de validation proposée par notre plateforme, notamment en validant chacune des sections du formulaire et en confirmant la véracité des informations avant la soumission finale.
+                </Typography>
+                <Typography variant="body2" align="justify" gutterBottom>
+                  <strong>4. Responsabilité et Limitation</strong>
+                  <br />
+                  Responsabilité de l’Utilisateur : En cas d’erreur, d’omission ou de fourniture d’informations inexactes, notre site ne pourra être tenu responsable des conséquences pouvant en découler, tant sur le plan légal qu’administratif.
+                  <br />
+                  Exclusion de Garantie : Notre plateforme est fournie « en l'état ». Bien que nous nous efforcions de garantir la qualité et la fiabilité de notre service, nous ne saurions être tenus responsables d’éventuels dysfonctionnements, retards ou interruptions pouvant affecter la création du certificat d'origine.
+                  <br />
+                  Force Majeure : Notre responsabilité ne saurait être engagée en cas de force majeure, notamment en cas de perturbations indépendantes de notre volonté affectant le fonctionnement de notre système ou l’exactitude des données.
+                </Typography>
+                <Typography variant="body2" align="justify" gutterBottom>
+                  <strong>5. Confidentialité et Protection des Données</strong>
+                  <br />
+                  Collecte et Utilisation : Les informations que vous renseignez dans le formulaire sont collectées dans le seul but de générer un certificat d'origine et d’assurer la bonne exécution de la procédure administrative afférente.
+                  <br />
+                  Sécurité : Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données personnelles contre tout accès non autorisé ou toute divulgation abusive.
+                  <br />
+                  Accès et Rectification : Vous disposez d’un droit d’accès, de rectification et de suppression de vos données. Pour exercer ce droit, veuillez consulter notre politique de confidentialité ou contacter notre service dédié.
+                </Typography>
+                <Typography variant="body2" align="justify" gutterBottom>
+                  <strong>6. Propriété Intellectuelle</strong>
+                  <br />
+                  Tous les éléments (textes, images, logos, etc.) présents sur notre site restent la propriété exclusive de notre entreprise ou de ses partenaires. Toute reproduction, modification ou distribution, même partielle, est strictement interdite sans autorisation préalable.
+                </Typography>
+                <Typography variant="body2" align="justify" gutterBottom>
+                  <strong>7. Modification des Conditions</strong>
+                  <br />
+                  Nous nous réservons le droit de modifier les présentes CGU à tout moment. Les modifications seront applicables dès leur mise en ligne et vous seront communiquées via notre site. Il vous appartient de consulter régulièrement ces conditions afin de prendre connaissance de toute mise à jour.
+                </Typography>
+                <Typography variant="body2" align="justify" gutterBottom>
+                  <strong>8. Droit Applicable et Juridiction Compétente</strong>
+                  <br />
+                  Les présentes CGU sont régies par le droit en vigueur dans le pays de notre siège social. En cas de litige relatif à l'interprétation ou à l'exécution des présentes conditions, les tribunaux compétents seront ceux du ressort de notre siège social.
+                </Typography>
+                <Typography variant="body2" align="justify" gutterBottom>
+                  <strong>9. Acceptation Finale</strong>
+                  <br />
+                  En validant le formulaire de création du certificat d'origine, vous reconnaissez avoir lu, compris et accepté l'ensemble des présentes Conditions Générales d'Utilisation. Vous vous engagez à respecter toutes les obligations qui y sont stipulées et assumez l'entière responsabilité de l'exactitude des informations fournies.
+                </Typography>
               </Box>
               <FormControlLabel
                 control={
-                  <Radio
-                    sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }}
+                  <Checkbox
                     checked={!!safeValues.isCommitted}
                     onChange={(e) => handleChange('isCommitted', e.target.checked)}
+                    sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }}
+                    inputProps={{ 'aria-label': 'Engagement checkbox' }}
                   />
                 }
-                label="Je certifie m'engager dans les conditions décrites ci-dessus"
+                label={
+                  <Typography variant="body1" align="justify">
+                    Je certifie m'engager dans les conditions décrites ci-dessus
+                  </Typography>
+                }
               />
             </div>
           </div>
