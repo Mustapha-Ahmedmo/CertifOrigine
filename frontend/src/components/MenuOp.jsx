@@ -1,5 +1,18 @@
+// MenuOP.jsx
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { logout } from '../slices/authSlice';
+
+import Drawer from '@mui/material/Drawer';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Collapse from '@mui/material/Collapse';
+import { Box, Toolbar, Divider } from '@mui/material';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faHome,
@@ -18,30 +31,58 @@ import {
   faMoneyBillWave,
   faUserPlus,
 } from '@fortawesome/free-solid-svg-icons';
-import './Menu.css';
-import '@fontsource/poppins';
-import { useDispatch } from 'react-redux';
-import { logout } from '../slices/authSlice';
+
+const drawerWidth = 240;
+
+// Style appliqué aux items sélectionnés (fond orange, texte et icône en blanc)
+const selectedStyle = {
+  "&.Mui-selected": {
+    backgroundColor: "#DCAF26",
+    color: "white",
+    "&:hover": {
+      backgroundColor: "#DCAF26 !important",
+    },
+    "& .MuiListItemText-primary": {
+      color: "white !important",
+    },
+    "& .MuiListItemIcon-root": {
+      color: "white !important",
+    },
+  },
+};
+
+// Style spécifique pour le bouton "Déconnexion" : texte et icône en rouge
+const logoutStyle = {
+  color: "red",
+  "& .MuiListItemText-primary": {
+    color: "red !important",
+  },
+  "& .MuiListItemIcon-root": {
+    color: "red !important",
+  },
+  "&:hover": {
+    color: "red !important",
+    backgroundColor: "inherit",
+  },
+};
 
 const MenuOP = ({ isMenuOpen, toggleMenu }) => {
   const [openMenu, setOpenMenu] = useState({});
   const [activeLink, setActiveLink] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const toggleSubMenu = (menu) => {
-    setOpenMenu((prevState) => ({
-      ...prevState,
-      [menu]: !prevState[menu],
-    }));
+  // Fonction pour basculer l'ouverture d'un sous-menu
+  const toggleSubmenu = (menu) => {
+    setOpenMenu((prev) => ({ ...prev, [menu]: !prev[menu] }));
   };
 
+  // Fonction pour gérer le clic sur un lien
   const handleLinkClick = (menu, link) => {
     setActiveLink(link);
-    setOpenMenu((prevState) => ({
-      ...prevState,
-      [menu]: true,
-    }));
+    // Si nécessaire, on peut forcer l'ouverture du sous-menu parent
+    setOpenMenu((prev) => ({ ...prev, [menu]: true }));
     // Ferme le menu sur mobile
     if (window.innerWidth <= 768) {
       toggleMenu();
@@ -49,9 +90,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
   };
 
   const handleLogout = () => {
-    // Dispatch Redux logout action
     dispatch(logout());
-    // Redirige l'utilisateur vers la page de connexion
     navigate('/login');
   };
 
@@ -59,289 +98,386 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
   const previousYear = currentYear - 1;
 
   return (
-    <nav className={`menu ${isMenuOpen ? 'menu-open' : ''}`}>
-      <ul>
-        {/* Accueil */}
-        <li>
-          <Link
-            to="/dashboard/operator"
-            className={`menu-title ${activeLink === 'home' ? 'active' : ''}`}
-            data-main-title
-            onClick={() => handleLinkClick('home', 'home')}
-          >
-            <FontAwesomeIcon icon={faHome} className="icon" /> Accueil
-          </Link>
-        </li>
+    <Drawer
+      variant="persistent"
+      anchor="left"
+      open={true}
+      sx={{
+        width: drawerWidth,
+        flexShrink: 0,
+        "& .MuiDrawer-paper": {
+          width: drawerWidth,
+          boxSizing: "border-box",
+          backgroundColor: "white",
+          color: "black",
+        },
+      }}
+    >
+      <Toolbar />
+      <Box sx={{ overflow: "auto" }}>
+        <List>
+          {/* Accueil */}
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
+              to="/dashboard/operator"
+              onClick={() => handleLinkClick('home', 'home')}
+              selected={activeLink === 'home' || location.pathname === "/dashboard/operator"}
+              sx={selectedStyle}
+            >
+              <ListItemIcon sx={{ color: "black" }}>
+                <FontAwesomeIcon icon={faHome} />
+              </ListItemIcon>
+              <ListItemText primary="Accueil" primaryTypographyProps={{ fontSize: "14px" }} />
+            </ListItemButton>
+          </ListItem>
+          <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-        {/* Commandes & Factures */}
-        <li>
-          <span
-            className={`menu-title ${openMenu.orders ? 'open' : ''}`}
-            data-main-title
-            onClick={() => toggleSubMenu('orders')}
-          >
-            <FontAwesomeIcon icon={faClipboardList} className="icon" /> Commandes & Factures
-          </span>
-          {openMenu.orders && (
-            <ul className="submenu">
-              <li>
-                <span
-                  className={`menu-title ${openMenu.currentOrders ? 'open' : ''}`}
-                  onClick={() => toggleSubMenu('currentOrders')}
+          {/* Commandes & Factures */}
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => toggleSubmenu('orders')} sx={{ cursor: 'pointer' }}>
+              <ListItemIcon sx={{ color: "black" }}>
+                <FontAwesomeIcon icon={faClipboardList} />
+              </ListItemIcon>
+              <ListItemText primary="Commandes & Factures" primaryTypographyProps={{ fontSize: "14px" }} />
+            </ListItemButton>
+          </ListItem>
+          <Collapse in={openMenu.orders} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {/* Commandes en cours */}
+              <ListItem disablePadding>
+                <ListItemButton
+                  component={Link}
+                  to="/dashboard/operator/current-orders"
+                  onClick={() => handleLinkClick('orders', 'currentOrders')}
+                  selected={activeLink === 'currentOrders'}
+                  sx={{ pl: 4, ...selectedStyle }}
                 >
-                  <FontAwesomeIcon icon={faShoppingCart} className="icon" /> Commandes en cours
-                </span>
-              </li>
-              <li>
-                <span
-                  className={`menu-title ${openMenu.searchOrders ? 'open' : ''}`}
-                  onClick={() => toggleSubMenu('searchOrders')}
+                  <ListItemIcon sx={{ color: "black" }}>
+                    <FontAwesomeIcon icon={faShoppingCart} />
+                  </ListItemIcon>
+                  <ListItemText primary="Commandes en cours" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+              {/* Recherches de commande */}
+              <ListItem disablePadding>
+                <ListItemButton
+                  component={Link}
+                  to="/dashboard/operator/search-orders"
+                  onClick={() => handleLinkClick('orders', 'searchOrders')}
+                  selected={activeLink === 'searchOrders'}
+                  sx={{ pl: 4, ...selectedStyle }}
                 >
-                  <FontAwesomeIcon icon={faClipboardList} className="icon" /> Recherches de commande
-                </span>
-              </li>
-              <li>
-                <span
-                  className={`menu-title ${openMenu.orderHistory ? 'open' : ''}`}
-                  onClick={() => toggleSubMenu('orderHistory')}
-                >
-                  <FontAwesomeIcon icon={faHistory} className="icon" /> Historiques de commandes
-                </span>
-                {openMenu.orderHistory && (
-                  <ul className="submenu">
-                    <li>
-                      <Link
-                        to="/orders/history/current-year"
-                        className={activeLink === 'historyCurrentYear' ? 'active' : ''}
-                        onClick={() => handleLinkClick('orderHistory', 'historyCurrentYear')}
-                      >
-                        {currentYear}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/orders/history/previous-year"
-                        className={activeLink === 'historyPreviousYear' ? 'active' : ''}
-                        onClick={() => handleLinkClick('orderHistory', 'historyPreviousYear')}
-                      >
-                        {previousYear}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/orders/history/before-previous-year"
-                        className={activeLink === 'historyBeforePreviousYear' ? 'active' : ''}
-                        onClick={() => handleLinkClick('orderHistory', 'historyBeforePreviousYear')}
-                      >
-                        Avant {previousYear}
-                      </Link>
-                    </li>
-                  </ul>
-                )}
-              </li>
-              <li>
-                <span
-                  className={`menu-title ${openMenu.invoiceHistory ? 'open' : ''}`}
-                  onClick={() => toggleSubMenu('invoiceHistory')}
-                >
-                  <FontAwesomeIcon icon={faFileInvoiceDollar} className="icon" /> Historiques des factures
-                </span>
-                {openMenu.invoiceHistory && (
-                  <ul className="submenu">
-                    <li>
-                      <Link
-                        to="/invoices/history/2024"
-                        className={activeLink === 'invoiceHistory2024' ? 'active' : ''}
-                        onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistory2024')}
-                      >
-                        2024
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/invoices/history/2023"
-                        className={activeLink === 'invoiceHistory2023' ? 'active' : ''}
-                        onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistory2023')}
-                      >
-                        2023
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/invoices/history/before-2023"
-                        className={activeLink === 'invoiceHistoryBefore2023' ? 'active' : ''}
-                        onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistoryBefore2023')}
-                      >
-                        Avant 2023
-                      </Link>
-                    </li>
-                  </ul>
-                )}
-              </li>
-              <li>
-                <span
-                  className={`menu-title ${openMenu.exportEntries ? 'open' : ''}`}
-                  onClick={() => toggleSubMenu('exportEntries')}
-                >
-                  <FontAwesomeIcon icon={faDownload} className="icon" /> Export des écritures
-                </span>
-              </li>
-            </ul>
-          )}
-        </li>
+                  <ListItemIcon sx={{ color: "black" }}>
+                    <FontAwesomeIcon icon={faClipboardList} />
+                  </ListItemIcon>
+                  <ListItemText primary="Recherches de commande" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+              {/* Historiques de commandes */}
+              <ListItem disablePadding>
+                <ListItemButton onClick={() => toggleSubmenu('orderHistory')} sx={{ pl: 4, cursor: 'pointer' }}>
+                  <ListItemIcon sx={{ color: "black" }}>
+                    <FontAwesomeIcon icon={faHistory} />
+                  </ListItemIcon>
+                  <ListItemText primary="Historiques de commandes" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+              <Collapse in={openMenu.orderHistory} timeout="auto" unmountOnExit>
+                <List component="div" disablePadding>
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      component={Link}
+                      to="/orders/history/current-year"
+                      onClick={() => handleLinkClick('orderHistory', 'historyCurrentYear')}
+                      selected={activeLink === 'historyCurrentYear'}
+                      sx={{ pl: 6, ...selectedStyle }}
+                    >
+                      <ListItemText primary={currentYear} primaryTypographyProps={{ fontSize: "12px" }} />
+                    </ListItemButton>
+                  </ListItem>
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      component={Link}
+                      to="/orders/history/previous-year"
+                      onClick={() => handleLinkClick('orderHistory', 'historyPreviousYear')}
+                      selected={activeLink === 'historyPreviousYear'}
+                      sx={{ pl: 6, ...selectedStyle }}
+                    >
+                      <ListItemText primary={previousYear} primaryTypographyProps={{ fontSize: "12px" }} />
+                    </ListItemButton>
+                  </ListItem>
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      component={Link}
+                      to="/orders/history/before-previous-year"
+                      onClick={() => handleLinkClick('orderHistory', 'historyBeforePreviousYear')}
+                      selected={activeLink === 'historyBeforePreviousYear'}
+                      sx={{ pl: 6, ...selectedStyle }}
+                    >
+                      <ListItemText primary={`Avant ${previousYear}`} primaryTypographyProps={{ fontSize: "12px" }} />
+                    </ListItemButton>
+                  </ListItem>
+                </List>
+              </Collapse>
+              {/* Historiques des factures */}
+              <ListItem disablePadding>
+                <ListItemButton onClick={() => toggleSubmenu('invoiceHistory')} sx={{ pl: 4, cursor: 'pointer' }}>
+                  <ListItemIcon sx={{ color: "black" }}>
+                    <FontAwesomeIcon icon={faFileInvoiceDollar} />
+                  </ListItemIcon>
+                  <ListItemText primary="Historiques des factures" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+              <Collapse in={openMenu.invoiceHistory} timeout="auto" unmountOnExit>
+                <List component="div" disablePadding>
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      component={Link}
+                      to="/invoices/history/2024"
+                      onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistory2024')}
+                      selected={activeLink === 'invoiceHistory2024'}
+                      sx={{ pl: 6, ...selectedStyle }}
+                    >
+                      <ListItemText primary="2024" primaryTypographyProps={{ fontSize: "12px" }} />
+                    </ListItemButton>
+                  </ListItem>
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      component={Link}
+                      to="/invoices/history/2023"
+                      onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistory2023')}
+                      selected={activeLink === 'invoiceHistory2023'}
+                      sx={{ pl: 6, ...selectedStyle }}
+                    >
+                      <ListItemText primary="2023" primaryTypographyProps={{ fontSize: "12px" }} />
+                    </ListItemButton>
+                  </ListItem>
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      component={Link}
+                      to="/invoices/history/before-2023"
+                      onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistoryBefore2023')}
+                      selected={activeLink === 'invoiceHistoryBefore2023'}
+                      sx={{ pl: 6, ...selectedStyle }}
+                    >
+                      <ListItemText primary="Avant 2023" primaryTypographyProps={{ fontSize: "12px" }} />
+                    </ListItemButton>
+                  </ListItem>
+                </List>
+              </Collapse>
+              {/* Export des écritures */}
+              <ListItem disablePadding>
+                <ListItemButton onClick={() => toggleSubmenu('exportEntries')} sx={{ pl: 4, cursor: 'pointer' }}>
+                  <ListItemIcon sx={{ color: "black" }}>
+                    <FontAwesomeIcon icon={faDownload} />
+                  </ListItemIcon>
+                  <ListItemText primary="Export des écritures" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+            </List>
+          </Collapse>
+          <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-        {/* Administration */}
-        <li>
-          <span
-            className={`menu-title ${openMenu.administration ? 'open' : ''}`}
-            data-main-title
-            onClick={() => toggleSubMenu('administration')}
-          >
-            <FontAwesomeIcon icon={faCog} className="icon" /> Administration
-          </span>
-          {openMenu.administration && (
-            <ul className="submenu">
+          {/* Administration */}
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => toggleSubmenu('administration')} sx={{ cursor: 'pointer' }}>
+              <ListItemIcon sx={{ color: "black" }}>
+                <FontAwesomeIcon icon={faCog} />
+              </ListItemIcon>
+              <ListItemText primary="Administration" primaryTypographyProps={{ fontSize: "14px" }} />
+            </ListItemButton>
+          </ListItem>
+          <Collapse in={openMenu.administration} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
               {/* Sous-menu "Clients" */}
-              <li>
-                <span
-                  className={`menu-title ${openMenu.clients ? 'open' : ''}`}
-                  onClick={() => toggleSubMenu('clients')}
-                >
-                  <FontAwesomeIcon icon={faUsers} className="icon" /> Clients
-                </span>
-                {openMenu.clients && (
-                  <ul className="submenu">
-                    <li>
-                      <Link
+              <ListItem disablePadding>
+                <ListItemButton onClick={() => toggleSubmenu('clients')} sx={{ pl: 4, cursor: 'pointer' }}>
+                  <ListItemIcon sx={{ color: "black" }}>
+                    <FontAwesomeIcon icon={faUsers} />
+                  </ListItemIcon>
+                  <ListItemText primary="Clients" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+              {openMenu.clients && (
+                <Collapse in={openMenu.clients} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding>
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        component={Link}
                         to="/dashboard/operator/inscriptions"
-                        className={activeLink === 'inscriptions' ? 'active' : ''}
                         onClick={() => handleLinkClick('clients', 'inscriptions')}
+                        selected={activeLink === 'inscriptions'}
+                        sx={{ pl: 6, ...selectedStyle }}
                       >
-                        <FontAwesomeIcon icon={faUserPlus} className="icon" /> Nouvelles inscriptions
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
+                        <ListItemIcon sx={{ color: "black" }}>
+                          <FontAwesomeIcon icon={faUserPlus} />
+                        </ListItemIcon>
+                        <ListItemText primary="Nouvelles inscriptions" primaryTypographyProps={{ fontSize: "12px" }} />
+                      </ListItemButton>
+                    </ListItem>
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        component={Link}
                         to="/dashboard/operator/clientvalides"
-                        className={activeLink === 'clientsvalides' ? 'active' : ''}
                         onClick={() => handleLinkClick('clients', 'clientsvalides')}
+                        selected={activeLink === 'clientsvalides'}
+                        sx={{ pl: 6, ...selectedStyle }}
                       >
-                        <FontAwesomeIcon icon={faUsers} className="icon" /> Clients validés
-                      </Link>
-                    </li>
-                  </ul>
-                )}
-              </li>
+                        <ListItemIcon sx={{ color: "black" }}>
+                          <FontAwesomeIcon icon={faUsers} />
+                        </ListItemIcon>
+                        <ListItemText primary="Clients validés" primaryTypographyProps={{ fontSize: "12px" }} />
+                      </ListItemButton>
+                    </ListItem>
+                  </List>
+                </Collapse>
+              )}
 
               {/* Sous-menu "Opérateurs" */}
-              <li>
-                <span
-                  className={`menu-title ${openMenu.operators ? 'open' : ''}`}
-                  onClick={() => toggleSubMenu('operators')}
-                >
-                  <FontAwesomeIcon icon={faUserTie} className="icon" /> Opérateurs
-                </span>
-                {openMenu.operators && (
-                  <ul className="submenu">
-                    <li>
-                      <Link
+              <ListItem disablePadding>
+                <ListItemButton onClick={() => toggleSubmenu('operators')} sx={{ pl: 4, cursor: 'pointer' }}>
+                  <ListItemIcon sx={{ color: "black" }}>
+                    <FontAwesomeIcon icon={faUserTie} />
+                  </ListItemIcon>
+                  <ListItemText primary="Opérateurs" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+              {openMenu.operators && (
+                <Collapse in={openMenu.operators} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding>
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        component={Link}
                         to="/dashboard/operator/operatorslist"
-                        className={activeLink === 'operatorslist' ? 'active' : ''}
                         onClick={() => handleLinkClick('operators', 'operatorslist')}
+                        selected={activeLink === 'operatorslist'}
+                        sx={{ pl: 6, ...selectedStyle }}
                       >
-                        <FontAwesomeIcon icon={faUsers} className="icon" /> Liste des opérateurs
-                      </Link>
-                    </li>
-                  </ul>
-                )}
-              </li>
+                        <ListItemIcon sx={{ color: "black" }}>
+                          <FontAwesomeIcon icon={faUsers} />
+                        </ListItemIcon>
+                        <ListItemText primary="Liste des opérateurs" primaryTypographyProps={{ fontSize: "12px" }} />
+                      </ListItemButton>
+                    </ListItem>
+                  </List>
+                </Collapse>
+              )}
 
               {/* Sous-menu "Prestations de services" */}
-              <li>
-                <span
-                  className={`menu-title ${openMenu.services ? 'open' : ''}`}
-                  onClick={() => toggleSubMenu('services')}
-                >
-                  <FontAwesomeIcon icon={faHandshake} className="icon" /> Prestations de services
-                </span>
-              </li>
+              <ListItem disablePadding>
+                <ListItemButton onClick={() => toggleSubmenu('services')} sx={{ pl: 4, cursor: 'pointer' }}>
+                  <ListItemIcon sx={{ color: "black" }}>
+                    <FontAwesomeIcon icon={faHandshake} />
+                  </ListItemIcon>
+                  <ListItemText primary="Prestations de services" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
 
-              {/* Nouveau sous-menu "Données de base" */}
-              <li>
-                <span
-                  className={`menu-title ${openMenu.baseData ? 'open' : ''}`}
-                  onClick={() => toggleSubMenu('baseData')}
-                >
-                  <FontAwesomeIcon icon={faCog} className="icon" /> Données de base
-                </span>
-                {openMenu.baseData && (
-                  <ul className="submenu">
-                    <li>
-                      <Link
+              {/* Sous-menu "Données de base" */}
+              <ListItem disablePadding>
+                <ListItemButton onClick={() => toggleSubmenu('baseData')} sx={{ pl: 4, cursor: 'pointer' }}>
+                  <ListItemIcon sx={{ color: "black" }}>
+                    <FontAwesomeIcon icon={faCog} />
+                  </ListItemIcon>
+                  <ListItemText primary="Données de base" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+              {openMenu.baseData && (
+                <Collapse in={openMenu.baseData} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding>
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        component={Link}
                         to="/dashboard/operator/document-type"
-                        className={activeLink === 'document-type' ? 'active' : ''}
                         onClick={() => handleLinkClick('baseData', 'document-type')}
+                        selected={activeLink === 'document-type'}
+                        sx={{ pl: 6, ...selectedStyle }}
                       >
-                        <FontAwesomeIcon icon={faFileContract} className="icon" /> Type de document
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
+                        <ListItemIcon sx={{ color: "black" }}>
+                          <FontAwesomeIcon icon={faFileContract} />
+                        </ListItemIcon>
+                        <ListItemText primary="Type de document" primaryTypographyProps={{ fontSize: "12px" }} />
+                      </ListItemButton>
+                    </ListItem>
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        component={Link}
                         to="/dashboard/operator/list-type"
-                        className={activeLink === 'list-type' ? 'active' : ''}
                         onClick={() => handleLinkClick('baseData', 'list-type')}
+                        selected={activeLink === 'list-type'}
+                        sx={{ pl: 6, ...selectedStyle }}
                       >
-                        <FontAwesomeIcon icon={faClipboardList} className="icon" /> Liste des unités
-                      </Link>
-                    </li>
-                  </ul>
-                )}
-              </li>
-            </ul>
-          )}
-        </li>
+                        <ListItemIcon sx={{ color: "black" }}>
+                          <FontAwesomeIcon icon={faClipboardList} />
+                        </ListItemIcon>
+                        <ListItemText primary="Liste des unités" primaryTypographyProps={{ fontSize: "12px" }} />
+                      </ListItemButton>
+                    </ListItem>
+                  </List>
+                </Collapse>
+              )}
+            </List>
+          </Collapse>
+          <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-        {/* Ma CCD */}
-        <li>
-          <span
-            className={`menu-title ${openMenu.myCCD ? 'open' : ''}`}
-            data-main-title
-            onClick={() => toggleSubMenu('myCCD')}
-          >
-            <FontAwesomeIcon icon={faBuilding} className="icon" /> Ma CCD
-          </span>
-          {openMenu.myCCD && (
-            <ul className="submenu">
-              <li>
-                <Link
-                  to="/my-ccd/cgv"
-                  className={activeLink === 'cgv' ? 'active' : ''}
+          {/* Ma CCD */}
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => toggleSubmenu('myCCD')} sx={{ cursor: 'pointer' }}>
+              <ListItemIcon sx={{ color: "black" }}>
+                <FontAwesomeIcon icon={faBuilding} />
+              </ListItemIcon>
+              <ListItemText primary="Ma CCD" primaryTypographyProps={{ fontSize: "14px" }} />
+            </ListItemButton>
+          </ListItem>
+          <Collapse in={openMenu.myCCD} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItem disablePadding>
+                <ListItemButton
+                  component={Link}
+                  to="/dashboard/operator/inscriptions"
                   onClick={() => handleLinkClick('myCCD', 'cgv')}
+                  selected={activeLink === 'cgv'}
+                  sx={{ pl: 4, ...selectedStyle }}
                 >
-                  <FontAwesomeIcon icon={faFileContract} className="icon" /> Les C.G.V
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/my-ccd/tarifs"
-                  className={activeLink === 'tarifs' ? 'active' : ''}
+                  <ListItemIcon sx={{ color: "black" }}>
+                    <FontAwesomeIcon icon={faFileContract} />
+                  </ListItemIcon>
+                  <ListItemText primary="Les C.G.V" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
+                <ListItemButton
+                  component={Link}
+                  to="/dashboard/operator/tarifs"
                   onClick={() => handleLinkClick('myCCD', 'tarifs')}
+                  selected={activeLink === 'tarifs'}
+                  sx={{ pl: 4, ...selectedStyle }}
                 >
-                  <FontAwesomeIcon icon={faMoneyBillWave} className="icon" /> Tarifs des prestations
-                </Link>
-              </li>
-            </ul>
-          )}
-        </li>
+                  <ListItemIcon sx={{ color: "black" }}>
+                    <FontAwesomeIcon icon={faMoneyBillWave} />
+                  </ListItemIcon>
+                  <ListItemText primary="Tarifs des prestations" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+            </List>
+          </Collapse>
+          <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-        {/* Bouton de déconnexion */}
-        <li>
-          <button className="menu-title logout-button" onClick={handleLogout}>
-            <FontAwesomeIcon icon={faSignOutAlt} className="icon" /> Se déconnecter
-          </button>
-        </li>
-      </ul>
-    </nav>
+          {/* Bouton de déconnexion */}
+          <Box sx={{ marginTop: 'auto' }}>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleLogout} sx={logoutStyle}>
+                <ListItemIcon sx={{ color: "inherit" }}>
+                  <FontAwesomeIcon icon={faSignOutAlt} />
+                </ListItemIcon>
+                <ListItemText primary="Se déconnecter" primaryTypographyProps={{ fontSize: "14px" }} />
+              </ListItemButton>
+            </ListItem>
+          </Box>
+        </List>
+      </Box>
+    </Drawer>
   );
 };
 

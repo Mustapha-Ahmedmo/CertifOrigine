@@ -3,6 +3,7 @@ import { getCustAccountInfo } from '../services/apiServices';
 import './Inscriptions.css'; // Même CSS
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { formatDate } from '../utils/dateUtils';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
