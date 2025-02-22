@@ -1294,6 +1294,66 @@ const getCertifTranspMode = async (req, res) => {
     }
   };
 
+  const sendbackOrder = async (req, res) => {
+    try {
+      const { p_id_order, p_idlogin_modify } = req.body;
+      
+      // Validate input parameters
+      if (!p_id_order || !p_idlogin_modify) {
+        return res.status(400).json({
+          message: 'Les champs p_id_order et p_idlogin_modify sont requis.'
+        });
+      }
+      
+      // Call the stored procedure "sendback_order"
+      await sequelize.query(
+        `CALL sendback_order(:p_id_order, :p_idlogin_modify)`,
+        {
+          replacements: { p_id_order, p_idlogin_modify },
+          type: QueryTypes.RAW,
+        }
+      );
+      
+      res.status(200).json({ message: 'Commande retournée avec succès.' });
+    } catch (error) {
+      console.error("Erreur lors du retour de la commande:", error);
+      res.status(500).json({
+        message: "Erreur lors du retour de la commande.",
+        error: error.message || "Erreur inconnue.",
+        details: error.original || error,
+      });
+    }
+  };
+  
+  const rejectOrder = async (req, res) => {
+    try {
+      const { p_id_order, p_idlogin_modify } = req.body;
+      if (!p_id_order || !p_idlogin_modify) {
+        return res.status(400).json({
+          message: 'Les champs p_id_order et p_idlogin_modify sont requis.'
+        });
+      }
+  
+      // Call the stored procedure "reject_order"
+      await sequelize.query(
+        `CALL reject_order(:p_id_order, :p_idlogin_modify)`,
+        {
+          replacements: { p_id_order, p_idlogin_modify },
+          type: QueryTypes.RAW,
+        }
+      );
+  
+      res.status(200).json({ message: 'Commande rejetée avec succès.' });
+    } catch (error) {
+      console.error('Erreur lors du rejet de la commande:', error);
+      res.status(500).json({
+        message: 'Erreur lors du rejet de la commande.',
+        error: error.message || 'Erreur inconnue.',
+        details: error.original || error,
+      });
+    }
+  };
+
 module.exports = {
   executeAddOrder,
   getTransmodeInfo,
@@ -1322,5 +1382,7 @@ module.exports = {
   remOrdCertifTranspMode,
   remSingleOrdCertifTranspMode,
   delFilesRepo,
-  approveOrder
+  approveOrder,
+  sendbackOrder,
+  rejectOrder
 };

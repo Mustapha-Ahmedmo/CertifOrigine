@@ -34,6 +34,7 @@ const CreateOrder = () => {
   // État global du formulaire
   const [formData, setFormData] = useState({
     orderId: existingOrderId || null,
+    orderStatus: 1,
     certifId: existingCertifId || null,
     orderName: '',
     merchandises: [],

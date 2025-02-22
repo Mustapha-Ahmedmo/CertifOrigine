@@ -95,7 +95,7 @@ const Home = () => {
       setOrdersVisa(allOrders.filter((order) => order.id_order_status === 1));
       setOrdersValidation(allOrders.filter((order) => order.id_order_status === 2));
       setOrdersPayment(allOrders.filter((order) => order.id_order_status === 3));
-      setOrdersReturned(allOrders.filter((order) => order.id_order_status === 4));
+      setOrdersReturned(allOrders.filter((order) => order.id_order_status === 6));
     } catch (err) {
       console.error('Error fetching orders:', err);
       setError(err.message || "Erreur lors de la récupération des commandes.");

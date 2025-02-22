@@ -1050,3 +1050,73 @@ export const removeSingleCertifTranspMode = async (p_id_ord_certif_ori, p_id_tra
     throw error;
   }
 };
+
+export const approveOrder = async (p_id_order, p_idlogin_modify) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/approve_order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ p_id_order, p_idlogin_modify }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to approve order');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (approveOrder):', error);
+    throw error;
+  }
+};
+
+export const sendbackOrder = async (p_id_order, p_idlogin_modify) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/sendback_order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ p_id_order, p_idlogin_modify }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to send back order');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (sendbackOrder):', error);
+    throw error;
+  }
+};
+
+
+export const rejectOrder = async (p_id_order, p_idlogin_modify) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/reject_order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ p_id_order, p_idlogin_modify }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to reject order');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (rejectOrder):', error);
+    throw error;
+  }
+};

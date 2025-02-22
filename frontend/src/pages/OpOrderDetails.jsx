@@ -8,7 +8,10 @@ import {
   getCertifGoodsInfo,
   getCertifTranspMode,
   getOrderOpInfo,
-  getOrderFilesInfo
+  getOrderFilesInfo,
+  approveOrder,
+  sendbackOrder,
+  rejectOrder
 } from '../services/apiServices';
 import './OpOrderDetails.css';
 
@@ -29,7 +32,12 @@ const API_URL = import.meta.env.VITE_API_URL;
   // Pour l'opérateur, on ne se base pas sur son idCustAccount pour récupérer la commande.
   // Nous utiliserons uniquement orderId (via idOrderList) pour filtrer la commande.
 
-
+  // New states for the "Retourner" modal
+  // New state variables for modals
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnReason, setReturnReason] = useState('');
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
 
   const [documentsInfo, setDocumentsInfo] = useState([]);
 
@@ -176,16 +184,68 @@ const handleFileClick = (file) => {
   window.open(fileUrl, '_blank');
 };
 
-
-  const handleValidate = () => {
-    console.log('Commande validée :', orderId);
-    navigate('/operator-dashboard');
+  // Handle order rejection modal actions
+  const handleRejectClick = () => {
+    setShowRejectModal(true);
   };
 
-  const handleReject = () => {
-    console.log('Commande rejetée :', orderId);
-    navigate('/operator-dashboard');
+  const handleRejectCancel = () => {
+    setRejectReason('');
+    setShowRejectModal(false);
   };
+
+  const handleRejectConfirm = async () => {
+    try {
+      // Call rejectOrder API service function
+      const result = await rejectOrder(orderId, idLogin);
+      console.log('Commande rejetée avec succès:', result);
+      setShowRejectModal(false);
+      navigate('/operator-dashboard');
+    } catch (error) {
+      console.error('Erreur lors du rejet de la commande:', error);
+      // Optionally, display an error notification here
+    }
+  };
+
+const handleReturnClick = () => {
+  setShowReturnModal(true);
+};
+
+// Function to cancel the return modal without sending the order back
+const handleReturnCancel = () => {
+  setReturnReason('');
+  setShowReturnModal(false);
+};
+
+// Function to confirm return; calls sendbackOrder API function
+const handleReturnConfirm = async () => {
+  try {
+    // Call the sendbackOrder API function (make sure it is defined in your service)
+    const result = await sendbackOrder(orderId, idLogin, returnReason);
+    console.log('Commande renvoyée avec succès:', result);
+    setShowReturnModal(false);
+    navigate('/operator-dashboard');
+  } catch (error) {
+    console.error('Erreur lors du retour de la commande:', error);
+    // Optionally display an error message here
+  }
+};
+
+
+
+const handleValidate = async () => {
+  try {
+    console.log('Tentative d\'approbation de la commande :', orderId);
+    const result = await approveOrder(orderId, idLogin);
+    console.log('Commande approuvée:', result);
+    navigate('/operator-dashboard');
+  } catch (error) {
+    console.error('Erreur lors de l\'approbation de la commande:', error);
+    // Optionally display an error message to the user (e.g., with a toast)
+  }
+};
+
+
 
   useEffect(() => {
     const loadDocumentsInfo = async () => {
@@ -210,6 +270,10 @@ const handleFileClick = (file) => {
     }
   }, [orderId]);
 
+  const handleReturn = () => {
+    // Navigate back to the previous page or dashboard
+    navigate('/operator-dashboard');
+  };
 
   if (loading) {
     return <div className="op-form">Chargement…</div>;
@@ -407,14 +471,11 @@ const handleFileClick = (file) => {
             ) : (
               <p>Aucune pièce justificative ajoutée.</p>
             )}
-            <button type="button" className="step5-upload-button">
-              Upload
-            </button>
+         
           </div>
         </div>
 
         <div className="step5-submit-section">
-          {/* Bouton Valider */}
           <button
             type="button"
             className="step5-next-button"
@@ -422,18 +483,72 @@ const handleFileClick = (file) => {
           >
             Valider
           </button>
-
-          {/* Bouton Rejeter */}
           <button
             type="button"
             className="step5-reject-button"
-            onClick={handleReject}
+            onClick={handleRejectClick}
           >
             Rejeter
+          </button>
+          <button
+            type="button"
+            className="step5-return-button"
+            onClick={handleReturnClick}
+          >
+            Retourner
           </button>
         </div>
 
       </form>
+
+      {showReturnModal && (
+        <div className="modal-overlay" onClick={handleReturnCancel}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Retourner la commande</h3>
+            <p>Veuillez indiquer la raison du retour :</p>
+            <textarea
+              value={returnReason}
+              onChange={(e) => setReturnReason(e.target.value)}
+              placeholder="Entrez la raison du retour ici..."
+              rows="4"
+              style={{ width: '100%' }}
+            />
+            <div className="modal-actions" style={{ marginTop: '20px', textAlign: 'right' }}>
+              <button type="button" onClick={handleReturnCancel} className="reject-button" style={{ marginRight: '10px' }}>
+                Annuler
+              </button>
+              <button type="button" onClick={handleReturnConfirm} className="validate-button">
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+            {/* Reject Modal */}
+            {showRejectModal && (
+        <div className="modal-overlay" onClick={handleRejectCancel}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Rejeter la commande</h3>
+            <p>Veuillez indiquer la raison du rejet :</p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Entrez la raison du rejet ici..."
+              rows="4"
+              style={{ width: '100%' }}
+            />
+            <div className="modal-actions" style={{ marginTop: '20px', textAlign: 'right' }}>
+              <button type="button" onClick={handleRejectCancel} className="reject-button" style={{ marginRight: '10px' }}>
+                Annuler
+              </button>
+              <button type="button" onClick={handleRejectConfirm} className="validate-button">
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

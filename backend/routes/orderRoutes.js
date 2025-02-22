@@ -1,6 +1,6 @@
 const express = require('express');
 const upload = require('../src/middleware/upload'); // Use your existing multer middleware
-const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController, setUnitWeight, deleteUnitWeight, submitOrder, remOrdCertifGoods, remOrdCertifTranspMode, remSingleOrdCertifTranspMode } = require('../controllers/OrderController');
+const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController, setUnitWeight, deleteUnitWeight, submitOrder, remOrdCertifGoods, remOrdCertifTranspMode, remSingleOrdCertifTranspMode, approveOrder, sendbackOrder, rejectOrder } = require('../controllers/OrderController');
 
 const router = express.Router();
 router.post('/create', executeAddOrder);
@@ -30,6 +30,10 @@ router.post('/rename', renameOrder);
 router.post('/update-certif', updateCertif);
 
 router.get('/files-repo-typeof', getFilesRepoTypeofInfo);
+
+router.post('/approve_order', approveOrder);
+router.post('/sendback_order', sendbackOrder);
+router.post('/reject_order', rejectOrder);
 
 //router.post('/order-files', upload.single('file'), setOrderFiles);
 router.post('/order-files', (req, res, next) => {

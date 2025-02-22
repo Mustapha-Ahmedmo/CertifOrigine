@@ -3635,6 +3635,41 @@ END;
 $$;
 
 
+
+DROP PROCEDURE IF EXISTS sendback_order;
+CREATE OR REPLACE PROCEDURE sendback_order(
+    p_id_order INT,
+    p_idlogin_modify INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM "ORDER"
+        WHERE ID_ORDER = p_id_order
+        AND ID_ORDER_STATUS IN (2, 7)  -- 2: NEW, 7: replaced
+        AND TYPEoF >= 1
+    ) THEN
+        UPDATE "ORDER"
+        SET 
+            DATE_LAST_RETURN = NOW(),
+            ID_ORDER_STATUS = 6,  -- 6: pending replace
+            LASTMODIFIED = NOW(),
+            IDLOGIN_MODIFY = p_idlogin_modify
+        WHERE 
+            ID_ORDER = p_id_order;
+
+        CALL set_histo_order(
+            p_id_order,
+            p_idlogin_modify,
+            12  -- ORDER_HISTO_ACTION = 12 pour 'Retourner'
+        );
+    ELSE
+        RAISE EXCEPTION 'La commande ne peut être retournée que si son statut est 2 (NEW) ou 7 (replaced) et que TYPEoF >= 1';
+    END IF;
+END;
+$$;
+
 DROP PROCEDURE IF EXISTS del_all_order_files_except;
 
 CREATE OR REPLACE PROCEDURE del_all_order_files_except (
