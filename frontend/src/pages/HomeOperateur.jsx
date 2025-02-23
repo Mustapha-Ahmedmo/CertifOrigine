@@ -21,6 +21,9 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import TablePagination from '@mui/material/TablePagination';
 import './HomeOperateur.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
+
 
 // Composant TabPanel pour l'affichage du contenu de chaque onglet
 function TabPanel(props) {
