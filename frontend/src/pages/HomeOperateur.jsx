@@ -247,7 +247,7 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails }) => {
                     </button>
                   </TableCell>
                   <TableCell>
-                    <button className="submit-button minimal-button">Facturer</button>
+                    <button className="submit-button minimal-button">Payer</button>
                   </TableCell>
                 </TableRow>
               ))
