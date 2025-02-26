@@ -1,29 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+
+import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
+import Badge from '@mui/material/Badge';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faUser, faBars, faTimes, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import {
+  faBell,
+  faUser,
+  faBars,
+  faTimes,
+  faUserPlus,
+} from '@fortawesome/free-solid-svg-icons';
+
 import logo from '../assets/logo.jpg';
-import { useTranslation } from 'react-i18next';
 import './HeaderOP.css';
 import { getCustAccountInfo } from '../services/apiServices';
 
 const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
-  const { t, i18n } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mailNotificationCount] = useState(7);
-  const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [inscriptionNotificationCount, setInscriptionNotificationCount] = useState(1);
-
-  const changeLanguage = (language) => {
-    i18n.changeLanguage(language);
-  };
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
-  };
-
-  const toggleLanguageDropdown = () => {
-    setLanguageDropdownOpen(!languageDropdownOpen);
   };
 
   useEffect(() => {
@@ -36,17 +37,16 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
         console.error('Failed to fetch inscription count:', err);
       }
     };
-  
+
     window.addEventListener('updateInscriptionCount', fetchInscriptionCount);
-    // Optionally: fetch once on mount:
     fetchInscriptionCount();
-  
+
     return () => window.removeEventListener('updateInscriptionCount', fetchInscriptionCount);
   }, []);
 
   return (
     <header className="header">
-      {/* Bouton menu mobile */}
+      {/* Bouton de menu mobile */}
       <div
         className="mobile-menu-button"
         onClick={toggleMenu}
@@ -57,60 +57,59 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
           if (e.key === 'Enter') toggleMenu();
         }}
       >
-        <FontAwesomeIcon icon={isMenuOpen ? faTimes : faBars} />
-      </div>
-      
-      <div className="header-left">
-        <div className="logo-container">
-          <img src={logo} alt="Chambre de Commerce de Djibouti" className="logo" />
-        </div>
+        <FontAwesomeIcon icon={isMenuOpen ? faTimes : faBars} style={{ fontSize: '1rem' }} />
       </div>
 
-      <div className="header-right">
-        <div className="header-icon-container">
-          <FontAwesomeIcon icon={faBell} className="header-icon" />
-          {mailNotificationCount > 0 && (
-            <span className="badge mail-badge">{mailNotificationCount}</span>
-          )}
-          <div className="icon-label">Notifications</div>
-        </div>
+      <Box className="logo-container">
+        <img src={logo} alt="Chambre de Commerce de Djibouti" className="logo" />
+      </Box>
 
-        {/* Nouveau bouton Inscriptions avec badge */}
-        <div className="header-icon-container">
+      <Box className="header-right">
+        {/* Notifications */}
+        <Box className="header-icon-container">
+          <Badge badgeContent={mailNotificationCount} color="error" anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+            <FontAwesomeIcon icon={faBell} style={{ fontSize: '1rem' }} />
+          </Badge>
+        </Box>
+
+        {/* Inscriptions */}
+        <Box className="header-icon-container">
           <Link to="/dashboard/operator/inscriptions" className="icon-link">
-            <FontAwesomeIcon icon={faUserPlus} className="header-icon" />
-            {inscriptionNotificationCount > 0 && (
-              <span className="badge inscription-badge">
-                {inscriptionNotificationCount}
-              </span>
-            )}
-            <div className="icon-label">Inscriptions</div>
+            <Badge badgeContent={inscriptionNotificationCount} color="error" anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+              <FontAwesomeIcon icon={faUserPlus} style={{ fontSize: '1rem' }} />
+            </Badge>
           </Link>
-        </div>
+        </Box>
 
-        <div className="header-icon-container">
-          <FontAwesomeIcon icon={faUser} className="header-icon" onClick={toggleDropdown} />
+        {/* Profil */}
+        <Box className="header-icon-container" sx={{ position: 'relative' }}>
+          <Avatar 
+            sx={{ width: 32, height: 32, backgroundColor: '#DDAF26' }}
+            onClick={toggleDropdown}
+          >
+            <FontAwesomeIcon icon={faUser} style={{ color: 'white', fontSize: '1rem' }} />
+          </Avatar>
           {dropdownOpen && (
-            <div className={`dropdown ${dropdownOpen ? 'show' : ''}`}>
-              <Link to="/profile">{t('header.profile')}</Link>
-              <Link to="/settings">{t('header.settings')}</Link>
-            </div>
+            <Box
+              className="dropdown"
+              sx={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                backgroundColor: 'white',
+                boxShadow: 3,
+                p: 1,
+                mt: 1,
+                zIndex: 1000,
+              }}
+            >
+              <Link to="/profile">Profil</Link>
+              <Link to="/settings">Réglages</Link>
+              <Link to="/login">Déconnexion</Link>
+            </Box>
           )}
-          <div className="icon-label">Profil</div>
-        </div>
-
-        <div className="language-container">
-          <button onClick={toggleLanguageDropdown} className="language-button">
-            🌐 {i18n.language.toUpperCase()}
-          </button>
-          {languageDropdownOpen && (
-            <div className="language-dropdown">
-              <button onClick={() => changeLanguage('fr')}>Français</button>
-              <button onClick={() => changeLanguage('en')}>English</button>
-            </div>
-          )}
-        </div>
-      </div>
+        </Box>
+      </Box>
     </header>
   );
 };
