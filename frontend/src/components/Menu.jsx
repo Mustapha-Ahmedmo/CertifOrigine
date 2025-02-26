@@ -1,7 +1,7 @@
 // Menu.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { logout } from '../slices/authSlice';
 
 import Drawer from '@mui/material/Drawer';
@@ -64,7 +64,7 @@ const logoutStyle = {
 };
 
 const Menu = ({ isMenuOpen, toggleMenu }) => {
-  // Initialiser explicitement les sous-menus
+  // Initialisation des sous-menus
   const [openSubmenus, setOpenSubmenus] = useState({
     newOrder: false,
     pastOrders: false,
@@ -73,8 +73,6 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-
-
 
   // Ouvrir automatiquement certains sous-menus selon l'URL courante
   useEffect(() => {
@@ -119,7 +117,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
     });
   };
 
-  // Fonction pour fermer tous les sous-menus
+  // Fermer tous les sous-menus
   const closeAllSubmenus = () => {
     setOpenSubmenus({
       newOrder: false,
@@ -128,7 +126,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
     });
   };
 
-  // Pour les parents qui n'ont pas de sous-menu, on ferme tous les sous-menus
+  // Pour les parents sans sous-menu, fermer tous les sous-menus et, sur mobile, fermer le menu
   const handleParentClick = () => {
     closeAllSubmenus();
     if (window.innerWidth <= 768) {
@@ -136,7 +134,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
     }
   };
 
-  // Déjà présent : fermer le menu sur mobile après un clic
+  // Fermer le menu sur mobile après un clic
   const handleLinkClick = () => {
     if (window.innerWidth <= 768) {
       toggleMenu();
@@ -170,7 +168,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
       <Toolbar />
       <Box sx={{ overflow: "auto" }}>
         <List>
-          {/* Lien vers DashboardClient (parent sans sous-menu) */}
+          {/* Lien vers Tableau de bord (DashboardClient) */}
           <ListItem disablePadding>
             <ListItemButton
               component={Link}
@@ -185,37 +183,32 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               <ListItemIcon sx={{ color: "black" }}>
                 <FontAwesomeIcon icon={faTachometerAlt} />
               </ListItemIcon>
-              <ListItemText
-                primary="Tableau de bord"
-                primaryTypographyProps={{ fontSize: "14px" }}
-              />
+              <ListItemText primary="Tableau de bord" primaryTypographyProps={{ fontSize: "14px" }} />
             </ListItemButton>
           </ListItem>
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
-          {/* Gestion des commandes (parent sans sous-menu) */}
+
+          {/* Lien vers Gestion des commandes -> pointe maintenant vers "/dashboard/home" */}
           <ListItem disablePadding>
             <ListItemButton
               component={Link}
-              to="/dashboard"
+              to="/dashboard/home"
               onClick={() => {
                 handleParentClick();
                 handleLinkClick();
               }}
-              selected={location.pathname === "/dashboard"}
+              selected={location.pathname === "/dashboard/home"}
               sx={selectedStyle}
             >
               <ListItemIcon sx={{ color: "black" }}>
                 <FontAwesomeIcon icon={faClipboardList} />
               </ListItemIcon>
-              <ListItemText
-                primary="Gestion des commandes"
-                primaryTypographyProps={{ fontSize: "14px" }}
-              />
+              <ListItemText primary="Gestion des commandes" primaryTypographyProps={{ fontSize: "14px" }} />
             </ListItemButton>
           </ListItem>
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-          {/* Nouvelle Commande (parent avec sous-menu) */}
+          {/* Nouvelle Commande (sous-menu) */}
           <ListItem disablePadding>
             <ListItemButton
               onClick={() => handleToggleSubmenu("newOrder")}
@@ -224,10 +217,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               <ListItemIcon sx={{ color: "black" }}>
                 <FontAwesomeIcon icon={faShoppingCart} />
               </ListItemIcon>
-              <ListItemText
-                primary="Nouvelle Commande"
-                primaryTypographyProps={{ fontSize: "14px" }}
-              />
+              <ListItemText primary="Nouvelle Commande" primaryTypographyProps={{ fontSize: "14px" }} />
             </ListItemButton>
           </ListItem>
           <Collapse in={openSubmenus.newOrder} timeout="auto" unmountOnExit>
@@ -243,10 +233,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemIcon sx={{ color: "black" }}>
                     <FontAwesomeIcon icon={faCertificate} />
                   </ListItemIcon>
-                  <ListItemText
-                    primary="Certificat d'origine"
-                    primaryTypographyProps={{ fontSize: "12px" }}
-                  />
+                  <ListItemText primary="Certificat d'origine" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
               <ListItem disablePadding>
@@ -260,10 +247,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemIcon sx={{ color: "black" }}>
                     <FontAwesomeIcon icon={faGavel} />
                   </ListItemIcon>
-                  <ListItemText
-                    primary="Légalisation de commande"
-                    primaryTypographyProps={{ fontSize: "12px" }}
-                  />
+                  <ListItemText primary="Légalisation de commande" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
               <ListItem disablePadding>
@@ -277,16 +261,13 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemIcon sx={{ color: "black" }}>
                     <FontAwesomeIcon icon={faFileInvoice} />
                   </ListItemIcon>
-                  <ListItemText
-                    primary="Facture commercial"
-                    primaryTypographyProps={{ fontSize: "12px" }}
-                  />
+                  <ListItemText primary="Facture commercial" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
             </List>
           </Collapse>
 
-          {/* Mes commandes passées (parent avec sous-menu) */}
+          {/* Mes commandes passées (sous-menu) */}
           <ListItem disablePadding>
             <ListItemButton
               onClick={() => handleToggleSubmenu("pastOrders")}
@@ -295,10 +276,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               <ListItemIcon sx={{ color: "black" }}>
                 <FontAwesomeIcon icon={faHistory} />
               </ListItemIcon>
-              <ListItemText
-                primary="Recherche de documents"
-                primaryTypographyProps={{ fontSize: "14px" }}
-              />
+              <ListItemText primary="Recherche de documents" primaryTypographyProps={{ fontSize: "14px" }} />
             </ListItemButton>
           </ListItem>
           <Collapse in={openSubmenus.pastOrders} timeout="auto" unmountOnExit>
@@ -314,10 +292,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemIcon sx={{ color: "black" }}>
                     <FontAwesomeIcon icon={faHistory} />
                   </ListItemIcon>
-                  <ListItemText
-                    primary={currentYear}
-                    primaryTypographyProps={{ fontSize: "12px" }}
-                  />
+                  <ListItemText primary={currentYear} primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
               <ListItem disablePadding>
@@ -331,10 +306,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemIcon sx={{ color: "black" }}>
                     <FontAwesomeIcon icon={faHistory} />
                   </ListItemIcon>
-                  <ListItemText
-                    primary={previousYear}
-                    primaryTypographyProps={{ fontSize: "12px" }}
-                  />
+                  <ListItemText primary={previousYear} primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
               <ListItem disablePadding>
@@ -348,26 +320,20 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemIcon sx={{ color: "black" }}>
                     <FontAwesomeIcon icon={faHistory} />
                   </ListItemIcon>
-                  <ListItemText
-                    primary={`Avant ${previousYear}`}
-                    primaryTypographyProps={{ fontSize: "12px" }}
-                  />
+                  <ListItemText primary={`Avant ${previousYear}`} primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
             </List>
           </Collapse>
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-          {/* Mes destinataires (parent avec sous-menu) */}
+          {/* Mes destinataires (sous-menu) */}
           <ListItem disablePadding>
             <ListItemButton onClick={() => handleToggleSubmenu("clients")}>
               <ListItemIcon sx={{ color: "black" }}>
                 <FontAwesomeIcon icon={faUsers} />
               </ListItemIcon>
-              <ListItemText
-                primary="Mes destinataires"
-                primaryTypographyProps={{ fontSize: "14px" }}
-              />
+              <ListItemText primary="Mes destinataires" primaryTypographyProps={{ fontSize: "14px" }} />
             </ListItemButton>
           </ListItem>
           <Collapse in={openSubmenus.clients} timeout="auto" unmountOnExit>
@@ -383,27 +349,21 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemIcon sx={{ color: "black" }}>
                     <FontAwesomeIcon icon={faUsers} />
                   </ListItemIcon>
-                  <ListItemText
-                    primary="Liste des destinataires"
-                    primaryTypographyProps={{ fontSize: "12px" }}
-                  />
+                  <ListItemText primary="Liste des destinataires" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
             </List>
           </Collapse>
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-          {/* Déconnexion */}
+          {/* Bouton de déconnexion */}
           <Box sx={{ marginTop: "auto" }}>
             <ListItem disablePadding>
               <ListItemButton onClick={handleLogout} sx={logoutStyle}>
                 <ListItemIcon sx={{ color: "inherit" }}>
                   <FontAwesomeIcon icon={faSignOutAlt} />
                 </ListItemIcon>
-                <ListItemText
-                  primary="Déconnexion"
-                  primaryTypographyProps={{ fontSize: "14px" }}
-                />
+                <ListItemText primary="Déconnexion" primaryTypographyProps={{ fontSize: "14px" }} />
               </ListItemButton>
             </ListItem>
           </Box>

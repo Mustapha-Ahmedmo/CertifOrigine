@@ -1,3 +1,4 @@
+// App.jsx
 import React, { useEffect, useState } from 'react';
 import {
   Routes,
@@ -27,7 +28,8 @@ import Maintenance from '../pages/Maintenance';
 import HeaderLayout from '../components/HeaderLayout';
 
 // Pages du dashboard
-import Home from '../pages/Home';
+import Home from '../pages/Home'; // Gestion des commandes
+import DashboardClient from '../pages/DashboardClient';
 import HomeOperateur from '../pages/HomeOperateur';
 import OpOrderDetails from '../pages/OpOrderDetails';
 import ToComplete from '../components/orders/ToComplete';
@@ -39,22 +41,21 @@ import CreateOrder from '../components/orders/Create/CreateOrder';
 import OperateurLayout from './OperateurLayout';
 import ContactsList from '../pages/ContactsList';
 import RegisterContact from '../pages/RegisterContact';
-import DashboardClient from '../pages/DashboardClient';
+import ListTypePage from '../pages/DonneeDeBase/unitTypePage';
 
 // Gestion de l'inactivité
 import InactivityHandler from './InactivityHandler';
 import Step2 from './orders/Create/steps/Step2';
 import OrderDetailsPage from '../pages/OrderDetails/OrderPageDetails';
-import ListTypePage from '../pages/DonneeDeBase/unitTypePage';
 
 const App = () => {
   const dispatch = useDispatch();
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
-
-  const [authRestored, setAuthRestored] = useState(false);
-
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Détermine si l'utilisateur est opérateur (on suppose que user.isopuser est true pour les opérateurs)
+  const isOperator = user?.isopuser;
 
   return (
     <>
@@ -62,16 +63,15 @@ const App = () => {
       {isAuthenticated && <InactivityHandler timeout={600000} />}
 
       <Routes>
-        {/* 1) Route racine : si on est connecté, go /dashboard, sinon /login */}
+        {/* Route racine : redirige vers /dashboard si connecté, sinon Login */}
         <Route
           path="/"
           element={
-            isAuthenticated ? <Navigate to="/dashboard" /> : <Login />
+            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
           }
         />
 
-
-        {/* 2) Dashboard protégé par ProtectedRoute */}
+        {/* Dashboard protégé */}
         <Route
           path="/dashboard"
           element={
@@ -80,8 +80,18 @@ const App = () => {
             </ProtectedRoute>
           }
         >
-          {/* Routes "client" */}
-          <Route index element={<Home />} />
+          {/* Route index conditionnelle :
+              - Si opérateur, on affiche HomeOperateur.
+              - Sinon (client), on affiche DashboardClient. */}
+          <Route
+            index
+            element={isOperator ? <HomeOperateur /> : <DashboardClient />}
+          />
+
+          {/* Lien pour "Gestion des commandes" qui pointe vers Home (page de gestion de commande) */}
+          <Route path="home" element={<Home />} />
+
+          {/* Autres routes client */}
           <Route path="dashboardclient" element={<DashboardClient />} />
           <Route path="to-complete" element={<ToComplete />} />
           <Route path="to-pay" element={<ToPay />} />
@@ -93,10 +103,9 @@ const App = () => {
             element={<CompletedOrdersThisYear />}
           />
           <Route path="create-order" element={<CreateOrder />} />
-
           <Route path="order-details" element={<OrderDetailsPage />} />
 
-          {/* Routes "opérateur" */}
+          {/* Routes réservées aux opérateurs */}
           <Route path="operator" element={<OperateurLayout />}>
             <Route index element={<HomeOperateur />} />
             <Route path="to-validateOP" element={<ToValidateOP />} />
@@ -104,22 +113,21 @@ const App = () => {
             <Route path="clientvalides" element={<ClientsValides />} />
             <Route path="operatorslist" element={<OperatorsList />} />
             <Route path="oporderdetails" element={<OpOrderDetails />} />
-
             <Route path="list-type" element={<ListTypePage />} />
           </Route>
         </Route>
 
-        {/* 3) Layout simple pour /login */}
+        {/* Layout simple pour /login */}
         <Route
           path="/login"
           element={
-            isAuthenticated ? <Navigate to="/dashboard" /> : <HeaderLayout />
+            isAuthenticated ? <Navigate to="/dashboard" replace /> : <HeaderLayout />
           }
         >
           <Route index element={<Login />} />
         </Route>
 
-        {/* 4) Autres routes "simples" */}
+        {/* Autres routes "simples" */}
         <Route path="/register" element={<Register />}>
           <Route index element={<Login />} />
         </Route>
@@ -141,10 +149,9 @@ const App = () => {
           <Route index element={<AccountCreated />} />
         </Route>
 
-
         <Route path="/create-order/step2" element={<Step2 />} />
 
-        {/* 5) Fallback si aucune route ne matche (page blanche -> rediriger) */}
+        {/* Fallback si aucune route ne matche */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

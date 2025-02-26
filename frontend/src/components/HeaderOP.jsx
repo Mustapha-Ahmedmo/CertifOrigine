@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Badge from '@mui/material/Badge';
+import Typography from '@mui/material/Typography';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -66,23 +67,35 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
 
       <Box className="header-right">
         {/* Notifications */}
-        <Box className="header-icon-container">
+        <Box
+          className="header-icon-container"
+          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+        >
           <Badge badgeContent={mailNotificationCount} color="error" anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
             <FontAwesomeIcon icon={faBell} style={{ fontSize: '1rem' }} />
           </Badge>
+          <Typography variant="caption" className="icon-label">
+            Notifications
+          </Typography>
         </Box>
 
         {/* Inscriptions */}
-        <Box className="header-icon-container">
+        <Box
+          className="header-icon-container"
+          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+        >
           <Link to="/dashboard/operator/inscriptions" className="icon-link">
             <Badge badgeContent={inscriptionNotificationCount} color="error" anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
               <FontAwesomeIcon icon={faUserPlus} style={{ fontSize: '1rem' }} />
             </Badge>
+            <Typography variant="caption" className="icon-label">
+              Nouvelles inscriptions
+            </Typography>
           </Link>
         </Box>
 
         {/* Profil */}
-        <Box className="header-icon-container" sx={{ position: 'relative' }}>
+        <Box className="header-icon-container" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
           <Avatar 
             sx={{ width: 32, height: 32, backgroundColor: '#DDAF26' }}
             onClick={toggleDropdown}
