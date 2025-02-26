@@ -23,6 +23,7 @@ import TablePagination from '@mui/material/TablePagination';
 import './HomeOperateur.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { formatDate } from '../utils/dateUtils';
 
 
 // Composant TabPanel pour l'affichage du contenu de chaque onglet
@@ -138,8 +139,8 @@ const HomeOperateur = () => {
           {user?.full_name || 'Utilisateur'}
         </span>
       </div>
-    
-    
+
+
       {/* Onglets et tableau */}
       <div className="operator-tabs-container" style={{ width: '100%' }}>
         <Box sx={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
@@ -161,7 +162,12 @@ const HomeOperateur = () => {
             <OrderTable orders={ordersNew} refreshOrders={fetchOrders} goToOrderDetails={goToOrderDetails} />
           </TabPanel>
           <TabPanel value={tabIndex} index={1} dir={theme.direction}>
-            <OrderTable orders={ordersPayment} refreshOrders={fetchOrders} goToOrderDetails={goToOrderDetails} />
+            <OrderTable
+              orders={ordersPayment}
+              refreshOrders={fetchOrders}
+              goToOrderDetails={goToOrderDetails}
+              mode="payment"  // indique que l'affichage sera pour les commandes en attente de paiement
+            />
           </TabPanel>
         </Box>
       </div>
@@ -169,12 +175,8 @@ const HomeOperateur = () => {
   );
 };
 
-const OrderTable = ({ orders, refreshOrders, goToOrderDetails }) => {
-  const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.user);
-  const currentUserId = user?.id_login_user;
-
-  // État de pagination
+const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
+  // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -187,73 +189,160 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails }) => {
     setPage(0);
   };
 
-  const handleCancelClick = async (orderId) => {
-    try {
-      const payload = {
-        p_id_order: orderId,
-        p_idlogin_modify: currentUserId,
-      };
-      const response = await cancelOrder(payload);
-      console.log('Order cancelled:', response);
-      refreshOrders && refreshOrders();
-    } catch (error) {
-      console.error('Error cancelling order:', error);
-      alert("Erreur lors de l'annulation de la commande.");
-    }
-  };
-
+  // Découpage pour la pagination
   const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
     <Paper sx={{ width: '100%', overflow: 'hidden' }}>
       <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
         <Table stickyHeader aria-label="orders table" sx={{ minWidth: 800 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>N° de Commande</TableCell>
-              <TableCell>Client</TableCell>
-              <TableCell>Désignation</TableCell>
-              <TableCell>Date soumission</TableCell>
-              <TableCell>Certificat d'Origine</TableCell>
-              <TableCell>Facture Commerciale</TableCell>
-              <TableCell>Légalisations</TableCell>
-              <TableCell></TableCell>
-            </TableRow>
-          </TableHead>
+          {mode === "payment" ? (
+            // En mode "payment", affichage simplifié sans icônes œil
+            <TableHead>
+              <TableRow>
+                <TableCell>Date de création</TableCell>
+                <TableCell>N° de Commande</TableCell>
+                <TableCell>Client</TableCell>
+                <TableCell>Désignation</TableCell>
+                <TableCell>Date de soumission</TableCell>
+                <TableCell>Date d'approbation</TableCell>
+                <TableCell>Certificat d'Origine</TableCell>
+                <TableCell>Facture Commerciale</TableCell>
+                <TableCell>Légalisations</TableCell>
+                <TableCell>Action</TableCell>
+              </TableRow>
+            </TableHead>
+          ) : (
+            // Mode par défaut (pour les autres onglets)
+            <TableHead>
+              <TableRow>
+                <TableCell>Date</TableCell>
+                <TableCell>N° de Commande</TableCell>
+                <TableCell>Client</TableCell>
+                <TableCell>Désignation</TableCell>
+                <TableCell>Date soumission</TableCell>
+                <TableCell>Certificat d'Origine</TableCell>
+                <TableCell>Facture Commerciale</TableCell>
+                <TableCell>Légalisations</TableCell>
+                <TableCell></TableCell>
+              </TableRow>
+            </TableHead>
+          )}
           <TableBody>
             {paginatedOrders.length > 0 ? (
-              paginatedOrders.map((order) => (
-                <TableRow key={order.id_order} hover>
-                  <TableCell>{order.insertdate_order}</TableCell>
-                  <TableCell>{order.id_order}</TableCell>
-                  <TableCell>{order.cust_name}</TableCell>
-                  <TableCell>{order.designation}</TableCell>
-                  <TableCell>{order.submissionDate}</TableCell>
-                  <TableCell>
-                    <button
-                      className="icon-button minimal-button"
-                      onClick={() => goToOrderDetails(order)}
-                    >
-                      <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                      <span className="button-text">Vérifier</span>
-                    </button>
-                  </TableCell>
-                  <TableCell></TableCell>
-                  <TableCell>
-                    <button className="icon-button minimal-button">
-                      <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                      <span className="button-text">Vérifier</span>
-                    </button>
-                  </TableCell>
-                  <TableCell>
-                    <button className="submit-button minimal-button">Payer</button>
-                  </TableCell>
-                </TableRow>
-              ))
+              paginatedOrders.map((order) =>
+                mode === "payment" ? (
+                  <TableRow key={order.id_order} hover>
+                    <TableCell>
+                      {order.insertdate_order
+                        ? new Date(order.insertdate_order).toLocaleString()
+                        : '-'}
+                    </TableCell>
+                    <TableCell>{order.id_order}</TableCell>
+                    <TableCell>{order.cust_name}</TableCell>
+                    <TableCell>{order.order_title}</TableCell>
+                    <TableCell>
+                      {order.date_last_submission
+                        ? formatDate(order.date_last_submission)
+                        : '-'}
+                    </TableCell>
+                    <TableCell>
+                      {order.date_validation_order
+                        ? formatDate(order.date_validation_order)
+                        : '-'}
+                    </TableCell>
+                    <TableCell>
+                      {order.id_ord_certif_ori ? (
+                        <button
+                          className="icon-button minimal-button"
+                          onClick={() => goToOrderDetails(order)}
+                        >
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
+                          <span className="button-text">Consulter</span>
+                        </button>
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {order.id_ord_com_invoice ? (
+                        <button className="icon-button minimal-button" onClick={() => goToOrderDetails(order)}>
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
+                          <span className="button-text">Consulter</span>
+                        </button>
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {order.id_ord_legalization ? (
+                        <button className="icon-button minimal-button" onClick={() => goToOrderDetails(order)}>
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
+                          <span className="button-text">Consulter</span>
+                        </button>
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {/* Ici, vous pouvez afficher le bouton "Payer" ou une autre action si nécessaire */}
+                      <button className="submit-button minimal-button">Payer</button>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  // Rendu par défaut pour les autres modes (exemple existant)
+                  <TableRow key={order.id_order} hover>
+                    <TableCell>{formatDate(order.insertdate_order)}</TableCell>
+                    <TableCell>{order.id_order}</TableCell>
+                    <TableCell>{order.cust_name}</TableCell>
+                    <TableCell>{order.order_title || '-'}</TableCell>
+                    <TableCell>
+                      {order.date_last_submission
+                        ? formatDate(order.date_last_submission)
+                        : '-'}
+                    </TableCell>
+                    <TableCell>
+                      {order.id_ord_certif_ori ? (
+                        <button
+                          className="icon-button minimal-button"
+                          onClick={() => goToOrderDetails(order)}
+                        >
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
+                          <span className="button-text">Vérifier</span>
+                        </button>
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {order.id_ord_com_invoice ? (
+                        <button className="icon-button minimal-button" onClick={() => goToOrderDetails(order)}>
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
+                          <span className="button-text">Vérifier</span>
+                        </button>
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {order.id_ord_legalization ? (
+                        <button className="icon-button minimal-button" onClick={() => goToOrderDetails(order)}>
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
+                          <span className="button-text">Vérifier</span>
+                        </button>
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <button className="submit-button minimal-button">Payer</button>
+                    </TableCell>
+                  </TableRow>
+                )
+              )
             ) : (
               <TableRow>
-                <TableCell colSpan={9}>Aucune commande trouvée.</TableCell>
+                <TableCell colSpan={mode === "payment" ? 7 : 9}>Aucune commande trouvée.</TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -275,7 +364,9 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails }) => {
 OrderTable.propTypes = {
   orders: PropTypes.array.isRequired,
   refreshOrders: PropTypes.func.isRequired,
-  goToOrderDetails: PropTypes.func.isRequired,
+  goToOrderDetails: PropTypes.func,
+  mode: PropTypes.string, // 'payment' pour le mode Commandes en attente de paiement
 };
+
 
 export default HomeOperateur;
