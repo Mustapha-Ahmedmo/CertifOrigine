@@ -9,7 +9,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardActions,
   Stack,
   Typography,
   Avatar,
@@ -22,14 +21,12 @@ import { alpha, useTheme } from '@mui/material/styles';
 import {
   ArrowDown as ArrowDownIcon,
   ArrowUp as ArrowUpIcon,
-  Users as UsersIcon,
-  CheckSquare as CheckSquareIcon,
-  CurrencyDollar as CurrencyDollarIcon,
-  ArrowClockwise as ArrowClockwiseIcon,
-  ArrowRight as ArrowRightIcon,
+  Activity as ActivityIcon,      // Icône "onde" verte
+  CreditCard as CreditCardIcon,  // Icône "carte bleue"
+  BagSimple as BagSimpleIcon,    // Icône "sac"
 } from '@phosphor-icons/react';
 
-// ApexCharts + ReactApexChart
+// ApexCharts
 import ReactApexChart from 'react-apexcharts';
 
 /*******************************************************************************
@@ -38,14 +35,25 @@ import ReactApexChart from 'react-apexcharts';
 const drawerWidth = 240;
 
 /*******************************************************************************
- * Composant générique de stats (StatCard)
+ * Composant générique StatCard
  ******************************************************************************/
-function StatCard({ title, value, diff, trend, icon }) {
+function StatCard({
+  title,
+  value,
+  diff,
+  trend,
+  icon,
+  periodLabel = "since last month",
+  bgColor,
+  iconColor,
+  iconBg
+}) {
   const TrendIcon = trend === 'up' ? ArrowUpIcon : ArrowDownIcon;
-  const trendColor = trend === 'up' ? 'green' : 'red';
+  // Couleur de la flèche + pourcentage
+  const trendColor = trend === 'up' ? '#66bb6a' : '#ef5350';
 
   return (
-    <Card sx={{ height: '100%' }}>
+    <Card sx={{ height: '100%', backgroundColor: bgColor || 'transparent' }}>
       <CardContent>
         <Stack spacing={2}>
           {/* Titre + Valeur */}
@@ -64,7 +72,8 @@ function StatCard({ title, value, diff, trend, icon }) {
 
             <Avatar
               sx={{
-                backgroundColor: '#f5f5f5',
+                backgroundColor: iconBg || alpha('#66bb6a', 0.1),
+                color: iconColor || '#66bb6a',
                 height: 56,
                 width: 56,
                 display: 'flex',
@@ -72,7 +81,8 @@ function StatCard({ title, value, diff, trend, icon }) {
                 justifyContent: 'center',
               }}
             >
-              {React.cloneElement(icon, { size: 28 })}
+              {/* On force la couleur de l’icône si iconColor est défini */}
+              {React.cloneElement(icon, { size: 28, color: iconColor || '#66bb6a' })}
             </Avatar>
           </Stack>
 
@@ -86,7 +96,7 @@ function StatCard({ title, value, diff, trend, icon }) {
                 </Typography>
               </Stack>
               <Typography color="text.secondary" variant="caption">
-                since last month
+                {periodLabel}
               </Typography>
             </Stack>
           )}
@@ -97,19 +107,19 @@ function StatCard({ title, value, diff, trend, icon }) {
 }
 
 /*******************************************************************************
- * Nouveau composant : OrdersChartCard
- * -> Remplace votre ancien BarChart en "mode" ApexCharts
+ * Composant pour le bar chart "Montant dépensé par Certificat d'Origine"
  ******************************************************************************/
-function OrdersChartCard() {
+function SpendChartCard() {
   const theme = useTheme();
 
-  // Catégories fictives (X-axis)
-  const categories = ['À soumettre', 'En validation', 'En paiement', 'Retournées'];
+  // Jours de la semaine en abscisse
+  const categories = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  // Série fictive (peut être modifiée selon vos vraies données)
+  // Deux séries : "Payer" (vert) et "Valider" (bleu)
+  // Avec certaines valeurs > 40k
   const chartSeries = [
-    { name: 'Commandes 2023', data: [10, 8, 5, 2] },
-    // Vous pourriez ajouter d'autres séries
+    { name: 'Payer', data: [12000, 21000, 15000, 42000, 30000, 65000, 10000] },
+    { name: 'Valider', data: [8000, 12000, 18000, 25000, 40000, 15000, 45000] },
   ];
 
   // Configuration ApexCharts
@@ -118,12 +128,10 @@ function OrdersChartCard() {
       chart: {
         background: 'transparent',
         stacked: false,
-        toolbar: { show: false },
+        toolbar: { show: false }, // Pas de barre d'outils
       },
-      colors: [
-        theme.palette.primary.main,
-        alpha(theme.palette.primary.main, 0.25),
-      ],
+      // 1ère série en vert (#66bb6a), 2ème en bleu (#42a5f5)
+      colors: ['#66bb6a', '#42a5f5'],
       dataLabels: { enabled: false },
       fill: { opacity: 1, type: 'solid' },
       grid: {
@@ -132,7 +140,10 @@ function OrdersChartCard() {
         xaxis: { lines: { show: false } },
         yaxis: { lines: { show: true } },
       },
-      legend: { show: false },
+      legend: {
+        show: true,
+        position: 'top',
+      },
       plotOptions: {
         bar: { columnWidth: '40px' },
       },
@@ -154,8 +165,16 @@ function OrdersChartCard() {
         },
       },
       yaxis: {
+        // On veut 0$ -> 75k$ avec 6 paliers
+        min: 0,
+        max: 75000,
+        tickAmount: 5, // crée 6 "points" (0, 15k, 30k, 45k, 60k, 75k)
         labels: {
-          formatter: (value) => (value > 0 ? `${value}K` : `${value}`),
+          // On affiche "0$", "15k$", "30k$", etc.
+          formatter: (value) => {
+            if (value === 0) return '0$';
+            return `${value / 1000}k$`;
+          },
           offsetX: -10,
           style: { colors: theme.palette.text.secondary },
         },
@@ -166,16 +185,8 @@ function OrdersChartCard() {
   return (
     <Card>
       <CardHeader
-        action={
-          <Button
-            color="inherit"
-            size="small"
-            startIcon={<ArrowClockwiseIcon size={18} />}
-          >
-            Sync
-          </Button>
-        }
-        title="Statistiques de commandes"
+        title="Montant dépensé par Certificat d'Origine"
+        // On enlève l'action (le bouton "Sync")
       />
       <CardContent>
         <ReactApexChart
@@ -186,16 +197,7 @@ function OrdersChartCard() {
           height={350}
         />
       </CardContent>
-      <Divider />
-      <CardActions sx={{ justifyContent: 'flex-end' }}>
-        <Button
-          color="inherit"
-          size="small"
-          endIcon={<ArrowRightIcon size={18} />}
-        >
-          Voir plus
-        </Button>
-      </CardActions>
+      {/* Pas de Divider ni de CardActions pour le bouton "Voir plus" */}
     </Card>
   );
 }
@@ -220,48 +222,68 @@ export default function DashboardClient() {
         Bienvenue <span className="home-highlight-text">{user?.companyname}</span>
       </div>
 
-      {/* Cartes de stats */}
-      <Grid container spacing={3} sx={{ marginBottom: 4 }}>
-        {/* Stat réelle : Total des commandes */}
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total des commandes"
-            value="1"
-            icon={
-              <UsersIcon color="#DCAF26" />
-            }
-          />
-        </Grid>
+      {/* --- Card parent : "Overview" avec le faux filtre "This Week" --- */}
+      <Card sx={{ mb: 4 }}>
+        <CardHeader
+          title="Overview"
+          action={
+            <Button variant="text" color="inherit">
+              This Week
+            </Button>
+          }
+        />
+        <CardContent>
+          <Grid container spacing={3}>
+            {/* 1) Nombre de C.O effectue (vert) */}
+            <Grid item xs={12} sm={6} md={4}>
+              <StatCard
+                title="Nombre de C.O effectue"
+                value="128k"
+                diff={37.8}
+                trend="up"
+                periodLabel="this week"
+                icon={<ActivityIcon />}
+                bgColor="#E8F5E9"
+                iconColor="#388E3C"
+                iconBg={alpha('#388E3C', 0.1)}
+              />
+            </Grid>
 
-        {/* Stat fictive : Task Progress */}
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Task Progress"
-            value="67%"
-            diff={3}
-            trend="up"
-            icon={
-              <CheckSquareIcon color="#4caf50" />
-            }
-          />
-        </Grid>
+            {/* 2) Nombre facture commercial visé (bleu) */}
+            <Grid item xs={12} sm={6} md={4}>
+              <StatCard
+                title="Nombre facture commercial visé"
+                value="521"
+                diff={37.8}
+                trend="down"
+                periodLabel="this week"
+                icon={<CreditCardIcon />}
+                bgColor="#E3F2FD"
+                iconColor="#1E88E5"
+                iconBg={alpha('#1E88E5', 0.1)}
+              />
+            </Grid>
 
-        {/* Stat fictive : Budget */}
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Budget"
-            value="12 000 €"
-            diff={12}
-            trend="up"
-            icon={
-              <CurrencyDollarIcon color="#1976d2" />
-            }
-          />
-        </Grid>
-      </Grid>
+            {/* 3) Nombre de document legalisé (jaune) */}
+            <Grid item xs={12} sm={6} md={4}>
+              <StatCard
+                title="Nombre de document legalisé"
+                value="64k"
+                diff={37.8}
+                trend="up"
+                periodLabel="this week"
+                icon={<BagSimpleIcon />}
+                bgColor="#FFFAE6"
+                iconColor="#C8A415"
+                iconBg={alpha('#C8A415', 0.1)}
+              />
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
-      {/* Nouveau diagramme en barres (ApexCharts) dans un Card soigné */}
-      <OrdersChartCard />
+      {/* --- Nouveau Card pour le bar chart "Montant dépensé par Certificat d'Origine" --- */}
+      <SpendChartCard />
     </Box>
   );
 }

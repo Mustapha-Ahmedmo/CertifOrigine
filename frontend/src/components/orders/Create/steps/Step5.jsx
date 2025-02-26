@@ -742,11 +742,13 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
             ) : (
               <div className="step5-editable-display">
                 <span>{orderLabel || 'Aucun libellé spécifié'}</span>
-                <FontAwesomeIcon
-                  icon={faPencilAlt}
-                  className="step5-pencil-icon"
-                  onClick={() => setIsEditingLabel(true)}
-                />
+                {isModifiable && (
+          <FontAwesomeIcon
+            icon={faPencilAlt}
+            className="step5-pencil-icon"
+            onClick={() => setIsEditingLabel(true)}
+          />
+        )}
               </div>
             )}
           </span>
@@ -761,7 +763,6 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
       {/* Section Contenu du Certificat d'origine */}
       <div className="step5-contenu-certificat">
         {/* 2/7 Destinataire */}
-        {/* Recipient Section */}
         <div className="step5-recap-section">
           <h5>2/7 Destinataire</h5>
           <div className="step5-form-group">
@@ -769,7 +770,8 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
               id="recipientSelect"
               className="step5-recipient-select"
               value={selectedRecipientId}
-              onChange={handleRecipientChange}
+              onChange={isModifiable ? handleRecipientChange : undefined}
+              disabled={!isModifiable}
             >
               <option value="">-- Sélectionnez un destinataire --</option>
               {localRecipients.map((recipient) => (
@@ -779,18 +781,19 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
               ))}
             </select>
           </div>
-          {/* Bouton placé dans un conteneur sans label pour être aligné à gauche */}
           <div style={{ marginTop: '10px' }}>
-            {isModifiable &&
+            {isModifiable && (
               <button
                 type="button"
                 className="step5-add-merch-button"
                 onClick={() => setShowNewRecipientModal(true)}
               >
                 + Ajouter un destinataire
-              </button>}
+              </button>
+            )}
           </div>
         </div>
+
 
         {/* 3/7 Description de la marchandise */}
         <div className="step5-recap-section">
@@ -804,7 +807,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
                     <th>Référence / HSCODE</th>
                     <th>Quantité</th>
                     <th>Unité</th>
-                    <th>Action</th>
+                    {isModifiable && <th>Action</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -814,22 +817,24 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
                       <td>{item.boxReference || 'Non spécifié'}</td>
                       <td>{item.quantity || 'Non spécifié'}</td>
                       <td>{item.unit || 'Non spécifié'}</td>
-                      <td>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteMerchandise(index)}
-                          style={{
-                            border: 'none',
-                            background: 'transparent',
-                            cursor: 'pointer',
-                            color: 'red',
-                            fontSize: '16px'
-                          }}
-                          title="Supprimer cette marchandise"
-                        >
-                          ❌
-                        </button>
-                      </td>
+                      {isModifiable && (
+                        <td>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMerchandise(index)}
+                            style={{
+                              border: 'none',
+                              background: 'transparent',
+                              cursor: 'pointer',
+                              color: 'red',
+                              fontSize: '16px'
+                            }}
+                            title="Supprimer cette marchandise"
+                          >
+                            ❌
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -838,7 +843,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
           ) : (
             <p>Aucune marchandise ajoutée.</p>
           )}
-          {isModifiable &&
+          {isModifiable && (
             <button
               type="button"
               className="step5-add-merch-button"
@@ -846,47 +851,47 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
               onClick={() => setShowNewMerchModal(true)}
             >
               + Ajouter une marchandise
-            </button>}
+            </button>
+          )}
         </div>
 
 
+
         <div className="step5-recap-section">
-          <h5>4/7 Origine et Destination des Marchandises</h5>
-          <div className="step5-country-selection">
-            <div className="step5-form-group">
-              <label>Pays d'origine :</label>
-
-
-              <select
-                value={values.goodsOrigin}
-                onChange={(e) => handleChange('goodsOrigin', e.target.value)}
-              >
-                <option value="">-- Sélectionnez un pays --</option>
-                {countries.map((country) => (
-                  <option key={country.id_country} value={country.id_country}>
-                    {country.symbol_fr}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="step5-form-group">
-              <label>Pays de destination :</label>
-
-
-              <select
-                value={values.goodsDestination}
-                onChange={(e) => handleChange('goodsDestination', e.target.value)}
-              >
-                <option value="">-- Sélectionnez un pays --</option>
-                {countries.map((country) => (
-                  <option key={country.id_country} value={country.id_country}>
-                    {country.symbol_fr}
-                  </option>
-                ))}
-              </select>
-            </div>
+        <h5>4/7 Origine et Destination des Marchandises</h5>
+        <div className="step5-country-selection">
+          <div className="step5-form-group">
+            <label>Pays d'origine :</label>
+            <select
+              value={values.goodsOrigin}
+              onChange={isModifiable ? (e) => handleChange('goodsOrigin', e.target.value) : undefined}
+              disabled={!isModifiable}
+            >
+              <option value="">-- Sélectionnez un pays --</option>
+              {countries.map((country) => (
+                <option key={country.id_country} value={country.id_country}>
+                  {country.symbol_fr}
+                </option>
+              ))}
+            </select>
           </div>
+
+          <div className="step5-form-group">
+            <label>Pays de destination :</label>
+            <select
+              value={values.goodsDestination}
+              onChange={isModifiable ? (e) => handleChange('goodsDestination', e.target.value) : undefined}
+              disabled={!isModifiable}
+            >
+              <option value="">-- Sélectionnez un pays --</option>
+              {countries.map((country) => (
+                <option key={country.id_country} value={country.id_country}>
+                  {country.symbol_fr}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
         </div>
 
 
@@ -898,10 +903,10 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
 
           <div className="step5-form-group">
             <label>Port de chargement :</label>
-
             <select
               value={values.loadingPort}
-              onChange={(e) => handleChange('loadingPort', e.target.value)}
+              onChange={isModifiable ? (e) => handleChange('loadingPort', e.target.value) : undefined}
+              disabled={!isModifiable}
             >
               <option value="">-- Sélectionnez un pays --</option>
               {countries.map((country) => (
@@ -910,16 +915,14 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
                 </option>
               ))}
             </select>
-
           </div>
 
           <div className="step5-form-group">
             <label>Port de déchargement :</label>
-
-
             <select
               value={values.dischargingPort}
-              onChange={(e) => handleChange('dischargingPort', e.target.value)}
+              onChange={isModifiable ? (e) => handleChange('dischargingPort', e.target.value) : undefined}
+              disabled={!isModifiable}
             >
               <option value="">-- Sélectionnez un pays --</option>
               {countries.map((country) => (
@@ -946,54 +949,58 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
               Enregistrer les pays/ports
             </button>
           }
-          <div className="step5-form-group">
-            <label>Modes de transport :</label>
-            <div className="transport-options">
-              {transpMode && transpMode.length > 0 ? (
-                transpMode.map((mode) => {
-                  // Use the French symbol (lowercased) as the key
-                  const key = mode.symbol_fr.toLowerCase();
-                  return (
-                    <label key={mode.id_transport_mode} style={{ marginRight: '10px' }}>
-                      <input
-                        type="checkbox"
-                        checked={tempTransportModes[key] === true}
-                        onChange={async (e) => {
-                          const checked = e.target.checked;
-                          // Update local state immediately
-                          setTempTransportModes(prev => ({ ...prev, [key]: checked }));
-                          if (checked) {
-                            // When checking, add the mode using setOrdCertifTranspMode
-                            try {
-                              await setOrdCertifTranspMode({
-                                id_ord_certif_transp_mode: null, // null to indicate insertion
-                                id_ord_certif_ori: certifId,       // certificate ID from query string
-                                id_transport_mode: mode.id_transport_mode,
-                              });
-                              console.log("Transport mode added:", mode);
-                            } catch (error) {
-                              console.error("Error adding transport mode:", error);
+         <div className="step5-form-group">
+          <label>Modes de transport :</label>
+          <div className="transport-options">
+            {transpMode && transpMode.length > 0 ? (
+              transpMode.map((mode) => {
+                // On utilise le symbole en minuscules comme clé
+                const key = mode.symbol_fr.toLowerCase();
+                return (
+                  <label key={mode.id_transport_mode} style={{ marginRight: '10px' }}>
+                    <input
+                      type="checkbox"
+                      checked={tempTransportModes[key] === true}
+                      onChange={
+                        isModifiable
+                          ? async (e) => {
+                              const checked = e.target.checked;
+                              // Mise à jour immédiate de l'état local
+                              setTempTransportModes((prev) => ({ ...prev, [key]: checked }));
+                              if (checked) {
+                                try {
+                                  await setOrdCertifTranspMode({
+                                    id_ord_certif_transp_mode: null, // null pour insertion
+                                    id_ord_certif_ori: certifId,       // ID du certificat depuis la query
+                                    id_transport_mode: mode.id_transport_mode,
+                                  });
+                                  console.log("Transport mode added:", mode);
+                                } catch (error) {
+                                  console.error("Error adding transport mode:", error);
+                                }
+                              } else {
+                                try {
+                                  await removeSingleCertifTranspMode(certifId, mode.id_transport_mode, idLogin);
+                                  console.log("Transport mode removed:", mode);
+                                } catch (error) {
+                                  console.error("Error removing transport mode:", error);
+                                }
+                              }
                             }
-                          } else {
-                            // When unchecking, remove only this transport mode using removeSingleCertifTranspMode
-                            try {
-                              await removeSingleCertifTranspMode(certifId, mode.id_transport_mode, idLogin);
-                              console.log("Transport mode removed:", mode);
-                            } catch (error) {
-                              console.error("Error removing transport mode:", error);
-                            }
-                          }
-                        }}
-                      />
-                      {mode.symbol_fr}
-                    </label>
-                  );
-                })
-              ) : (
-                <p>Aucun mode de transport disponible.</p>
-              )}
-            </div>
+                          : undefined
+                      }
+                      disabled={!isModifiable}
+                    />
+                    {mode.symbol_fr}
+                  </label>
+                );
+              })
+            ) : (
+              <p>Aucun mode de transport disponible.</p>
+            )}
           </div>
+        </div>
+
 
           {/* Ajout du champ "Remarques sur le transport" */}
           <div className="step5-form-group">
@@ -1033,65 +1040,78 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
         <div className="step5-recap-section">
           <h5>6/7 Autres</h5>
           <div className="step5-recap-item">
-            <span className="step5-recap-label">Copies certifiées :</span>
-            {/* On ajoute ici la classe step5-fixed-field pour avoir l'encadré gris */}
-            <span className="step5-recap-value step5-fixed-field">
-              {isEditingCopies ? (
-                <div className="step5-editable-field">
-                  <input
-                    type="number"
-                    value={copies}
-                    onChange={(e) => setCopies(e.target.value)}
-                    className="step5-editable-input step5-white-input"
-                  />
-                  <div className="step5-save-container">
-                    {isModifiable &&
-                      <button type="button" className="step5-save-button" onClick={saveCopies}>
-                        Enregistrer
-                      </button>
-                    }
-                  </div>
-                </div>
-              ) : (
-                <div className="step5-editable-display">
-                  <span>{copies || 'Non spécifié'}</span>
-                  <FontAwesomeIcon
-                    icon={faPencilAlt}
-                    className="step5-pencil-icon"
-                    onClick={() => setIsEditingCopies(true)}
-                  />
-                </div>
-              )}
-            </span>
+  <span className="step5-recap-label">Copies certifiées :</span>
+  <span className="step5-recap-value step5-fixed-field">
+    {isModifiable ? (
+      isEditingCopies ? (
+        <div className="step5-editable-field">
+          <input
+            type="number"
+            value={copies}
+            onChange={(e) => setCopies(e.target.value)}
+            className="step5-editable-input"  // sans 'step5-white-input'
+          />
+          <div className="step5-save-container">
+            <button type="button" className="step5-save-button" onClick={saveCopies}>
+              Enregistrer
+            </button>
           </div>
+        </div>
+      ) : (
+        <div className="step5-editable-display">
+          <span>{copies || 'Non spécifié'}</span>
+          <FontAwesomeIcon
+            icon={faPencilAlt}
+            className="step5-pencil-icon"
+            onClick={() => setIsEditingCopies(true)}
+          />
+        </div>
+      )
+    ) : (
+      // Utilisation d'une classe spécifique pour le style en lecture seule
+      <input
+        type="number"
+        value={copies}
+        disabled
+        className="step5-disabled-input"
+      />
+    )}
+  </span>
+</div>
+
+
           <div className="step5-recap-item">
             <span className="step5-recap-label">Remarques :</span>
             <span className="step5-recap-value step5-fixed-field">
-              {isEditingRemarks ? (
-                <div className="step5-editable-field">
-                  <textarea
-                    value={remarks}
-                    onChange={(e) => setRemarks(e.target.value)}
-                    className="step5-editable-input step5-white-input"
-                  />
-                  <div className="step5-save-container">
-                    {isModifiable &&
-                      <button type="button" className="step5-save-button" onClick={saveRemarks}>
-                        Enregistrer
-                      </button>
-                    }
-                  </div>
-                </div>
-              ) : (
-                <div className="step5-editable-display">
-                  <span>{remarks || 'Aucune remarque'}</span>
-                  <FontAwesomeIcon
-                    icon={faPencilAlt}
-                    className="step5-pencil-icon"
-                    onClick={() => setIsEditingRemarks(true)}
-                  />
-                </div>
-              )}
+            {isEditingRemarks ? (
+  <div className="step5-editable-field">
+    <textarea
+      value={remarks}
+      onChange={isModifiable ? (e) => setRemarks(e.target.value) : undefined}
+      className={isModifiable ? "step5-editable-input" : "step5-disabled-input"}
+      disabled={!isModifiable}
+    />
+    <div className="step5-save-container">
+      {isModifiable && (
+        <button type="button" className="step5-save-button" onClick={saveRemarks}>
+          Enregistrer
+        </button>
+      )}
+    </div>
+  </div>
+) : (
+  <div className="step5-editable-display">
+    <span>{remarks || 'Aucune remarque'}</span>
+    {isModifiable && (
+      <FontAwesomeIcon
+        icon={faPencilAlt}
+        className="step5-pencil-icon"
+        onClick={() => setIsEditingRemarks(true)}
+      />
+    )}
+  </div>
+)}
+
             </span>
           </div>
         </div>
@@ -1120,62 +1140,67 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
       <h4 className="step5-main-title">Pièce justificatives</h4>
       {/* 7/7 Pièce Justificatives dans un rectangle gris avec titre en orange */}
       <div className="step5-designation-commande">
-        <h5 className="step5-sub-title">7/7 Pièce Justificatives</h5>
-        <div className="step5-pieces-justificatives-rectangle">
-          {documentsInfo && documentsInfo.length > 0 ? (
-            <div className="step5-table-responsive">
-              <table className="step5-document-table">
-                <thead>
-                  <tr>
-                    <th>Nom</th>
-                    <th>Type</th>
-                    <th>Fichier</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {documentsInfo.map((doc, index) => (
-                    <tr key={index}>
-                      <td>{doc.txt_description_fr}</td>
-                      <td>{doc.type === 'justificative' ? 'Justificative' : 'Annexe'}</td>
-                      {/* 3) Clickable link */}
-                      <td>
-                        {doc.file_guid ? (
-                          <span
-                            onClick={() => handleFileClick(doc)}
-                            style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
-                          >
-                            {doc.file_origin_name || 'Télécharger le fichier'}
-                          </span>
-                        ) : (
-                          "Aucun fichier"
-                        )}
-                      </td>
-                      <td>
-
-                        <button
-                          onClick={() => handleDeleteDocument(doc.id_order_files)}
-                          style={{ color: 'red' }}
-                          title="Supprimer"
-                        >
-                          ❌
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p>Aucune pièce justificative ajoutée.</p>
-          )}
-          {isModifiable &&
-            <button type="button" className="step5-upload-button" onClick={handleShowNewDocumentModal}>
-              Upload
-            </button>
-          }
-        </div>
+  <h5 className="step5-sub-title">7/7 Pièce Justificatives</h5>
+  <div className="step5-pieces-justificatives-rectangle">
+    {documentsInfo && documentsInfo.length > 0 ? (
+      <div className="step5-table-responsive">
+        <table className="step5-document-table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Type</th>
+              <th>Fichier</th>
+              {isModifiable && <th>Actions</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {documentsInfo.map((doc, index) => (
+              <tr key={index}>
+                <td>{doc.txt_description_fr}</td>
+                <td>{doc.type === 'justificative' ? 'Justificative' : 'Annexe'}</td>
+                <td>
+                  {doc.file_guid ? (
+                    <span
+                      onClick={isModifiable ? () => handleFileClick(doc) : undefined}
+                      style={{
+                        cursor: isModifiable ? 'pointer' : 'default',
+                        color: isModifiable ? 'blue' : 'inherit',
+                        textDecoration: isModifiable ? 'underline' : 'none'
+                      }}
+                    >
+                      {doc.file_origin_name || 'Télécharger le fichier'}
+                    </span>
+                  ) : (
+                    "Aucun fichier"
+                  )}
+                </td>
+                {isModifiable && (
+                  <td>
+                    <button
+                      onClick={() => handleDeleteDocument(doc.id_order_files)}
+                      style={{ color: 'red' }}
+                      title="Supprimer"
+                    >
+                      ❌
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+    ) : (
+      <p>Aucune pièce justificative ajoutée.</p>
+    )}
+    {isModifiable && (
+      <button type="button" className="step5-upload-button" onClick={handleShowNewDocumentModal}>
+        Upload
+      </button>
+    )}
+  </div>
+</div>
+
 
       {/* Actions */}
       {!isModal && (
