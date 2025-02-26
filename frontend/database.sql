@@ -26,6 +26,7 @@ DROP TABLE IF EXISTS ORD_COM_INVOICE CASCADE;
 DROP TABLE IF EXISTS ORD_CERTIF_TRANSP_MODE CASCADE;
 DROP TABLE IF EXISTS ORD_LEGALIZATION CASCADE;
 DROP TABLE IF EXISTS ORDER_FILES CASCADE;
+DROP TABLE IF EXISTS MEMO CASCADE;
 
 CREATE TABLE CURRENCY (
     ID_CURRENCY INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -455,6 +456,29 @@ CREATE TABLE ORD_CERTIF_TRANSP_MODE (
     DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
     FOREIGN KEY (ID_ORD_CERTIF_ORI) REFERENCES ORD_CERTIF_ORI(ID_ORD_CERTIF_ORI),
     FOREIGN KEY (ID_TRANSPORT_MODE) REFERENCES TRANSPORT_MODE(ID_TRANSPORT_MODE)
+);
+
+
+CREATE TABLE MEMO (
+    ID_MEMO INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_ORDER INT NULL,                                   	 -- Nullable
+    ID_CUST_ACCOUNT INT NULL,
+    TYPEoF INT DEFAULT 1,
+    IDLOGIN_INSERT INT NOT NULL,                         	 -- Non nullable
+    MEMO_DATE TIMESTAMP NOT NULL,                        	 -- Non nullable
+    INSERT_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    MEMO_SUBJECT VARCHAR(256) NOT NULL,                  	 -- Non nullable
+    MEMO_BODY TEXT NOT NULL,                             	 -- Non nullable
+    IDLOGIN_ACK INT NULL,                            	 -- Non nullable
+    ACK_DATE TIMESTAMP NULL,                             	 -- Nullable
+    MAIL_TO VARCHAR(32) NULL,                            	 -- Nullable
+    MAIL_BCC VARCHAR(32) NULL,                           	 -- Nullable
+    MAIL_ACC VARCHAR(32) NULL,                           	 -- Nullable
+    MAIL_NOTIFICATIONS VARCHAR(64) NULL,                 	 -- Nullable
+    FOREIGN KEY (ID_ORDER) REFERENCES "ORDER"(ID_ORDER),
+    FOREIGN KEY (ID_CUST_ACCOUNT) REFERENCES CUST_ACCOUNT(ID_CUST_ACCOUNT),
+    FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER), 
+    FOREIGN KEY (IDLOGIN_ACK) REFERENCES LOGIN_USER(ID_LOGIN_USER)
 );
 
 
@@ -4041,6 +4065,346 @@ BEGIN
 END;
 $$;
 
+DROP PROCEDURE IF EXISTS ack_memo_ope;
+CREATE OR REPLACE PROCEDURE ack_memo_ope(
+    p_id_memo INT,
+    p_idlogin INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    m_typeof_order INT := 1;
+    m_id_ord_certif_ori INT;
+BEGIN
+
+    IF NOT EXISTS (
+        SELECT 1 FROM OP_USER op  
+		JOIN LOGIN_USER lo ON lo.ID_LOGIN_USER = op.ID_LOGIN_USER
+		WHERE op.ID_LOGIN_USER = p_idlogin
+		AND op."deactivation_date" > CURRENT_DATE AND lo."deactivation_date" > CURRENT_DATE
+    ) THEN 
+        RAISE EXCEPTION 'login rejeté.';
+    END IF;
+
+   --verifier si le memo est en attente d'ack
+    IF EXISTS (
+        SELECT 1 FROM "memo" me  WHERE id_memo = p_id_memo
+		and me.typeof =2
+		AND me.IDLOGIN_ACK is null and me.ACK_DATE is null
+
+    ) THEN 
+	-- mise a jour des champs pour les tables
+        UPDATE "memo" 
+        SET 
+            IDLOGIN_ACK = p_idlogin,
+            ACK_DATE = CURRENT_TIMESTAMP 
+         WHERE id_memo = p_id_memo;
+
+    ELSE
+        RAISE EXCEPTION 'Ce memo introuvable ne peut être acquitter ';
+    END IF;
+END;
+$$;
+
+DROP PROCEDURE IF EXISTS ack_memo_cust;
+CREATE OR REPLACE PROCEDURE ack_memo_cust(
+    p_id_memo INT,
+	p_id_cust_account int,
+    p_idlogin INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    m_typeof_order INT := 1;
+    m_id_ord_certif_ori INT;
+BEGIN
+--verifier si le memo est en attente d'ack
+    IF EXISTS (
+        SELECT 1 FROM "memo" me 
+		JOIN 
+			cust_account ca ON me."id_cust_account" = ca."id_cust_account"
+		JOIN
+			CUST_USER cu ON ca."ID_CUST_ACCOUNT" = cu."ID_CUST_ACCOUNT"
+
+        WHERE id_memo = p_id_memo
+		and me.id_cust_account =p_id_cust_account
+        AND cu."ID_LOGIN_USER"  = p_idlogin
+		and me.typeof =1
+		AND me.IDLOGIN_ACK is null and me.ACK_DATE is null
+
+    ) THEN 
+	-- mise a jour des champs pour les tables
+        UPDATE "memo" 
+        SET 
+            IDLOGIN_ACK = p_idlogin,
+            ACK_DATE = CURRENT_TIMESTAMP 
+         WHERE id_memo = p_id_memo;
+
+    ELSE
+        RAISE EXCEPTION 'Ce memo introuvable ne peut être acquitter ';
+    END IF;
+END;
+$$;
+
+
+DROP FUNCTION IF EXISTS get_memo_files; 
+CREATE OR REPLACE FUNCTION get_memo_files(
+    p_id_memo_files_list TEXT,
+    p_id_memo_list TEXT,
+	p_id_files_repo_list TEXT,
+	p_code_list TEXT,
+    p_isactive BOOLEAN
+)
+RETURNS TABLE(
+    id_memo_files INT,
+    id_memo INT,
+	memo_subject VARCHAR(256),
+	id_files_repo INT,
+	id_files_repo_typeof INT,
+	file_origin_name VARCHAR(160),
+	file_guid VARCHAR(64),
+	file_path VARCHAR(256),
+	insertdate TIMESTAMP,
+	idlogin_insert INT,
+	lastmodified TIMESTAMP,
+	idlogin_modify INT,
+	deactivation_date TIMESTAMP,
+	txt_description_fr VARCHAR(64),
+	txt_description_eng VARCHAR(64)
+
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT
+		mf."id_memo_files",
+	    mf."id_memo",
+		me."memo_subject",
+		mf."id_files_repo",
+		fr."idfiles_repo_typeof",
+		fr."file_origin_name",
+		fr."file_guid",
+		fr."file_path",
+		fr."insertdate",
+		fr."idlogin_insert",
+		fr."lastmodified",
+		fr."idlogin_modify",
+		fr."deactivation_date",
+		ft."txt_description_fr",
+		ft."txt_description_eng"
+	FROM
+        memo_files mf
+	JOIN 
+		memo me ON mf."id_memo" = me."id_memo"
+	JOIN 
+		files_repo fr ON mf."id_files_repo" = fr."id_files_repo" 
+		JOIN
+			files_repo_typeof ft ON fr."idfiles_repo_typeof" = ft."id_files_repo_typeof"
+    WHERE 
+        (p_id_memo_files_list IS NULL OR mf."id_memo_files" = ANY (string_to_array(p_id_memo_files_list, ',')::INT[]))
+    AND 
+		(p_id_memo_list IS NULL OR mf."id_memo" = ANY(string_to_array(p_id_memo_list, ',')::INT[]))
+	AND 
+        (p_id_files_repo_list IS NULL OR mf."id_files_repo" = ANY(string_to_array(p_id_files_repo_list, ',')::INT[]))
+    AND 
+		(p_code_list IS NULL OR ft."code" = ANY(string_to_array(p_code_list, ',')::INT[]))
+	
+	AND (
+	     p_isactive IS NULL
+        -- Si p_isactive = 0, je verifie si une des deux dates de désactivation est avant la date du jour
+        OR(p_isactive IS NOT TRUE AND mf."deactivation_date" <= CURRENT_DATE 
+            
+        )
+        -- Si p_isactive = 1, je verifie que les deux dates de désactivation sont après la date du jour
+        OR (p_isactive IS TRUE AND mf."deactivation_date" > CURRENT_DATE
+            
+        )
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+DROP FUNCTION IF EXISTS get_memo;
+CREATE OR REPLACE FUNCTION get_memo(
+    p_id_memo_list TEXT,
+    p_id_order_list TEXT,
+    p_typeof_list TEXT,
+    p_id_cust_account INT,
+    p_memo_date_start TIMESTAMP,
+    p_memo_date_end TIMESTAMP,
+    p_isAck BOOLEAN,
+    p_idlogin INT,
+    p_isopuser BOOLEAN -- si false, utiliser id_cust_account dans le jeton de cust_user connecté et typeof = 2, sinon typeof = 1
+)
+RETURNS TABLE(
+    id_memo INT,
+    id_order INT,
+    id_cust_account INT,
+	cust_name VARCHAR(96),
+	recipient_name VARCHAR(96),
+	order_title VARCHAR(32),
+    typeof INT,
+    idlogin_insert INT,
+    memo_date TIMESTAMP,
+    memo_subject VARCHAR(256),
+    memo_body TEXT,
+    idlogin_ack INT,
+    ack_date TIMESTAMP,
+    mail_to VARCHAR(32),
+    mail_bcc VARCHAR(32),
+    mail_acc VARCHAR(32),
+    mail_notifications VARCHAR(64)
+) AS
+$$
+BEGIN
+    -- Vérification si p_isopuser est TRUE
+    IF p_isopuser THEN
+        -- Vérifier si p_idlogin existe dans op_user
+        IF NOT EXISTS (SELECT 1 FROM op_user WHERE "id_login_user" = p_idlogin) THEN
+            RAISE EXCEPTION 'Utilisateur non autorisé';
+        END IF;
+    END IF;
+
+    RETURN QUERY
+    SELECT
+        me."id_memo",
+        me."id_order",
+        me."id_cust_account",
+		ca."cust_name",
+		r."recipient_name",
+		o."order_title",
+        me."typeof",
+        me."idlogin_insert",
+        me."memo_date",
+        me."memo_subject",
+        me."memo_body",
+        me."idlogin_ack",
+        me."ack_date",
+        me."mail_to",
+        me."mail_bcc",
+        me."mail_acc",
+        me."mail_notifications"
+   FROM
+        memo me
+    JOIN 
+        cust_account ca ON me."id_cust_account" = ca."id_cust_account"
+    JOIN 
+        "ORDER" o ON me."id_order" = o."id_order" 
+    JOIN 
+        "RECIPIENT_ACCOUNT" r ON r."id_cust_account" = ca."id_cust_account" 
+    JOIN
+        login_user lu ON me."idlogin_insert" = lu."id_login_user"
+    WHERE 
+        (p_id_memo_list IS NULL OR me."id_memo" = ANY (string_to_array(p_id_memo_list, ',')::INT[]))
+    AND 
+        (p_id_order_list IS NULL OR me."id_order" = ANY (string_to_array(p_id_order_list, ',')::INT[]))
+    AND 
+        (p_typeof_list IS NULL OR me."typeof" = ANY (string_to_array(p_typeof_list, ',')::INT[]))
+    AND 
+        (p_memo_date_start IS NULL OR me."memo_date" >= p_memo_date_start)
+    AND 
+        (p_memo_date_end IS NULL OR me."memo_date" <= p_memo_date_end)
+    AND (
+        p_isAck IS NULL 
+        OR (p_isAck IS NOT TRUE AND me."ack_date" IS NULL)
+        OR (p_isAck IS TRUE AND me."ack_date" IS NOT NULL)
+    )
+    AND 
+    (
+        -- Si p_isopuser est FALSE, filtrer sur id_cust_account et typeof = p_type
+        p_isopuser IS TRUE 
+        OR (p_isopuser IS NOT TRUE AND me."id_cust_account" = p_id_cust_account)
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+
+DROP PROCEDURE IF EXISTS set_memo;
+CREATE OR REPLACE PROCEDURE set_memo(
+    p_id_order INT,
+    p_id_cust_account INT,
+    p_typeof INT,
+    p_idlogin_insert INT,
+	p_memo_date TIMESTAMP, 
+	p_memo_subject  VARCHAR(256),
+	p_memo_body  TEXT,
+	p_mail_to  VARCHAR(32),
+	p_mail_bcc VARCHAR(32),
+	p_mail_acc  VARCHAR(32),
+	p_mail_notifications  VARCHAR(32),
+
+	INOUT p_id INT 
+)
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    INSERT INTO memo(
+            id_order,
+            id_cust_account,
+            typeof,
+            idlogin_insert,
+			memo_date,
+			memo_subject,
+			memo_body,
+			mail_to,
+			mail_bcc,
+			mail_acc,
+			mail_notifications
+        ) VALUES (
+            p_id_order,
+		    p_id_cust_account,
+		    p_typeof,
+		    p_idlogin_insert,
+			p_memo_date,
+			p_memo_subject,
+			p_memo_body,
+			p_mail_to,
+			p_mail_bcc,
+			p_mail_acc,
+			p_mail_notifications
+        )
+	RETURNING id_memo INTO p_id;
+END;
+$$;
+
+
+DROP PROCEDURE IF EXISTS set_memo_files;
+CREATE OR REPLACE PROCEDURE set_memo_files(
+    p_id_memo INT,
+    p_idfiles_repo_typeof INT,
+    p_file_origin_name VARCHAR(160),
+    p_file_guid VARCHAR(64),
+    p_file_path VARCHAR(256),
+    --p_insertdate TIMESTAMP,
+    p_idlogin_insert INT,
+    --p_lastmodified TIMESTAMP,
+    --p_idlogin_modify INT,
+    --p_deactivation_date TIMESTAMP,
+	INOUT p_id INT
+)
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    CALL set_files_repo(
+        p_idfiles_repo_typeof,
+        p_file_origin_name,
+        p_file_guid,
+        p_file_path,
+        --p_insertdate,
+        p_idlogin_insert,
+        --p_lastmodified,
+        --p_idlogin_modify,
+        --p_deactivation_date,
+        p_id
+    );
+
+    
+    INSERT INTO MEMO_FILES (ID_FILES_REPO, ID_MEMO/*, DEACTIVATION_DATE*/)
+    VALUES (p_id, p_id_memo/*, p_deactivation_date*/);
+
+END;
+$$;
 
 call set_op_user(0, 0, 'M. Admin', 1, TRUE,
 'admin@cdd.dj','4889ba9b',

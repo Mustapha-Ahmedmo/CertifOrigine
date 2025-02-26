@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// Header.jsx
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -22,14 +23,22 @@ import logo from '../assets/logo.jpg';
 // La photo de profil est supprimée
 
 import './Header.css';
+import { useSelector } from 'react-redux';
+import { getMemo } from '../services/apiServices';
 
 const Header = ({ toggleMenu, isMenuOpen }) => {
   const { t, i18n } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [languageSwitch, setLanguageSwitch] = useState(i18n.language === 'fr');
 
+  const [notificationsCount, setNotificationsCount] = useState(0);
+
+
+  const user = useSelector((state) => state.auth.user);
+  const idLogin = user?.id_login_user;
+  const custAccountId = user?.id_cust_account;
+
   const cartItemCount = 3;
-  const mailNotificationCount = 7;
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
@@ -40,6 +49,30 @@ const Header = ({ toggleMenu, isMenuOpen }) => {
     setLanguageSwitch(isFr);
     i18n.changeLanguage(isFr ? 'fr' : 'en');
   };
+
+  useEffect(() => {
+    const fetchMemos = async () => {
+
+      if (custAccountId) {
+
+        const params = {
+          p_isAck: 'false',               // unacknowledged memos
+          p_id_cust_account: custAccountId, // customer account ID
+          p_isopuser: 'false'             // for non-operator users
+        };
+        try {
+          const result = await getMemo(params);
+          if (result && result.data) {
+            setNotificationsCount(result.data.length);
+          }
+        } catch (error) {
+          console.error('Error fetching memos:', error);
+        }
+      }
+    };
+  
+    fetchMemos();
+  }, [custAccountId], []);
 
   return (
     <header className="header">
@@ -71,7 +104,7 @@ const Header = ({ toggleMenu, isMenuOpen }) => {
           sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
         >
           <Badge 
-            badgeContent={mailNotificationCount} 
+            badgeContent={notificationsCount} 
             color="error"
             anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
           >

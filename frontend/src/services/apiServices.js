@@ -1051,7 +1051,7 @@ export const removeSingleCertifTranspMode = async (p_id_ord_certif_ori, p_id_tra
   }
 };
 
-export const approveOrder = async (p_id_order, p_idlogin_modify) => {
+export const approveOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, customerEmail) => {
   try {
     const response = await fetch(`${API_URL}/orders/approve_order`, {
       method: 'POST',
@@ -1059,14 +1059,15 @@ export const approveOrder = async (p_id_order, p_idlogin_modify) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
-      body: JSON.stringify({ p_id_order, p_idlogin_modify }),
+      // Pass p_id_cust_account and customerEmail along with other parameters
+      body: JSON.stringify({ p_id_order, p_id_cust_account, p_idlogin_modify, customerEmail }),
     });
-
+    
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to approve order');
     }
-
+    
     return await response.json();
   } catch (error) {
     console.error('API call error (approveOrder):', error);
@@ -1074,7 +1075,7 @@ export const approveOrder = async (p_id_order, p_idlogin_modify) => {
   }
 };
 
-export const sendbackOrder = async (p_id_order, p_idlogin_modify) => {
+export const sendbackOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, returnReason, customerEmail) => {
   try {
     const response = await fetch(`${API_URL}/orders/sendback_order`, {
       method: 'POST',
@@ -1082,7 +1083,13 @@ export const sendbackOrder = async (p_id_order, p_idlogin_modify) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
-      body: JSON.stringify({ p_id_order, p_idlogin_modify }),
+      body: JSON.stringify({ 
+        p_id_order, 
+        p_id_cust_account, 
+        p_idlogin_modify, 
+        returnReason, 
+        customerEmail 
+      }),
     });
     
     if (!response.ok) {
@@ -1096,9 +1103,7 @@ export const sendbackOrder = async (p_id_order, p_idlogin_modify) => {
     throw error;
   }
 };
-
-
-export const rejectOrder = async (p_id_order, p_idlogin_modify) => {
+export const rejectOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail) => {
   try {
     const response = await fetch(`${API_URL}/orders/reject_order`, {
       method: 'POST',
@@ -1106,17 +1111,64 @@ export const rejectOrder = async (p_id_order, p_idlogin_modify) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
-      body: JSON.stringify({ p_id_order, p_idlogin_modify }),
+      body: JSON.stringify({ p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail }),
     });
-
+    
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to reject order');
     }
-
+    
     return await response.json();
   } catch (error) {
     console.error('API call error (rejectOrder):', error);
+    throw error;
+  }
+};
+
+export const setMemo = async (memoData) => {
+  try {
+    const response = await fetch(`${API_URL}/mailer/set_memo`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(memoData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to set memo');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (setMemo):', error);
+    throw error;
+  }
+};
+
+export const getMemo = async (params = {}) => {
+  try {
+    // Construct query string from params object
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(`${API_URL}/mailers/get_memo?${queryString}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to retrieve memos');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getMemo):', error);
     throw error;
   }
 };

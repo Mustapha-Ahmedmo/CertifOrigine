@@ -1,7 +1,7 @@
 // Menu.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../slices/authSlice';
 
 import Drawer from '@mui/material/Drawer';
@@ -73,6 +73,8 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+
+
 
   // Ouvrir automatiquement certains sous-menus selon l'URL courante
   useEffect(() => {

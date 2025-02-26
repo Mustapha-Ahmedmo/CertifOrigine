@@ -11,7 +11,8 @@ import {
   getOrderFilesInfo,
   approveOrder,
   sendbackOrder,
-  rejectOrder
+  rejectOrder,
+  getCustUsersByAccount
 } from '../services/apiServices';
 import './OpOrderDetails.css';
 
@@ -146,7 +147,8 @@ const OpOrderDetails = () => {
               remarks: order.notes_ori || 'Aucune remarque',
               transportModes: transportModesObj,
               documents: order.documents || [],
-              orderStatus: order.id_order_status
+              orderStatus: order.id_order_status,
+              custAccountId: order.id_cust_account
             }));
           } else {
             console.error('Commande introuvable pour l’ID :', orderId);
@@ -197,8 +199,17 @@ const OpOrderDetails = () => {
 
   const handleRejectConfirm = async () => {
     try {
-      // Call rejectOrder API service function
-      const result = await rejectOrder(orderId, idLogin);
+      const custUsersResponse = await getCustUsersByAccount(
+        formData.custAccountId,
+        null,
+        'true',
+        'true',
+        true
+      );
+      const customerEmail = custUsersResponse.data[0].email;
+  
+      // Appeler l'API rejectOrder en passant la raison de rejet et l'email
+      const result = await rejectOrder(orderId, formData.custAccountId, idLogin, rejectReason, customerEmail);
       console.log('Commande rejetée avec succès:', result);
       setShowRejectModal(false);
       navigate('/operator-dashboard');
@@ -221,8 +232,24 @@ const OpOrderDetails = () => {
   // Function to confirm return; calls sendbackOrder API function
   const handleReturnConfirm = async () => {
     try {
-      // Call the sendbackOrder API function (make sure it is defined in your service)
-      const result = await sendbackOrder(orderId, idLogin, returnReason);
+      const custUsersResponse = await getCustUsersByAccount(
+        formData.custAccountId,
+        null,
+        'true',
+        'true',
+        true
+      );
+      const customerEmail = custUsersResponse.data[0].email;
+  
+      // Appeler l'API sendbackOrder en passant la raison de retour et l'email
+      const result = await sendbackOrder(
+        orderId,
+        formData.custAccountId,  // now included as p_id_cust_account
+        idLogin,
+        returnReason,
+        customerEmail
+      );
+
       console.log('Commande renvoyée avec succès:', result);
       setShowReturnModal(false);
       navigate('/operator-dashboard');
@@ -237,12 +264,24 @@ const OpOrderDetails = () => {
   const handleValidate = async () => {
     try {
       console.log('Tentative d\'approbation de la commande :', orderId);
-      const result = await approveOrder(orderId, idLogin);
+
+      
+      const custUsersResponse = await getCustUsersByAccount(
+        formData.custAccountId,
+        null,            // statutflag (optional)
+        'true',          // isactiveCA: as string ('true' to filter active accounts)
+        'true',          // isactiveCU: as string ('true' to filter active users)
+        true           // ismain_user: as string ('true' to filter main users; or use 'false'/null)
+      );
+
+      const customerEmail = custUsersResponse.data[0].email;
+
+      // Appeler l'API pour approuver la commande en passant aussi l'email du client
+      const result = await approveOrder(orderId, formData.custAccountId, idLogin, customerEmail);
       console.log('Commande approuvée:', result);
       navigate('/operator-dashboard');
     } catch (error) {
       console.error('Erreur lors de l\'approbation de la commande:', error);
-      // Optionally display an error message to the user (e.g., with a toast)
     }
   };
 
