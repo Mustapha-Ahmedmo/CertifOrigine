@@ -131,9 +131,6 @@ const Home = () => {
       <Helmet>
         <title>Dashboard</title>
       </Helmet>
-      <div className="home-welcome-message">
-        Bienvenue <span className="home-highlight-text">{user?.companyname}</span>
-      </div>
       {/* Conteneur centré pour les onglets et le tableau */}
       <div className="home-tabs-container">
         <Box sx={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>

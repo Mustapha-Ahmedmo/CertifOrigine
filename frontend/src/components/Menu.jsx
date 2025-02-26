@@ -16,6 +16,7 @@ import { Box, Toolbar, Divider } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboardList, // Pour "Gestion des commandes"
+  faTachometerAlt,
   faCheckCircle,
   faDollarSign,
   faArrowCircleLeft,
@@ -63,38 +64,77 @@ const logoutStyle = {
 };
 
 const Menu = ({ isMenuOpen, toggleMenu }) => {
-  const [openSubmenus, setOpenSubmenus] = useState({});
+  // Initialiser explicitement les sous-menus
+  const [openSubmenus, setOpenSubmenus] = useState({
+    newOrder: false,
+    pastOrders: false,
+    clients: false,
+  });
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
 
   // Ouvrir automatiquement certains sous-menus selon l'URL courante
   useEffect(() => {
-    // Sous-pages de "Nouvelle Commande"
     if (
       location.pathname.startsWith("/dashboard/create-order") ||
       location.pathname.startsWith("/dashboard/legalization") ||
       location.pathname.startsWith("/dashboard/commercial-invoice")
     ) {
-      setOpenSubmenus((prev) => ({ ...prev, newOrder: true }));
+      setOpenSubmenus({
+        newOrder: true,
+        pastOrders: false,
+        clients: false,
+      });
     }
 
-    // Sous-pages de "Mes commandes passées"
     if (location.pathname === "/") {
-      setOpenSubmenus((prev) => ({ ...prev, pastOrders: true }));
+      setOpenSubmenus({
+        newOrder: false,
+        pastOrders: true,
+        clients: false,
+      });
     }
 
-    // Sous-page "Mes destinataires"
     if (location.pathname.startsWith("/dashboard/destinatairelist")) {
-      setOpenSubmenus((prev) => ({ ...prev, clients: true }));
+      setOpenSubmenus({
+        newOrder: false,
+        pastOrders: false,
+        clients: true,
+      });
     }
   }, [location]);
 
+  // Pour les menus qui ouvrent des sous-menus, on ferme les autres
   const handleToggleSubmenu = (menu) => {
-    setOpenSubmenus((prev) => ({ ...prev, [menu]: !prev[menu] }));
+    setOpenSubmenus((prev) => {
+      return {
+        newOrder: false,
+        pastOrders: false,
+        clients: false,
+        [menu]: !prev[menu],
+      };
+    });
   };
 
-  // Fermer le menu sur mobile après un clic
+  // Fonction pour fermer tous les sous-menus
+  const closeAllSubmenus = () => {
+    setOpenSubmenus({
+      newOrder: false,
+      pastOrders: false,
+      clients: false,
+    });
+  };
+
+  // Pour les parents qui n'ont pas de sous-menu, on ferme tous les sous-menus
+  const handleParentClick = () => {
+    closeAllSubmenus();
+    if (window.innerWidth <= 768) {
+      toggleMenu();
+    }
+  };
+
+  // Déjà présent : fermer le menu sur mobile après un clic
   const handleLinkClick = () => {
     if (window.innerWidth <= 768) {
       toggleMenu();
@@ -128,13 +168,37 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
       <Toolbar />
       <Box sx={{ overflow: "auto" }}>
         <List>
-          {/* Gestion des commandes (anciennement "Accueil") */}
+          {/* Lien vers DashboardClient (parent sans sous-menu) */}
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
+              to="/dashboard/dashboardclient"
+              onClick={() => {
+                handleParentClick();
+                handleLinkClick();
+              }}
+              selected={location.pathname === "/dashboard/dashboardclient"}
+              sx={selectedStyle}
+            >
+              <ListItemIcon sx={{ color: "black" }}>
+                <FontAwesomeIcon icon={faTachometerAlt} />
+              </ListItemIcon>
+              <ListItemText
+                primary="Tableau de bord"
+                primaryTypographyProps={{ fontSize: "14px" }}
+              />
+            </ListItemButton>
+          </ListItem>
+          <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
+          {/* Gestion des commandes (parent sans sous-menu) */}
           <ListItem disablePadding>
             <ListItemButton
               component={Link}
               to="/dashboard"
-              onClick={handleLinkClick}
-              // Surligné uniquement quand l'URL est exactement "/dashboard"
+              onClick={() => {
+                handleParentClick();
+                handleLinkClick();
+              }}
               selected={location.pathname === "/dashboard"}
               sx={selectedStyle}
             >
@@ -149,11 +213,10 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           </ListItem>
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-          {/* Nouvelle Commande */}
+          {/* Nouvelle Commande (parent avec sous-menu) */}
           <ListItem disablePadding>
             <ListItemButton
               onClick={() => handleToggleSubmenu("newOrder")}
-              // Pas de surbrillance pour le parent car il n'y a pas de page associée
               selected={false}
             >
               <ListItemIcon sx={{ color: "black" }}>
@@ -221,7 +284,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
             </List>
           </Collapse>
 
-          {/* Mes commandes passées */}
+          {/* Mes commandes passées (parent avec sous-menu) */}
           <ListItem disablePadding>
             <ListItemButton
               onClick={() => handleToggleSubmenu("pastOrders")}
@@ -293,7 +356,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           </Collapse>
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-          {/* Mes destinataires */}
+          {/* Mes destinataires (parent avec sous-menu) */}
           <ListItem disablePadding>
             <ListItemButton onClick={() => handleToggleSubmenu("clients")}>
               <ListItemIcon sx={{ color: "black" }}>
