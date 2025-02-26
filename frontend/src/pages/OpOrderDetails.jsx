@@ -19,7 +19,7 @@ const OpOrderDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
   const params = new URLSearchParams(location.search);
   const orderId = params.get('orderId');
   const certifId = params.get('certifId');
@@ -129,11 +129,11 @@ const API_URL = import.meta.env.VITE_API_URL;
                 ? countryMap[order.id_country_destination]
                 : 'Non spécifié',
               loadingPort: order.id_country_port_loading && countryMap[order.id_country_port_loading]
-              ? countryMap[order.id_country_port_loading]
-              : 'Non spécifié',
+                ? countryMap[order.id_country_port_loading]
+                : 'Non spécifié',
               dischargingPort: order.id_country_port_discharge && countryMap[order.id_country_port_discharge]
-              ? countryMap[order.id_country_port_discharge]
-              : 'Non spécifié',
+                ? countryMap[order.id_country_port_discharge]
+                : 'Non spécifié',
               transportRemarks: order.transport_remarks || '',
               receiverName: order.recipient_name || 'N/A',
               receiverAddress: order.address_1 || 'N/A',
@@ -146,6 +146,7 @@ const API_URL = import.meta.env.VITE_API_URL;
               remarks: order.notes_ori || 'Aucune remarque',
               transportModes: transportModesObj,
               documents: order.documents || [],
+              orderStatus: order.id_order_status
             }));
           } else {
             console.error('Commande introuvable pour l’ID :', orderId);
@@ -177,12 +178,12 @@ const API_URL = import.meta.env.VITE_API_URL;
   }, [orderId, certifId, idLogin]);
 
 
-const handleFileClick = (file) => {
-  // Construct the file URL
-  const fileUrl = `${API_URL}/files/commandes/${new Date().getFullYear()}/${file.file_guid}`;
-  // Open in a new browser tab
-  window.open(fileUrl, '_blank');
-};
+  const handleFileClick = (file) => {
+    // Construct the file URL
+    const fileUrl = `${API_URL}/files/commandes/${new Date().getFullYear()}/${file.file_guid}`;
+    // Open in a new browser tab
+    window.open(fileUrl, '_blank');
+  };
 
   // Handle order rejection modal actions
   const handleRejectClick = () => {
@@ -207,43 +208,43 @@ const handleFileClick = (file) => {
     }
   };
 
-const handleReturnClick = () => {
-  setShowReturnModal(true);
-};
+  const handleReturnClick = () => {
+    setShowReturnModal(true);
+  };
 
-// Function to cancel the return modal without sending the order back
-const handleReturnCancel = () => {
-  setReturnReason('');
-  setShowReturnModal(false);
-};
-
-// Function to confirm return; calls sendbackOrder API function
-const handleReturnConfirm = async () => {
-  try {
-    // Call the sendbackOrder API function (make sure it is defined in your service)
-    const result = await sendbackOrder(orderId, idLogin, returnReason);
-    console.log('Commande renvoyée avec succès:', result);
+  // Function to cancel the return modal without sending the order back
+  const handleReturnCancel = () => {
+    setReturnReason('');
     setShowReturnModal(false);
-    navigate('/operator-dashboard');
-  } catch (error) {
-    console.error('Erreur lors du retour de la commande:', error);
-    // Optionally display an error message here
-  }
-};
+  };
+
+  // Function to confirm return; calls sendbackOrder API function
+  const handleReturnConfirm = async () => {
+    try {
+      // Call the sendbackOrder API function (make sure it is defined in your service)
+      const result = await sendbackOrder(orderId, idLogin, returnReason);
+      console.log('Commande renvoyée avec succès:', result);
+      setShowReturnModal(false);
+      navigate('/operator-dashboard');
+    } catch (error) {
+      console.error('Erreur lors du retour de la commande:', error);
+      // Optionally display an error message here
+    }
+  };
 
 
 
-const handleValidate = async () => {
-  try {
-    console.log('Tentative d\'approbation de la commande :', orderId);
-    const result = await approveOrder(orderId, idLogin);
-    console.log('Commande approuvée:', result);
-    navigate('/operator-dashboard');
-  } catch (error) {
-    console.error('Erreur lors de l\'approbation de la commande:', error);
-    // Optionally display an error message to the user (e.g., with a toast)
-  }
-};
+  const handleValidate = async () => {
+    try {
+      console.log('Tentative d\'approbation de la commande :', orderId);
+      const result = await approveOrder(orderId, idLogin);
+      console.log('Commande approuvée:', result);
+      navigate('/operator-dashboard');
+    } catch (error) {
+      console.error('Erreur lors de l\'approbation de la commande:', error);
+      // Optionally display an error message to the user (e.g., with a toast)
+    }
+  };
 
 
 
@@ -471,34 +472,35 @@ const handleValidate = async () => {
             ) : (
               <p>Aucune pièce justificative ajoutée.</p>
             )}
-         
+
           </div>
         </div>
 
-        <div className="step5-submit-section">
-          <button
-            type="button"
-            className="step5-next-button"
-            onClick={handleValidate}
-          >
-            Valider
-          </button>
-          <button
-            type="button"
-            className="step5-reject-button"
-            onClick={handleRejectClick}
-          >
-            Rejeter
-          </button>
-          <button
-            type="button"
-            className="step5-return-button"
-            onClick={handleReturnClick}
-          >
-            Retourner
-          </button>
-        </div>
-
+        {!([3, 4, 5, 8, 9].includes(formData.orderStatus)) && (
+          <div className="step5-submit-section">
+            <button
+              type="button"
+              className="step5-next-button"
+              onClick={handleValidate}
+            >
+              Valider
+            </button>
+            <button
+              type="button"
+              className="step5-reject-button"
+              onClick={handleRejectClick}
+            >
+              Rejeter
+            </button>
+            <button
+              type="button"
+              className="step5-return-button"
+              onClick={handleReturnClick}
+            >
+              Retourner
+            </button>
+          </div>
+        )}
       </form>
 
       {showReturnModal && (
@@ -525,8 +527,8 @@ const handleValidate = async () => {
         </div>
       )}
 
-            {/* Reject Modal */}
-            {showRejectModal && (
+      {/* Reject Modal */}
+      {showRejectModal && (
         <div className="modal-overlay" onClick={handleRejectCancel}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3>Rejeter la commande</h3>

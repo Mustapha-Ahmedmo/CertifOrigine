@@ -274,36 +274,36 @@ const OrderTable = ({ orders, refreshOrders }) => {
                     )}
                   </TableCell>
                   <TableCell>
-  {(order.id_order_status === 1 || order.id_order_status === 6) ? (
-    // => Affiche "Supprimer" + "Soumettre"
-    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', alignItems: 'center' }}>
-      <Button
-        variant="contained"
-        color="error"
-        size="small"
-        onClick={() => handleCancelClick(order.id_order)}
-      >
-        Supprimer
-      </Button>
-      <Button variant="contained" color="success" size="small">
-        {order.id_order_status === 3 ? 'Payer' : 'Soumettre'}
-      </Button>
-    </Box>
-  ) : order.id_order_status === 2 ? (
-    // => Si statut = 2, on n'affiche rien du tout
-    null
-  ) : order.id_order_status === 3 ? (
-    // => Si statut = 3, affiche "Payer"
-    <Button variant="contained" color="primary" size="small">
-      Payer
-    </Button>
-  ) : (
-    // => Sinon, par défaut, affiche "Soumettre"
-    <Button variant="contained" color="primary" size="small">
-      Soumettre
-    </Button>
-  )}
-</TableCell>
+                    {(order.id_order_status === 1 || order.id_order_status === 6) ? (
+                      // => Affiche "Supprimer" + "Soumettre"
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', alignItems: 'center' }}>
+                        <Button
+                          variant="contained"
+                          color="error"
+                          size="small"
+                          onClick={() => handleCancelClick(order.id_order)}
+                        >
+                          Supprimer
+                        </Button>
+                        <Button variant="contained" color="success" size="small">
+                          {order.id_order_status === 3 ? 'Payer' : 'Soumettre'}
+                        </Button>
+                      </Box>
+                    ) : order.id_order_status === 2 ? (
+                      // => Si statut = 2, on n'affiche rien du tout
+                      null
+                    ) : order.id_order_status === 3 ? (
+                      // => Si statut = 3, affiche "Payer"
+                      <Button variant="contained" color="primary" size="small">
+                        Payer
+                      </Button>
+                    ) : (
+                      // => Sinon, par défaut, affiche "Soumettre"
+                      <Button variant="contained" color="primary" size="small">
+                        Soumettre
+                      </Button>
+                    )}
+                  </TableCell>
 
                 </TableRow>
               ))
