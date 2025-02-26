@@ -1,6 +1,6 @@
 // OrderDetailsPage.jsx
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import './OrderDetailsPage.css'; // Create this CSS file for page-specific styles
 import Step5 from '../../components/orders/Create/steps/Step5';
 import { fetchCountries, getCertifGoodsInfo, getCertifTranspMode, getOrdersForCustomer, getTransmodeInfo } from '../../services/apiServices';
@@ -11,6 +11,9 @@ const OrderDetailsPage = () => {
   const params = new URLSearchParams(location.search);
   const orderId = params.get('orderId');
   const certifId = params.get('certifId');
+
+
+  const navigate = useNavigate();
 
   const user = useSelector((state) => state.auth.user);
   const idLogin = user?.id_login_user;
@@ -172,6 +175,8 @@ const OrderDetailsPage = () => {
   // Handle the submit action from Step5 (e.g., generate PDF, submit data, etc.)
   const handleSubmit = () => {
     console.log('Submitting order details:', formData);
+
+      navigate('/dashboard'); 
     // Insert your submission logic here (e.g., generatePDF(formData))
   };
 
