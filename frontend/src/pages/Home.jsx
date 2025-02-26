@@ -93,7 +93,9 @@ const Home = () => {
       });
       const allOrders = response.data || [];
       setOrdersVisa(allOrders.filter((order) => order.id_order_status === 1));
-      setOrdersValidation(allOrders.filter((order) => order.id_order_status === 2));
+      setOrdersValidation(
+        allOrders.filter(order => order.id_order_status === 2 || order.id_order_status === 7)
+      );
       setOrdersPayment(allOrders.filter((order) => order.id_order_status === 3));
       setOrdersReturned(allOrders.filter((order) => order.id_order_status === 6));
     } catch (err) {

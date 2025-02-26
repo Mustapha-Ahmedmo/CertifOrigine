@@ -101,7 +101,7 @@ const HomeOperateur = () => {
   // Pour l'opérateur :
   // Nouvelles commandes : filtre sur id_order_status === 2
   // Commandes en attente de paiement : filtre sur id_order_status === 3
-  const ordersNew = orders.filter(order => order.id_order_status === 2);
+  const ordersNew = orders.filter(order => order.id_order_status === 2 || order.id_order_status === 7);
   const ordersPayment = orders.filter(order => order.id_order_status === 3);
 
   const options = [
