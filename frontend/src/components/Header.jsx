@@ -1,4 +1,3 @@
-// Header.jsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -16,11 +15,11 @@ import {
   faShoppingCart,
   faBars,      // Icône hamburger
   faTimes,     // Icône de fermeture
+  faUser,      // Icône de profil
 } from '@fortawesome/free-solid-svg-icons';
 
 import logo from '../assets/logo.jpg';
-// Pour modifier la photo de profil, changez le chemin ci-dessous :
-import photo from '../assets/photo.jpeg';
+// La photo de profil est supprimée
 
 import './Header.css';
 
@@ -100,19 +99,18 @@ const Header = ({ toggleMenu, isMenuOpen }) => {
           </Typography>
         </Box>
 
-        {/* Profil avec Avatar */}
+        {/* Profil avec Avatar remplacé par une icône */}
         <Box
           className="header-icon-container"
           sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}
         >
-          {/* Pour modifier la photo de profil, changez le chemin dans l'import "photo" ou ici */}
           <Avatar
-            alt="Profil"
-            src={photo}
             className="header-avatar"
             onClick={toggleDropdown}
-            sx={{ width: 32, height: 32 }}
-          />
+            sx={{ width: 32, height: 32, backgroundColor: '#DDAF26' }}
+          >
+            <FontAwesomeIcon icon={faUser} style={{ color: 'white', fontSize: '1rem' }} />
+          </Avatar>
           {dropdownOpen && (
             <Box
               className="dropdown"
@@ -132,23 +130,6 @@ const Header = ({ toggleMenu, isMenuOpen }) => {
               <Link to="/login">{t('header.logout')}</Link>
             </Box>
           )}
-          {/* Le label "Profil" a été retiré */}
-        </Box>
-
-        {/* Sélecteur de langue avec Switch */}
-        <Box
-          className="language-container"
-          sx={{ zIndex: 9999, ml: 2, display: 'flex', alignItems: 'center' }}
-        >
-          <Switch
-            checked={languageSwitch}
-            onChange={handleLanguageChange}
-            inputProps={{ 'aria-label': 'language switch' }}
-            size="small"
-          />
-          <Typography variant="caption" className="icon-label">
-            {languageSwitch ? 'FR' : 'EN'}
-          </Typography>
         </Box>
       </div>
     </header>

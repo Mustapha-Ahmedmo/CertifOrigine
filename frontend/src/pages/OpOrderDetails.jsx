@@ -441,7 +441,6 @@ const OpOrderDetails = () => {
                 <table className="step5-document-table">
                   <thead>
                     <tr>
-                      <th>Nom</th>
                       <th>Type</th>
                       <th>Fichier</th>
                     </tr>
@@ -450,7 +449,6 @@ const OpOrderDetails = () => {
                     {documentsInfo.map((doc, index) => (
                       <tr key={index}>
                         <td>{doc.txt_description_fr}</td>
-                        <td>{doc.type === 'justificative' ? 'Justificative' : 'Annexe'}</td>
                         {/* 3) Clickable link */}
                         <td>
                           {doc.file_guid ? (

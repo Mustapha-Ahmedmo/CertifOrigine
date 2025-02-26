@@ -1147,7 +1147,6 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
         <table className="step5-document-table">
           <thead>
             <tr>
-              <th>Nom</th>
               <th>Type</th>
               <th>Fichier</th>
               {isModifiable && <th>Actions</th>}
@@ -1157,15 +1156,14 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
             {documentsInfo.map((doc, index) => (
               <tr key={index}>
                 <td>{doc.txt_description_fr}</td>
-                <td>{doc.type === 'justificative' ? 'Justificative' : 'Annexe'}</td>
                 <td>
                   {doc.file_guid ? (
                     <span
-                      onClick={isModifiable ? () => handleFileClick(doc) : undefined}
+                      onClick={() => handleFileClick(doc)}
                       style={{
-                        cursor: isModifiable ? 'pointer' : 'default',
-                        color: isModifiable ? 'blue' : 'inherit',
-                        textDecoration: isModifiable ? 'underline' : 'none'
+                        cursor: 'pointer',
+                        color: 'blue',
+                        textDecoration: 'underline'
                       }}
                     >
                       {doc.file_origin_name || 'Télécharger le fichier'}

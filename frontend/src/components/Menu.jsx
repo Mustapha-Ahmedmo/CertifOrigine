@@ -294,7 +294,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                 <FontAwesomeIcon icon={faHistory} />
               </ListItemIcon>
               <ListItemText
-                primary="Mes commandes passées"
+                primary="Recherche de documents"
                 primaryTypographyProps={{ fontSize: "14px" }}
               />
             </ListItemButton>
