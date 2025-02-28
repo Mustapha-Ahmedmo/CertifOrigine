@@ -24,6 +24,8 @@ import './HomeOperateur.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { formatDate } from '../utils/dateUtils';
+import PaymentModal from './PaymentModal'; // Chemin à adapter si nécessaire
+
 
 
 // Composant TabPanel pour l'affichage du contenu de chaque onglet
@@ -180,6 +182,37 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // === 1) État pour la modale de paiement ===
+  const [openPaymentModal, setOpenPaymentModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  // === 2) Fonctions pour gérer l'ouverture/fermeture de la modale ===
+  const handleOpenPayment = (order) => {
+    setSelectedOrder(order);
+    setOpenPaymentModal(true);
+  };
+
+  const handleClosePaymentModal = () => {
+    setOpenPaymentModal(false);
+    setSelectedOrder(null);
+  };
+
+  // === 3) Fonction appelée quand on valide le paiement dans la modale ===
+  const handlePaymentSubmit = async (paymentData) => {
+    // Ici, vous pouvez faire un appel API pour valider le paiement
+    console.log('Payment submitted:', paymentData);
+
+    // Exemple : await validatePaymentAPI(paymentData);
+
+    // Fermez la modale
+    setOpenPaymentModal(false);
+    setSelectedOrder(null);
+
+    // Rafraîchissez la liste des commandes après le paiement
+    refreshOrders();
+  };
+
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -209,7 +242,6 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                 <TableCell>Certificat d'Origine</TableCell>
                 <TableCell>Facture Commerciale</TableCell>
                 <TableCell>Légalisations</TableCell>
-                <TableCell>Action</TableCell>
               </TableRow>
             </TableHead>
           ) : (
@@ -285,9 +317,14 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                       )}
                     </TableCell>
                     <TableCell>
-                      {/* Ici, vous pouvez afficher le bouton "Payer" ou une autre action si nécessaire */}
-                      <button className="submit-button minimal-button">Payer</button>
+                      <button
+                        className="submit-button minimal-button"
+                        onClick={() => handleOpenPayment(order)}
+                      >
+                        Payer
+                      </button>
                     </TableCell>
+
                   </TableRow>
                 ) : (
                   // Rendu par défaut pour les autres modes (exemple existant)
@@ -334,9 +371,6 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                         <span>-</span>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <button className="submit-button minimal-button">Payer</button>
-                    </TableCell>
                   </TableRow>
                 )
               )
@@ -357,6 +391,14 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
         onRowsPerPageChange={handleChangeRowsPerPage}
         rowsPerPageOptions={[10, 25, 50, 100]}
       />
+
+      <PaymentModal
+        open={openPaymentModal}
+        onClose={handleClosePaymentModal}
+        onSubmit={handlePaymentSubmit}
+        order={selectedOrder}
+      />
+
     </Paper>
   );
 };
