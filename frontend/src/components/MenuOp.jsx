@@ -116,7 +116,24 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
       <Toolbar />
       <Box sx={{ overflow: "auto" }}>
         <List>
-          {/* Accueil */}
+          {/* Dashboard */}
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
+              to="/dashboard/operator/dashboardoperateur"
+              onClick={() => handleLinkClick('dashboardoperateur', 'dashboardoperateur')}
+              selected={activeLink === 'dashboardoperateur'}
+              sx={selectedStyle}
+            >
+              <ListItemIcon sx={{ color: "black" }}>
+                <FontAwesomeIcon icon={faUserTie} />
+              </ListItemIcon>
+              <ListItemText primary="Dashboard Opérateur" primaryTypographyProps={{ fontSize: "14px" }} />
+            </ListItemButton>
+          </ListItem>
+          <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
+
+          {/* Gestion des commandes */}
           <ListItem disablePadding>
             <ListItemButton
               component={Link}
@@ -126,9 +143,9 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
               sx={selectedStyle}
             >
               <ListItemIcon sx={{ color: "black" }}>
-                <FontAwesomeIcon icon={faHome} />
+                <FontAwesomeIcon icon={faShoppingCart} />
               </ListItemIcon>
-              <ListItemText primary="Accueil" primaryTypographyProps={{ fontSize: "14px" }} />
+              <ListItemText primary="Gestion des commandes" primaryTypographyProps={{ fontSize: "14px" }} />
             </ListItemButton>
           </ListItem>
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />

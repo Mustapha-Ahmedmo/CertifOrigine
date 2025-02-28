@@ -135,14 +135,6 @@ const HomeOperateur = () => {
       <Helmet>
         <title>Dashboard Opérateur</title>
       </Helmet>
-      {/* Section Bienvenue */}
-      <div className="welcome-message" style={{ textAlign: 'left', margin: '16px' }}>
-        Bienvenue <span className="home-highlight-text" style={{ textTransform: 'none', marginLeft: '8px' }}>
-          {user?.full_name || 'Utilisateur'}
-        </span>
-      </div>
-
-
       {/* Onglets et tableau */}
       <div className="operator-tabs-container" style={{ width: '100%' }}>
         <Box sx={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>

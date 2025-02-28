@@ -42,6 +42,7 @@ import OperateurLayout from './OperateurLayout';
 import ContactsList from '../pages/ContactsList';
 import RegisterContact from '../pages/RegisterContact';
 import ListTypePage from '../pages/DonneeDeBase/unitTypePage';
+import DashboardOperateur from '../pages/DashboardOperateur';
 
 // Gestion de l'inactivité
 import InactivityHandler from './InactivityHandler';
@@ -116,6 +117,7 @@ const App = () => {
             <Route path="operatorslist" element={<OperatorsList />} />
             <Route path="oporderdetails" element={<OpOrderDetails />} />
             <Route path="list-type" element={<ListTypePage />} />
+            <Route path="dashboardoperateur" element={<DashboardOperateur />} />
           </Route>
         </Route>
 
