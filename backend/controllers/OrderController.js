@@ -1299,7 +1299,6 @@ const delFilesRepo = async (req, res) => {
     });
   }
 };
-
 const approveOrder = async (req, res) => {
   try {
     // Extract required parameters from req.body
@@ -1320,21 +1319,8 @@ const approveOrder = async (req, res) => {
       }
     );
 
-    const memoReplacements = {
-      p_id_order,
-      p_id_cust_account,
-      p_typeof: 1, 
-      p_idlogin_insert: p_idlogin_modify,
-      p_memo_date: new Date(),
-      p_memo_subject: `Ordre numéro ${p_id_order} est approuvé`,
-      p_memo_body: 'Votre certificat a été validé, nous vous invitons à venir régler le certificat.',
-      p_mail_to: customerEmail,
-      p_mail_bcc: null,
-      p_mail_acc: null,
-      p_mail_notifications: null,
-      p_id: 0 // initial value for the INOUT parameter
-    };
-
+    // 2. Create a memo for the approval by calling the set_memo stored procedure directly.
+    // The set_memo procedure uses an INOUT parameter (p_id). We pass an initial value (0) and do not capture any returned ID.
     await sequelize.query(
       `CALL set_memo(
          :p_id_order,
@@ -1348,15 +1334,28 @@ const approveOrder = async (req, res) => {
          :p_mail_bcc,
          :p_mail_acc,
          :p_mail_notifications,
-         :p_id
+         0
       )`,
       {
-        replacements: memoReplacements,
+        replacements: {
+          p_id_order,
+          p_id_cust_account,
+          p_typeof: 1, // Assuming 1 for customer memos (approval)
+          p_idlogin_insert: p_idlogin_modify,
+          p_memo_date: new Date(),
+          p_memo_subject: `Ordre numéro ${p_id_order} est approuvé`,
+          p_memo_body:
+            'Votre certificat a été validé, nous vous invitons à venir régler le certificat.',
+          p_mail_to: customerEmail,
+          p_mail_bcc: null,
+          p_mail_acc: null,
+          p_mail_notifications: null,
+        },
         type: QueryTypes.RAW,
       }
     );
 
-    // 3. Send an email notification
+    // 3. Send an email notification for the approval.
     await sendEmailNotification(p_id_order, 'approuvé', '', customerEmail);
 
     res.status(200).json({ message: 'Commande approuvée avec succès.' });
@@ -1380,7 +1379,7 @@ const sendbackOrder = async (req, res) => {
       });
     }
 
-    // Call the stored procedure "sendback_order"
+    // 1. Call the stored procedure "sendback_order"
     await sequelize.query(
       `CALL sendback_order(:p_id_order, :p_idlogin_modify)`,
       {
@@ -1389,45 +1388,44 @@ const sendbackOrder = async (req, res) => {
       }
     );
 
+    // 2. Create a memo for the sendback using the stored function (fn_set_memo)
     const memoReplacements = {
       p_id_order,
-      p_id_cust_account: p_id_cust_account || null, // adjust as needed
+      p_id_cust_account,
       p_typeof: 1,
       p_idlogin_insert: p_idlogin_modify,
-      p_memo_date: new Date(), 
+      p_memo_date: new Date(),
       p_memo_subject: `Ordre numéro ${p_id_order} est renvoyé`,
       p_memo_body: returnReason,
       p_mail_to: customerEmail,
       p_mail_bcc: null,
       p_mail_acc: null,
       p_mail_notifications: null,
-      p_id: 0  // initial value for the INOUT parameter
     };
 
+    // Call the stored function without checking for the returned memo ID.
     await sequelize.query(
-      `CALL set_memo(
-         :p_id_order,
-         :p_id_cust_account,
-         :p_typeof,
-         :p_idlogin_insert,
-         :p_memo_date,
-         :p_memo_subject,
-         :p_memo_body,
-         :p_mail_to,
-         :p_mail_bcc,
-         :p_mail_acc,
-         :p_mail_notifications,
-         :p_id
-      )`,
+      `SELECT fn_set_memo(
+             :p_id_order,
+             :p_id_cust_account,
+             :p_typeof,
+             :p_idlogin_insert,
+             :p_memo_date::timestamp,
+             :p_memo_subject,
+             :p_memo_body,
+             :p_mail_to,
+             :p_mail_bcc,
+             :p_mail_acc,
+             :p_mail_notifications
+          )`,
       {
         replacements: memoReplacements,
-        type: QueryTypes.RAW,
+        type: QueryTypes.SELECT,
       }
     );
 
-    // Envoyer l'email avec la raison saisie
+    // 3. Send an email notification for the sendback
     await sendEmailNotification(p_id_order, 'renvoyé', returnReason, customerEmail);
-    
 
     res.status(200).json({ message: 'Commande retournée avec succès.' });
   } catch (error) {
@@ -1460,21 +1458,8 @@ const rejectOrder = async (req, res) => {
       }
     );
 
-    const memoReplacements = {
-      p_id_order,
-      p_id_cust_account,
-      p_typeof: 1, 
-      p_idlogin_insert: p_idlogin_modify,
-      p_memo_date: new Date(),
-      p_memo_subject: `Ordre numéro ${p_id_order} est rejeté`,
-      p_memo_body: rejectReason,
-      p_mail_to: customerEmail,
-      p_mail_bcc: null,
-      p_mail_acc: null,
-      p_mail_notifications: null,
-      p_id: 0 // initial value for INOUT parameter
-    };
-
+    // 2. Create a memo for the rejection using the stored procedure "set_memo"
+    // Note: Since set_memo uses an INOUT parameter (p_id), we pass a value (here 0) and do not capture any return.
     await sequelize.query(
       `CALL set_memo(
          :p_id_order,
@@ -1488,15 +1473,27 @@ const rejectOrder = async (req, res) => {
          :p_mail_bcc,
          :p_mail_acc,
          :p_mail_notifications,
-         :p_id
+         0
       )`,
       {
-        replacements: memoReplacements,
+        replacements: {
+          p_id_order,
+          p_id_cust_account,
+          p_typeof: 1, // for rejection memo, using type 1
+          p_idlogin_insert: p_idlogin_modify,
+          p_memo_date: new Date(),
+          p_memo_subject: `Ordre numéro ${p_id_order} est rejeté`,
+          p_memo_body: rejectReason,
+          p_mail_to: customerEmail,
+          p_mail_bcc: null,
+          p_mail_acc: null,
+          p_mail_notifications: null,
+        },
         type: QueryTypes.RAW,
       }
     );
 
-    // 3. Send email notification with rejection reason
+    // 3. Send email notification with the rejection reason
     await sendEmailNotification(p_id_order, 'rejeté', rejectReason, customerEmail);
 
     res.status(200).json({ message: 'Commande rejetée avec succès.' });

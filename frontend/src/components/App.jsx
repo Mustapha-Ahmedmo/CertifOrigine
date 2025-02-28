@@ -47,6 +47,8 @@ import ListTypePage from '../pages/DonneeDeBase/unitTypePage';
 import InactivityHandler from './InactivityHandler';
 import Step2 from './orders/Create/steps/Step2';
 import OrderDetailsPage from '../pages/OrderDetails/OrderPageDetails';
+import ListTypePage from '../pages/DonneeDeBase/unitTypePage';
+import NotificationPage from '../pages/Notifications/NotificationPage';
 
 const App = () => {
   const dispatch = useDispatch();
@@ -104,6 +106,7 @@ const App = () => {
           />
           <Route path="create-order" element={<CreateOrder />} />
           <Route path="order-details" element={<OrderDetailsPage />} />
+          <Route path="notifications" element={<NotificationPage />} />
 
           {/* Routes réservées aux opérateurs */}
           <Route path="operator" element={<OperateurLayout />}>

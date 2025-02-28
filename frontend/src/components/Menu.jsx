@@ -18,6 +18,7 @@ import {
   faClipboardList, // Pour "Gestion des commandes"
   faTachometerAlt,
   faCheckCircle,
+  faBell,
   faDollarSign,
   faArrowCircleLeft,
   faShoppingCart,
@@ -186,6 +187,26 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               <ListItemText primary="Tableau de bord" primaryTypographyProps={{ fontSize: "14px" }} />
             </ListItemButton>
           </ListItem>
+
+          {/* NEW: Mes Notifications menu item */}
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
+              to="/dashboard/notifications?all=true"
+              onClick={() => {
+                handleParentClick();
+                handleLinkClick();
+              }}
+              selected={location.pathname.startsWith("/dashboard/notifications")}
+              sx={selectedStyle}
+            >
+              <ListItemIcon sx={{ color: "black" }}>
+                <FontAwesomeIcon icon={faBell} />
+              </ListItemIcon>
+              <ListItemText primary="Mes Notifications" primaryTypographyProps={{ fontSize: "14px" }} />
+            </ListItemButton>
+          </ListItem>
+
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
           {/* Lien vers Gestion des commandes -> pointe maintenant vers "/dashboard/home" */}
@@ -277,6 +298,10 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                 <FontAwesomeIcon icon={faHistory} />
               </ListItemIcon>
               <ListItemText primary="Recherche de documents" primaryTypographyProps={{ fontSize: "14px" }} />
+              <ListItemText
+                primary="Mes commandes passées"
+                primaryTypographyProps={{ fontSize: "14px" }}
+              />
             </ListItemButton>
           </ListItem>
           <Collapse in={openSubmenus.pastOrders} timeout="auto" unmountOnExit>

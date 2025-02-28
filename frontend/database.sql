@@ -4124,11 +4124,11 @@ BEGIN
 		JOIN 
 			cust_account ca ON me."id_cust_account" = ca."id_cust_account"
 		JOIN
-			CUST_USER cu ON ca."ID_CUST_ACCOUNT" = cu."ID_CUST_ACCOUNT"
+			CUST_USER cu ON ca.ID_CUST_ACCOUNT = cu.ID_CUST_ACCOUNT
 
         WHERE id_memo = p_id_memo
 		and me.id_cust_account =p_id_cust_account
-        AND cu."ID_LOGIN_USER"  = p_idlogin
+        AND cu.ID_LOGIN_USER  = p_idlogin
 		and me.typeof =1
 		AND me.IDLOGIN_ACK is null and me.ACK_DATE is null
 
@@ -4240,7 +4240,6 @@ RETURNS TABLE(
     id_order INT,
     id_cust_account INT,
 	cust_name VARCHAR(96),
-	recipient_name VARCHAR(96),
 	order_title VARCHAR(32),
     typeof INT,
     idlogin_insert INT,
@@ -4270,7 +4269,6 @@ BEGIN
         me."id_order",
         me."id_cust_account",
 		ca."cust_name",
-		r."recipient_name",
 		o."order_title",
         me."typeof",
         me."idlogin_insert",
@@ -4289,8 +4287,6 @@ BEGIN
         cust_account ca ON me."id_cust_account" = ca."id_cust_account"
     JOIN 
         "ORDER" o ON me."id_order" = o."id_order" 
-    JOIN 
-        "RECIPIENT_ACCOUNT" r ON r."id_cust_account" = ca."id_cust_account" 
     JOIN
         login_user lu ON me."idlogin_insert" = lu."id_login_user"
     WHERE 
@@ -4316,6 +4312,7 @@ BEGIN
     );
 END;
 $$ LANGUAGE plpgsql;
+
 
 
 DROP PROCEDURE IF EXISTS set_memo;
@@ -4403,6 +4400,112 @@ BEGIN
     INSERT INTO MEMO_FILES (ID_FILES_REPO, ID_MEMO/*, DEACTIVATION_DATE*/)
     VALUES (p_id, p_id_memo/*, p_deactivation_date*/);
 
+END;
+$$;
+
+
+DROP FUNCTION IF EXISTS wrapper_set_memo;
+CREATE OR REPLACE FUNCTION wrapper_set_memo(
+    p_id_order INT,
+    p_id_cust_account INT,
+    p_typeof INT,
+    p_idlogin_insert INT,
+    p_memo_date TIMESTAMP, 
+    p_memo_subject  VARCHAR(256),
+    p_memo_body  TEXT,
+    p_mail_to  VARCHAR(32),
+    p_mail_bcc VARCHAR(32),
+    p_mail_acc  VARCHAR(32),
+    p_mail_notifications  VARCHAR(32)
+)
+RETURNS INT
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    new_memo_id INT;
+BEGIN
+    INSERT INTO memo(
+            id_order,
+            id_cust_account,
+            typeof,
+            idlogin_insert,
+            memo_date,
+            memo_subject,
+            memo_body,
+            mail_to,
+            mail_bcc,
+            mail_acc,
+            mail_notifications
+        ) VALUES (
+            p_id_order,
+            p_id_cust_account,
+            p_typeof,
+            p_idlogin_insert,
+            p_memo_date,
+            p_memo_subject,
+            p_memo_body,
+            p_mail_to,
+            p_mail_bcc,
+            p_mail_acc,
+            p_mail_notifications
+        )
+    RETURNING id_memo INTO new_memo_id;
+
+    RETURN new_memo_id;
+END;
+$$;
+
+DROP FUNCTION IF EXISTS fn_set_memo;
+CREATE OR REPLACE FUNCTION fn_set_memo(
+    p_id_order INT,
+    p_id_cust_account INT,
+    p_typeof INT,
+    p_idlogin_insert INT,
+    p_memo_date TIMESTAMP, 
+    p_memo_subject  VARCHAR(256),
+    p_memo_body  TEXT,
+    p_mail_to  VARCHAR(32),
+    p_mail_bcc VARCHAR(32),
+    p_mail_acc  VARCHAR(32),
+    p_mail_notifications  VARCHAR(32)
+)
+RETURNS INT
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    new_memo_id INT;
+BEGIN
+    INSERT INTO memo(
+            id_order,
+            id_cust_account,
+            typeof,
+            idlogin_insert,
+            memo_date,
+            memo_subject,
+            memo_body,
+            mail_to,
+            mail_bcc,
+            mail_acc,
+            mail_notifications
+        )
+    VALUES (
+            p_id_order,
+            p_id_cust_account,
+            p_typeof,
+            p_idlogin_insert,
+            p_memo_date,
+            p_memo_subject,
+            p_memo_body,
+            p_mail_to,
+            p_mail_bcc,
+            p_mail_acc,
+            p_mail_notifications
+        )
+    RETURNING id_memo INTO new_memo_id;
+
+    RETURN new_memo_id;
 END;
 $$;
 

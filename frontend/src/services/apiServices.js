@@ -1172,3 +1172,26 @@ export const getMemo = async (params = {}) => {
     throw error;
   }
 };
+
+export const ackMemoCust = async (p_id_memo, p_id_cust_account, p_idlogin) => {
+  try {
+    const response = await fetch(`${API_URL}/mailers/ack_memo_cust`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ p_id_memo, p_id_cust_account, p_idlogin }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to acknowledge memo');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (ackMemoCust):', error);
+    throw error;
+  }
+};

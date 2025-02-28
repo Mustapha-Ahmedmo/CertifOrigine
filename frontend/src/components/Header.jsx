@@ -69,8 +69,9 @@ const Header = ({ toggleMenu, isMenuOpen }) => {
           console.error('Error fetching memos:', error);
         }
       }
-    };
-  
+    }; window.addEventListener('memoAck', fetchMemos);
+
+
     fetchMemos();
   }, [custAccountId], []);
 
@@ -87,9 +88,9 @@ const Header = ({ toggleMenu, isMenuOpen }) => {
           if (e.key === 'Enter') toggleMenu();
         }}
       >
-        <FontAwesomeIcon 
-          icon={isMenuOpen ? faTimes : faBars} 
-          style={{ fontSize: '1rem' }} 
+        <FontAwesomeIcon
+          icon={isMenuOpen ? faTimes : faBars}
+          style={{ fontSize: '1rem' }}
         />
       </div>
 
@@ -103,13 +104,15 @@ const Header = ({ toggleMenu, isMenuOpen }) => {
           className="header-icon-container"
           sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
         >
-          <Badge 
-            badgeContent={notificationsCount} 
-            color="error"
-            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-          >
-            <FontAwesomeIcon icon={faBell} style={{ fontSize: '1rem' }} />
-          </Badge>
+          <Link to="/dashboard/notifications">
+            <Badge
+              badgeContent={notificationsCount}
+              color="error"
+              anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+              <FontAwesomeIcon icon={faBell} style={{ fontSize: '1rem' }} />
+            </Badge>
+          </Link>
           <Typography variant="caption" className="icon-label">
             Notifications
           </Typography>
@@ -120,8 +123,8 @@ const Header = ({ toggleMenu, isMenuOpen }) => {
           className="header-icon-container"
           sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
         >
-          <Badge 
-            badgeContent={cartItemCount} 
+          <Badge
+            badgeContent={cartItemCount}
             color="error"
             anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
           >

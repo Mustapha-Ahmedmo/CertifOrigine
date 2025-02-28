@@ -2,103 +2,94 @@ const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/db'); // Your Sequelize instance
 
 const setMemo = async (req, res) => {
-  try {
-    const {
-      p_id_order,
-      p_id_cust_account,
-      p_typeof,
-      p_idlogin_insert,
-      p_memo_date,
-      p_memo_subject,
-      p_memo_body,
-      p_mail_to,
-      p_mail_bcc,
-      p_mail_acc,
-      p_mail_notifications,
-    } = req.body;
-
-    // Validate required fields (adjust validation as needed)
-    if (
-      !p_id_order ||
-      !p_id_cust_account ||
-      !p_typeof ||
-      !p_idlogin_insert ||
-      !p_memo_date ||
-      !p_memo_subject ||
-      !p_memo_body
-    ) {
-      return res.status(400).json({
-        message:
-          'Les champs p_id_order, p_id_cust_account, p_typeof, p_idlogin_insert, p_memo_date, p_memo_subject et p_memo_body sont requis.',
-      });
-    }
-
-    // Initialize the INOUT parameter p_id to 0
-    const initialMemoId = 0;
-
-    // Call the stored procedure using CALL syntax.
-    const result = await sequelize.query(
-      `CALL set_memo(
-        :p_id_order,
-        :p_id_cust_account,
-        :p_typeof,
-        :p_idlogin_insert,
-        :p_memo_date,
-        :p_memo_subject,
-        :p_memo_body,
-        :p_mail_to,
-        :p_mail_bcc,
-        :p_mail_acc,
-        :p_mail_notifications,
-        :p_id
-      )`,
-      {
-        replacements: {
-          p_id_order,
-          p_id_cust_account,
-          p_typeof,
-          p_idlogin_insert,
-          p_memo_date,
-          p_memo_subject,
-          p_memo_body,
-          p_mail_to: p_mail_to || null,
-          p_mail_bcc: p_mail_bcc || null,
-          p_mail_acc: p_mail_acc || null,
-          p_mail_notifications: p_mail_notifications || null,
-          p_id: initialMemoId,
-        },
-        // Using RAW type because CALL may return an empty array.
-        type: QueryTypes.RAW,
+    try {
+      const {
+        p_id_order,
+        p_id_cust_account,
+        p_typeof,
+        p_idlogin_insert,
+        p_memo_date,
+        p_memo_subject,
+        p_memo_body,
+        p_mail_to,
+        p_mail_bcc,
+        p_mail_acc,
+        p_mail_notifications,
+      } = req.body;
+  
+      // Validate required fields (adjust validation as needed)
+      if (
+        !p_id_order ||
+        !p_id_cust_account ||
+        !p_typeof ||
+        !p_idlogin_insert ||
+        !p_memo_date ||
+        !p_memo_subject ||
+        !p_memo_body
+      ) {
+        return res.status(400).json({
+          message:
+            'Les champs p_id_order, p_id_cust_account, p_typeof, p_idlogin_insert, p_memo_date, p_memo_subject et p_memo_body sont requis.',
+        });
       }
-    );
-
-    // Depending on your driver, the procedure output may be found in result[0] or via another property.
-    // Here, we assume the returned value is available as result[0].p_id.
-    const newMemoId = result && result[0] && result[0].p_id ? result[0].p_id : null;
-
-    if (!newMemoId) {
-      return res.status(500).json({
-        message: 'Erreur lors de la création du memo. Aucune ID de memo retournée.',
+  
+      const result = await sequelize.query(
+        `SELECT fn_set_memo(
+                 :p_id_order,
+                 :p_id_cust_account,
+                 :p_typeof,
+                 :p_idlogin_insert,
+                 :p_memo_date::timestamp,
+                 :p_memo_subject,
+                 :p_memo_body,
+                 :p_mail_to,
+                 :p_mail_bcc,
+                 :p_mail_acc,
+                 :p_mail_notifications
+               ) AS newMemoId`,
+        {
+          replacements: {
+            p_id_order,
+            p_id_cust_account,
+            p_typeof,
+            p_idlogin_insert,
+            p_memo_date, // Make sure this is a valid ISO date string (e.g., '2025-03-01T10:00:00Z')
+            p_memo_subject,
+            p_memo_body,
+            p_mail_to: p_mail_to || null,
+            p_mail_bcc: p_mail_bcc || null,
+            p_mail_acc: p_mail_acc || null,
+            p_mail_notifications: p_mail_notifications || null,
+          },
+          type: QueryTypes.SELECT,
+        }
+      );
+  
+      // Extract the new memo ID from the result
+      const newMemoId = result[0]?.newMemoId;
+      if (!newMemoId) {
+        return res.status(500).json({
+          message: 'Erreur lors de la création du memo. Aucune ID de memo retournée.',
+        });
+      }
+  
+      res.status(201).json({
+        message: 'Memo créé avec succès.',
+        newMemoId,
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'exécution de wrapper_set_memo:", error);
+      res.status(500).json({
+        message: 'Erreur lors de la création du memo.',
+        error: error.message || 'Erreur inconnue.',
+        details: error.original || error,
       });
     }
-
-    res.status(201).json({
-      message: 'Memo créé avec succès.',
-      newMemoId,
-    });
-  } catch (error) {
-    console.error("Erreur lors de l'exécution de set_memo:", error);
-    res.status(500).json({
-      message: 'Erreur lors de la création du memo.',
-      error: error.message || 'Erreur inconnue.',
-      details: error.original || error,
-    });
-  }
-};
-
+  };
+  
 const getMemo = async (req, res) => {
     try {
-        
+
       const { 
         p_id_memo_list,
         p_id_order_list,
@@ -155,7 +146,37 @@ const getMemo = async (req, res) => {
     }
   };
 
+  const ackMemoCust = async (req, res) => {
+    try {
+      const { p_id_memo, p_id_cust_account, p_idlogin } = req.body;
+  
+      if (!p_id_memo || !p_id_cust_account || !p_idlogin) {
+        return res.status(400).json({
+          message: 'Les champs p_id_memo, p_id_cust_account et p_idlogin sont requis.'
+        });
+      }
+
+      await sequelize.query(
+        `CALL ack_memo_cust(:p_id_memo, :p_id_cust_account, :p_idlogin)`,
+        {
+          replacements: { p_id_memo, p_id_cust_account, p_idlogin },
+          type: QueryTypes.RAW,
+        }
+      );
+  
+      res.status(200).json({ message: 'Memo acquitté avec succès.' });
+    } catch (error) {
+      console.error('Erreur lors de l\'acquittement du memo:', error);
+      res.status(500).json({
+        message: 'Erreur lors de l\'acquittement du memo.',
+        error: error.message || 'Erreur inconnue.',
+        details: error.original || error,
+      });
+    }
+  };
+
 module.exports = {
   setMemo,
-  getMemo
+  getMemo,
+  ackMemoCust
 };
