@@ -1556,6 +1556,109 @@ const getOrderStaticsByServices = async (req, res) => {
   }
 };
 
+const billOrder = async (req, res) => {
+  try {
+    const { p_id_order, p_idlogin_modify } = req.body;
+    if (!p_id_order || !p_idlogin_modify) {
+      return res.status(400).json({
+        message: 'Les champs p_id_order et p_idlogin_modify sont requis.'
+      });
+    }
+    
+    // Call the stored procedure "bill_order"
+    await sequelize.query(
+      `CALL bill_order(:p_id_order, :p_idlogin_modify)`,
+      {
+        replacements: { p_id_order, p_idlogin_modify },
+        type: QueryTypes.RAW,
+      }
+    );
+    
+    res.status(200).json({ message: 'Commande facturée avec succès.' });
+  } catch (error) {
+    console.error('Erreur lors de la facturation de la commande:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la facturation de la commande.',
+      error: error.message || 'Erreur inconnue.',
+      details: error.original || error,
+    });
+  }
+};
+
+const setInvoiceHeader = async (req, res) => {
+  try {
+    const {
+      p_id_order,
+      p_invoice_number,
+      p_amount_exVat,
+      p_amount_Vat,
+      p_idlogin_insert,
+      p_paymentDate,
+      p_free_txt1,
+      p_free_txt2,
+      p_idlogin_modify  // Now required!
+    } = req.body;
+
+    // Validate required parameters
+    if (
+      !p_id_order ||
+      !p_invoice_number ||
+      p_amount_exVat === undefined ||
+      p_amount_Vat === undefined ||
+      !p_idlogin_insert ||
+      !p_paymentDate ||
+      !p_idlogin_modify
+    ) {
+      return res.status(400).json({
+        message: "Les champs p_id_order, p_invoice_number, p_amount_exVat, p_amount_Vat, p_idlogin_insert, p_paymentDate et p_idlogin_modify sont requis."
+      });
+    }
+
+    // Initialize the INOUT parameter p_id to 0 (or another initial value if needed)
+    const initialInvoiceId = 0;
+
+    await sequelize.query(
+      `CALL set_invoice_header(
+         :p_id_order,
+         :p_invoice_number,
+         :p_amount_exVat,
+         :p_amount_Vat,
+         :p_idlogin_insert,
+         :p_paymentDate,
+         :p_free_txt1,
+         :p_free_txt2,
+         :p_idlogin_modify,
+         :p_id
+      )`,
+      {
+        replacements: {
+          p_id_order,
+          p_invoice_number,
+          p_amount_exVat,
+          p_amount_Vat,
+          p_idlogin_insert,
+          p_paymentDate,
+          p_free_txt1: p_free_txt1 || null,
+          p_free_txt2: p_free_txt2 || null,
+          p_idlogin_modify,
+          p_id: initialInvoiceId
+        },
+        type: QueryTypes.RAW,
+      }
+    );
+
+    res.status(200).json({
+      message: "Facture créée et paiement enregistré avec succès."
+    });
+  } catch (error) {
+    console.error("Erreur lors de la création de l'en-tête de facture:", error);
+    res.status(500).json({
+      message: "Erreur lors de la création de l'en-tête de facture.",
+      error: error.message || "Erreur inconnue.",
+      details: error.original || error,
+    });
+  }
+};
 
 module.exports = {
   executeAddOrder,
@@ -1588,5 +1691,7 @@ module.exports = {
   approveOrder,
   sendbackOrder,
   rejectOrder,
-  getOrderStaticsByServices
+  getOrderStaticsByServices,
+  billOrder,
+  setInvoiceHeader
 };

@@ -1,4 +1,3 @@
-// Home.jsx
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -157,7 +156,8 @@ const Home = () => {
             <OrderTable orders={ordersValidation} refreshOrders={fetchOrders} />
           </TabPanel>
           <TabPanel value={tabIndex} index={2} dir={theme.direction}>
-            <OrderTable orders={ordersPayment} refreshOrders={fetchOrders} />
+            {/* For orders waiting for payment, hide the action column */}
+            <OrderTable orders={ordersPayment} refreshOrders={fetchOrders} hideActions={true} />
           </TabPanel>
           <TabPanel value={tabIndex} index={3} dir={theme.direction}>
             <OrderTable orders={ordersReturned} refreshOrders={fetchOrders} />
@@ -169,7 +169,7 @@ const Home = () => {
 };
 
 // Composant OrderTable utilisant MUI pour styliser le tableau avec pagination
-const OrderTable = ({ orders, refreshOrders }) => {
+const OrderTable = ({ orders, refreshOrders, hideActions }) => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const currentUserId = user?.id_login_user;
@@ -206,25 +206,23 @@ const OrderTable = ({ orders, refreshOrders }) => {
     }
   };
 
-
   const handleSoumettreClick = async (orderId) => {
     try {
       const payload = {
         p_id_order: orderId,
-        p_idlogin_modify: currentUserId,
+        p_idlogin_modify: currentUserId
       };
-      console.log("Payload : ", payload)
+      console.log("Payload : ", payload);
       const response = await submitOrder(payload);
-      console.log('Order submited:', response);
+      console.log('Order submitted:', response);
       refreshOrders && refreshOrders();
     } catch (error) {
-      console.error('Error submited order:', error);
-      alert("Erreur lors de l'submited de la commande.");
+      console.error('Error submitting order:', error);
+      alert("Erreur lors de la soumission de la commande.");
     }
   };
 
-
-  // Slicing orders pour la pagination
+  // Slicing orders for pagination
   const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
@@ -239,7 +237,7 @@ const OrderTable = ({ orders, refreshOrders }) => {
               <TableCell>Certificat d'Origine</TableCell>
               <TableCell>Facture Commerciale</TableCell>
               <TableCell>Législation</TableCell>
-              <TableCell>Action</TableCell>
+              {!hideActions && <TableCell>Action</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -291,53 +289,54 @@ const OrderTable = ({ orders, refreshOrders }) => {
                       </button>
                     )}
                   </TableCell>
-                  <TableCell>
-                    {(order.id_order_status === 1 || order.id_order_status === 6) ? (
-                      // Affiche "Supprimer" + "Soumettre" (with onClick on the "Soumettre" button)
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', alignItems: 'center' }}>
-                        <Button
-                          variant="contained"
-                          color="error"
-                          size="small"
-                          onClick={() => handleCancelClick(order.id_order)}
-                        >
-                          Supprimer
+                  {!hideActions && (
+                    <TableCell>
+                      {(order.id_order_status === 1 || order.id_order_status === 6) ? (
+                        // Affiche "Supprimer" + "Soumettre"
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', alignItems: 'center' }}>
+                          <Button
+                            variant="contained"
+                            color="error"
+                            size="small"
+                            onClick={() => handleCancelClick(order.id_order)}
+                          >
+                            Supprimer
+                          </Button>
+                          <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            onClick={() => handleSoumettreClick(order.id_order)}
+                          >
+                            {order.id_order_status === 3 ? 'Payer' : 'Soumettre'}
+                          </Button>
+                        </Box>
+                      ) : order.id_order_status === 2 ? (
+                        // Si statut = 2, on n'affiche rien
+                        null
+                      ) : order.id_order_status === 3 ? (
+                        // Si statut = 3, affiche "Payer"
+                        <Button variant="contained" color="primary" size="small">
+                          Payer
                         </Button>
+                      ) : (
+                        // Sinon, par défaut, affiche "Soumettre"
                         <Button
                           variant="contained"
-                          color="success"
+                          color="primary"
                           size="small"
                           onClick={() => handleSoumettreClick(order.id_order)}
                         >
-                          {order.id_order_status === 3 ? 'Payer' : 'Soumettre'}
+                          Soumettre
                         </Button>
-                      </Box>
-                    ) : order.id_order_status === 2 ? (
-                      // Si statut = 2, on n'affiche rien
-                      null
-                    ) : order.id_order_status === 3 ? (
-                      // Si statut = 3, affiche "Payer"
-                      <Button variant="contained" color="primary" size="small">
-                        Payer
-                      </Button>
-                    ) : (
-                      // Sinon, par défaut, affiche "Soumettre"
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        size="small"
-                        onClick={() => handleSoumettreClick(order.id_order)}
-                      >
-                        Soumettre
-                      </Button>
-                    )}
-                  </TableCell>
-
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7}>Aucune commande trouvée.</TableCell>
+                <TableCell colSpan={hideActions ? 6 : 7}>Aucune commande trouvée.</TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -359,6 +358,7 @@ const OrderTable = ({ orders, refreshOrders }) => {
 OrderTable.propTypes = {
   orders: PropTypes.array.isRequired,
   refreshOrders: PropTypes.func.isRequired,
+  hideActions: PropTypes.bool,
 };
 
 export default Home;

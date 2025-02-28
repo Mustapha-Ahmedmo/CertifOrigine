@@ -27,6 +27,7 @@ DROP TABLE IF EXISTS ORD_CERTIF_TRANSP_MODE CASCADE;
 DROP TABLE IF EXISTS ORD_LEGALIZATION CASCADE;
 DROP TABLE IF EXISTS ORDER_FILES CASCADE;
 DROP TABLE IF EXISTS MEMO CASCADE;
+DROP TABLE IF EXISTS INVOICE_HEADER CASCADE;
 
 CREATE TABLE CURRENCY (
     ID_CURRENCY INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -481,6 +482,29 @@ CREATE TABLE MEMO (
     FOREIGN KEY (IDLOGIN_ACK) REFERENCES LOGIN_USER(ID_LOGIN_USER)
 );
 
+
+
+CREATE TABLE INVOICE_HEADER (
+    ID_INVOICE_HEADER INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_ORDER INT NOT NULL,                        -- Non nullable
+    INVOICE_NUMBER VARCHAR(32) NOT NULL,          -- Non nullable
+    AMOUNT_ExVAT FLOAT NOT NULL,                  -- Non nullable
+    AMOUNT_VAT FLOAT DEFAULT 0 NOT NULL,          -- Non nullable avec valeur par défaut
+    INSERTDATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Non nullable avec valeur par défaut
+    IDLOGIN_INSERT INT NOT NULL,                  -- Non nullable
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
+    PAYMENTDATE TIMESTAMP NULL,
+    IDLOGIN_PAYMENT INT NULL,
+    CREDITNOTE_NUMBER VARCHAR(32) NULL,           -- Nullable
+    CREDITNOTE_DATE TIMESTAMP NULL,               -- Nullable
+    IDLOGIN_CREDITNOTE INT NULL,
+    FREE_TXT1 VARCHAR(64) NULL,                   -- Nullable
+    FREE_TXT2 VARCHAR(64) NULL,                   -- Nullable
+    FOREIGN KEY (ID_ORDER) REFERENCES "ORDER"(ID_ORDER),
+    FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_PAYMENT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
+    FOREIGN KEY (IDLOGIN_CREDITNOTE) REFERENCES LOGIN_USER(ID_LOGIN_USER)
+);
 
 DO $$ 
 BEGIN 
@@ -2803,6 +2827,8 @@ BEGIN
     RETURN new_id;
 END;
 $$ LANGUAGE plpgsql;
+
+
 DROP FUNCTION IF EXISTS get_order_op_info;
 CREATE OR REPLACE FUNCTION get_order_op_info(
     p_id_order_list TEXT,
@@ -2896,7 +2922,9 @@ RETURNS TABLE(
     date_validation_invoice TIMESTAMP,
     lastmodified_invoice TIMESTAMP,
     idlogin_modify_invoice INT,
-    typeof_invoice INT
+    typeof_invoice INT,
+    country_symbol_fr VARCHAR(64),
+    country_symbol_eng VARCHAR(64)
 ) AS
 $$
 BEGIN
@@ -2991,10 +3019,13 @@ BEGIN
         oi."date_validation" AS date_validation_invoice,
         oi."lastmodified" AS lastmodified_invoice,
         oi."idlogin_modify" AS idlogin_modify_invoice,
-        oi."typeof" AS typeof_invoice
+        oi."typeof" AS typeof_invoice,
+        co."symbol_fr" as country_symbol_fr,
+        co."symbol_eng" as country_symbol_eng
     FROM 
         "ORDER" o
         INNER JOIN CUST_ACCOUNT ca ON o."id_cust_account" = ca."id_cust_account"  -- New inner join
+        INNER JOIN COUNTRY co ON ca."id_country" = co."id_country"
         INNER JOIN ORDER_STATUS os ON o."id_order_status" = os."id_order_status"
         LEFT JOIN ORD_CERTIF_ORI oco ON o."id_order" = oco."id_order"
         LEFT JOIN RECIPIENT_ACCOUNT r ON oco."id_recipient_account" = r."id_recipient_account"
@@ -3107,7 +3138,9 @@ RETURNS TABLE(
 	date_validation_invoice TIMESTAMP,
 	lastmodified_invoice TIMESTAMP,
 	idlogin_modify_invoice INT,
-	typeof_invoice INT
+	typeof_invoice INT,
+    country_symbol_fr VARCHAR(64),
+    country_symbol_eng VARCHAR(64)
 ) AS
 $$
 BEGIN
@@ -3198,13 +3231,17 @@ BEGIN
 		oi."date_validation" as date_validation_invoice ,
 		oi."lastmodified" as lastmodified_invoice ,
 		oi."idlogin_modify" as idlogin_modify_invoice ,
-		oi."typeof" as typeof_invoice
+		oi."typeof" as typeof_invoice,
+        co."symbol_fr" as country_symbol_fr,
+        co."symbol_eng" as country_symbol_eng
+
     FROM 
         "ORDER" o
         INNER JOIN 
 			CUST_ACCOUNT ca ON o."id_cust_account" = ca."id_cust_account"  -- modifiée remplacer CUST_USER par CUST_ACCOUNT
 			INNER JOIN 
 				CUST_USER cu ON ca."id_cust_account" = cu."id_cust_account"
+        INNER JOIN COUNTRY co ON ca."id_country" = co."id_country"
         INNER JOIN 
 			ORDER_STATUS os ON o."id_order_status" = os."id_order_status"
         LEFT JOIN 
@@ -4539,6 +4576,217 @@ BEGIN
         AND (p_id_list_orderstatus IS NULL OR o."id_order_status" = ANY (string_to_array(p_id_list_orderstatus, ',')::INT[]))
         AND (p_date_start IS NULL OR o."insertdate" >= p_date_start)
         AND (p_date_end IS NULL OR o."insertdate" <= p_date_end);
+END;
+$$ LANGUAGE plpgsql;
+
+
+DROP PROCEDURE IF EXISTS bill_order;
+CREATE OR REPLACE PROCEDURE bill_order(
+    p_id_order INT,
+    p_idlogin_modify INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM "ORDER"
+        WHERE ID_ORDER = p_id_order
+        AND ID_ORDER_STATUS IN (3)  -- 3: approuvé
+        AND TYPEoF >= 1
+    ) THEN
+        UPDATE "ORDER"
+        SET 
+            DATE_LAST_RETURN = NOW(),
+            ID_ORDER_STATUS = 4,  -- 4: billed
+            LASTMODIFIED = NOW(),
+            IDLOGIN_MODIFY = p_idlogin_modify
+        WHERE 
+            ID_ORDER = p_id_order;
+
+        CALL set_histo_order(
+            p_id_order,
+            p_idlogin_modify,
+            18  -- ORDER_HISTO_ACTION = 18 pour 'Ordre Facturé'
+        );
+    ELSE
+        RAISE EXCEPTION 'La commande ne peut être facturée que si son statut est 3 (APPROVED) et que TYPEoF >= 1';
+    END IF;
+END;
+$$;
+
+DROP PROCEDURE IF EXISTS pay_order;
+CREATE OR REPLACE PROCEDURE pay_order(
+    p_id_order INT,
+    p_idlogin_modify INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM "ORDER"
+        WHERE ID_ORDER = p_id_order
+        AND ID_ORDER_STATUS IN (4)  -- 4: billed
+        AND TYPEoF >= 1
+    ) THEN
+        UPDATE "ORDER"
+        SET 
+            DATE_LAST_RETURN = NOW(),
+            ID_ORDER_STATUS = 5,  -- 5: paid
+            LASTMODIFIED = NOW(),
+            IDLOGIN_MODIFY = p_idlogin_modify
+        WHERE 
+            ID_ORDER = p_id_order;
+
+        CALL set_histo_order(
+            p_id_order,
+            p_idlogin_modify,
+            14  -- ORDER_HISTO_ACTION = 14 pour 'Ordre Payé'
+        );
+    ELSE
+        RAISE EXCEPTION 'La commande ne peut être payée que si son statut est 4 (BILLED) et que TYPEoF >= 1';
+    END IF;
+END;
+$$;
+DROP PROCEDURE IF EXISTS set_invoice_header;
+CREATE OR REPLACE PROCEDURE set_invoice_header(
+    p_id_order INT,
+    p_invoice_number VARCHAR(32),
+    p_amount_exVat FLOAT,
+    p_amount_Vat FLOAT,
+    p_idlogin_insert INT,
+    p_paymentDate TIMESTAMP,
+    p_free_txt1 VARCHAR(64),
+    p_free_txt2 VARCHAR(64),
+    p_idlogin_modify INT, -- NEW: added parameter for modifying login
+    INOUT p_id INT
+)
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    -- Check if an active invoice header already exists
+    IF NOT EXISTS (
+        SELECT 1
+        FROM INVOICE_HEADER
+        WHERE ID_INVOICE_HEADER = p_id
+          AND DEACTIVATION_DATE > CURRENT_DATE
+    ) THEN
+        INSERT INTO INVOICE_HEADER (
+            ID_ORDER,
+            INVOICE_NUMBER,
+            AMOUNT_ExVAT,
+            AMOUNT_VAT,
+            IDLOGIN_INSERT,
+            PAYMENTDATE,
+            IDLOGIN_PAYMENT,
+            FREE_TXT1,
+            FREE_TXT2
+        )
+        VALUES (
+            p_id_order,
+            p_invoice_number,
+            p_amount_exVat,
+            p_amount_Vat,
+            p_idlogin_insert,
+            p_paymentDate,
+            p_idlogin_modify,  -- use the new parameter here
+            p_free_txt1,
+            p_free_txt2
+        );
+    END IF;
+
+    -- Call another procedure (assumed to handle further payment processing)
+    CALL pay_order(
+        p_id_order,
+        p_idlogin_modify
+    );
+END;
+$$;
+
+
+DROP FUNCTION IF EXISTS get_invoice_header;
+CREATE OR REPLACE FUNCTION get_invoice_header(
+    p_id_invoice_header_list TEXT,
+    p_id_order_list TEXT,
+    p_id_cust_account INT,
+    p_payment_date_start TIMESTAMP,
+    p_payment_date_end TIMESTAMP,
+    p_idlogin INT,
+    p_isopuser BOOLEAN -- si false, utiliser id_cust_account dans le jeton de cust_user connecté
+)
+RETURNS TABLE(
+    id_invoice_header INT,
+    id_order INT,
+    id_cust_account INT,
+	cust_name VARCHAR(96),
+	recipient_name VARCHAR(96),
+	order_title VARCHAR(32),
+
+    invoice_number VARCHAR(32),
+    amount_exVat FLOAT,
+    amount_Vat FLOAT,
+    paymentDate TIMESTAMP,
+    free_txt1 VARCHAR(64),
+    free_txt2 VARCHAR(64),
+
+    idlogin_insert INT
+
+
+) AS
+$$
+BEGIN
+    -- Vérification si p_isopuser est TRUE
+    IF p_isopuser THEN
+        -- Vérifier si p_idlogin existe dans op_user
+        IF NOT EXISTS (SELECT 1 FROM op_user WHERE "id_login_user" = p_idlogin) THEN
+            RAISE EXCEPTION 'Utilisateur non autorisé';
+        END IF;
+    END IF;
+
+    RETURN QUERY
+    SELECT
+    	ih."id_invoice_header",
+    	ih."id_order",
+
+        ca."id_cust_account",
+		ca."cust_name",
+		r."recipient_name",
+		o."order_title",
+
+    	ih."invoice_",
+    	ih."amount_exVat",
+    	ih."amount_Vat",
+    	ih."paymentDate",
+    	ih."free_txt1",
+    	ih."free_txt2",
+
+        ih."idlogin_insert"
+
+
+   FROM
+        INVOICE_HEADER ih
+    JOIN 
+        "ORDER" o ON ih."id_order" = o."id_order" 
+    JOIN 
+        cust_account ca ON o."id_cust_account" = ca."id_cust_account"
+    JOIN 
+        "RECIPIENT_ACCOUNT" r ON r."id_cust_account" = ca."id_cust_account" 
+    JOIN
+        login_user lu ON ih."idlogin_insert" = lu."id_login_user"
+    WHERE 
+        (p_id_invoice_header_list IS NULL OR mih."ID_INVOICE_HEADER" = ANY (string_to_array(p_id_invoice_header_list, ',')::INT[]))
+    AND 
+        (p_id_order_list IS NULL OR ih."id_order" = ANY (string_to_array(p_id_order_list, ',')::INT[]))
+    AND 
+        (p_payment_date_start IS NULL OR ih."PAYMENTDATE" >= p_payment_date_start)
+    AND 
+        (p_payment_date_end IS NULL OR ih."PAYMENTDATE" <= p_payment_date_end)
+    AND 
+    (
+        -- Si p_isopuser est FALSE, filtrer sur id_cust_account et typeof = p_type
+        p_isopuser IS TRUE 
+        OR (p_isopuser IS NOT TRUE AND ca."id_cust_account" = p_id_cust_account)
+    );
 END;
 $$ LANGUAGE plpgsql;
 
