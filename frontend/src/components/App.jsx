@@ -47,7 +47,6 @@ import ListTypePage from '../pages/DonneeDeBase/unitTypePage';
 import InactivityHandler from './InactivityHandler';
 import Step2 from './orders/Create/steps/Step2';
 import OrderDetailsPage from '../pages/OrderDetails/OrderPageDetails';
-import ListTypePage from '../pages/DonneeDeBase/unitTypePage';
 import NotificationPage from '../pages/Notifications/NotificationPage';
 
 const App = () => {

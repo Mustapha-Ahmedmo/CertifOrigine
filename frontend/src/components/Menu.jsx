@@ -298,10 +298,6 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                 <FontAwesomeIcon icon={faHistory} />
               </ListItemIcon>
               <ListItemText primary="Recherche de documents" primaryTypographyProps={{ fontSize: "14px" }} />
-              <ListItemText
-                primary="Mes commandes passées"
-                primaryTypographyProps={{ fontSize: "14px" }}
-              />
             </ListItemButton>
           </ListItem>
           <Collapse in={openSubmenus.pastOrders} timeout="auto" unmountOnExit>
