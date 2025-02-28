@@ -1150,7 +1150,16 @@ const deleteUnitWeight = async (req, res) => {
 
 const submitOrder = async (req, res) => {
   try {
-    const { p_id_order, p_idlogin_modify } = req.body;
+
+    let { p_id_order, p_idlogin_modify } = req.body;
+
+    if (typeof p_id_order === 'object' && p_id_order !== null) {
+      p_idlogin_modify = p_id_order.p_idlogin_modify || p_idlogin_modify;
+      p_id_order = p_id_order.p_id_order;
+    }
+
+    // Log the processed parameters
+    console.log('submitOrder - Processed parameters:', { p_id_order, p_idlogin_modify });
 
     // Validate input parameters
     if (!p_id_order || !p_idlogin_modify) {
@@ -1507,6 +1516,47 @@ const rejectOrder = async (req, res) => {
   }
 };
 
+const getOrderStaticsByServices = async (req, res) => {
+  try {
+    // Retrieve query parameters (if not provided, they default to null)
+    const { p_date_start, p_date_end, p_id_list_order, p_id_custaccount, p_id_list_orderstatus } = req.query;
+
+    // Call the function using a SELECT statement with proper replacements
+    const result = await sequelize.query(
+      `SELECT * FROM get_order_statics_byservices(
+          :p_date_start,
+          :p_date_end,
+          :p_id_list_order,
+          :p_id_custaccount,
+          :p_id_list_orderstatus
+      )`,
+      {
+        replacements: {
+          p_date_start: p_date_start || null,
+          p_date_end: p_date_end || null,
+          p_id_list_order: p_id_list_order || null,
+          p_id_custaccount: p_id_custaccount ? parseInt(p_id_custaccount, 10) : null,
+          p_id_list_orderstatus: p_id_list_orderstatus || null,
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    res.status(200).json({
+      message: 'Order statistics retrieved successfully.',
+      data: result,
+    });
+  } catch (error) {
+    console.error('Error retrieving order statistics:', error);
+    res.status(500).json({
+      message: 'Error retrieving order statistics.',
+      error: error.message || 'Unknown error.',
+      details: error.original || error,
+    });
+  }
+};
+
+
 module.exports = {
   executeAddOrder,
   getTransmodeInfo,
@@ -1537,5 +1587,6 @@ module.exports = {
   delFilesRepo,
   approveOrder,
   sendbackOrder,
-  rejectOrder
+  rejectOrder,
+  getOrderStaticsByServices
 };

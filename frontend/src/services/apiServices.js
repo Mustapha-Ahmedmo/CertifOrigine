@@ -1195,3 +1195,33 @@ export const ackMemoCust = async (p_id_memo, p_id_cust_account, p_idlogin) => {
     throw error;
   }
 };
+
+export const getOrderStaticsByServices = async (params = {}) => {
+  try {
+    // Remove any keys with null, undefined, or the string "null"
+    const cleanedParams = {};
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== "null") {
+        cleanedParams[key] = value;
+      }
+    });
+    const queryString = new URLSearchParams(cleanedParams).toString();
+
+    const response = await fetch(`${API_URL}/orders/order-statistics?${queryString}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch order statistics');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getOrderStaticsByServices):', error);
+    throw error;
+  }
+};

@@ -4509,6 +4509,39 @@ BEGIN
 END;
 $$;
 
+DROP FUNCTION IF EXISTS get_order_statics_byservices;
+CREATE OR REPLACE FUNCTION get_order_statics_byservices(
+    p_date_start TIMESTAMP,
+    p_date_end TIMESTAMP,
+    p_id_list_order TEXT,
+    p_id_custaccount INT,
+    p_id_list_orderstatus TEXT
+)
+RETURNS TABLE(
+    count_ord_certif_ori BIGINT,
+    count_ord_legalization BIGINT,
+    count_ord_com_invoice BIGINT
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        SUM(CASE WHEN MOD(o.TYPEOF, 10) = 1 THEN 1 ELSE 0 END) AS count_ord_certif_ori,
+        SUM(CASE 
+              WHEN MOD(o.TYPEOF/10, 100) = 1 
+                OR MOD(o.TYPEOF/10, 100) = 11 
+              THEN 1 ELSE 0 END) AS count_ord_legalization,
+        SUM(CASE WHEN MOD(o.TYPEOF/100, 1000) = 1 THEN 1 ELSE 0 END) AS count_ord_com_invoice
+    FROM "ORDER" o
+    WHERE 
+        (p_id_list_order IS NULL OR o."id_order" = ANY (string_to_array(p_id_list_order, ',')::INT[]))
+        AND (p_id_custaccount IS NULL OR o."id_cust_account" = p_id_custaccount)
+        AND (p_id_list_orderstatus IS NULL OR o."id_order_status" = ANY (string_to_array(p_id_list_orderstatus, ',')::INT[]))
+        AND (p_date_start IS NULL OR o."insertdate" >= p_date_start)
+        AND (p_date_end IS NULL OR o."insertdate" <= p_date_end);
+END;
+$$ LANGUAGE plpgsql;
+
 call set_op_user(0, 0, 'M. Admin', 1, TRUE,
 'admin@cdd.dj','4889ba9b',
 '253355445', '25377340000',

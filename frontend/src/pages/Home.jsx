@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { getOrdersForCustomer, cancelOrder } from '../services/apiServices';
+import { getOrdersForCustomer, cancelOrder, submitOrder } from '../services/apiServices';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboardList,
@@ -206,6 +206,24 @@ const OrderTable = ({ orders, refreshOrders }) => {
     }
   };
 
+
+  const handleSoumettreClick = async (orderId) => {
+    try {
+      const payload = {
+        p_id_order: orderId,
+        p_idlogin_modify: currentUserId,
+      };
+      console.log("Payload : ", payload)
+      const response = await submitOrder(payload);
+      console.log('Order submited:', response);
+      refreshOrders && refreshOrders();
+    } catch (error) {
+      console.error('Error submited order:', error);
+      alert("Erreur lors de l'submited de la commande.");
+    }
+  };
+
+
   // Slicing orders pour la pagination
   const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
@@ -275,7 +293,7 @@ const OrderTable = ({ orders, refreshOrders }) => {
                   </TableCell>
                   <TableCell>
                     {(order.id_order_status === 1 || order.id_order_status === 6) ? (
-                      // => Affiche "Supprimer" + "Soumettre"
+                      // Affiche "Supprimer" + "Soumettre" (with onClick on the "Soumettre" button)
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', alignItems: 'center' }}>
                         <Button
                           variant="contained"
@@ -285,21 +303,31 @@ const OrderTable = ({ orders, refreshOrders }) => {
                         >
                           Supprimer
                         </Button>
-                        <Button variant="contained" color="success" size="small">
+                        <Button
+                          variant="contained"
+                          color="success"
+                          size="small"
+                          onClick={() => handleSoumettreClick(order.id_order)}
+                        >
                           {order.id_order_status === 3 ? 'Payer' : 'Soumettre'}
                         </Button>
                       </Box>
                     ) : order.id_order_status === 2 ? (
-                      // => Si statut = 2, on n'affiche rien du tout
+                      // Si statut = 2, on n'affiche rien
                       null
                     ) : order.id_order_status === 3 ? (
-                      // => Si statut = 3, affiche "Payer"
+                      // Si statut = 3, affiche "Payer"
                       <Button variant="contained" color="primary" size="small">
                         Payer
                       </Button>
                     ) : (
-                      // => Sinon, par défaut, affiche "Soumettre"
-                      <Button variant="contained" color="primary" size="small">
+                      // Sinon, par défaut, affiche "Soumettre"
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        onClick={() => handleSoumettreClick(order.id_order)}
+                      >
                         Soumettre
                       </Button>
                     )}
