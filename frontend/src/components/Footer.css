@@ -1,66 +1,60 @@
-/* Réinitialisation des marges et paddings du body */
-body {
+/* Réinitialisation globale */
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* Styles du footer */
+/* Footer */
 .footer {
-  background-color: #ffffff; /* Fond blanc */
-  padding: 15px 0; /* Padding compact */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  background-color: #ffffff;
+  padding: 10px 20px;
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
   z-index: 10001;
 }
 
 /* Conteneur principal du footer */
 .footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
-  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  width: 100vw;
-  max-width: 1200px;
-  padding: 0 20px;
-  flex-wrap: nowrap; /* Forcer sur une seule ligne */
+  flex-wrap: nowrap; /* Empêche le passage à la ligne */
 }
 
 /* Logo du footer */
 .footer-logo {
   font-weight: bold;
-  font-size: 12px;
+  font-size: 16px;
   color: #333333;
-  margin-bottom: 0; /* Suppression de l'espacement vertical */
+  white-space: nowrap; /* Empêche le retour à la ligne */
 }
 
 /* Section des informations du footer */
 .footer-info {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  justify-content: center;
+  gap: 20px; /* Espacement entre les éléments */
+  flex-wrap: nowrap; /* Tous sur une seule ligne */
 }
 
-/* Paragraphes, spans et liens dans le footer */
-.footer-info > p,
-.footer-info > a,
-.footer-info > span {
-  margin: 0 8px; /* Marges réduites pour éviter le débordement */
-  font-size: 0.9rem;
+/* Styles pour les spans et liens dans footer-info */
+.footer-info a,
+.footer-info span {
+  font-size: 14px;
   color: #555555;
+  text-decoration: none;
+  white-space: nowrap; /* Empêche le retour à la ligne */
 }
 
 /* Liens spécifiques */
 .footer-link {
   color: #FF8C00;
-  text-decoration: none;
   transition: color 0.3s ease;
 }
 
@@ -69,20 +63,13 @@ body {
   text-decoration: underline;
 }
 
+/* Email spécifique */
 .footer-email a {
   color: #FF8C00;
-  text-decoration: none;
   transition: color 0.3s ease;
 }
 
 .footer-email a:hover {
   color: #FFB84D;
   text-decoration: underline;
-}
-
-/* Masquer le Footer sur les écrans de 768px ou moins */
-@media (max-width: 768px) {
-  .footer {
-    display: none;
-  }
 }
