@@ -1,38 +1,49 @@
-// NotificationPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Typography,
-  Link as MuiLink,
+  Paper,
+  Chip,
+  Button,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
-  Button,
   Snackbar,
+  IconButton,
+  Link as MuiLink,
+  Divider
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { ackMemoCust, getMemo } from '../../services/apiServices';
-import './NotificationPage.css';
 import { format } from 'date-fns';
+import './NotificationPage.css';
 
-// A helper function that safely formats dates
 const safeFormatDate = (dateString) => {
   if (!dateString) return '-';
   try {
-    return format(new Date(dateString), "dd/MM/yyyy HH:mm");
+    return format(new Date(dateString), "dd MMM yyyy 'à' HH:mm");
   } catch (error) {
     console.error("Error formatting date:", error);
     return dateString;
+  }
+};
+
+const getChipPropsBySubject = (subject) => {
+  switch (subject?.toLowerCase()) {
+    case 'message':
+      return { label: 'Message', sx: { backgroundColor: '#f44336', color: '#fff' } };
+    case 'comment':
+      return { label: 'Comment', sx: { backgroundColor: '#9c27b0', color: '#fff' } };
+    case 'connect':
+      return { label: 'Connect', sx: { backgroundColor: '#2196f3', color: '#fff' } };
+    case 'joined new user':
+      return { label: 'New User', sx: { backgroundColor: '#4caf50', color: '#fff' } };
+    default:
+      return { label: subject || 'Note', sx: { backgroundColor: '#607d8b', color: '#fff' } };
   }
 };
 
@@ -43,24 +54,22 @@ const Notifications = () => {
   const [selectedMemoId, setSelectedMemoId] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
+
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Retrieve the logged-in user details from Redux
+  // Récupération de l'utilisateur depuis Redux
   const user = useSelector((state) => state.auth.user);
   const custAccountId = user?.id_cust_account;
-  const isOperator = user?.isopuser; // true if operator, false otherwise
+  const isOperator = user?.isopuser;
   const idLogin = user?.id_login_user;
 
-  // Determine if we want to show all memos or only unacknowledged ones from query parameter "all"
   const queryParams = new URLSearchParams(location.search);
   const showAll = queryParams.get('all') === 'true';
 
-  // Define fetchMemos outside useEffect so we can call it on event as well.
   const fetchMemos = useCallback(async () => {
     if (custAccountId) {
       const params = {
-        // When showAll is true, don't filter by ack status; otherwise, only unacknowledged memos
         p_isAck: showAll ? null : 'false',
         p_id_cust_account: custAccountId,
         p_isopuser: isOperator ? 'true' : 'false',
@@ -80,17 +89,14 @@ const Notifications = () => {
     }
   }, [custAccountId, isOperator, showAll]);
 
-  // Initial fetch on mount (and when dependencies change)
   useEffect(() => {
     fetchMemos();
   }, [fetchMemos]);
 
-  // Listen for custom "memoAck" events and refresh the memo list accordingly.
   useEffect(() => {
     const handleMemoAck = () => {
       fetchMemos();
     };
-
     window.addEventListener('memoAck', handleMemoAck);
     return () => {
       window.removeEventListener('memoAck', handleMemoAck);
@@ -98,7 +104,6 @@ const Notifications = () => {
   }, [fetchMemos]);
 
   const handleAcknowledgeClick = (memoId) => {
-    // Open confirmation modal and set the selected memo ID
     setSelectedMemoId(memoId);
     setOpenConfirm(true);
   };
@@ -106,9 +111,7 @@ const Notifications = () => {
   const handleConfirmAcknowledge = async () => {
     try {
       await ackMemoCust(selectedMemoId, custAccountId, idLogin);
-      // Dispatch an event so that other components (e.g., header) can refresh their counts
       window.dispatchEvent(new Event('memoAck'));
-      // Optionally remove the acknowledged memo from the list (or you can refetch)
       setMemos((prev) => prev.filter((m) => m.id_memo !== selectedMemoId));
       setSnackbarMsg("Memo acquitté avec succès.");
       setSnackbarOpen(true);
@@ -133,108 +136,134 @@ const Notifications = () => {
 
   if (loading) {
     return (
-      <Box sx={{ p: 2 }}>
-        <Typography>Chargement des notifications...</Typography>
+      <Box sx={{ p: 2, ml: '240px' }}>
+        <Typography sx={{ fontSize: '0.8rem' }}>Chargement des notifications...</Typography>
       </Box>
     );
   }
 
   return (
-    <div className="notifications-page">
-      <Box sx={{ p: 2 }}>
-        <Typography variant="h4" gutterBottom>
-          Notifications
-        </Typography>
-        {memos.length === 0 ? (
-          <Typography>Aucune notification.</Typography>
-        ) : (
-          <TableContainer component={Paper}>
-            <Table aria-label="notifications table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Date Memo</TableCell>
-                  {isOperator && <TableCell>Cust Name</TableCell>}
-                  <TableCell>Order Title</TableCell>
-                  <TableCell>Recipient Name</TableCell>
-                  <TableCell>Memo Subject</TableCell>
-                  <TableCell>Memo Body</TableCell>
-                  {showAll && <TableCell>Ack Date</TableCell>}
-                  <TableCell>Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {memos.map((memo) => (
-                  <TableRow key={memo.id_memo}>
-                    <TableCell>{safeFormatDate(memo.memo_date)}</TableCell>
-                    {isOperator && (
-                      <TableCell>{memo.cust_name}</TableCell>
-                    )}
-                    <TableCell>{memo.order_title}</TableCell>
-                    <TableCell>{memo.recipient_name}</TableCell>
-                    <TableCell>{memo.memo_subject}</TableCell>
-                    <TableCell>{memo.memo_body}</TableCell>
-                    {showAll && (
-                      <TableCell>
-                        {memo.ack_date ? safeFormatDate(memo.ack_date) : '-'}
-                      </TableCell>
-                    )}
-                    <TableCell>
-                      {/* Link to view the order details */}
-                      <MuiLink
-                        component="button"
-                        variant="body2"
-                        onClick={() =>
-                          navigate(`/dashboard/order-details?orderId=${memo.id_order}&certifId=${memo.id_ord_certif_ori || ''}`)
-                        }
-                        sx={{ mr: 1 }}
-                      >
-                        Voir la commande
-                      </MuiLink>
-                      {/* "S’acquitter" appears only if user is not an operator and ack_date is null */}
-                      {!isOperator && !memo.ack_date && (
-                        <MuiLink
-                          component="button"
-                          variant="body2"
-                          onClick={() => handleAcknowledgeClick(memo.id_memo)}
-                        >
-                          S’acquitter
-                        </MuiLink>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Box>
+    <Box sx={{ p: 2, ml: '240px' }}>
+     
 
-      {/* Confirmation Modal for Acknowledging a Memo */}
+      {memos.length === 0 ? (
+        <Typography sx={{ fontSize: '0.8rem' }}>Aucune notification.</Typography>
+      ) : (
+        <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2 }}>
+          {memos.map((memo, index) => {
+            const {
+              id_memo,
+              memo_date,
+              memo_subject,
+              memo_body,
+              ack_date,
+              order_title,
+              cust_name,
+              id_order,
+              id_ord_certif_ori,
+            } = memo;
+
+            const dateFormatted = safeFormatDate(memo_date);
+            const dateAckFormatted = ack_date ? safeFormatDate(ack_date) : null;
+            // Utilisation de la fonction d'origine pour le Chip
+            const chipProps = getChipPropsBySubject(memo_subject);
+
+            return (
+              <Box key={id_memo} sx={{ mb: index < memos.length - 1 ? 1 : 0 }}>
+                {/* Ligne du haut : bouton d'acquittement et date */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 0.5,
+                  }}
+                >
+                  <Box>
+                    {!isOperator && !ack_date && (
+                      <IconButton
+                        onClick={() => handleAcknowledgeClick(id_memo)}
+                        aria-label="Acquitter"
+                        color="primary"
+                        size="small"
+                      >
+                        <CloseIcon sx={{ fontSize: '1rem' }} />
+                      </IconButton>
+                    )}
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                      {dateFormatted}
+                    </Typography>
+                    {ack_date && (
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }} display="block">
+                        Acquitté : {dateAckFormatted}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+
+                {/* Contenu de la notification */}
+                <Box sx={{ mt: 0.5 }}>
+                  <Chip size="small" {...chipProps} />
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '0.8rem' }}>
+                    {order_title || 'Notification'}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 0.5, fontSize: '0.7rem' }}>
+                    {memo_body || 'Pas de description.'}
+                  </Typography>
+                  {isOperator && cust_name && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: '0.7rem' }}>
+                      Client : {cust_name}
+                    </Typography>
+                  )}
+                  <Box sx={{ mt: 0.5 }}>
+                    <MuiLink
+                      component="button"
+                      variant="body2"
+                      onClick={() =>
+                        navigate(
+                          `/dashboard/order-details?orderId=${id_order}&certifId=${id_ord_certif_ori || ''}`
+                        )
+                      }
+                      sx={{ textDecoration: 'underline', cursor: 'pointer', fontSize: '0.7rem' }}
+                    >
+                      Voir la commande
+                    </MuiLink>
+                  </Box>
+                </Box>
+                {/* Divider léger entre notifications, sauf pour la dernière */}
+                {index < memos.length - 1 && <Divider sx={{ my: 1 }} />}
+              </Box>
+            );
+          })}
+        </Paper>
+      )}
+
       <Dialog open={openConfirm} onClose={handleCancelAcknowledge}>
-        <DialogTitle>Confirmer l'acquittement</DialogTitle>
+        <DialogTitle sx={{ fontSize: '0.9rem' }}>Confirmer l'acquittement</DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText sx={{ fontSize: '0.8rem' }}>
             Êtes-vous sûr de vouloir acquitter ce memo ?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelAcknowledge} color="secondary">
+          <Button onClick={handleCancelAcknowledge} color="secondary" sx={{ fontSize: '0.7rem' }}>
             Annuler
           </Button>
-          <Button onClick={handleConfirmAcknowledge} color="primary">
+          <Button onClick={handleConfirmAcknowledge} color="primary" sx={{ fontSize: '0.7rem' }}>
             Confirmer
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for feedback */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3000}
         onClose={handleSnackbarClose}
         message={snackbarMsg}
       />
-    </div>
+    </Box>
   );
 };
 

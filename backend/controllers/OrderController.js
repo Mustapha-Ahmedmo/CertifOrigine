@@ -1311,7 +1311,7 @@ const delFilesRepo = async (req, res) => {
 const approveOrder = async (req, res) => {
   try {
     // Extract required parameters from req.body
-    const { p_id_order, p_id_cust_account, p_idlogin_modify, customerEmail } = req.body;
+    const { p_id_order, p_id_cust_account, p_idlogin_modify, customerEmail, orderTitle } = req.body;
 
     if (!p_id_order || !p_id_cust_account || !p_idlogin_modify || !customerEmail) {
       return res.status(400).json({
@@ -1352,7 +1352,7 @@ const approveOrder = async (req, res) => {
           p_typeof: 1, // Assuming 1 for customer memos (approval)
           p_idlogin_insert: p_idlogin_modify,
           p_memo_date: new Date(),
-          p_memo_subject: `Ordre numéro ${p_id_order} est approuvé`,
+          p_memo_subject: `Votre commande ${orderTitle} est approuvé`,
           p_memo_body:
             'Votre certificat a été validé, nous vous invitons à venir régler le certificat.',
           p_mail_to: customerEmail,
@@ -1380,7 +1380,7 @@ const approveOrder = async (req, res) => {
 
 const sendbackOrder = async (req, res) => {
   try {
-    const { p_id_order, p_id_cust_account, p_idlogin_modify, returnReason, customerEmail } = req.body;
+    const { p_id_order, p_id_cust_account, p_idlogin_modify, returnReason, customerEmail, orderTitle } = req.body;
 
     if (!p_id_order || !p_id_cust_account || !p_idlogin_modify || !customerEmail) {
       return res.status(400).json({
@@ -1404,7 +1404,7 @@ const sendbackOrder = async (req, res) => {
       p_typeof: 1,
       p_idlogin_insert: p_idlogin_modify,
       p_memo_date: new Date(),
-      p_memo_subject: `Ordre numéro ${p_id_order} est renvoyé`,
+      p_memo_subject: `Votre commande ${orderTitle} est renvoyé`,
       p_memo_body: returnReason,
       p_mail_to: customerEmail,
       p_mail_bcc: null,
@@ -1450,7 +1450,7 @@ const sendbackOrder = async (req, res) => {
 const rejectOrder = async (req, res) => {
   try {
     // Extract required parameters
-    const { p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail } = req.body;
+    const { p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail,orderTitle } = req.body;
 
     if (!p_id_order || !p_id_cust_account || !p_idlogin_modify || !customerEmail) {
       return res.status(400).json({
@@ -1491,7 +1491,7 @@ const rejectOrder = async (req, res) => {
           p_typeof: 1, // for rejection memo, using type 1
           p_idlogin_insert: p_idlogin_modify,
           p_memo_date: new Date(),
-          p_memo_subject: `Ordre numéro ${p_id_order} est rejeté`,
+          p_memo_subject: `Votre commande ${orderTitle} est rejeté`,
           p_memo_body: rejectReason,
           p_mail_to: customerEmail,
           p_mail_bcc: null,

@@ -148,7 +148,8 @@ const OpOrderDetails = () => {
               transportModes: transportModesObj,
               documents: order.documents || [],
               orderStatus: order.id_order_status,
-              custAccountId: order.id_cust_account
+              custAccountId: order.id_cust_account,
+              title: order.order_title
             }));
           } else {
             console.error('Commande introuvable pour l’ID :', orderId);
@@ -209,7 +210,7 @@ const OpOrderDetails = () => {
       const customerEmail = custUsersResponse.data[0].email;
   
       // Appeler l'API rejectOrder en passant la raison de rejet et l'email
-      const result = await rejectOrder(orderId, formData.custAccountId, idLogin, rejectReason, customerEmail);
+      const result = await rejectOrder(orderId, formData.custAccountId, idLogin, rejectReason, customerEmail,formData.title);
       console.log('Commande rejetée avec succès:', result);
       setShowRejectModal(false);
       navigate('/operator-dashboard');
@@ -247,7 +248,8 @@ const OpOrderDetails = () => {
         formData.custAccountId,  // now included as p_id_cust_account
         idLogin,
         returnReason,
-        customerEmail
+        customerEmail,
+        formData.title
       );
 
       console.log('Commande renvoyée avec succès:', result);
@@ -275,9 +277,8 @@ const OpOrderDetails = () => {
       );
 
       const customerEmail = custUsersResponse.data[0].email;
-
       // Appeler l'API pour approuver la commande en passant aussi l'email du client
-      const result = await approveOrder(orderId, formData.custAccountId, idLogin, customerEmail);
+      const result = await approveOrder(orderId, formData.custAccountId, idLogin, customerEmail, formData.title);
       console.log('Commande approuvée:', result);
       navigate('/operator-dashboard');
     } catch (error) {
