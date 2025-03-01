@@ -4834,3 +4834,7 @@ CALL add_files_repo_typeof(51, 'Numéro Immatriculation RCS', 'Registration numb
 CALL add_files_repo_typeof(500, 'Certificat d''origine - Facture Commerciale', 'Certificate of origin - Commercial Invoice', TRUE);
 CALL add_files_repo_typeof(501, 'Certificat d''origine - Liste de colisage', 'Certificate of origin - Packing List', TRUE);
 CALL add_files_repo_typeof(502, 'Certificat d''origine - Certificat de poids', 'Certificate of origin - Weight Certificate', FALSE);
+
+
+CALL add_files_repo_typeof(1000, 'Certificat d''origine - Original', 'Certificate of origin - Original', FALSE);
+CALL add_files_repo_typeof(1001, 'Certificat d''origine - Copie', 'Certificate of origin - Copy', FALSE);
