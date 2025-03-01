@@ -1226,3 +1226,49 @@ export const getOrderStaticsByServices = async (params = {}) => {
     throw error;
   }
 };
+
+export const billOrder = async (p_id_order, p_idlogin_modify) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/bill_order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ p_id_order, p_idlogin_modify }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to bill order');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (billOrder):', error);
+    throw error;
+  }
+};
+
+export const setInvoiceHeader = async (invoiceData) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/invoice-header`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(invoiceData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to set invoice header');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (setInvoiceHeader):', error);
+    throw error;
+  }
+};

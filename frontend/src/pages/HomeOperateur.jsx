@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { getOrderOpInfo, cancelOrder } from '../services/apiServices';
 import { useTheme } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import Tabs from '@mui/material/Tabs';
@@ -25,6 +24,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { formatDate } from '../utils/dateUtils';
 import PaymentModal from './PaymentModal'; // Chemin à adapter si nécessaire
+import { getOrderOpInfo } from '../services/apiServices';
 
 
 

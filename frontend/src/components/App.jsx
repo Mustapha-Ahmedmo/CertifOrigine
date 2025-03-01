@@ -49,6 +49,7 @@ import InactivityHandler from './InactivityHandler';
 import Step2 from './orders/Create/steps/Step2';
 import OrderDetailsPage from '../pages/OrderDetails/OrderPageDetails';
 import NotificationPage from '../pages/Notifications/NotificationPage';
+import SearchOrders from '../pages/SearchOrders/SearchOrders';
 
 const App = () => {
   const dispatch = useDispatch();
@@ -118,6 +119,8 @@ const App = () => {
             <Route path="oporderdetails" element={<OpOrderDetails />} />
             <Route path="list-type" element={<ListTypePage />} />
             <Route path="dashboardoperateur" element={<DashboardOperateur />} />
+
+            <Route path="search-orders" element={<SearchOrders />} />
           </Route>
         </Route>
 
