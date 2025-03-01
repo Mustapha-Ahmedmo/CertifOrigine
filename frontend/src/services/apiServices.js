@@ -1051,7 +1051,7 @@ export const removeSingleCertifTranspMode = async (p_id_ord_certif_ori, p_id_tra
   }
 };
 
-export const approveOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, customerEmail) => {
+export const approveOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, customerEmail, orderTitle) => {
   try {
     const response = await fetch(`${API_URL}/orders/approve_order`, {
       method: 'POST',
@@ -1060,7 +1060,7 @@ export const approveOrder = async (p_id_order, p_id_cust_account, p_idlogin_modi
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
       // Pass p_id_cust_account and customerEmail along with other parameters
-      body: JSON.stringify({ p_id_order, p_id_cust_account, p_idlogin_modify, customerEmail }),
+      body: JSON.stringify({ p_id_order, p_id_cust_account, p_idlogin_modify, customerEmail, orderTitle }),
     });
     
     if (!response.ok) {
@@ -1075,7 +1075,7 @@ export const approveOrder = async (p_id_order, p_id_cust_account, p_idlogin_modi
   }
 };
 
-export const sendbackOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, returnReason, customerEmail) => {
+export const sendbackOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, returnReason, customerEmail, orderTitle) => {
   try {
     const response = await fetch(`${API_URL}/orders/sendback_order`, {
       method: 'POST',
@@ -1088,7 +1088,8 @@ export const sendbackOrder = async (p_id_order, p_id_cust_account, p_idlogin_mod
         p_id_cust_account, 
         p_idlogin_modify, 
         returnReason, 
-        customerEmail 
+        customerEmail,
+        orderTitle
       }),
     });
     
@@ -1103,7 +1104,7 @@ export const sendbackOrder = async (p_id_order, p_id_cust_account, p_idlogin_mod
     throw error;
   }
 };
-export const rejectOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail) => {
+export const rejectOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail, orderTitle) => {
   try {
     const response = await fetch(`${API_URL}/orders/reject_order`, {
       method: 'POST',
@@ -1111,7 +1112,7 @@ export const rejectOrder = async (p_id_order, p_id_cust_account, p_idlogin_modif
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
-      body: JSON.stringify({ p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail }),
+      body: JSON.stringify({ p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail, orderTitle }),
     });
     
     if (!response.ok) {
