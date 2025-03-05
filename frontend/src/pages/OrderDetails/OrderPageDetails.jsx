@@ -155,6 +155,7 @@ const OrderDetailsPage = () => {
             id_ord_certif_goods: good.id_ord_certif_goods,  // add this property
             designation: good.good_description,
             boxReference: good.good_references,
+            docReference: good.doc_references,
             quantity: good.weight_qty, // Ensure that your API returns quantity; otherwise, adjust
             unit: good.symbol_fr || 'N/A',
           }));

@@ -129,9 +129,9 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
             fetchedGoods.map((good) => ({
               designation: good.goodDescription,
               boxReference: good.goodReferences,
+              docReference: good.docReferences,
               quantity: good.quantity,
               unit: good.unit || 'N/A',
-              reference: '',
             }))
           );
           setMerchEditStates(fetchedGoods.map(() => false));
@@ -242,7 +242,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       boxReference: '',
       quantity: '',
       unit: 'kilo',
-      reference: '',
+      docReference: '',
     };
     const updated = [...safeValues.merchandises, newItem];
     handleChange('merchandises', updated);
@@ -377,7 +377,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       }
       for (const merchandise of safeValues.merchandises) {
         if (!merchandise.boxReference || !merchandise.designation) {
-          throw new Error("Référence/HSCODE et Nature sont obligatoires pour chaque marchandise.");
+          throw new Error("Référence/HSCODE et Designation sont obligatoires pour chaque marchandise.");
         }
         const normalizeText = (txt) => (txt || '').toLowerCase().trim();
         const matchedUnit = unitWeights.find(
@@ -390,6 +390,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           idOrdCertifOri: certResponse.newCertifId,
           goodDescription: merchandise.designation,
           goodReferences: merchandise.boxReference,
+          docReferences: merchandise.docReference,
           weight_qty: merchandise.quantity,
           idUnitWeight: matchedUnit.id_unit_weight,
         };
@@ -815,9 +816,9 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       label="Référence doc. justificatif"
                       variant="outlined"
                       fullWidth
-                      value={m.reference || ''}
+                      value={m.docReference || ''}
                       onChange={(e) =>
-                        handleMerchChange(index, 'reference', e.target.value)
+                        handleMerchChange(index, 'docReference', e.target.value)
                       }
                       disabled={!isEditable}
                       sx={{ ...customFieldStyle }}

@@ -1315,8 +1315,16 @@ const delFilesRepo = async (req, res) => {
 
 const approveOrder = async (req, res) => {
   try {
-    // Extract required parameters from req.body
-    const { p_id_order, p_id_cust_account, p_idlogin_modify, customerEmail, orderTitle } = req.body;
+
+    const { 
+      p_id_order, 
+      p_id_cust_account, 
+      p_idlogin_modify, 
+      customerEmail, 
+      orderTitle, 
+      orderDate,   // Expecting a string like "12/03/2025"
+      totalFD      // Total amount (as a number or string)
+    } = req.body;
 
     if (!p_id_order || !p_id_cust_account || !p_idlogin_modify || !customerEmail) {
       return res.status(400).json({
@@ -1369,8 +1377,6 @@ const approveOrder = async (req, res) => {
       }
     );
 
-    const orderDate = new Date().toLocaleDateString(); // Use actual order date if available
-    const totalFD = 1000; // Replace with computed total amount if needed
     await sendEmailNotification(p_id_order, 'approuvé', '', customerEmail, orderDate, totalFD);
 
     res.status(200).json({ message: 'Commande approuvée avec succès.' });

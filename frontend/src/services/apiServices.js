@@ -1050,8 +1050,15 @@ export const removeSingleCertifTranspMode = async (p_id_ord_certif_ori, p_id_tra
     throw error;
   }
 };
-
-export const approveOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, customerEmail, orderTitle) => {
+export const approveOrder = async (
+  p_id_order,
+  p_id_cust_account,
+  p_idlogin_modify,
+  customerEmail,
+  orderTitle,
+  orderDate,
+  totalFD
+) => {
   try {
     const response = await fetch(`${API_URL}/orders/approve_order`, {
       method: 'POST',
@@ -1059,15 +1066,22 @@ export const approveOrder = async (p_id_order, p_id_cust_account, p_idlogin_modi
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
-      // Pass p_id_cust_account and customerEmail along with other parameters
-      body: JSON.stringify({ p_id_order, p_id_cust_account, p_idlogin_modify, customerEmail, orderTitle }),
+      body: JSON.stringify({
+        p_id_order,
+        p_id_cust_account,
+        p_idlogin_modify,
+        customerEmail,
+        orderTitle,
+        orderDate,  // e.g., "12/03/2025"
+        totalFD,    // e.g., the computed total amount (as a number or string)
+      }),
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to approve order');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('API call error (approveOrder):', error);
