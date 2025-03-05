@@ -156,7 +156,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
               <ListItemIcon sx={{ color: "black" }}>
                 <FontAwesomeIcon icon={faClipboardList} />
               </ListItemIcon>
-              <ListItemText primary="Commandes & Factures" primaryTypographyProps={{ fontSize: "14px" }} />
+              <ListItemText primary="Commandes & Paiements" primaryTypographyProps={{ fontSize: "14px" }} />
             </ListItemButton>
           </ListItem>
           <Collapse in={openMenu.orders} timeout="auto" unmountOnExit>
@@ -233,52 +233,6 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                       sx={{ pl: 6, ...selectedStyle }}
                     >
                       <ListItemText primary={`Avant ${previousYear}`} primaryTypographyProps={{ fontSize: "12px" }} />
-                    </ListItemButton>
-                  </ListItem>
-                </List>
-              </Collapse>
-              {/* Historiques des factures */}
-              <ListItem disablePadding>
-                <ListItemButton onClick={() => toggleSubmenu('invoiceHistory')} sx={{ pl: 4, cursor: 'pointer' }}>
-                  <ListItemIcon sx={{ color: "black" }}>
-                    <FontAwesomeIcon icon={faFileInvoiceDollar} />
-                  </ListItemIcon>
-                  <ListItemText primary="Historiques des factures" primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-              </ListItem>
-              <Collapse in={openMenu.invoiceHistory} timeout="auto" unmountOnExit>
-                <List component="div" disablePadding>
-                  <ListItem disablePadding>
-                    <ListItemButton
-                      component={Link}
-                      to="/invoices/history/2024"
-                      onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistory2024')}
-                      selected={activeLink === 'invoiceHistory2024'}
-                      sx={{ pl: 6, ...selectedStyle }}
-                    >
-                      <ListItemText primary="2024" primaryTypographyProps={{ fontSize: "12px" }} />
-                    </ListItemButton>
-                  </ListItem>
-                  <ListItem disablePadding>
-                    <ListItemButton
-                      component={Link}
-                      to="/invoices/history/2023"
-                      onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistory2023')}
-                      selected={activeLink === 'invoiceHistory2023'}
-                      sx={{ pl: 6, ...selectedStyle }}
-                    >
-                      <ListItemText primary="2023" primaryTypographyProps={{ fontSize: "12px" }} />
-                    </ListItemButton>
-                  </ListItem>
-                  <ListItem disablePadding>
-                    <ListItemButton
-                      component={Link}
-                      to="/invoices/history/before-2023"
-                      onClick={() => handleLinkClick('invoiceHistory', 'invoiceHistoryBefore2023')}
-                      selected={activeLink === 'invoiceHistoryBefore2023'}
-                      sx={{ pl: 6, ...selectedStyle }}
-                    >
-                      <ListItemText primary="Avant 2023" primaryTypographyProps={{ fontSize: "12px" }} />
                     </ListItemButton>
                   </ListItem>
                 </List>

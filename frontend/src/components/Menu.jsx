@@ -348,16 +348,16 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           </Collapse>
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-          {/* Mes destinataires (sous-menu) */}
+         {/* Mes destinataires (sous-menu) */}
           <ListItem disablePadding>
-            <ListItemButton onClick={() => handleToggleSubmenu("clients")}>
+            <ListItemButton onClick={() => handleToggleSubmenu("destinataires")}>
               <ListItemIcon sx={{ color: "black" }}>
                 <FontAwesomeIcon icon={faUsers} />
               </ListItemIcon>
               <ListItemText primary="Mes destinataires" primaryTypographyProps={{ fontSize: "14px" }} />
             </ListItemButton>
           </ListItem>
-          <Collapse in={openSubmenus.clients} timeout="auto" unmountOnExit>
+          <Collapse in={openSubmenus.destinataires} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               <ListItem disablePadding>
                 <ListItemButton
@@ -375,7 +375,36 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               </ListItem>
             </List>
           </Collapse>
+
+          {/* Mes contacts (sous-menu) */}
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleToggleSubmenu("contacts")}>
+              <ListItemIcon sx={{ color: "black" }}>
+                <FontAwesomeIcon icon={faUsers} />
+              </ListItemIcon>
+              <ListItemText primary="Mes contacts" primaryTypographyProps={{ fontSize: "14px" }} />
+            </ListItemButton>
+          </ListItem>
+          <Collapse in={openSubmenus.contacts} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItem disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4, ...selectedStyle }}
+                  component={Link}
+                  to="/dashboard/contactslist"
+                  onClick={handleLinkClick}
+                  selected={location.pathname === "/dashboard/contactslist"}
+                >
+                  <ListItemIcon sx={{ color: "black" }}>
+                    <FontAwesomeIcon icon={faUsers} />
+                  </ListItemIcon>
+                  <ListItemText primary="Liste des contacts" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+            </List>
+          </Collapse>
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
+
 
           {/* Bouton de déconnexion */}
           <Box sx={{ marginTop: "auto" }}>
