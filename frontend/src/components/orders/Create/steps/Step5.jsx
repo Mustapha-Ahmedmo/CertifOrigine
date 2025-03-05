@@ -506,6 +506,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
         idOrdCertifOri: certifId, // using certifId from query string
         goodDescription: newMerchLocal.designation,
         goodReferences: newMerchLocal.boxReference,
+        goodDocReferences: newMerchLocal.docReference,
         weight_qty: newMerchLocal.quantity,
         idUnitWeight: matchedUnit.id_unit_weight,
       };
@@ -529,6 +530,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
       setNewMerchLocal({
         designation: '',
         boxReference: '',
+        docReference: '',
         quantity: '',
         unit: '',
       });
@@ -623,7 +625,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
         p_id_order: orderId,
         p_idfiles_repo_typeof: newDocumentData.selectedFileType,
         p_file_origin_name: newDocumentData.file.name,
-        p_typeof_order: 0, // adjust if needed
+        p_typeof_order: 1, // adjust if needed
         p_idlogin_insert: idLogin,
         file: newDocumentData.file,
       };
@@ -805,6 +807,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
                   <tr>
                     <th>Désignation</th>
                     <th>Référence / HSCODE</th>
+                    <th>Référence doc. Justificatif</th>
                     <th>Quantité</th>
                     <th>Unité</th>
                     {isModifiable && <th>Action</th>}
@@ -815,6 +818,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
                     <tr key={index}>
                       <td>{item.designation || 'Non spécifié'}</td>
                       <td>{item.boxReference || 'Non spécifié'}</td>
+                      <td>{item.docReference || 'Non spécifié'}</td>
                       <td>{item.quantity || 'Non spécifié'}</td>
                       <td>{item.unit || 'Non spécifié'}</td>
                       {isModifiable && (

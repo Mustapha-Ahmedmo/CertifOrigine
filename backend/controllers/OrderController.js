@@ -15,12 +15,14 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-async function sendEmailNotification(orderId, status, reason, recipientEmail) {
+async function sendEmailNotification(orderId, status, reason, recipientEmail, orderDate, totalFD) {
   let subject = `Ordre numéro ${orderId} est ${status}`;
   let body = '';
 
-  if (status === 'approuvé') {
-    body = 'Votre certificat a été validé, nous vous invitons à venir régler le certificat.';
+  // If status is "Valider" (or "validé" or "approuvé"), send the validation email.
+  if (status === 'Valider' || status === 'validé' || status === 'approuvé') {
+    body = `Nous vous informons que votre commande de certificat N° ${orderId} du ${orderDate} est validée. Par conséquent, nous vous invitons à procéder au règlement d’un montant total de ${totalFD} FD. Vous pouvez régler le paiement par chèque, en espèces ou par virement bancaire.
+Votre certificat, et le cas échéant les copies conformes, sera (ou seront) disponible(s) sur votre compte dès le paiement de ce montant.`;
   } else if (status === 'renvoyé' || status === 'rejeté') {
     body = `Votre certificat a été ${status}. Raison : ${reason}`;
   } else {
@@ -34,7 +36,7 @@ async function sendEmailNotification(orderId, status, reason, recipientEmail) {
     text: body,
   };
 
-
+  // Assumes that "transporter" is defined in your module (e.g., via nodemailer)
   return transporter.sendMail(mailOptions);
 }
 
@@ -158,6 +160,7 @@ const getUnitWeightInfo = async (req, res) => {
     });
   }
 };
+
 const getRecipientInfo = async (req, res) => {
   try {
     const { idListR, idListCA, isActiveR, isActiveCA, statutFlagR, statutFlagCA } = req.query;
@@ -197,6 +200,7 @@ const getRecipientInfo = async (req, res) => {
     });
   }
 };
+
 const setRecipientAccount = async (req, res) => {
   try {
     const {
@@ -989,7 +993,7 @@ const getOrderFilesInfoController = async (req, res) => {
       p_id_order_files_list,
       p_id_order_list,
       p_id_files_repo_list,
-      p_id_files_repo_typeof_list,
+      p_idfiles_repo_typeof,
       p_isactive,
       p_id_custaccount,
       p_id_list_orderstatus,
@@ -1001,7 +1005,7 @@ const getOrderFilesInfoController = async (req, res) => {
       p_id_order_files_list: p_id_order_files_list || null,
       p_id_order_list: p_id_order_list || null,
       p_id_files_repo_list: p_id_files_repo_list || null,
-      p_id_files_repo_typeof_list: p_id_files_repo_typeof_list || null,
+      p_id_files_repo_typeof_list: p_idfiles_repo_typeof || null,
       p_isactive: typeof p_isactive !== 'undefined' ? (p_isactive.toLowerCase() === 'true') : null,
       p_id_custaccount: p_id_custaccount ? parseInt(p_id_custaccount, 10) : null,
       p_id_list_orderstatus: p_id_list_orderstatus || null,
@@ -1308,6 +1312,7 @@ const delFilesRepo = async (req, res) => {
     });
   }
 };
+
 const approveOrder = async (req, res) => {
   try {
     // Extract required parameters from req.body
@@ -1364,8 +1369,9 @@ const approveOrder = async (req, res) => {
       }
     );
 
-    // 3. Send an email notification for the approval.
-    await sendEmailNotification(p_id_order, 'approuvé', '', customerEmail);
+    const orderDate = new Date().toLocaleDateString(); // Use actual order date if available
+    const totalFD = 1000; // Replace with computed total amount if needed
+    await sendEmailNotification(p_id_order, 'approuvé', '', customerEmail, orderDate, totalFD);
 
     res.status(200).json({ message: 'Commande approuvée avec succès.' });
   } catch (error) {

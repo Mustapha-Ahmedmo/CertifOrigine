@@ -27,7 +27,7 @@ import {
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faFilePdf } from '@fortawesome/free-solid-svg-icons';
-import { fetchCountries, getOrderOpInfo } from '../../services/apiServices';
+import { fetchCountries, fetchRecipients, getCertifGoodsInfo, getCertifTranspMode, getCustAccountInfo, getOrderFilesInfo, getOrderOpInfo, getTransmodeInfo, setOrderFiles } from '../../services/apiServices';
 import { formatDate } from '../../utils/dateUtils';
 import './SearchOrders.css';
 import { generatePDF } from '../../components/orders/GeneratePDF'
@@ -43,6 +43,8 @@ const MenuProps = {
   },
 };
 
+
+const API_URL = import.meta.env.VITE_API_URL;
 // List of status codes
 const allStatuses = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
@@ -85,6 +87,11 @@ const SearchOrders = () => {
   // Pagination state
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const [transpMode, settransportModes] = useState({});
+
+  const [orderFiles, setOrderFilesMap] = useState({});
+
 
   // Handler for multi‑select dropdown change
   const handleStatusChange = (event) => {
@@ -180,29 +187,142 @@ const SearchOrders = () => {
     navigate(`/dashboard/operator/oporderdetails?orderId=${order.id_order}&certifId=${certifId}`);
   };
 
-  const handleGeneratePDF = (order) => {
+  useEffect(() => {
+    const fetchTransportModes = async () => {
+      try {
+        const fetched = await getTransmodeInfo(null, true);
+        // Assume fetched.data is an object like { air: true, mer: false, terre: true, mixte: false }
+        settransportModes(fetched.data || {});
+
+      } catch (error) {
+        console.error("Error fetching transport modes:", error);
+      }
+    };
+    fetchTransportModes();
+  }, []);
+
+  const handleGeneratePDF = async (order) => {
     console.log('Génération de PDF pour la commande:', order);
+    console.log("Transmode : ", transpMode)
     // Lookup country names based on the order's country IDs.
     const originCountry = countries.find(c => c.id_country === order.id_country_origin)?.symbol_fr || '';
     const destinationCountry = countries.find(c => c.id_country === order.id_country_destination)?.symbol_fr || '';
     const portLoading = countries.find(c => c.id_country === order.id_country_port_loading)?.symbol_fr || '';
     const portDischarge = countries.find(c => c.id_country === order.id_country_port_discharge)?.symbol_fr || '';
 
+
+
+    // 2. Récupérer les modes de transport (optionnel)
+    const transpResponse = await getCertifTranspMode({
+      idListCT: null,
+      idListCO: order.id_ord_certif_ori ? order.id_ord_certif_ori.toString() : null,
+      isActiveOT: 'true',
+      isActiveTM: 'true',
+      idListOrder: null,
+      idListOrderStatus: null,
+    });
+    let transportModesObj = {};
+    if (transpResponse && transpResponse.data) {
+      transpResponse.data.forEach((mode) => {
+        transportModesObj[mode.symbol_fr.toLowerCase()] = true;
+      });
+    }
+
+    console.log("transpResponse ", transportModesObj)
+
+    const custAccountInfo = await getCustAccountInfo(order.id_cust_account);
+    console.log("custAccountInfo ", custAccountInfo);
+
+    const exporterCountry = countries.find(c => c.id_country === custAccountInfo.data[0].id_country)?.symbol_fr || '';
+    console.log("exporterCountry ", exporterCountry);
+
+    const certifGoods = await getCertifGoodsInfo(
+      order.id_ord_certif_ori
+    );
+    console.log("certifGoods =>", certifGoods);
+
+    const recipientInfoResponse = await fetchRecipients({
+      idListR: order.id_recipient_account ? order.id_recipient_account.toString() : null,
+    });
+    const recipient = (recipientInfoResponse.data && recipientInfoResponse.data.length > 0)
+      ? recipientInfoResponse.data[0]
+      : {};
+    console.log("Recipient info:", recipient);
+
     const formData = {
-      transportModes: order.transportModes || { road: false, sea: false, air: false },
-      merchandises: order.merchandises || [],
+      transportModes: transportModesObj,
+      merchandises: certifGoods.data || [],
       exporterName: order.cust_name || '',
-      exporterAddress: [order.address_1, order.address_2, order.address_3].filter(Boolean).join(', '),
-      exporterCity: order.city || '',
+      exporterAddress: custAccountInfo.data[0].full_address,
+      exporterCountry: exporterCountry || '',
       originCountry,        // Country of origin name
       destinationCountry,   // Destination country name
       portLoading,          // Port de chargement name
       portDischarge,        // Port de déchargement name
+      recipientName: recipient.recipient_name || '',
+      recipientAddress: [recipient.address_1, recipient.address_2, recipient.address_3].filter(Boolean).join(', '),
+      recipientCountry: recipient.country_symbol_fr_recipient,
+      DateValidation: order.date_validation_ori,
+      Certifid: order.id_ord_certif_ori
     };
 
     // Now call generatePDF with the real formData
-    generatePDF(formData);
+    const pdfBlob = await generatePDF(formData);
+    const pdfFile = new File(
+      [pdfBlob],
+      `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}.pdf`,
+      { type: 'application/pdf' }
+    );
+
+    const orderFileData = {
+      uploadType: 'commandes',
+      p_id_order: order.id_order,
+      p_idfiles_repo_typeof: 1000, // Use 1000 as the type for certificate file
+      p_file_origin_name: `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}.pdf`,
+      p_typeof_order: 1,
+      p_idlogin_insert: operatorId,
+      file: pdfFile,
+    };
+
+    // Call setOrderFiles to store the generated PDF.
+    await setOrderFiles(orderFileData);
+    console.log("PDF generated and order file saved successfully.");
   };
+
+  const handleFileClick = (file) => {
+    // Construct the file URL
+    const fileUrl = `${API_URL}/files/commandes/${new Date().getFullYear()}/${file.file_guid}`;
+    // Open in a new browser tab
+    window.open(fileUrl, '_blank');
+  };
+
+  useEffect(() => {
+    const fetchFilesForOrders = async () => {
+      let filesMapping = {};
+      for (const order of orders) {
+        try {
+          const result = await getOrderFilesInfo({
+            p_id_order_list: order.id_order,
+            p_idfiles_repo_typeof: 1000,
+          });
+
+          console.log("getOrderFilesInfo => ", result)
+          if (result && result.length > 0) {
+            filesMapping[order.id_order] = result[0]; // Store the first certificate file
+          }
+
+          console.log("filesmapping ", filesMapping)
+        } catch (error) {
+          console.error("Error fetching file info for order", order.id_order, error);
+        }
+      }
+      setOrderFilesMap(filesMapping);
+    };
+
+    if (orders.length > 0) {
+      fetchFilesForOrders();
+    }
+  }, [orders]);
 
 
   const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -326,9 +446,27 @@ const SearchOrders = () => {
                       <FontAwesomeIcon icon={faEye} /> Détails
                     </Button>
                     {order.id_order_status === 5 && (
-                      <Button variant="contained" color="secondary" size="small" onClick={() => handleGeneratePDF(order)} sx={{ ml: 1 }}>
-                        <FontAwesomeIcon icon={faFilePdf} /> Générer PDF
-                      </Button>
+                      orderFiles[order.id_order] ? (
+                        <Button
+                          variant="contained"
+                          color="success"
+                          size="small"
+                          onClick={() => handleFileClick(orderFiles[order.id_order])}
+                          sx={{ ml: 1 }}
+                        >
+                          <FontAwesomeIcon icon={faFilePdf} /> Ouvrir
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          size="small"
+                          onClick={() => handleGeneratePDF(order)}
+                          sx={{ ml: 1 }}
+                        >
+                          <FontAwesomeIcon icon={faFilePdf} /> Générer PDF
+                        </Button>
+                      )
                     )}
                   </TableCell>
                 </TableRow>

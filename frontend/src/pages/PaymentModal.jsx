@@ -1,4 +1,3 @@
-// PaymentModal.jsx
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -17,21 +16,17 @@ import {
   Box,
   FormControlLabel as MuiFormControlLabel,
 } from '@mui/material';
-import { billOrder, setInvoiceHeader } from '../services/apiServices'; // API service function for invoice header
+import { billOrder, setInvoiceHeader } from '../services/apiServices'; // API service functions
 import { useSelector } from 'react-redux';
 
 function PaymentModal({ open, onClose, onSubmit, order }) {
-  // order may contain fields such as id_order, orderYear, cust_name, copy_count_ori,
-  // unit_price_ord_certif_ori, unit_price_copies_ord_certif_ori, address_1, address_2, address_3,
-  // country_symbol_fr, etc.
-
   // Default invoice date: today's date (YYYY-MM-DD)
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
   const [invoiceNumber, setInvoiceNumber] = useState('');
 
   // Calculate Montant HT: unit_price_ord_certif_ori + (copies * unit_price_copies_ord_certif_ori)
-  const unitPriceCertif = order?.unit_price_ord_certif_ori ? parseFloat(order.unit_price_ord_certif_ori) : 10000;
-  const unitPriceCopies = order?.unit_price_copies_ord_certif_ori ? parseFloat(order.unit_price_copies_ord_certif_ori) : 1000;
+  const unitPriceCertif = order?.unit_price_ord_certif_ori ? parseFloat(order.unit_price_ord_certif_ori) : 8500;
+  const unitPriceCopies = order?.unit_price_copies_ord_certif_ori ? parseFloat(order.unit_price_copies_ord_certif_ori) : 2500;
   const copies = order?.copy_count_ori ? parseFloat(order.copy_count_ori) : 1;
   const computedMontantHT = (unitPriceCertif + copies * unitPriceCopies).toFixed(2);
 
@@ -49,10 +44,13 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
   const [customPaymentMethod, setCustomPaymentMethod] = useState('');
   const [generateCertif, setGenerateCertif] = useState(false);
 
+  // NEW: Payment Information field
+  const [paymentInfo, setPaymentInfo] = useState('');
+
   // State to control the confirmation dialog
   const [confirmationOpen, setConfirmationOpen] = useState(false);
 
-  // Get the operator (user) info from Redux (we use operatorId for both insert and modify)
+  // Get the operator (user) info from Redux
   const user = useSelector((state) => state.auth.user);
   const operatorId = user?.id_login_user;
 
@@ -72,36 +70,34 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
   // Compute TOTAL as Montant HT + Taxe
   const totalAmount = (parseFloat(montantHT) + parseFloat(montantTaxe)).toFixed(2);
 
-  // When the user clicks "ENREGISTRER LE PAIEMENT", open the confirmation dialog.
+  // Open confirmation dialog on clicking "ENREGISTRER LE PAIEMENT"
   const handleOpenConfirmation = () => {
     setConfirmationOpen(true);
   };
 
-  // When the user confirms ("Oui"), call setInvoiceHeader.
+  // When the user confirms ("Oui"), call billOrder and setInvoiceHeader.
   const handleConfirmPayment = async () => {
     try {
       const billResponse = await billOrder(order.id_order, operatorId);
       console.log('Order billed successfully:', billResponse);
 
-     
       // Prepare the invoice header data.
-      // We include p_idlogin_modify (set here equal to operatorId) for the stored procedure.
       const invoiceData = {
         p_id_order: order?.id_order,
         p_invoice_number: invoiceNumber,
         p_amount_exVat: parseFloat(montantHT),
         p_amount_Vat: parseFloat(montantTaxe),
         p_idlogin_insert: operatorId,
-        p_paymentDate: invoiceDate, // Should be in a valid timestamp format (YYYY-MM-DD)
+        p_paymentDate: invoiceDate, // Must be a valid timestamp (YYYY-MM-DD)
         p_free_txt1: paymentMethod === 'Autre' ? customPaymentMethod : paymentMethod,
-        p_free_txt2: "", // Optionally add additional info if needed
+        p_free_txt2: paymentInfo, // Payment information field added here.
         p_idlogin_modify: operatorId,
       };
 
       const response = await setInvoiceHeader(invoiceData);
       console.log('Invoice header set successfully:', response);
       setConfirmationOpen(false);
-      // Optionally, invoke parent's onSubmit callback if provided:
+      // Optionally, invoke parent's onSubmit callback if provided.
       if (onSubmit) onSubmit(response);
     } catch (error) {
       console.error('Erreur lors de la facturation de la commande:', error);
@@ -204,6 +200,15 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
               />
             )}
           </FormControl>
+
+          {/* NEW: Payment Information Input */}
+          <TextField
+            label="Informations concernant le paiement"
+            fullWidth
+            value={paymentInfo}
+            onChange={(e) => setPaymentInfo(e.target.value)}
+            sx={{ mb: 2 }}
+          />
 
           {/* Checkbox for generating certificate */}
           <MuiFormControlLabel

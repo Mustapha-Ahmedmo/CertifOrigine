@@ -755,7 +755,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       sx={{ ...customFieldStyle }}
                     />
                     <TextField
-                      label="Nature"
+                      label="Description"
                       variant="outlined"
                       fullWidth
                       value={m.designation}

@@ -120,7 +120,7 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
           p_id_order: orderId,
           p_idfiles_repo_typeof: doc.fileTypeId,
           p_file_origin_name: doc.file.name,
-          p_typeof_order: 0,
+          p_typeof_order: 1,
           p_idlogin_insert: idloginInsert,
           file: doc.file,
         };

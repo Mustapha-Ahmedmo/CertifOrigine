@@ -90,7 +90,7 @@ const OpOrderDetails = () => {
         let transportModesObj = {};
         if (transpResponse && transpResponse.data) {
           transpResponse.data.forEach((mode) => {
-            transportModesObj[mode.symbol_eng.toLowerCase()] = true;
+            transportModesObj[mode.symbol_fr.toLowerCase()] = true;
           });
         }
 
@@ -162,6 +162,7 @@ const OpOrderDetails = () => {
           const mappedGoods = (goodsResponse.data || []).map(good => ({
             designation: good.good_description,
             boxReference: good.good_references,
+            docReference: good.doc_references,
             quantity: good.weight_qty,
             unit: good.symbol_fr || 'N/A',
           }));
@@ -208,9 +209,9 @@ const OpOrderDetails = () => {
         true
       );
       const customerEmail = custUsersResponse.data[0].email;
-  
+
       // Appeler l'API rejectOrder en passant la raison de rejet et l'email
-      const result = await rejectOrder(orderId, formData.custAccountId, idLogin, rejectReason, customerEmail,formData.title);
+      const result = await rejectOrder(orderId, formData.custAccountId, idLogin, rejectReason, customerEmail, formData.title);
       console.log('Commande rejetée avec succès:', result);
       setShowRejectModal(false);
       navigate('/operator-dashboard');
@@ -241,7 +242,7 @@ const OpOrderDetails = () => {
         true
       );
       const customerEmail = custUsersResponse.data[0].email;
-  
+
       // Appeler l'API sendbackOrder en passant la raison de retour et l'email
       const result = await sendbackOrder(
         orderId,
@@ -267,7 +268,7 @@ const OpOrderDetails = () => {
     try {
       console.log('Tentative d\'approbation de la commande :', orderId);
 
-      
+
       const custUsersResponse = await getCustUsersByAccount(
         formData.custAccountId,
         null,            // statutflag (optional)
@@ -391,6 +392,7 @@ const OpOrderDetails = () => {
                     <tr>
                       <th>Désignation</th>
                       <th>Référence</th>
+                      <th>Référence doc. Justificatif</th>
                       <th>Quantité</th>
                       <th>Unité</th>
                     </tr>
@@ -400,6 +402,7 @@ const OpOrderDetails = () => {
                       <tr key={index}>
                         <td>{item.designation || 'Non spécifié'}</td>
                         <td>{item.boxReference || 'Non spécifié'}</td>
+                        <td>{item.docReference || 'Non spécifié'}</td>
                         <td>{item.quantity || 'Non spécifié'}</td>
                         <td>{item.unit || 'Non spécifié'}</td>
                       </tr>

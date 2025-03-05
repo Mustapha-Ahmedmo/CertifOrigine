@@ -344,7 +344,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                         <ListItemIcon sx={{ color: "black" }}>
                           <FontAwesomeIcon icon={faUsers} />
                         </ListItemIcon>
-                        <ListItemText primary="Clients validés" primaryTypographyProps={{ fontSize: "12px" }} />
+                        <ListItemText primary="Listing Clients" primaryTypographyProps={{ fontSize: "12px" }} />
                       </ListItemButton>
                     </ListItem>
                   </List>
