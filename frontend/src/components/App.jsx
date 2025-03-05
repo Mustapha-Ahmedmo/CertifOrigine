@@ -26,6 +26,7 @@ import ClientsValides from '../pages/ClientsValides';
 import OperatorsList from '../pages/OperatorsList';
 import Maintenance from '../pages/Maintenance';
 import HeaderLayout from '../components/HeaderLayout';
+import DestinataireList from '../pages/DestinataireList';
 
 // Pages du dashboard
 import Home from '../pages/Home';
@@ -98,7 +99,7 @@ const App = () => {
             <Route path="to-pay" element={<ToPay />} />
             <Route path="returned-orders" element={<ReturnedOrders />} />
             <Route path="contactslist" element={<ContactsList />} />
-            <Route path="destinatairelist" element={<Maintenance />} />
+            <Route path="destinatairelist" element={<DestinataireList />} />
             <Route
               path="completed-orders-this-year"
               element={<CompletedOrdersThisYear />}
