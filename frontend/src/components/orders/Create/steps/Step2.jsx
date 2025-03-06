@@ -28,14 +28,12 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
-import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Alert from '@mui/material/Alert';
-
-// Nouveaux imports pour la section ENGAGEMENT
-import Typography from '@mui/material/Typography';
 import Checkbox from '@mui/material/Checkbox';
+
+import Typography from '@mui/material/Typography';
 
 const customFieldStyle = {
   '& .MuiOutlinedInput-root': {
@@ -112,7 +110,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     4: "Veuillez ajouter et valider au moins une marchandise.",
     5: "Veuillez renseigner le nombre de copies certifiées.",
     6: "Veuillez certifier votre engagement.",
-    // Pour la section 8/8 (index 7) il n'y a pas de champ obligatoire.
   };
 
   // Chargement initial des données
@@ -171,6 +168,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     loadData();
   }, [certifId, customerAccountId]);
 
+  // Sécuriser les valeurs
   const safeValues = values || {
     goodsOrigin: '',
     goodsDestination: '',
@@ -184,27 +182,41 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   // Calcul du nombre de champs manquants pour la section courante
   const getMissingFieldsCount = () => {
     const fields = sectionConfig[currentSection] || [];
-    let missingCount = 0;
+    const missingFields = [];
+
     fields.forEach((fieldName) => {
       if (fieldName === 'transportModes') {
         const isTransportSelected = Object.keys(safeValues.transportModes || {}).some(
           (k) => safeValues.transportModes[k]
         );
-        if (!isTransportSelected) missingCount += 1;
+        if (!isTransportSelected) {
+          missingFields.push('transportModes');
+        }
       } else if (fieldName === 'merchandises') {
         if (!safeValues.merchandises || safeValues.merchandises.length === 0) {
-          missingCount += 1;
+          missingFields.push('merchandises');
+        }
+      } else if (fieldName === 'copies') {
+        // Le champ copies est obligatoire, mais peut rester vide (chaîne vide) tant que l'utilisateur n'a pas saisi
+        if (
+          safeValues.copies === null ||
+          safeValues.copies === undefined ||
+          safeValues.copies === ''
+        ) {
+          missingFields.push('copies');
         }
       } else if (!safeValues[fieldName]) {
-        missingCount += 1;
+        missingFields.push(fieldName);
       }
     });
-    return missingCount;
+
+    console.log('Section', currentSection, '- Missing fields:', missingFields);
+
+    return missingFields.length;
   };
 
   // Navigation entre sections avec validation des champs obligatoires
   const nextSection = () => {
-    // Vérification spécifique pour la section 4 (MARCHANDISES)
     if (currentSection === 4) {
       if (merchEditStates.some((state) => state)) {
         setErrorMessage(
@@ -213,7 +225,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         return;
       }
     }
-    // Pour toutes les sections sauf 1/8 (index 0) déjà remplies, on vérifie que tous les champs obligatoires sont remplis.
     if (currentSection !== 0) {
       const missing = getMissingFieldsCount();
       if (missing > 0) {
@@ -224,7 +235,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         return;
       }
     }
-    // Si tous les champs sont remplis, on passe à la section suivante et on efface l'erreur.
     setErrorMessage('');
     setSlideDirection('left');
     if (currentSection < totalSections - 1) {
@@ -247,7 +257,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       designation: '',
       boxReference: '',
       quantity: '',
-      unit: 'kilo',
+      unit: 'Kilo',
       docReference: '',
     };
     const updated = [...safeValues.merchandises, newItem];
@@ -291,7 +301,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     handleChange('merchandises', updated);
   };
 
-  // Navigation locale : retour à Step1 si currentSection est 0
   const onBack = () => {
     if (currentSection === 0) {
       prevStep();
@@ -301,7 +310,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     }
   };
 
-  // Soumission finale
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!safeValues.loadingPort) {
@@ -330,7 +338,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       return;
     }
 
-    // Traitement destinataire et certificat
     let recipientId = selectedRecipient;
     if (isNewDestinataire) {
       try {
@@ -351,20 +358,16 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         const recipientResponse = await addRecipient(newRecipientData);
         const newId = recipientResponse?.newRecipientId;
 
-        // On recharge la liste
         const updatedRecipientsResponse = await fetchRecipients({
           idListCA: customerAccountId,
         });
         setRecipients(updatedRecipientsResponse.data);
         handleChange('recipients', updatedRecipientsResponse.data);
 
-        // Sélection auto du nouveau
         setSelectedRecipient(newId);
         handleChange('selectedRecipientId', newId);
 
-        // Repasser en mode "choisir" pour éviter de rester en "saisir" après retour
         setIsNewDestinataire(false);
-
         recipientId = newId;
       } catch (err) {
         console.error('Erreur création destinataire :', err);
@@ -396,6 +399,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       if (!certResponse.newCertifId) {
         throw new Error("La réponse du serveur ne contient pas 'newCertifId'.");
       }
+
       for (const merchandise of safeValues.merchandises) {
         if (!merchandise.boxReference || !merchandise.designation) {
           throw new Error("Référence/HSCODE et Designation sont obligatoires pour chaque marchandise.");
@@ -417,6 +421,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         };
         await addOrUpdateGoods(goodsData);
       }
+
       const selectedModeKeys = Object.keys(safeValues.transportModes || {}).filter(
         (k) => safeValues.transportModes[k]
       );
@@ -432,6 +437,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           });
         }
       }
+
       setErrorMessage('');
       nextStep();
     } catch (err) {
@@ -443,7 +449,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   if (loading) return <div>Chargement en cours...</div>;
   if (error) return <div className="error-message">{error}</div>;
 
-  // Rendu des sections en fonction de currentSection
   const renderSection = () => {
     switch (currentSection) {
       case 0:
@@ -466,6 +471,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
             </div>
           </div>
         );
+
       case 1:
         return (
           <div>
@@ -476,21 +482,26 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
               <FormControl component="fieldset" sx={{ mb: 2 }}>
                 <RadioGroup
                   row
-                  // REMPLACEMENT : on lie la valeur au state
                   value={isNewDestinataire ? 'saisir' : 'choisir'}
                   onChange={(e) => setIsNewDestinataire(e.target.value === 'saisir')}
                 >
                   <FormControlLabel
                     value="choisir"
                     control={
-                      <Radio sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }} />
+                      <Checkbox
+                        sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }}
+                        checked={!isNewDestinataire}
+                      />
                     }
                     label={t('step1.chooseReceiver')}
                   />
                   <FormControlLabel
                     value="saisir"
                     control={
-                      <Radio sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }} />
+                      <Checkbox
+                        sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }}
+                        checked={isNewDestinataire}
+                      />
                     }
                     label={t('step1.enterNewReceiver')}
                   />
@@ -498,9 +509,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
               </FormControl>
               {!isNewDestinataire ? (
                 <FormControl fullWidth variant="outlined" sx={{ mb: 2, ...customFieldStyle }}>
-                  <InputLabel id="destinataire-select-label">
-                    Choisir une entreprise *
-                  </InputLabel>
+                  <InputLabel id="destinataire-select-label">Choisir une entreprise *</InputLabel>
                   <Select
                     labelId="destinataire-select-label"
                     value={selectedRecipient}
@@ -576,9 +585,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                     />
                   </Box>
                   <FormControl fullWidth variant="outlined" sx={{ mb: 2, ...customFieldStyle }}>
-                    <InputLabel id="receiver-country-label">
-                      {t('step1.country')} *
-                    </InputLabel>
+                    <InputLabel id="receiver-country-label">{t('step1.country')} *</InputLabel>
                     <Select
                       labelId="receiver-country-label"
                       value={safeValues.receiverCountry || ''}
@@ -607,6 +614,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
             </div>
           </div>
         );
+
       case 2:
         return (
           <div>
@@ -659,6 +667,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
             </div>
           </div>
         );
+
       case 3:
         return (
           <div>
@@ -668,9 +677,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
             <div className="collapsible-content">
               <Box sx={{ mt: 2, display: 'flex', gap: 2, mb: 2 }}>
                 <FormControl fullWidth variant="outlined" sx={{ ...customFieldStyle }}>
-                  <InputLabel id="loading-port-label">
-                    Port de chargement *
-                  </InputLabel>
+                  <InputLabel id="loading-port-label">Port de chargement *</InputLabel>
                   <Select
                     labelId="loading-port-label"
                     value={safeValues.loadingPort || ''}
@@ -688,9 +695,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                   </Select>
                 </FormControl>
                 <FormControl fullWidth variant="outlined" sx={{ ...customFieldStyle }}>
-                  <InputLabel id="discharging-port-label">
-                    Port de déchargement *
-                  </InputLabel>
+                  <InputLabel id="discharging-port-label">Port de déchargement *</InputLabel>
                   <Select
                     labelId="discharging-port-label"
                     value={safeValues.dischargingPort || ''}
@@ -715,7 +720,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                     <FormControlLabel
                       key={mode.id_transport_mode}
                       control={
-                        <Radio
+                        <Checkbox
                           sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }}
                           checked={!!safeValues.transportModes[mode.symbol_eng.toLowerCase()]}
                           onChange={(e) =>
@@ -742,6 +747,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
             </div>
           </div>
         );
+
       case 4:
         return (
           <div>
@@ -777,9 +783,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       variant="outlined"
                       fullWidth
                       value={m.boxReference}
-                      onChange={(e) =>
-                        handleMerchChange(index, 'boxReference', e.target.value)
-                      }
+                      onChange={(e) => handleMerchChange(index, 'boxReference', e.target.value)}
                       disabled={!isEditable}
                       sx={{ ...customFieldStyle }}
                     />
@@ -788,16 +792,12 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       variant="outlined"
                       fullWidth
                       value={m.designation}
-                      onChange={(e) =>
-                        handleMerchChange(index, 'designation', e.target.value)
-                      }
+                      onChange={(e) => handleMerchChange(index, 'designation', e.target.value)}
                       disabled={!isEditable}
                       sx={{ ...customFieldStyle }}
                     />
                     <FormControl variant="outlined" sx={{ width: '150px', ...customFieldStyle }}>
-                      <InputLabel htmlFor={`merch-qty-${index}`}>
-                        Quantité
-                      </InputLabel>
+                      <InputLabel htmlFor={`merch-qty-${index}`}>Quantité</InputLabel>
                       <OutlinedInput
                         id={`merch-qty-${index}`}
                         type="number"
@@ -812,25 +812,17 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                         }}
                         label="Quantité"
                         disabled={!isEditable}
-                        endAdornment={
-                          <InputAdornment position="end">
-                            {m.unit}
-                          </InputAdornment>
-                        }
+                        endAdornment={<InputAdornment position="end">{m.unit}</InputAdornment>}
                       />
                     </FormControl>
                     <FormControl variant="outlined" sx={{ width: '150px', ...customFieldStyle }}>
-                      <InputLabel id={`merch-unit-label-${index}`}>
-                        Unité
-                      </InputLabel>
+                      <InputLabel id={`merch-unit-label-${index}`}>Unité</InputLabel>
                       <Select
                         labelId={`merch-unit-label-${index}`}
                         id={`merch-unit-${index}`}
                         value={m.unit}
                         label="Unité"
-                        onChange={(e) =>
-                          handleMerchChange(index, 'unit', e.target.value)
-                        }
+                        onChange={(e) => handleMerchChange(index, 'unit', e.target.value)}
                         disabled={!isEditable}
                       >
                         {unitWeights.map((u) => (
@@ -845,9 +837,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       variant="outlined"
                       fullWidth
                       value={m.docReference || ''}
-                      onChange={(e) =>
-                        handleMerchChange(index, 'docReference', e.target.value)
-                      }
+                      onChange={(e) => handleMerchChange(index, 'docReference', e.target.value)}
                       disabled={!isEditable}
                       sx={{ ...customFieldStyle }}
                     />
@@ -869,10 +859,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                           <FontAwesomeIcon icon={faEdit} />
                         </IconButton>
                       )}
-                      <IconButton
-                        color="error"
-                        onClick={() => removeMerchandise(index)}
-                      >
+                      <IconButton color="error" onClick={() => removeMerchandise(index)}>
                         <FontAwesomeIcon icon={faTimes} />
                       </IconButton>
                     </Box>
@@ -882,6 +869,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
             </div>
           </div>
         );
+
       case 5:
         return (
           <div>
@@ -894,24 +882,26 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                   label="Combien de copies certifiées ?"
                   type="number"
                   fullWidth
-                  value={safeValues.copies === '' ? '' : safeValues.copies}
+                  value={safeValues.copies === 0 ? 0 : (safeValues.copies || '')}
                   onChange={(e) => {
-                    if (e.target.value === '') {
+                    const val = e.target.value;
+                    if (val === '') {
                       handleChange('copies', '');
                     } else {
-                      const val = parseFloat(e.target.value);
-                      if (!isNaN(val)) {
-                        handleChange('copies', val);
+                      const numericVal = parseFloat(val);
+                      if (!isNaN(numericVal)) {
+                        handleChange('copies', numericVal);
                       }
                     }
                   }}
-                  InputProps={{ inputProps: { min: 1 } }}
+                  InputProps={{ inputProps: { min: 0 } }}
                   sx={{ ...customFieldStyle }}
                 />
               </Box>
             </div>
           </div>
         );
+
       case 6:
         return (
           <div>
@@ -1004,6 +994,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
             </div>
           </div>
         );
+
       case 7:
         return (
           <div>
@@ -1025,6 +1016,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
             </div>
           </div>
         );
+
       default:
         return null;
     }
@@ -1042,7 +1034,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       >
         <div className="step-content">{renderSection()}</div>
       </Slide>
-      {/* Affichage du message d'erreur spécifique via MUI Alert */}
       {errorMessage && (
         <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
           {errorMessage}

@@ -440,7 +440,7 @@ const executeAddCertifOrder = async (req, res) => {
           p_id_country_origin: idCountryOrigin,
           p_id_country_destination: idCountryDestination,
           p_notes: notes || '',
-          p_copy_count: copyCount || 1,
+          p_copy_count: copyCount,
           p_idlogin_insert: idLoginInsert,
           p_transport_remarks: transportRemarks || '',
           p_id_country_port_loading: idCountryPortLoading,
@@ -796,7 +796,7 @@ const renameOrder = async (req, res) => {
     const destinationIdInt = parseInt(p_id_country_destination, 10);
     const portLoadingInt = parseInt(p_id_country_port_loading, 10);
     const portDischargeInt = parseInt(p_id_country_port_discharge, 10);
-    const copyCountInt = parseInt(p_copy_count, 10) || 1;
+    const copyCountInt = parseInt(p_copy_count, 10);
 
     // Call the stored procedure
     await sequelize.query(

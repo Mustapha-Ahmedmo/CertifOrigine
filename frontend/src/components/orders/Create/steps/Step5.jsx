@@ -399,7 +399,7 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
         p_id_country_port_loading: parseInt(values.loadingPort, 10),
         p_id_country_port_discharge: parseInt(values.dischargingPort, 10),
         p_notes: values.remarks || '',
-        p_copy_count: values.copies || 1,
+        p_copy_count: values.copies ?? 0,
         p_idlogin_modify: idLogin,
         p_transport_remains: values.transportRemarks || '',
       };
