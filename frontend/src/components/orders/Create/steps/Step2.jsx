@@ -101,7 +101,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     4: ['merchandises'], // MARCHANDISES
     5: ['copies'], // NOMBRE DE COPIES
     6: ['isCommitted'], // ENGAGEMENT
-    7: [] // REMARQUES
+    7: [], // REMARQUES
   };
 
   // Messages d'erreur spécifiques par section (en fonction de currentSection)
@@ -192,7 +192,9 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         );
         if (!isTransportSelected) missingCount += 1;
       } else if (fieldName === 'merchandises') {
-        if (!safeValues.merchandises || safeValues.merchandises.length === 0) missingCount += 1;
+        if (!safeValues.merchandises || safeValues.merchandises.length === 0) {
+          missingCount += 1;
+        }
       } else if (!safeValues[fieldName]) {
         missingCount += 1;
       }
@@ -205,7 +207,9 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     // Vérification spécifique pour la section 4 (MARCHANDISES)
     if (currentSection === 4) {
       if (merchEditStates.some((state) => state)) {
-        setErrorMessage("Certaines lignes de marchandise ne sont pas validées. Veuillez remplir tous les champs et cliquer sur 'Valider' avant de continuer.");
+        setErrorMessage(
+          "Certaines lignes de marchandise ne sont pas validées. Veuillez remplir tous les champs et cliquer sur 'Valider' avant de continuer."
+        );
         return;
       }
     }
@@ -213,7 +217,9 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     if (currentSection !== 0) {
       const missing = getMissingFieldsCount();
       if (missing > 0) {
-        const msg = errorMessages[currentSection] || "Veuillez remplir tous les champs obligatoires de cette section.";
+        const msg =
+          errorMessages[currentSection] ||
+          'Veuillez remplir tous les champs obligatoires de cette section.';
         setErrorMessage(msg);
         return;
       }
@@ -260,7 +266,9 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   const validateLine = (index) => {
     const merch = safeValues.merchandises[index];
     if (!merch.boxReference || !merch.designation) {
-      setErrorMessage("Veuillez remplir la référence/HSCODE et la nature avant de valider.");
+      setErrorMessage(
+        "Veuillez remplir la référence/HSCODE et la nature avant de valider."
+      );
       return;
     }
     setMerchEditStates((prev) => {
@@ -316,7 +324,9 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       return;
     }
     if (merchEditStates.some((st) => st === true)) {
-      setErrorMessage("Certaines lignes de marchandise ne sont pas validées. Cliquez sur 'Valider' avant de continuer.");
+      setErrorMessage(
+        "Certaines lignes de marchandise ne sont pas validées. Cliquez sur 'Valider' avant de continuer."
+      );
       return;
     }
 
@@ -339,12 +349,23 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           idLoginModify: null,
         };
         const recipientResponse = await addRecipient(newRecipientData);
-        recipientId = recipientResponse?.newRecipientId;
-        const updatedRecipientsResponse = await fetchRecipients({ idListCA: customerAccountId });
+        const newId = recipientResponse?.newRecipientId;
+
+        // On recharge la liste
+        const updatedRecipientsResponse = await fetchRecipients({
+          idListCA: customerAccountId,
+        });
         setRecipients(updatedRecipientsResponse.data);
         handleChange('recipients', updatedRecipientsResponse.data);
-        setSelectedRecipient(recipientId);
-        handleChange('selectedRecipientId', recipientId);
+
+        // Sélection auto du nouveau
+        setSelectedRecipient(newId);
+        handleChange('selectedRecipientId', newId);
+
+        // Repasser en mode "choisir" pour éviter de rester en "saisir" après retour
+        setIsNewDestinataire(false);
+
+        recipientId = newId;
       } catch (err) {
         console.error('Erreur création destinataire :', err);
         setErrorMessage('Erreur lors de la création du nouveau destinataire.');
@@ -377,7 +398,9 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       }
       for (const merchandise of safeValues.merchandises) {
         if (!merchandise.boxReference || !merchandise.designation) {
-          throw new Error("Référence/HSCODE et Nature sont obligatoires pour chaque marchandise.");
+          throw new Error(
+            "Référence/HSCODE et Nature sont obligatoires pour chaque marchandise."
+          );
         }
         const normalizeText = (txt) => (txt || '').toLowerCase().trim();
         const matchedUnit = unitWeights.find(
@@ -399,7 +422,9 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         (k) => safeValues.transportModes[k]
       );
       for (const key of selectedModeKeys) {
-        const matched = transportModes.find((tm) => tm.symbol_eng.toLowerCase() === key);
+        const matched = transportModes.find(
+          (tm) => tm.symbol_eng.toLowerCase() === key
+        );
         if (matched) {
           await setOrdCertifTranspMode({
             id_ord_certif_transp_mode: null,
@@ -452,17 +477,22 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
               <FormControl component="fieldset" sx={{ mb: 2 }}>
                 <RadioGroup
                   row
-                  defaultValue="choisir"
+                  // REMPLACEMENT : on lie la valeur au state
+                  value={isNewDestinataire ? 'saisir' : 'choisir'}
                   onChange={(e) => setIsNewDestinataire(e.target.value === 'saisir')}
                 >
                   <FormControlLabel
                     value="choisir"
-                    control={<Radio sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }} />}
+                    control={
+                      <Radio sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }} />
+                    }
                     label={t('step1.chooseReceiver')}
                   />
                   <FormControlLabel
                     value="saisir"
-                    control={<Radio sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }} />}
+                    control={
+                      <Radio sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }} />
+                    }
                     label={t('step1.enterNewReceiver')}
                   />
                 </RadioGroup>
