@@ -318,20 +318,20 @@ const Inscriptions = () => {
                           <Typography variant="body2">Aucun fichier</Typography>
                         )}
 
-                        {registration.in_free_zone && registration.trade_registration_num && (
+                        {registration.in_free_zone && registration.identification_number && (
                           <Box mt={1} fontStyle="italic">
                             Numéro de licence :{' '}
-                            <strong>{registration.trade_registration_num}</strong>
+                            <strong>{registration.identification_number}</strong>
                           </Box>
                         )}
-                        {!registration.in_free_zone && registration.nif && (
+                        {!registration.in_free_zone && registration.trade_registration_num && (
                           <Box mt={1} fontStyle="italic">
-                            NIF : <strong>{registration.nif}</strong>
+                            NIF : <strong>{registration.trade_registration_num}</strong>
                           </Box>
                         )}
-                        {!registration.in_free_zone && registration.rchNumber && (
+                        {!registration.in_free_zone && registration.register_number && (
                           <Box mt={1} fontStyle="italic">
-                            RCS : <strong>{registration.rchNumber}</strong>
+                            RCS : <strong>{registration.register_number}</strong>
                           </Box>
                         )}
                       </TableCell>
