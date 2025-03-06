@@ -720,7 +720,9 @@ const executeAddSubscription = async (req, res) => {
       error: error.message || 'Erreur inconnue.',
     });
   }
-}; const executeCreateSubscriptionWithFile = async (req, res) => {
+}; 
+
+const executeCreateSubscriptionWithFile = async (req, res) => {
   try {
     const {
       uploadType, // 'inscriptions' or 'commandes'
@@ -759,7 +761,6 @@ const executeAddSubscription = async (req, res) => {
       trade_registration_num,
       in_free_zone,
       identification_number,
-      register_number,
       full_address,
       id_sector,
       id_country,

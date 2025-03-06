@@ -86,7 +86,7 @@ CREATE TABLE OP_USER (
     ROLES INT DEFAULT 0 NOT NULL,             -- Non nullable avec valeur par défaut
     EMAIL VARCHAR(32) NOT NULL,               -- Non nullable
     PHONE_NUMBER VARCHAR(32) NULL,            -- Nullable
-    MOBILE_NUMBER VARCHAR(12) NULL,           -- Nullable
+    MOBILE_NUMBER VARCHAR(32) NULL,           -- Nullable
     IDLOGIN_INSERT INT NOT NULL,              -- Non nullable
     INSERTDATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,  -- Non nullable avec valeur par défaut
     DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par défaut
@@ -141,7 +141,7 @@ CREATE TABLE CUST_USER (
     IsMAIN_USER BOOLEAN DEFAULT FALSE NOT NULL, -- Non nullable avec valeur par défaut
     EMAIL VARCHAR(32) NOT NULL,               -- Non nullable
     PHONE_NUMBER VARCHAR(32) NULL,            -- Nullable
-    MOBILE_NUMBER VARCHAR(12) NULL,           -- Nullable
+    MOBILE_NUMBER VARCHAR(32) NULL,           -- Nullable
     USER_POSITION VARCHAR(64) NULL,
     IDLOGIN_INSERT INT NOT NULL,              -- Non nullable
     INSERTDATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,  -- Non nullable avec valeur par défaut
@@ -670,7 +670,7 @@ CREATE OR REPLACE PROCEDURE add_Subscription(
     p_email VARCHAR(32),
     p_password VARCHAR(128),
     p_phone_number VARCHAR(32),
-    p_mobile_number VARCHAR(12),
+    p_mobile_number VARCHAR(32),
     p_position VARCHAR(64),
 
 	p_id_country_headoffice INT,	
@@ -958,7 +958,7 @@ CREATE OR REPLACE PROCEDURE set_cust_user(
     p_email VARCHAR(32),
     p_password VARCHAR(128),
     p_phone_number VARCHAR(32),
-    p_mobile_number VARCHAR(12),
+    p_mobile_number VARCHAR(32),
     p_idlogin INT,
     p_position VARCHAR(64)
 	)
@@ -1047,7 +1047,7 @@ RETURNS TABLE(
     ismain_user BOOLEAN,
     email VARCHAR(32),
     phone_number VARCHAR(32),
-    mobile_number VARCHAR(12),
+    mobile_number VARCHAR(32),
     "position" VARCHAR(64), -- Correct alias for user_position
     idlogin_insert INT,
     insertdate TIMESTAMP,
@@ -1121,7 +1121,7 @@ CREATE OR REPLACE PROCEDURE set_op_user(
     p_email VARCHAR(32),
     p_password VARCHAR(128),
     p_phone_number VARCHAR(32),
-    p_mobile_number VARCHAR(12),
+    p_mobile_number VARCHAR(32),
     p_idlogin INT
 	)
 AS
@@ -1395,7 +1395,7 @@ RETURNS TABLE(
     ismain_user BOOLEAN,
     email VARCHAR(32),
     phone_number VARCHAR(32),
-    mobile_number VARCHAR(12),
+    mobile_number VARCHAR(32),
     "position" VARCHAR(64),
     idlogin_insert INT,
     insertdate TIMESTAMP,
@@ -1935,7 +1935,7 @@ RETURNS TABLE(
     roles INT,
     email VARCHAR(32),
     phone_number VARCHAR(32),
-    mobile_number VARCHAR(12),
+    mobile_number VARCHAR(32),
     idlogin_insert INT,
     insertdate TIMESTAMP,
     deactivation_date TIMESTAMP,

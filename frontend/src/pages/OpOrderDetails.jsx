@@ -42,6 +42,11 @@ const OpOrderDetails = () => {
   const [rejectReason, setRejectReason] = useState('');
 
   const [documentsInfo, setDocumentsInfo] = useState([]);
+  
+  const unitPriceCertif = 8500;
+  const unitPriceCopies = 2500;
+
+  let totalPrice;
 
   // État local pour stocker les données de la commande
   const [formData, setFormData] = useState({
@@ -122,7 +127,7 @@ const OpOrderDetails = () => {
             ? recipientResponse.data[0]
             : {};
           
-          console.log("recipient => ", recipient);
+          console.log("order => ", order);
           if (order) {
             setFormData(prev => ({
               ...prev,
@@ -157,7 +162,10 @@ const OpOrderDetails = () => {
               documents: order.documents || [],
               orderStatus: order.id_order_status,
               custAccountId: order.id_cust_account,
-              title: order.order_title
+              title: order.order_title,
+              copy_count_ori: order.copy_count_ori,
+              date_last_submission: order.date_last_submission
+
             }));
           } else {
             console.error('Commande introuvable pour l’ID :', orderId);
@@ -286,8 +294,9 @@ const OpOrderDetails = () => {
       );
 
       const customerEmail = custUsersResponse.data[0].email;
+      totalPrice = unitPriceCopies * formData.copy_count_ori + unitPriceCertif;
       // Appeler l'API pour approuver la commande en passant aussi l'email du client
-      const result = await approveOrder(orderId, formData.custAccountId, idLogin, customerEmail, formData.title);
+      const result = await approveOrder(orderId, formData.custAccountId, idLogin, customerEmail, formData.title, formData.date_last_submission, totalPrice);
       console.log('Commande approuvée:', result);
       navigate('/operator-dashboard');
     } catch (error) {
