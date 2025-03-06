@@ -1,13 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faPlus,
-  faEdit,
-  faTrashAlt,
-} from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import './OperatorsList.css';
-
 import { disableOperator, getOperatorList } from '../services/apiServices';
 import { useSelector } from 'react-redux';
 
@@ -26,7 +21,12 @@ import {
   TableRow,
   TableCell,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent
 } from '@mui/material';
+
+import RegisterOP from './RegisterOP'; // Composant du formulaire dans la modal
 
 // Fonctions utilitaires pour la gestion de TabPanel
 function TabPanel(props) {
@@ -64,10 +64,18 @@ const OperatorsList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Pour la gestion des onglets (ici, un seul onglet "Listing Opérateurs")
+  // Gestion des onglets (ici, un seul onglet "Listing Opérateurs")
   const [tabIndex, setTabIndex] = useState(0);
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
+  };
+
+  // State pour l'ouverture de la modal
+  const [openRegisterModal, setOpenRegisterModal] = useState(false);
+
+  const handleModalClose = () => {
+    setOpenRegisterModal(false);
+    // Vous pouvez ici relancer une requête pour rafraîchir la liste des opérateurs si nécessaire
   };
 
   // Récupération des opérateurs
@@ -94,6 +102,7 @@ const OperatorsList = () => {
   };
 
   const handleEdit = (operatorId) => {
+    // Pour l'édition, vous pouvez soit naviguer vers une autre page, soit utiliser une modal similaire.
     navigate(`/registerop/${operatorId}`);
   };
 
@@ -114,7 +123,8 @@ const OperatorsList = () => {
 
   const handleAddNew = () => {
     if (isAdmin) {
-      navigate('/registerop');
+      // Ouvre la modal avec le formulaire d'inscription
+      setOpenRegisterModal(true);
     } else {
       alert("Seul un administrateur peut créer un nouvel opérateur.");
     }
@@ -156,16 +166,14 @@ const OperatorsList = () => {
         </Tabs>
       </AppBar>
 
-      {/* Contenu onglet 0 */}
+      {/* Contenu de l'onglet */}
       <TabPanel value={tabIndex} index={0}>
-        {/* En-tête : Bouton "Ajouter un nouvel opérateur" */}
         <Box
           display="flex"
           justifyContent="space-between"
           alignItems="center"
           mb={2}
         >
-         
           <Button
             variant="contained"
             color="primary"
@@ -176,7 +184,6 @@ const OperatorsList = () => {
           </Button>
         </Box>
 
-        {/* Tableau MUI */}
         <Paper>
           <TableContainer>
             <Table>
@@ -230,6 +237,19 @@ const OperatorsList = () => {
           </TableContainer>
         </Paper>
       </TabPanel>
+
+      {/* Modal Material‑UI utilisant Dialog */}
+      <Dialog
+        open={openRegisterModal}
+        onClose={handleModalClose}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Créer un Compte Opérateur</DialogTitle>
+        <DialogContent>
+          <RegisterOP onClose={handleModalClose} />
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };
