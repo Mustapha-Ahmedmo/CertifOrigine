@@ -12,7 +12,8 @@ import {
   approveOrder,
   sendbackOrder,
   rejectOrder,
-  getCustUsersByAccount
+  getCustUsersByAccount,
+  fetchRecipients
 } from '../services/apiServices';
 import './OpOrderDetails.css';
 
@@ -115,6 +116,13 @@ const OpOrderDetails = () => {
           const orders = ordersResponse.data || ordersResponse;
           // Forcer la comparaison en chaîne de caractères
           const order = orders.find(o => String(o.id_order) === String(orderId));
+
+          const recipientResponse = await fetchRecipients({ idListR: order.id_recipient_account });
+          const recipient = (recipientResponse.data && recipientResponse.data.length > 0)
+            ? recipientResponse.data[0]
+            : {};
+          
+          console.log("recipient => ", recipient);
           if (order) {
             setFormData(prev => ({
               ...prev,
@@ -137,11 +145,11 @@ const OpOrderDetails = () => {
                 : 'Non spécifié',
               transportRemarks: order.transport_remarks || '',
               receiverName: order.recipient_name || 'N/A',
-              receiverAddress: order.address_1 || 'N/A',
+              receiverAddress: recipient.address_1 || 'N/A',
               receiverAddress2: order.address_2 || '',
-              receiverPostalCode: order.postal_code || 'N/A',
-              receiverCity: order.city || 'N/A',
-              receiverCountry: order.country || 'N/A',
+              receiverPostalCode: recipient.address_3 || 'N/A',
+              receiverCity: recipient.city_symbol_fr_recipient || 'N/A',
+              receiverCountry: recipient.country_symbol_fr_recipient || 'N/A',
               receiverPhone: order.receiver_phone || 'N/A',
               copies: order.copy_count_ori || 1,
               remarks: order.notes_ori || 'Aucune remarque',
@@ -375,10 +383,6 @@ const OpOrderDetails = () => {
             <div className="step5-form-group">
               <label>Pays :</label>
               <span className="step5-field-value">{formData.receiverCountry}</span>
-            </div>
-            <div className="step5-form-group">
-              <label>Téléphone :</label>
-              <span className="step5-field-value">{formData.receiverPhone}</span>
             </div>
           </div>
 
