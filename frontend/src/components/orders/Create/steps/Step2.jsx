@@ -28,6 +28,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
+import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Alert from '@mui/material/Alert';
@@ -118,6 +119,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       try {
         setLoading(true);
 
+        // Si on a un certifId, on récupère la liste des marchandises déjà associées
         if (certifId) {
           const goodsResponse = await getCertifGoodsInfo(certifId);
           const fetchedGoods = goodsResponse.data || [];
@@ -134,17 +136,22 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           setMerchEditStates(fetchedGoods.map(() => false));
         }
 
+        // Pays
         const fetchedCountries = await fetchCountries();
         setCountries(fetchedCountries);
 
+        // Modes de transport
         const fetchedTransportModes = await getTransmodeInfo(null, true);
         setTransportModes(fetchedTransportModes.data);
 
+        // Unités
         const fetchedUnitWeights = await getUnitWeightInfo(null, true);
         const filteredUnitWeights = (fetchedUnitWeights.data || []).filter(
           (u) => u.id_unit_weight >= 1
         );
         setUnitWeights(filteredUnitWeights);
+
+        // Si aucune unité n'est set et qu'on a une liste non vide, on définit la première
         if (!values.unit && filteredUnitWeights.length > 0) {
           const defaultUnit = filteredUnitWeights.find((u) => u.id_unit_weight === 1);
           if (defaultUnit) {
@@ -152,11 +159,14 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           }
         }
 
+        // Si on n'a pas déjà un certifId et qu'on a un id_cust_account pour l'utilisateur,
+        // on peut charger la liste des destinataires déjà connus
         if (!certifId && customerAccountId) {
           const recipientFetched = await fetchRecipients({ idListCA: customerAccountId });
           setRecipients(recipientFetched.data);
           handleChange('recipients', recipientFetched.data);
         }
+
         setLoading(false);
       } catch (err) {
         console.error('Error loading data:', err);
@@ -168,7 +178,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     loadData();
   }, [certifId, customerAccountId]);
 
-  // Sécuriser les valeurs
+  // Pour éviter les valeurs undefined
   const safeValues = values || {
     goodsOrigin: '',
     goodsDestination: '',
@@ -186,6 +196,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
 
     fields.forEach((fieldName) => {
       if (fieldName === 'transportModes') {
+        // Au moins un mode doit être coché
         const isTransportSelected = Object.keys(safeValues.transportModes || {}).some(
           (k) => safeValues.transportModes[k]
         );
@@ -197,7 +208,8 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           missingFields.push('merchandises');
         }
       } else if (fieldName === 'copies') {
-        // Le champ copies est obligatoire, mais peut rester vide (chaîne vide) tant que l'utilisateur n'a pas saisi
+        // Le champ copies peut être vide (string) tant qu'aucune saisie n'a eu lieu,
+        // mais reste obligatoire avant de passer à la suite
         if (
           safeValues.copies === null ||
           safeValues.copies === undefined ||
@@ -205,18 +217,21 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         ) {
           missingFields.push('copies');
         }
-      } else if (!safeValues[fieldName]) {
-        missingFields.push(fieldName);
+      } else {
+        // Check standard
+        if (!safeValues[fieldName]) {
+          missingFields.push(fieldName);
+        }
       }
     });
 
     console.log('Section', currentSection, '- Missing fields:', missingFields);
-
     return missingFields.length;
   };
 
-  // Navigation entre sections avec validation des champs obligatoires
+  // Navigation entre sections avec validation
   const nextSection = () => {
+    // Vérif spécifique sur la section 4 (les marchandises)
     if (currentSection === 4) {
       if (merchEditStates.some((state) => state)) {
         setErrorMessage(
@@ -225,12 +240,11 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         return;
       }
     }
+    // Vérification standard
     if (currentSection !== 0) {
       const missing = getMissingFieldsCount();
       if (missing > 0) {
-        const msg =
-          errorMessages[currentSection] ||
-          'Veuillez remplir tous les champs obligatoires de cette section.';
+        const msg = errorMessages[currentSection] || 'Veuillez remplir tous les champs obligatoires.';
         setErrorMessage(msg);
         return;
       }
@@ -276,9 +290,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   const validateLine = (index) => {
     const merch = safeValues.merchandises[index];
     if (!merch.boxReference || !merch.designation) {
-      setErrorMessage(
-        "Veuillez remplir la référence/HSCODE et la nature avant de valider."
-      );
+      setErrorMessage("Veuillez remplir la référence/HSCODE et la nature avant de valider.");
       return;
     }
     setMerchEditStates((prev) => {
@@ -301,6 +313,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     handleChange('merchandises', updated);
   };
 
+  // Navigation locale
   const onBack = () => {
     if (currentSection === 0) {
       prevStep();
@@ -310,8 +323,11 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     }
   };
 
+  // Soumission finale
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Vérifications minimales sur la dernière section
     if (!safeValues.loadingPort) {
       setErrorMessage('Veuillez sélectionner un port de chargement.');
       return;
@@ -332,12 +348,11 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       return;
     }
     if (merchEditStates.some((st) => st === true)) {
-      setErrorMessage(
-        "Certaines lignes de marchandise ne sont pas validées. Cliquez sur 'Valider' avant de continuer."
-      );
+      setErrorMessage("Certaines lignes de marchandise ne sont pas validées. Cliquez sur 'Valider'.");
       return;
     }
 
+    // Création destinataire si besoin
     let recipientId = selectedRecipient;
     if (isNewDestinataire) {
       try {
@@ -376,11 +391,13 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       }
     }
 
+    // Conversion pays -> ID
     const getCountryId = (countryName) => {
       const found = countries.find((c) => c.symbol_fr === countryName);
       return found ? found.id_country : null;
     };
 
+    // Création du certificat
     try {
       const certData = {
         idOrder: safeValues.orderId,
@@ -400,6 +417,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         throw new Error("La réponse du serveur ne contient pas 'newCertifId'.");
       }
 
+      // Ajout des marchandises
       for (const merchandise of safeValues.merchandises) {
         if (!merchandise.boxReference || !merchandise.designation) {
           throw new Error("Référence/HSCODE et Designation sont obligatoires pour chaque marchandise.");
@@ -422,6 +440,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         await addOrUpdateGoods(goodsData);
       }
 
+      // Ajout des modes de transport
       const selectedModeKeys = Object.keys(safeValues.transportModes || {}).filter(
         (k) => safeValues.transportModes[k]
       );
@@ -446,9 +465,14 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     }
   };
 
-  if (loading) return <div>Chargement en cours...</div>;
-  if (error) return <div className="error-message">{error}</div>;
+  if (loading) {
+    return <div>Chargement en cours...</div>;
+  }
+  if (error) {
+    return <div className="error-message">{error}</div>;
+  }
 
+  // Rendu des sections en fonction de currentSection
   const renderSection = () => {
     switch (currentSection) {
       case 0:
@@ -488,9 +512,8 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                   <FormControlLabel
                     value="choisir"
                     control={
-                      <Checkbox
+                      <Radio
                         sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }}
-                        checked={!isNewDestinataire}
                       />
                     }
                     label={t('step1.chooseReceiver')}
@@ -498,9 +521,8 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                   <FormControlLabel
                     value="saisir"
                     control={
-                      <Checkbox
+                      <Radio
                         sx={{ color: '#DDAF26', '&.Mui-checked': { color: '#DDAF26' } }}
-                        checked={isNewDestinataire}
                       />
                     }
                     label={t('step1.enterNewReceiver')}
@@ -624,9 +646,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
             <div className="collapsible-content">
               <Box sx={{ mt: 2 }}>
                 <FormControl fullWidth variant="outlined" sx={{ mb: 2, ...customFieldStyle }}>
-                  <InputLabel id="goods-origin-label">
-                    Pays d'origine de la marchandise *
-                  </InputLabel>
+                  <InputLabel id="goods-origin-label">Pays d'origine de la marchandise *</InputLabel>
                   <Select
                     labelId="goods-origin-label"
                     value={safeValues.goodsOrigin || ''}
@@ -882,6 +902,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                   label="Combien de copies certifiées ?"
                   type="number"
                   fullWidth
+                  // On affiche une chaîne vide par défaut tant que ce n'est pas 0
                   value={safeValues.copies === 0 ? 0 : (safeValues.copies || '')}
                   onChange={(e) => {
                     const val = e.target.value;

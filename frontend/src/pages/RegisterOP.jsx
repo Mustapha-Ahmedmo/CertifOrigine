@@ -1,45 +1,37 @@
-import React, { useState, forwardRef, useEffect } from 'react';
-import './Register.css';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faUser,
-  faPhone,
-  faMobileAlt,
-  faEnvelope,
-  faLock,
-} from '@fortawesome/free-solid-svg-icons';
-import logo from '../assets/logo.jpg';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-
-// IMPORT DU FICHIER DES INDICATIFS
+import { useNavigate, useParams } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser, faPhone, faMobileAlt, faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
 import countryCodes from '../components/countryCodes';
-
-// Exemple d'API ou utilitaires si vous en avez besoin
-// import { registerUser } from '../services/apiServices';
-
-// MUI
-import Snackbar from '@mui/material/Snackbar';
-import MuiAlert from '@mui/material/Alert';
 import { createOperator, getOperatorList } from '../services/apiServices';
 import { homemadeHash } from '../utils/hashUtils';
 
-// ↓↓↓ FONCTION DE VALIDATION SIMPLIFIÉE POUR LES NUMÉROS ↓↓↓
+// MUI imports
+import {
+  Box,
+  TextField,
+  Button,
+  FormControl,
+  FormControlLabel,
+  RadioGroup,
+  Radio,
+  FormLabel,
+  Select,
+  InputLabel,
+  Checkbox,
+  Snackbar,
+  Alert
+} from '@mui/material';
+
 const isValidLocalNumber = (number) => {
-  // Vérifie que le numéro contient entre 6 et 15 chiffres
   return /^[0-9]{6,15}$/.test(number);
 };
 
-const Alert = forwardRef(function Alert(props, ref) {
-  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
-});
-
-const RegisterOP = () => {
-  const { id } = useParams(); // Get the operator ID from the URL
-
+const RegisterOP = ({ onClose }) => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  
-  // État du formulaire (UNIQUEMENT la partie Contact)
+
   const [formData, setFormData] = useState({
     gender: 'Mr',
     name: '',
@@ -50,33 +42,37 @@ const RegisterOP = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'Opérateur', // Opérateur par défaut
-    isAdmin: false,    // Admin ou non
+    role: 'Opérateur',
+    isAdmin: false,
   });
 
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-
-  // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  // Gère la fermeture du snackbar
-  const handleSnackbarClose = (event, reason) => {
-    if (reason === 'clickaway') {
-      return;
+  // Gestionnaire de touche pour les selects natifs avec cycle
+  const handleCountryKeyDown = (field) => (event) => {
+    const key = event.key.toLowerCase();
+    if (key.length === 1 && /[a-z]/.test(key)) {
+      const matchingCountries = countryCodes.filter(country =>
+        country.name.toLowerCase().startsWith(key)
+      );
+      if (matchingCountries.length > 0) {
+        const currentCode = formData[field];
+        const currentIndex = matchingCountries.findIndex(country => country.code === currentCode);
+        const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % matchingCountries.length : 0;
+        setFormData((prev) => ({ ...prev, [field]: matchingCountries[nextIndex].code }));
+      }
     }
-    setSnackbarOpen(false);
   };
 
-
-  
   useEffect(() => {
     const preloadOperatorData = async () => {
       if (id) {
         try {
-          const response = await getOperatorList(`${id}`, null, null); // Pass '1' as a string
+          const response = await getOperatorList(`${id}`, null, null);
           if (response.data && response.data.length > 0) {
             const operator = response.data[0];
             setFormData({
@@ -87,9 +83,10 @@ const RegisterOP = () => {
               phoneMobileCountryCode: operator.mobile_number.slice(0, 3),
               phoneMobileNumber: operator.mobile_number.slice(3),
               email: operator.email,
-              password: '', // Leave blank for security
-              confirmPassword: '', // Leave blank for security
+              password: '',
+              confirmPassword: '',
               role: operator.roles === 1 ? 'Administrateur' : 'Opérateur avec pouvoir',
+              isAdmin: operator.roles === 1,
             });
           }
         } catch (err) {
@@ -101,34 +98,25 @@ const RegisterOP = () => {
     preloadOperatorData();
   }, [id]);
 
-  // Gère le changement des champs du formulaire
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    // Si c’est un bouton radio ou checkbox
-    if (type === 'checkbox' || type === 'radio') {
-      setFormData((prev) => ({ ...prev, [name]: checked ? value : '' }));
-      return;
-    }
-
-    // Pour les champs "phoneFixedNumber" ou "phoneMobileNumber"
-    if (name === 'phoneFixedNumber' || name === 'phoneMobileNumber') {
-      if (!isValidLocalNumber(value) && value !== '') {
+    const { name, value } = e.target;
+    if ((name === 'phoneFixedNumber' || name === 'phoneMobileNumber') && value !== '') {
+      if (!isValidLocalNumber(value)) {
         setError(
-          `Le champ ${
-            name === 'phoneFixedNumber' ? 'téléphone fixe' : 'téléphone portable'
-          } est invalide (6 à 15 chiffres).`
+          `Le champ ${name === 'phoneFixedNumber' ? 'téléphone fixe' : 'téléphone portable'} est invalide (6 à 15 chiffres).`
         );
       } else {
         setError('');
       }
     }
-
-    // Mise à jour générique
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Toggle entre Mr / Mme
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: checked }));
+  };
+
   const toggleGender = () => {
     setFormData((prev) => ({
       ...prev,
@@ -136,27 +124,27 @@ const RegisterOP = () => {
     }));
   };
 
-  // Soumission du formulaire
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbarOpen(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Vérification du numéro fixe
-    if (!isValidLocalNumber(formData.phoneFixedNumber)) {
-      setSnackbarMessage('Le numéro de téléphone fixe est invalide (6 à 15 chiffres).');
+    const totalFixed = formData.phoneFixedCountryCode + formData.phoneFixedNumber;
+    const totalMobile = formData.phoneMobileCountryCode + formData.phoneMobileNumber;
+    if (totalFixed.length > 12) {
+      setSnackbarMessage('Le numéro de téléphone fixe dépasse la limite de 12 caractères.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
-
-    // Vérification du numéro mobile
-    if (!isValidLocalNumber(formData.phoneMobileNumber)) {
-      setSnackbarMessage('Le numéro de téléphone portable est invalide (6 à 15 chiffres).');
+    if (totalMobile.length > 12) {
+      setSnackbarMessage('Le numéro de téléphone portable dépasse la limite de 12 caractères.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
-
-    // Vérification de la correspondance des mots de passe
     if (formData.password !== formData.confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       setSnackbarMessage('Les mots de passe ne correspondent pas');
@@ -164,44 +152,38 @@ const RegisterOP = () => {
       setSnackbarOpen(true);
       return;
     }
-
-    // Vérification du champ "role" (obligatoire)
     if (!formData.role) {
       setSnackbarMessage('Veuillez sélectionner un rôle (Administrateur ou Opérateur).');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
-
     try {
-      // Exemple : construire un objet userData
       const operatorData = {
-        id_op_user: id || 0, // Use ID for update or 0 for new creation
-        gender: formData.gender === 'Mr' ? 1 : 2, // Convert to 1 (Mr) or 2 (Mme)
+        id_op_user: id || 0,
+        gender: formData.gender === 'Mr' ? 1 : 2,
         fullName: formData.name,
-        roles: formData.role === 'Administrateur' ? 1 : 2, // 1 for Admin, 2 for Operator
+        roles: formData.role === 'Administrateur' ? 1 : 2,
         isAdmin: formData.role === 'Administrateur',
         email: formData.email,
         password: homemadeHash(formData.password, 'md5'),
-        phoneNumber: formData.phoneFixedCountryCode + formData.phoneFixedNumber,
-        mobileNumber: formData.phoneMobileCountryCode + formData.phoneMobileNumber,
+        phoneNumber: totalFixed,
+        mobileNumber: totalMobile,
         idLoginInsert: 1
       };
 
       await createOperator(operatorData);
-
-      // Appel API à adapter
-      // const response = await registerUser(userData);
-      // console.log('registerUser response:', response);
-
       setSuccessMessage('Inscription de l’opérateur réussie !');
       setSnackbarMessage("L'utilisateur opérateur a bien été créé.");
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
 
-      // Redirection (à adapter)
       setTimeout(() => {
-        navigate('/login');
+        if (onClose) {
+          onClose();
+        } else {
+          navigate('/login');
+        }
       }, 2000);
     } catch (err) {
       setError(err.message);
@@ -212,277 +194,189 @@ const RegisterOP = () => {
   };
 
   const handleCancel = () => {
-    navigate('/login'); // Redirect to the operators list without saving
+    if (onClose) {
+      onClose();
+    } else {
+      navigate('/login');
+    }
   };
 
   return (
-    <div className="register-page-container">
+    <Box sx={{ p: 2 }}>
       <Helmet>
         <title>Créer un Compte (Opérateur)</title>
         <meta name="description" content="Inscrivez un opérateur." />
       </Helmet>
 
-      {/* Logo en dehors du formulaire */}
-      <div className="register-logo-container">
-        <img src={logo} alt="Logo" className="register-logo" />
-      </div>
-
-      <div className="register-client-container">
+      <Box sx={{ mb: 2, textAlign: 'center' }}>
         <h2>Créer un Compte Opérateur</h2>
-        {error && <p className="error-message">{error}</p>}
-        {successMessage && <p className="success-message">{successMessage}</p>}
+      </Box>
 
-        <form onSubmit={handleSubmit} className="register-client-form">
-          {/* Section Contact UNIQUEMENT */}
-          <div className="register-client-form-section">
-            <div className="register-client-form-row">
-              {/* Civilité */}
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-toggle-switch">
-                  <input
-                    type="checkbox"
-                    id="gender-toggle"
-                    name="gender"
-                    checked={formData.gender === 'Mme'}
-                    onChange={toggleGender}
-                  />
-                  <label htmlFor="gender-toggle" className="register-client-toggle-label">
-                    <span className="register-client-toggle-slider"></span>
-                  </label>
-                  <label htmlFor="gender-toggle" className="register-client-gender-label">
-                    {formData.gender}
-                  </label>
-                </div>
-                <span className="register-client-required-asterisk">*</span>
-              </div>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+      {successMessage && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {successMessage}
+        </Alert>
+      )}
 
-              {/* Nom */}
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faUser} className="input-icon" />
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Nom"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
+      <form onSubmit={handleSubmit}>
+        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <Button variant="outlined" onClick={toggleGender} sx={{ minWidth: 100 }}>
+            {formData.gender}
+          </Button>
+          <TextField
+            label="Nom *"
+            variant="outlined"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            fullWidth
+          />
+        </Box>
 
-            {/* Téléphone fixe + indicatif */}
-            <div className="register-client-form-row">
-              <div className="register-client-field register-client-half-width">
-                <label className="register-client-label">Téléphone (fixe)</label>
-                <div className="register-client-input-wrapper phone-wrapper">
-                  <FontAwesomeIcon icon={faPhone} className="input-icon" />
-                  <select
-                    name="phoneFixedCountryCode"
-                    value={formData.phoneFixedCountryCode}
-                    onChange={handleChange}
-                    className="register-client-input country-code-select"
-                  >
-                    {countryCodes.map((country) => (
-                      <option key={country.code} value={country.code}>
-                        {country.flag} {country.name} ({country.code})
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    name="phoneFixedNumber"
-                    value={formData.phoneFixedNumber}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input phone-number-input"
-                    placeholder="612345678"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-
-              {/* Téléphone portable + indicatif */}
-              <div className="register-client-field register-client-half-width">
-                <label className="register-client-label">Téléphone (portable)</label>
-                <div className="register-client-input-wrapper phone-wrapper">
-                  <FontAwesomeIcon icon={faMobileAlt} className="input-icon" />
-                  <select
-                    name="phoneMobileCountryCode"
-                    value={formData.phoneMobileCountryCode}
-                    onChange={handleChange}
-                    className="register-client-input country-code-select"
-                  >
-                    {countryCodes.map((country) => (
-                      <option key={country.code} value={country.code}>
-                        {country.flag} {country.name} ({country.code})
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    name="phoneMobileNumber"
-                    value={formData.phoneMobileNumber}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input phone-number-input"
-                    placeholder="712345678"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Email */}
-            <div className="register-client-form-row">
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Email"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Mot de passe + confirmation */}
-            <div className="register-client-form-row">
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faLock} className="input-icon" />
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Mot de passe"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <FontAwesomeIcon icon={faLock} className="input-icon" />
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Confirmer mot de passe"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="register-client-form-row">
-              <div className="register-client-toggle-switch">
-                <input
-                  type="checkbox"
-                  id="admin-toggle"
-                  name="isAdmin"
-                  checked={formData.isAdmin}
-                  onChange={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      isAdmin: !prev.isAdmin, // Basculer entre true et false
-                    }))
-                  }
-                />
-                <label htmlFor="admin-toggle" className="register-client-toggle-label">
-                  <span className="register-client-toggle-slider"></span>
-                </label>
-                <label htmlFor="admin-toggle" className="register-client-role-label">
-                  {formData.isAdmin ? 'Administrateur' : 'Non Administrateur'}
-                </label>
-              </div>
-            </div>
-
-
-
-            {/* Choix obligatoire Rôle */}
-            <div className="register-client-form-row">
-              <div className="register-client-field register-client-full-width">
-                <label style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-                  Rôle  
-                </label>
-                <span className="register-client-required-asterisk">*</span>
-                <div style={{ display: 'flex', gap: '20px' }}>
-                  <label className="register-client-radio-label">
-                    <input
-                      type="radio"
-                      name="role"
-                      value="Opérateur"
-                      checked={formData.role === 'Opérateur'}
-                      onChange={handleChange}
-                      required
-                    />
-                    Opérateur
-                  </label>
-                  <label className="register-client-radio-label">
-                    <input
-                      type="radio"
-                      name="role"
-                      value="Opérateur avec pouvoir"
-                      checked={formData.role === 'Opérateur avec pouvoir'}
-                      onChange={handleChange}
-                      required
-                    />
-                    Opérateur avec pouvoir
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="register-client-form-actions">
-            <button type="submit" className="register-client-button">
-              {id ? 'Modifier' : 'Créer'}
-            </button>
-
-            <button
-              type="button"
-              className="registerOP-client-button cancel-button"
-              onClick={handleCancel}
+        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel htmlFor="phoneFixedCountryCode-native">Indicatif fixe</InputLabel>
+            <Select
+              native
+              label="Indicatif fixe"
+              inputProps={{
+                name: 'phoneFixedCountryCode',
+                id: 'phoneFixedCountryCode-native',
+                onKeyDown: handleCountryKeyDown('phoneFixedCountryCode')
+              }}
+              value={formData.phoneFixedCountryCode}
+              onChange={handleChange}
             >
-              Annuler
-            </button>
-          </div>
-        </form>
+              {countryCodes.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.flag} {country.name} ({country.code})
+                </option>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            label="Téléphone fixe *"
+            variant="outlined"
+            name="phoneFixedNumber"
+            value={formData.phoneFixedNumber}
+            onChange={handleChange}
+            fullWidth
+            inputProps={{ maxLength: 9 }}
+          />
+        </Box>
 
+        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel htmlFor="phoneMobileCountryCode-native">Indicatif portable</InputLabel>
+            <Select
+              native
+              label="Indicatif portable"
+              inputProps={{
+                name: 'phoneMobileCountryCode',
+                id: 'phoneMobileCountryCode-native',
+                onKeyDown: handleCountryKeyDown('phoneMobileCountryCode')
+              }}
+              value={formData.phoneMobileCountryCode}
+              onChange={handleChange}
+            >
+              {countryCodes.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.flag} {country.name} ({country.code})
+                </option>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            label="Téléphone portable *"
+            variant="outlined"
+            name="phoneMobileNumber"
+            value={formData.phoneMobileNumber}
+            onChange={handleChange}
+            fullWidth
+            inputProps={{ maxLength: 9 }}
+          />
+        </Box>
 
-      </div>
+        <Box sx={{ mb: 2 }}>
+          <TextField
+            label="Email *"
+            variant="outlined"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            fullWidth
+          />
+        </Box>
 
-      {/* Snackbar Component */}
+        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <TextField
+            label="Mot de passe *"
+            variant="outlined"
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            fullWidth
+          />
+          <TextField
+            label="Confirmer mot de passe *"
+            variant="outlined"
+            type="password"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            fullWidth
+          />
+        </Box>
+
+        <Box sx={{ mb: 2 }}>
+          <FormControl component="fieldset" fullWidth>
+            <FormLabel component="legend">Rôle *</FormLabel>
+            <RadioGroup row name="role" value={formData.role} onChange={handleChange}>
+              <FormControlLabel value="Opérateur" control={<Radio />} label="Opérateur" />
+              <FormControlLabel value="Opérateur avec pouvoir" control={<Radio />} label="Opérateur avec pouvoir" />
+            </RadioGroup>
+          </FormControl>
+        </Box>
+
+        <Box sx={{ mb: 2 }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                name="isAdmin"
+                checked={formData.isAdmin}
+                onChange={handleCheckboxChange}
+              />
+            }
+            label={formData.isAdmin ? 'Administrateur' : 'Non Administrateur'}
+          />
+        </Box>
+
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+          <Button variant="outlined" onClick={handleCancel}>
+            Annuler
+          </Button>
+          <Button variant="contained" type="submit">
+            {id ? 'Modifier' : 'Créer'}
+          </Button>
+        </Box>
+      </form>
+
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={handleSnackbarClose}
       >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbarSeverity}
-          sx={{ width: '100%' }}
-        >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>
-    </div>
+    </Box>
   );
 };
 
