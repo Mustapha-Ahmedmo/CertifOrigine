@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { getCustAccountInfo } from '../services/apiServices';
+import { fetchSectors, getCustAccountInfo, setCustAccount, updateCustAccount } from '../services/apiServices';
 import './Inscriptions.css'; // Retain your CSS classes
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { formatDate } from '../utils/dateUtils';
 import {
   Box,
@@ -24,6 +24,10 @@ import {
   Tabs,
   Tab,
   AppBar,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 
 function TabPanel(props) {
@@ -56,13 +60,15 @@ const ClientsValides = () => {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [tabIndex, setTabIndex] = useState(0);
-  // New: state to manage the selected filter (default is "validé")
+  // State to manage the selected filter (default is "validé")
   const [selectedFilter, setSelectedFilter] = useState('validé');
   const currentYear = new Date().getFullYear();
 
-  const handleTabChange = (event, newValue) => {
-    setTabIndex(newValue);
-  };
+  // States for the edit modal
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [selectedEditAccount, setSelectedEditAccount] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
+  const [sectors, setSectors] = useState([]);
 
   // Fetch accounts based on the selected filter.
   useEffect(() => {
@@ -85,6 +91,23 @@ const ClientsValides = () => {
     };
     fetchAccounts();
   }, [selectedFilter]);
+
+  // Fetch sectors for the dropdown in the edit modal.
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const sectorData = await fetchSectors();
+        setSectors(sectorData);
+      } catch (err) {
+        console.error('Error fetching sectors:', err);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleTabChange = (event, newValue) => {
+    setTabIndex(newValue);
+  };
 
   const handleOpenContactsModal = (account) => {
     setSelectedAccount(account);
@@ -125,6 +148,98 @@ const ClientsValides = () => {
       .map((val) => String(val).toLowerCase());
     return fields.some((field) => field.includes(search));
   });
+
+  // Open edit modal and preload form data
+  const handleOpenEditModal = (account) => {
+
+
+    setSelectedEditAccount(account);
+
+    let companyType = '';
+    if (account.in_free_zone) {
+      companyType = 'zoneFranche';
+    } else if (!account.in_free_zone && account.other_business_type) {
+      companyType = 'autres';
+    } else {
+      companyType = 'autre';
+    }
+
+    setEditFormData({
+      companyName: account.cust_name,
+      legalForm: account.legal_form,
+      fullAddress: account.full_address,
+      country: account.co_symbol_fr,
+      sector: account.sectorName?.symbol_fr || '',
+      nif: account.trade_registration_num,
+      rchNumber: account.register_number,
+      licenseNumber: account.identification_number,
+      companyType
+      // You can add additional fields as needed.
+    });
+    setOpenEditModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setOpenEditModal(false);
+    setSelectedEditAccount(null);
+    setEditFormData({});
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handler to save modifications (update API call should be implemented here)
+  const handleSaveEdit = async () => {
+    console.log('Saving updated account data:', editFormData);
+
+    const updateData = {
+      // Required by your stored procedure
+      id_cust_account: selectedEditAccount.id_cust_account,
+      legal_form: editFormData.legalForm, // Updated from the edit form
+      cust_name: editFormData.companyName, // Updated from the edit form
+      // For fields not edited in the modal, use the existing account values:
+      trade_registration_num: editFormData.nif || '',
+      in_free_zone: selectedEditAccount.in_free_zone,
+      // We'll assume that the new license number is also the identification number:
+      identification_number: editFormData.licenseNumber,
+      // And that the RCS field corresponds to register_number:
+      register_number: editFormData.rchNumber,
+
+      full_address: editFormData.fullAddress,
+      id_sector: selectedEditAccount.id_sector,
+      other_sector: selectedEditAccount.other_sector || '',
+      id_country: selectedEditAccount.id_country,
+      statut_flag: selectedEditAccount.statut_flag, // Not changed here
+      idlogin: selectedEditAccount.idlogin_modify || 1,
+      billed_cust_name: selectedEditAccount.billed_cust_name || '',
+      bill_full_address: selectedEditAccount.bill_full_address || '',
+      id_country_headoffice: selectedEditAccount.id_country_headoffice || null,
+      other_legal_form: selectedEditAccount.other_legal_form || '',
+      other_business_type: selectedEditAccount.other_business_type || '',
+      companyType: editFormData.companyType || ''
+    };
+
+    console.log('Updating customer account with:', updateData);
+    let status;
+    if (selectedFilter === 'validé') {
+      status = 2;
+    } else if (selectedFilter === 'non validé') {
+      status = 1;
+    } else if (selectedFilter === 'rejeté') {
+      status = 4;
+    }
+
+    // Call the API service function
+    const result = await updateCustAccount(updateData);
+    console.log('Update result:', result);
+    const response = await getCustAccountInfo(null, status, true);
+    const data = response.data || [];
+    setCustAccounts(data);
+
+    handleCloseEditModal();
+  };
 
   return (
     <Box sx={{ ml: '240px', p: 3 }}>
@@ -191,6 +306,7 @@ const ClientsValides = () => {
                 <TableCell>Implantation</TableCell>
                 <TableCell>Fichier Justificatifs</TableCell>
                 <TableCell>Contact Principal</TableCell>
+                <TableCell>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -261,12 +377,135 @@ const ClientsValides = () => {
                       Ouvrir
                     </Button>
                   </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="small"
+                      startIcon={<FontAwesomeIcon icon={faEdit} />}
+                      onClick={() => handleOpenEditModal(registration)}
+                    >
+                      Modifier
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
       </Paper>
+
+      {/* Edit Modal */}
+      <Dialog open={openEditModal} onClose={handleCloseEditModal} fullWidth maxWidth="sm">
+        <DialogTitle>Modifier les informations du client</DialogTitle>
+        <DialogContent>
+          <Box component="form" noValidate sx={{ mt: 2 }}>
+            <TextField
+              margin="normal"
+              fullWidth
+              label="Nom de l'entreprise"
+              name="companyName"
+              value={editFormData.companyName || ''}
+              onChange={handleEditChange}
+            />
+            <TextField
+              margin="normal"
+              fullWidth
+              label="Statut juridique"
+              name="legalForm"
+              value={editFormData.legalForm || ''}
+              onChange={handleEditChange}
+            />
+            <TextField
+              margin="normal"
+              fullWidth
+              label="Adresse complète"
+              name="fullAddress"
+              value={editFormData.fullAddress || ''}
+              onChange={handleEditChange}
+            />
+            <TextField
+              margin="normal"
+              fullWidth
+              label="Pays"
+              name="country"
+              value={editFormData.country || ''}
+              onChange={handleEditChange}
+              disabled
+            />
+            <FormControl margin="normal" fullWidth>
+              <InputLabel id="edit-company-type-label">Type d'entreprise</InputLabel>
+              <Select
+                labelId="edit-company-type-label"
+                id="edit-company-type-select"
+                name="companyType"
+                value={editFormData.companyType || ''}
+                onChange={handleEditChange}
+                label="Type d'entreprise"
+              >
+                <MenuItem value="autre">Entreprise</MenuItem>
+                <MenuItem value="zoneFranche">Entreprise en zone franche</MenuItem>
+                <MenuItem value="autres">Autre</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl margin="normal" fullWidth>
+              <InputLabel id="edit-sector-label">Secteur</InputLabel>
+              <Select
+                labelId="edit-sector-label"
+                id="edit-sector-select"
+                name="sector"
+                value={editFormData.sector || ''}
+                onChange={handleEditChange}
+                label="Secteur"
+              >
+                {sectors.map((sector) => (
+                  <MenuItem key={sector.id_sector} value={sector.symbol_fr}>
+                    {sector.symbol_fr.charAt(0).toUpperCase() + sector.symbol_fr.slice(1).toLowerCase()}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {/* Conditionally render identification fields */}
+            {editFormData.companyType === 'zoneFranche' ? (
+              <TextField
+                margin="normal"
+                fullWidth
+                label="Numéro de licence"
+                name="licenseNumber"
+                value={editFormData.licenseNumber || ''}
+                onChange={handleEditChange}
+              />
+            ) : editFormData.companyType === 'autre' ? (
+              <>
+                <TextField
+                  margin="normal"
+                  fullWidth
+                  label="NIF"
+                  name="nif"
+                  value={editFormData.nif || ''}
+                  onChange={handleEditChange}
+                />
+                <TextField
+                  margin="normal"
+                  fullWidth
+                  label="Numéro RCS"
+                  name="rchNumber"
+                  value={editFormData.rchNumber || ''}
+                  onChange={handleEditChange}
+                />
+              </>
+            ) : null}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditModal} color="error">
+            Annuler
+          </Button>
+          <Button onClick={handleSaveEdit} color="primary" variant="contained">
+            Sauvegarder
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

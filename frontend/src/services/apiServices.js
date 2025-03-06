@@ -1309,3 +1309,26 @@ export const setInvoiceHeader = async (invoiceData) => {
     throw error;
   }
 };
+
+export const updateCustAccount = async (accountData) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/upd-cust-account`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(accountData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update customer account');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (updateCustAccount):', error);
+    throw error;
+  }
+};

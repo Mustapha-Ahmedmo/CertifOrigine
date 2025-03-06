@@ -111,6 +111,7 @@ const executeSetCustAccount = async (req, res) => {
     });
   }
 };
+
 const executeGetCustUsersByAccount = async (req, res) => {
   try {
     // Extract query parameters. They come in as strings.
@@ -1437,6 +1438,96 @@ L'équipe de la Chambre de Commerce de Djibouti
   }
 };
 
+const executeUpdCustAccount = async (req, res) => {
+  try {
+    const {
+      id_cust_account,
+      legal_form,
+      cust_name,
+      trade_registration_num,
+      in_free_zone,
+      identification_number,
+      register_number,
+      full_address,
+      id_sector,
+      other_sector,
+      id_country,
+      statut_flag,
+      idlogin,
+      billed_cust_name,
+      bill_full_address,
+      id_country_headoffice,
+      other_legal_form,
+      other_business_type,
+    } = req.body;
+
+    if (!id_cust_account) {
+      return res.status(400).json({ message: "L'ID du compte client est requis." });
+    }
+
+    const result = await sequelize.query(
+      `CALL upd_cust_account(
+          :p_id_cust_account,
+          :p_legal_form,
+          :p_cust_name,
+          :p_trade_registration_num,
+          :p_in_free_zone,
+          :p_identification_number,
+          :p_register_number,
+          :p_full_address,
+          :p_id_sector,
+          :p_other_sector,
+          :p_id_country,
+          :p_statut_flag,
+          :p_idlogin,
+          :p_billed_cust_name,
+          :p_bill_full_address,
+          :p_id_country_headoffice,
+          :p_other_legal_form,
+          :p_other_business_type
+       )`,
+      {
+        replacements: {
+          p_id_cust_account: id_cust_account,
+          p_legal_form: legal_form,
+          p_cust_name: cust_name,
+          p_trade_registration_num: trade_registration_num,
+          p_in_free_zone: in_free_zone,
+          p_identification_number: identification_number,
+          p_register_number: register_number,
+          p_full_address: full_address,
+          p_id_sector: id_sector,
+          p_other_sector: other_sector,
+          p_id_country: id_country,
+          p_statut_flag: statut_flag,
+          p_idlogin: idlogin,
+          p_billed_cust_name: billed_cust_name,
+          p_bill_full_address: bill_full_address,
+          p_id_country_headoffice: id_country_headoffice,
+          p_other_legal_form: other_legal_form,
+          p_other_business_type: other_business_type,
+        },
+        type: sequelize.QueryTypes.RAW,
+      }
+    );
+
+    console.log("upd_cust_account result:", result);
+
+    res.status(200).json({
+      message: "Customer account updated successfully",
+      result,
+    });
+  } catch (error) {
+    console.error("Error executing upd_cust_account:", error);
+    res.status(500).json({
+      message: "Error executing upd_cust_account",
+      error: error.message || "Unknown error occurred",
+      details: error.original || error,
+    });
+  }
+};
+
+
 // Export the new function along with the existing ones
 module.exports = {
   executeSetCustAccount,
@@ -1452,5 +1543,6 @@ module.exports = {
   executeGetCustUsersByAccount,
   executeDeleteCustUser,
   handleContactForm,
-  executeSetCustSmallUser
+  executeSetCustSmallUser,
+  executeUpdCustAccount
 };

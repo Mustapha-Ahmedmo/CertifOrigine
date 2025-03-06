@@ -13,6 +13,8 @@ import {
   faEnvelope,
   faLock,
   faIndustry,
+  faEye,           // Import the eye icon
+  faEyeSlash,      // Optionally import an eye-slash icon
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../assets/logo.jpg';
 import { Helmet } from 'react-helmet';
@@ -49,6 +51,8 @@ const Alert = forwardRef(function Alert(props, ref) {
 const Register = () => {
   const allowedFileTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
   const navigate = useNavigate();
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     gender: 'Mr',
@@ -837,7 +841,7 @@ const Register = () => {
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
@@ -845,6 +849,13 @@ const Register = () => {
                     className="register-client-input"
                     placeholder="Mot de passe"
                   />
+                  <span
+                    className="toggle-password"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}
+                  >
+                    <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                  </span>
                   <span className="register-client-required-asterisk">*</span>
                 </div>
               </div>
@@ -852,7 +863,7 @@ const Register = () => {
               <div className="register-client-field register-client-half-width">
                 <div className="register-client-input-wrapper">
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
@@ -860,6 +871,13 @@ const Register = () => {
                     className="register-client-input"
                     placeholder="Confirmer mot de passe"
                   />
+                  <span
+                    className="toggle-password"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}
+                  >
+                    <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                  </span>
                   <span className="register-client-required-asterisk">*</span>
                 </div>
               </div>
