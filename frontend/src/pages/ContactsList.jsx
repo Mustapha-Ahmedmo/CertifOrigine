@@ -5,6 +5,7 @@ import {
   getCustUsersByAccount,
   setCustUser,
   deleteCustUser,
+  setCustSmallUser,
 } from '../services/apiServices';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
@@ -46,6 +47,9 @@ const ContactsList = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalError, setModalError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+
+  const user2 = useSelector((state) => state.auth.user);
+  const idLogin = user2?.id_login_user;
 
   // Contact en cours (pour la modale)
   const [currentContact, setCurrentContact] = useState({
@@ -215,9 +219,11 @@ const ContactsList = () => {
         statut_flag: 1,
         id_login_insert: user?.id_login_user || 1,
         id_login_modify: isEditing ? (user?.id_login_user || 1) : null,
+        password: 'account123password',
+        idlogin: idLogin
       };
 
-      await setCustUser(payload);
+      await setCustSmallUser(payload);
 
       // Rechargement
       const updated = await getCustUsersByAccount(custAccountId, null, 'true', 'true', null);

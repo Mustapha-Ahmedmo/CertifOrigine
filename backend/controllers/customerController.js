@@ -14,6 +14,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const FRONTEND_URL = "http://51.195.203.178"
 
 const sendEmail = async (to, subject, text) => {
   try {
@@ -252,6 +253,129 @@ const executeSetCustUser = async (req, res) => {
     });
   }
 };
+
+
+const executeSetCustSmallUser = async (req, res) => {
+  try {
+    const {
+      id_cust_user,
+      id_cust_account,
+      gender,
+      full_name,
+      ismain_user,
+      email,
+      password, // received password (may be empty when updating)
+      phone_number,
+      mobile_number,
+      idlogin,
+      position,
+    } = req.body;
+
+    // Debug: log incoming data
+    console.log('Received set_cust_user data:', req.body);
+
+    // Prepare replacements. If updating an existing user (id_cust_user exists) and password is empty, pass null.
+    const replacements = {
+      id_cust_user,
+      id_cust_account,
+      gender,
+      full_name,
+      ismain_user,
+      email,
+      phone_number,
+      mobile_number,
+      idlogin,
+      position,
+      password: (id_cust_user && (!password || password.trim() === '')) ? null : password,
+    };
+
+    // Execute the stored procedure. Notice we pass p_password as null in update mode if no new password is provided.
+    const result = await sequelize.query(
+      `CALL set_cust_user(
+        :id_cust_user, 
+        :id_cust_account, 
+        :gender, 
+        :full_name, 
+        :ismain_user, 
+        :email, 
+        :password, 
+        :phone_number, 
+        :mobile_number, 
+        :idlogin, 
+        :position
+      )`,
+      {
+        replacements,
+        type: sequelize.QueryTypes.RAW, // Specify the query type
+      }
+    );
+
+    console.log('set_cust_user result:', result);
+
+    // Now, generate a reset token so the user can set a new password.
+    const token = crypto.randomUUID();
+    const activationDate = new Date();
+    const deactivationDate = new Date();
+    deactivationDate.setHours(deactivationDate.getHours() + 24); // Token valid for 24 hours
+
+    // Save the token in the database using a stored procedure (assumed to be "add_TokenResetPwd_Settings").
+    await sequelize.query(
+      `CALL add_TokenResetPwd_Settings(
+            :p_token,
+            :p_login,
+            :p_email,
+            :p_activation_date,
+            :p_deactivation,
+            :p_id
+          )`,
+      {
+        replacements: {
+          p_token: token,
+          p_login: email,
+          p_email: email,
+          p_activation_date: activationDate,
+          p_deactivation: deactivationDate,
+          p_id: null,
+        },
+        type: sequelize.QueryTypes.RAW,
+      }
+    );
+
+    const resetLink = `${FRONTEND_URL}/forgot-password?token=${token}`;
+
+    // Send an email to the user with instructions to reset the password.
+    await sendEmail(
+      email,
+      'Réinitialisation de votre mot de passe',
+      `Bonjour ${full_name},
+
+Votre compte a été créé avec succès. Pour sécuriser votre compte, nous vous invitons à réinitialiser votre mot de passe en cliquant sur le lien ci-dessous :
+
+${resetLink}
+
+⚠️ Ce lien expirera dans 24 heures.
+
+Si vous n'avez pas initié cette demande, veuillez contacter notre support immédiatement.
+
+Cordialement,
+L'équipe`
+    );
+
+
+    res.status(200).json({
+      message: 'Customer user processed successfully',
+      result,
+    });
+  } catch (error) {
+    console.error('Error executing set_cust_user:', error);
+    res.status(500).json({
+      message: 'Error executing set_cust_user',
+      error: error.message || 'Unknown error occurred',
+      details: error.original || error,
+    });
+  }
+};
+
 
 const executeGetCustAccountInfo = async (req, res) => {
   try {
@@ -720,7 +844,7 @@ const executeAddSubscription = async (req, res) => {
       error: error.message || 'Erreur inconnue.',
     });
   }
-}; 
+};
 
 const executeCreateSubscriptionWithFile = async (req, res) => {
   try {
@@ -805,11 +929,11 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
       // We initialize p_id_cust_account with null.
 
       let in_free_zone_value = null;
-if (req.body.in_free_zone === 'true') {
-  in_free_zone_value = true;
-} else if (req.body.in_free_zone === 'false') {
-  in_free_zone_value = false;
-}
+      if (req.body.in_free_zone === 'true') {
+        in_free_zone_value = true;
+      } else if (req.body.in_free_zone === 'false') {
+        in_free_zone_value = false;
+      }
       const subscriptionResult = await sequelize.query(
         `CALL add_Subscription(
           :p_legal_form, 
@@ -1090,7 +1214,7 @@ const requestPasswordReset = async (req, res) => {
     );
 
     // Send reset email
-    const resetLink = `http://51.195.203.178/forgot-password?token=${token}`;
+    const resetLink = `${FRONTEND_URL}/forgot-password?token=${token}`;
     await sendEmail(
       email,
       'Réinitialisation de mot de passe',
@@ -1279,7 +1403,7 @@ ${message}
     // Send email to company
     await sendEmail(
       email,// 'contact@ccd.dj', // Your company email
-        `[Contact] ${subject}`,
+      `[Contact] ${subject}`,
       companyEmailText
     );
 
@@ -1327,5 +1451,6 @@ module.exports = {
   executeResetPassword,
   executeGetCustUsersByAccount,
   executeDeleteCustUser,
-  handleContactForm
+  handleContactForm,
+  executeSetCustSmallUser
 };

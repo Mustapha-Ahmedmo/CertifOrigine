@@ -109,6 +109,29 @@ export const setCustUser = async (userData) => {
   }
 };
 
+
+export const setCustSmallUser = async (userData) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/setCustSmallUser`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Setting customer user failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
+  }
+};
+
 export const loginUser = async (email, password) => {
   try {
     const response = await fetch(`${API_URL}/auth/login`, {

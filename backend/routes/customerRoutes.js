@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { executeSetCustAccount, executeSetCustUser, executeGetCustAccountInfo, updateCustAccountStatus, rejectCustAccount, executeAddSubscription, executeCreateSubscriptionWithFile, executeGetCustAccountFiles, requestPasswordReset, executeResetPassword, executeGetCustUsersByAccount, executeDeleteCustUser, handleContactForm } = require('../controllers/customerController');
+const { executeSetCustAccount, executeSetCustUser, executeSetCustSmallUser, executeGetCustAccountInfo, updateCustAccountStatus, rejectCustAccount, executeAddSubscription, executeCreateSubscriptionWithFile, executeGetCustAccountFiles, requestPasswordReset, executeResetPassword, executeGetCustUsersByAccount, executeDeleteCustUser, handleContactForm } = require('../controllers/customerController');
 const upload = require('../src/middleware/upload');
 
 // Route to handle set_cust_account
@@ -8,6 +8,9 @@ router.post('/setCustAccount', executeSetCustAccount);
 
 // Route to handle set_cust_user
 router.post('/setCustUser', executeSetCustUser);
+
+
+router.post('/setCustSmallUser', executeSetCustSmallUser);
 
 router.put('/rejectCustAccount/:id', rejectCustAccount);
 
