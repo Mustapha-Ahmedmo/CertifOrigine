@@ -266,7 +266,7 @@ const Inscriptions = () => {
                     >
                       <TableCell>{formatDate(registration.insertdate)}</TableCell>
                       <TableCell>
-                        {registration.legal_form} {registration.cust_name}
+                        {registration.other_legal_form ? registration.other_legal_form : registration.legal_form} {registration.cust_name}
                       </TableCell>
                       <TableCell>
                         {registration.sectorName?.symbol_fr || 'N/A'}
