@@ -222,7 +222,6 @@ CREATE TABLE "ORDER" (
     FOREIGN KEY (IDLOGIN_SPARE) REFERENCES LOGIN_USER(ID_LOGIN_USER)
 );
 
-
 CREATE TABLE RECIPIENT_ACCOUNT (
     ID_RECIPIENT_ACCOUNT INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     ID_CUST_ACCOUNT INT,
@@ -230,7 +229,7 @@ CREATE TABLE RECIPIENT_ACCOUNT (
     ADDRESS_1 VARCHAR(160),
     ADDRESS_2 VARCHAR(160) NULL,    -- Nullable
     ADDRESS_3 VARCHAR(160) NULL,    -- Nullable
-    ID_CITY INT,
+    ID_COUNTRY INT,
     STATUT_FLAG INT DEFAULT 1 NOT NULL,   -- Valeur par défaut
     INSERTDATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,   -- Non nullable
     ACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,   -- Non nullable
@@ -240,7 +239,7 @@ CREATE TABLE RECIPIENT_ACCOUNT (
     IDLOGIN_MODIFY INT NULL,      -- Nullable
     FOREIGN KEY (ID_CUST_ACCOUNT) REFERENCES CUST_ACCOUNT(ID_CUST_ACCOUNT),
     FOREIGN KEY (IDLOGIN_INSERT) REFERENCES LOGIN_USER(ID_LOGIN_USER),
-    FOREIGN KEY (ID_CITY) REFERENCES CITY(ID_CITY),
+    FOREIGN KEY (ID_COUNTRY) REFERENCES COUNTRY(ID_COUNTRY),
     FOREIGN KEY (IDLOGIN_MODIFY) REFERENCES LOGIN_USER(ID_LOGIN_USER)
 );
 
@@ -1889,6 +1888,19 @@ DECLARE
     new_id INT;
 BEGIN
     INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
+    VALUES ('ETHIOPIE', 'ETHIOPIA')
+    RETURNING ID_COUNTRY INTO new_id;
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Addis-Abeba', 'Addis-Abeba');
+    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
+    VALUES (new_id, 'Dire Dawa', 'Dire Dawa');
+END $$;
+
+DO $$
+DECLARE
+    new_id INT;
+BEGIN
+    INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
     VALUES ('REP. DE DJIBOUTI', 'REP. DE DJIBOUTI')
     RETURNING ID_COUNTRY INTO new_id;
     INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
@@ -1897,18 +1909,7 @@ BEGIN
     VALUES (new_id, 'Tadjourah','Tadjourah');
 END $$;
 
-DO $$
-DECLARE
-    new_id INT;
-BEGIN
-    INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
-    VALUES ('ETHIOPIE', 'ETHIOPIA')
-    RETURNING ID_COUNTRY INTO new_id;
-    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
-    VALUES (new_id, 'Addis-Abeba', 'Addis-Abeba');
-    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
-    VALUES (new_id, 'Dire Dawa', 'Dire Dawa');
-END $$;
+
 
 DO $$
 DECLARE
@@ -2300,11 +2301,11 @@ RETURNS TABLE (
     address_1 VARCHAR(160),
     address_2 VARCHAR(160),
     address_3 VARCHAR(160),
-    id_city_recipient INT,
-    id_country_recipient INT,
+    --id_city_recipient INT,
+    --id_country_recipient INT,
     id_country_cust INT,
-    city_symbol_fr_recipient VARCHAR(64),
-    city_symbol_eng_recipient VARCHAR(64),
+    --city_symbol_fr_recipient VARCHAR(64),
+    --city_symbol_eng_recipient VARCHAR(64),
     country_symbol_fr_recipient VARCHAR(64),
     country_symbol_eng_recipient VARCHAR(64),
     country_symbol_fr_cust VARCHAR(64),
@@ -2333,11 +2334,11 @@ BEGIN
         ra."address_1",
         ra."address_2",
         ra."address_3",
-        ra."id_city" AS id_city_recipient,
-        city_recipient."id_country" AS id_country_recipient,
+        --ra."id_city" AS id_city_recipient,
+        --city_recipient."id_country" AS id_country_recipient,
         ca."id_country" AS id_country_cust,
-        city_recipient."symbol_fr" AS city_symbol_fr_recipient,
-        city_recipient."symbol_eng" AS city_symbol_eng_recipient,
+        --city_recipient."symbol_fr" AS city_symbol_fr_recipient,
+        --city_recipient."symbol_eng" AS city_symbol_eng_recipient,
         country_recipient."symbol_fr" AS country_symbol_fr_recipient,
         country_recipient."symbol_eng" AS country_symbol_eng_recipient,
         country_cust."symbol_fr" AS country_symbol_fr_cust,
@@ -2356,8 +2357,8 @@ BEGIN
         ca."identification_number",
         ca."full_address"
     FROM recipient_account ra
-    JOIN city city_recipient ON ra."id_city" = city_recipient."id_city"
-         JOIN country country_recipient ON city_recipient."id_country" = country_recipient."id_country"
+    --JOIN city city_recipient ON ra."id_city" = city_recipient."id_city"
+         JOIN country country_recipient ON ra."id_country" = country_recipient."id_country"
     JOIN cust_account ca ON ra."id_cust_account" = ca."id_cust_account"
          JOIN country country_cust ON ca."id_country" = country_cust."id_country"
     WHERE 
@@ -2378,6 +2379,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
 DROP PROCEDURE IF EXISTS set_recipient_account;
 CREATE OR REPLACE PROCEDURE set_recipient_account(
     p_id_recipient_account INT,
@@ -2386,7 +2388,7 @@ CREATE OR REPLACE PROCEDURE set_recipient_account(
     p_address_1 VARCHAR(160),
     p_address_2 VARCHAR(160),
     p_address_3 VARCHAR(160),
-    p_id_city INT,
+    p_id_country INT,
     p_statut_flag INT,
     p_activation_date TIMESTAMP,
     p_deactivation_date TIMESTAMP,
@@ -2404,7 +2406,7 @@ BEGIN
             address_1,
             address_2,
             address_3,
-            id_city,
+            id_country,
             statut_flag,
             activation_date,
             deactivation_date,
@@ -2415,7 +2417,7 @@ BEGIN
             p_address_1,
             p_address_2,
             p_address_3,
-            p_id_city,
+            p_id_country,
             p_statut_flag,
             p_activation_date,
             p_deactivation_date,
@@ -2429,7 +2431,7 @@ BEGIN
             address_1 = p_address_1,
             address_2 = p_address_2,
             address_3 = p_address_3,
-            id_city = p_id_city,
+            id_country = p_id_country,
             statut_flag = p_statut_flag,
             activation_date = p_activation_date,
             deactivation_date = p_deactivation_date,
@@ -2839,7 +2841,6 @@ CREATE OR REPLACE FUNCTION get_order_op_info(
 RETURNS TABLE(
     id_order INT,
     id_cust_account INT,
-    cust_name VARCHAR(128),
     order_title VARCHAR(32),
     id_order_status INT,
     idlogin_owner INT,
@@ -2858,7 +2859,7 @@ RETURNS TABLE(
     id_recipient_account INT,
     id_country_origin INT,
     id_country_destination INT,
-    id_country_port_loading INT,
+	id_country_port_loading INT,
     id_country_port_discharge INT,
     transport_remarks VARCHAR(160),
     notes_ori VARCHAR(256),
@@ -2875,7 +2876,7 @@ RETURNS TABLE(
     address_1 VARCHAR(160),
     address_2 VARCHAR(160),
     address_3 VARCHAR(160),
-    id_city INT,
+    id_country INT,
     statut_flag INT,
     insertdate_recip TIMESTAMP,
     activation_date_recip TIMESTAMP,
@@ -2922,21 +2923,17 @@ RETURNS TABLE(
     date_validation_invoice TIMESTAMP,
     lastmodified_invoice TIMESTAMP,
     idlogin_modify_invoice INT,
-    typeof_invoice INT,
-    country_symbol_fr VARCHAR(64),
-    country_symbol_eng VARCHAR(64)
+    typeof_invoice INT
 ) AS
 $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM op_user WHERE id_login_user = p_idlogin) THEN
+IF NOT EXISTS (SELECT 1 FROM op_user WHERE id_login_user = p_idlogin) THEN
         RAISE EXCEPTION 'Accès refusé';
-    END IF;
-    
+	END IF;
     RETURN QUERY
     SELECT 
         o."id_order",
         o."id_cust_account",
-        ca."cust_name" AS cust_name,  -- Return customer name from CUST_ACCOUNT
         o."order_title",
         o."id_order_status",
         o."idlogin_owner",
@@ -2945,12 +2942,12 @@ BEGIN
         o."date_spare",
         o."date_last_submission",
         o."date_last_return",
-        o."date_validation" AS date_validation_order,
-        o."insertdate" AS insertdate_order,
-        o."idlogin_insert" AS idlogin_insert_order,
-        o."lastmodified" AS lastmodified_order,
-        o."idlogin_modify" AS idlogin_modify_order,
-        o."typeof" AS typeof_order,
+        o."date_validation" as date_validation_order,
+        o."insertdate" as insertdate_order,
+        o."idlogin_insert" as idlogin_insert_order,
+        o."lastmodified" as lastmodified_order,
+        o."idlogin_modify" as idlogin_modify_order,
+        o."typeof" as typeof_order,
         oco."id_ord_certif_ori",
         r."id_recipient_account",
         oco."id_country_origin",
@@ -2958,32 +2955,32 @@ BEGIN
         oco."id_country_port_loading",
         oco."id_country_port_discharge",
         oco."transport_remarks",
-        oco."notes" AS notes_ori,
-        oco."copy_count" AS copy_count_ori,
-        oco."equivalent_amount" AS equivalent_amount_ori,
-        oco."insertdate" AS insertdate_ori,
-        oco."deactivation_date" AS deactivation_date_ori,
-        oco."idlogin_insert" AS idlogin_insert_ori,
-        oco."date_validation" AS date_validation_ori,
-        oco."lastmodified" AS lastmodified_ori,
-        oco."idlogin_modify" AS idlogin_modify_ori,
-        oco."typeof" AS typeof_ori,
+        oco."notes" as notes_ori,
+        oco."copy_count" as copy_count_ori,
+        oco."equivalent_amount" as equivalent_amount_ori,
+        oco."insertdate" as insertdate_ori,
+        oco."deactivation_date" as deactivation_date_ori,
+        oco."idlogin_insert" as idlogin_insert_ori,
+        oco."date_validation" as date_validation_ori,
+        oco."lastmodified" as lastmodified_ori,
+        oco."idlogin_modify" as idlogin_modify_ori,
+        oco."typeof" as typeof_ori,
         r."recipient_name",
         r."address_1",
         r."address_2",
         r."address_3",
-        r."id_city",
+        r."id_country",
         r."statut_flag",
-        r."insertdate" AS insertdate_recip,
-        r."activation_date" AS activation_date_recip,
-        r."deactivation_date" AS deactivation_date_recip,
-        r."idlogin_insert" AS idlogin_insert_recip,
-        r."lastmodified" AS lastmodified_recip,
-        r."idlogin_modify" AS idlogin_modify,
+        r."insertdate" as insertdate_recip,
+        r."activation_date" as activation_date_recip,
+        r."deactivation_date" as deactivation_date_recip,
+        r."idlogin_insert" as idlogin_insert_recip,
+        r."lastmodified" as lastmodified_recip,
+        r."idlogin_modify" as idlogin_modify,
         sc."id_services_charges",
         sc."description_fr",
         sc."description_eng",
-        sc."typeof" AS typeof_serv,
+        sc."typeof" as typeof_serv,
         sc."unit_price",
         sc."unit_percent",
         sc."amount_lower_limit",
@@ -2992,40 +2989,36 @@ BEGIN
         sc."unit_price_stamp",
         sc."with_copies",
         sc."unit_price_copies",
-        sc."id_currency" AS id_currency_serv,
-        sc."activation_date" AS activation_date_serv,
-        sc."deactivation_date" AS deactivation_date_serv,
+        sc."id_currency" as id_currency_serv,
+        sc."activation_date" as activation_date_serv,
+        sc."deactivation_date" as deactivation_date_serv,
         ol."id_ord_legalization",
-        ol."notes" AS notes_legali,
-        ol."copy_count" AS copy_count_legali,
-        ol."equivalent_amount" AS equivalent_amount_legali,
-        ol."insertdate" AS insertdate_legali,
-        ol."deactivation_date" AS deactivation_date_legali,
-        ol."idlogin_insert" AS idlogin_insert_legali,
-        ol."date_validation" AS date_validation_legali,
-        ol."lastmodified" AS lastmodified_legali,
-        ol."idlogin_modify" AS idlogin_modify_legali,
-        ol."typeof" AS typeof_legali,
+        ol."notes" as notes_legali,
+        ol."copy_count" as copy_count_legali,
+        ol."equivalent_amount" as equivalent_amount_legali,
+        ol."insertdate" as insertdate_legali,
+        ol."deactivation_date" as deactivation_date_legali,
+        ol."idlogin_insert" as idlogin_insert_legali,
+        ol."date_validation" as date_validation_legali,
+        ol."lastmodified" as lastmodified_legali,
+        ol."idlogin_modify" as idlogin_modify_legali,
+        ol."typeof" as typeof_legali,
         oi."id_ord_com_invoice",
-        oi."notes" AS notes_invoice,
-        oi."copy_count" AS copy_count_invoice,
-        oi."id_currency" AS id_currency_invoice,
+        oi."notes" as notes_invoice,
+        oi."copy_count" as copy_count_invoice,
+        oi."id_currency" as id_currency_invoice,
         oi."currency_amount",
         oi."currency_rates",
-        oi."equivalent_amount" AS equivalent_amount_invoice,
-        oi."insertdate" AS insertdate_invoice,
-        oi."deactivation_date" AS deactivation_date_invoice,
-        oi."idlogin_insert" AS idlogin_insert_invoice,
-        oi."date_validation" AS date_validation_invoice,
-        oi."lastmodified" AS lastmodified_invoice,
-        oi."idlogin_modify" AS idlogin_modify_invoice,
-        oi."typeof" AS typeof_invoice,
-        co."symbol_fr" as country_symbol_fr,
-        co."symbol_eng" as country_symbol_eng
+        oi."equivalent_amount" as equivalent_amount_invoice,
+        oi."insertdate" as insertdate_invoice,
+        oi."deactivation_date" as deactivation_date_invoice,
+        oi."idlogin_insert" as idlogin_insert_invoice,
+        oi."date_validation" as date_validation_invoice,
+        oi."lastmodified" as lastmodified_invoice,
+        oi."idlogin_modify" as idlogin_modify_invoice,
+        oi."typeof" as typeof_invoice
     FROM 
         "ORDER" o
-        INNER JOIN CUST_ACCOUNT ca ON o."id_cust_account" = ca."id_cust_account"  -- New inner join
-        INNER JOIN COUNTRY co ON ca."id_country" = co."id_country"
         INNER JOIN ORDER_STATUS os ON o."id_order_status" = os."id_order_status"
         LEFT JOIN ORD_CERTIF_ORI oco ON o."id_order" = oco."id_order"
         LEFT JOIN RECIPIENT_ACCOUNT r ON oco."id_recipient_account" = r."id_recipient_account"
@@ -3091,7 +3084,7 @@ RETURNS TABLE(
 	address_1 VARCHAR(160),
 	address_2 VARCHAR(160),
 	address_3 VARCHAR(160),
-	id_city INT,
+	id_country INT,
 	statut_flag INT,
 	insertdate_recip TIMESTAMP,
 	activation_date_recip TIMESTAMP,
@@ -3138,9 +3131,7 @@ RETURNS TABLE(
 	date_validation_invoice TIMESTAMP,
 	lastmodified_invoice TIMESTAMP,
 	idlogin_modify_invoice INT,
-	typeof_invoice INT,
-    country_symbol_fr VARCHAR(64),
-    country_symbol_eng VARCHAR(64)
+	typeof_invoice INT
 ) AS
 $$
 BEGIN
@@ -3184,7 +3175,7 @@ BEGIN
 		r."address_1",
 		r."address_2",
 		r."address_3",
-		r."id_city",
+		r."id_country",
 		r."statut_flag",
 		r."insertdate" as insertdate_recip,
 		r."activation_date" as activation_date_recip,
@@ -3231,17 +3222,13 @@ BEGIN
 		oi."date_validation" as date_validation_invoice ,
 		oi."lastmodified" as lastmodified_invoice ,
 		oi."idlogin_modify" as idlogin_modify_invoice ,
-		oi."typeof" as typeof_invoice,
-        co."symbol_fr" as country_symbol_fr,
-        co."symbol_eng" as country_symbol_eng
-
+		oi."typeof" as typeof_invoice
     FROM 
         "ORDER" o
         INNER JOIN 
 			CUST_ACCOUNT ca ON o."id_cust_account" = ca."id_cust_account"  -- modifiée remplacer CUST_USER par CUST_ACCOUNT
 			INNER JOIN 
 				CUST_USER cu ON ca."id_cust_account" = cu."id_cust_account"
-        INNER JOIN COUNTRY co ON ca."id_country" = co."id_country"
         INNER JOIN 
 			ORDER_STATUS os ON o."id_order_status" = os."id_order_status"
         LEFT JOIN 
@@ -3265,7 +3252,6 @@ BEGIN
 		;
 END;
 $$ LANGUAGE plpgsql;
-
 
 
 DROP PROCEDURE IF EXISTS set_ordcertif_goods;
