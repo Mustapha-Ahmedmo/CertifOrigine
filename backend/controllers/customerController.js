@@ -1527,6 +1527,40 @@ const executeUpdCustAccount = async (req, res) => {
   }
 };
 
+const executeDelCustAccountFiles = async (req, res) => {
+  try {
+    const { id } = req.params; 
+    const { mode } = req.body; 
+
+    if (!id) {
+      return res.status(400).json({
+        message: 'L’ID du fichier du compte client est requis.',
+      });
+    }
+
+    // Execute the stored procedure
+    await sequelize.query(
+      `CALL del_cust_account_files(:p_id_cust_account_files, :p_mode)`,
+      {
+        replacements: {
+          p_id_cust_account_files: id,
+          p_mode: mode || 0, // default to 0 if not provided
+        },
+        type: sequelize.QueryTypes.RAW,
+      }
+    );
+
+    res.status(200).json({
+      message: 'Fichier du compte client supprimé avec succès.',
+    });
+  } catch (error) {
+    console.error('Erreur lors de la suppression du fichier du compte client:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la suppression du fichier du compte client.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
 
 // Export the new function along with the existing ones
 module.exports = {
@@ -1544,5 +1578,6 @@ module.exports = {
   executeDeleteCustUser,
   handleContactForm,
   executeSetCustSmallUser,
-  executeUpdCustAccount
+  executeUpdCustAccount,
+  executeDelCustAccountFiles
 };

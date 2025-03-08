@@ -1332,3 +1332,27 @@ export const updateCustAccount = async (accountData) => {
     throw error;
   }
 };
+
+export const deleteCustAccountFile = async (id, mode = 0) => {
+  try {
+    // Build the URL with the id and the mode as a query parameter
+    const url = `${API_URL}/customer/delete-cust-account-file/${id}?p_mode=${mode}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete customer account file');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (deleteCustAccountFile):', error);
+    throw error;
+  }
+};
