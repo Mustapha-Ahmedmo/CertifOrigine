@@ -14,36 +14,40 @@ import {
   Button,
   FormControl,
   FormControlLabel,
+  FormLabel,
   RadioGroup,
   Radio,
-  FormLabel,
-  Select,
   InputLabel,
+  Select,
+  MenuItem,
   Checkbox,
   Snackbar,
   Alert
 } from '@mui/material';
 
-const isValidLocalNumber = (number) => {
-  return /^[0-9]{6,15}$/.test(number);
+// Fonction de validation pour un numéro de téléphone international : 
+// Il doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères.
+const isValidInternationalPhone = (number) => {
+  return /^\+[0-9]+$/.test(number) && number.length <= 12;
 };
 
 const RegisterOP = ({ onClose }) => {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  // On conserve dans l'état le numéro complet international et on ajoute un champ pour le statut admin.
   const [formData, setFormData] = useState({
-    gender: 'Mr',
+    gender: 'Mr', // "Mr" ou "Mme"
     name: '',
-    phoneFixedCountryCode: '+33',
     phoneFixedNumber: '',
-    phoneMobileCountryCode: '+33',
     phoneMobileNumber: '',
     email: '',
     password: '',
     confirmPassword: '',
+    // Pour le rôle, les options sont "Opérateur" et "Opérateur avec pouvoir"
     role: 'Opérateur',
-    isAdmin: false,
+    // Pour le statut admin, les options sont "Administrateur" et "Non Administrateur"
+    adminStatus: 'Non Administrateur',
   });
 
   const [error, setError] = useState('');
@@ -52,21 +56,11 @@ const RegisterOP = ({ onClose }) => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  // Gestionnaire de touche pour les selects natifs avec cycle
-  const handleCountryKeyDown = (field) => (event) => {
-    const key = event.key.toLowerCase();
-    if (key.length === 1 && /[a-z]/.test(key)) {
-      const matchingCountries = countryCodes.filter(country =>
-        country.name.toLowerCase().startsWith(key)
-      );
-      if (matchingCountries.length > 0) {
-        const currentCode = formData[field];
-        const currentIndex = matchingCountries.findIndex(country => country.code === currentCode);
-        const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % matchingCountries.length : 0;
-        setFormData((prev) => ({ ...prev, [field]: matchingCountries[nextIndex].code }));
-      }
-    }
-  };
+  // Calcul des indicateurs d'erreur pour les champs de téléphone
+  const phoneFixedError =
+    formData.phoneFixedNumber !== '' && !isValidInternationalPhone(formData.phoneFixedNumber);
+  const phoneMobileError =
+    formData.phoneMobileNumber !== '' && !isValidInternationalPhone(formData.phoneMobileNumber);
 
   useEffect(() => {
     const preloadOperatorData = async () => {
@@ -78,15 +72,16 @@ const RegisterOP = ({ onClose }) => {
             setFormData({
               gender: operator.gender === 1 ? 'Mr' : 'Mme',
               name: operator.full_name,
-              phoneFixedCountryCode: operator.phone_number.slice(0, 3),
-              phoneFixedNumber: operator.phone_number.slice(3),
-              phoneMobileCountryCode: operator.mobile_number.slice(0, 3),
-              phoneMobileNumber: operator.mobile_number.slice(3),
+              // On suppose que les numéros stockés sont déjà au format international.
+              phoneFixedNumber: operator.phone_number,
+              phoneMobileNumber: operator.mobile_number,
               email: operator.email,
               password: '',
               confirmPassword: '',
-              role: operator.roles === 1 ? 'Administrateur' : 'Opérateur avec pouvoir',
-              isAdmin: operator.roles === 1,
+              // Pour le rôle, on garde l'option initiale "Opérateur"
+              role: 'Opérateur',
+              // Pour le statut admin, on déduit en fonction de operator.roles : ici on suppose que 1 signifie administrateur.
+              adminStatus: operator.roles === 1 ? 'Administrateur' : 'Non Administrateur',
             });
           }
         } catch (err) {
@@ -100,28 +95,17 @@ const RegisterOP = ({ onClose }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    // Pour les champs de téléphone, validation du format international
     if ((name === 'phoneFixedNumber' || name === 'phoneMobileNumber') && value !== '') {
-      if (!isValidLocalNumber(value)) {
+      if (!isValidInternationalPhone(value)) {
         setError(
-          `Le champ ${name === 'phoneFixedNumber' ? 'téléphone fixe' : 'téléphone portable'} est invalide (6 à 15 chiffres).`
+          `Le champ ${name === 'phoneFixedNumber' ? 'téléphone fixe' : 'téléphone portable'} est invalide. Format international requis (doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères).`
         );
       } else {
         setError('');
       }
     }
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleCheckboxChange = (e) => {
-    const { name, checked } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: checked }));
-  };
-
-  const toggleGender = () => {
-    setFormData((prev) => ({
-      ...prev,
-      gender: prev.gender === 'Mr' ? 'Mme' : 'Mr',
-    }));
   };
 
   const handleSnackbarClose = (event, reason) => {
@@ -131,16 +115,16 @@ const RegisterOP = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const totalFixed = formData.phoneFixedCountryCode + formData.phoneFixedNumber;
-    const totalMobile = formData.phoneMobileCountryCode + formData.phoneMobileNumber;
-    if (totalFixed.length > 12) {
-      setSnackbarMessage('Le numéro de téléphone fixe dépasse la limite de 12 caractères.');
+
+    // Validation des numéros de téléphone
+    if (!isValidInternationalPhone(formData.phoneFixedNumber)) {
+      setSnackbarMessage('Le numéro de téléphone fixe est invalide. Format international requis (doit commencer par "+" suivi uniquement de chiffres et ne pas dépasser 12 caractères).');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
-    if (totalMobile.length > 12) {
-      setSnackbarMessage('Le numéro de téléphone portable dépasse la limite de 12 caractères.');
+    if (!isValidInternationalPhone(formData.phoneMobileNumber)) {
+      setSnackbarMessage('Le numéro de téléphone portable est invalide. Format international requis (doit commencer par "+" suivi uniquement de chiffres et ne pas dépasser 12 caractères).');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
@@ -153,7 +137,7 @@ const RegisterOP = ({ onClose }) => {
       return;
     }
     if (!formData.role) {
-      setSnackbarMessage('Veuillez sélectionner un rôle (Administrateur ou Opérateur).');
+      setSnackbarMessage('Veuillez sélectionner un rôle (Opérateur ou Opérateur avec pouvoir).');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
@@ -163,12 +147,15 @@ const RegisterOP = ({ onClose }) => {
         id_op_user: id || 0,
         gender: formData.gender === 'Mr' ? 1 : 2,
         fullName: formData.name,
-        roles: formData.role === 'Administrateur' ? 1 : 2,
-        isAdmin: formData.role === 'Administrateur',
+        // On définit "roles" en fonction du rôle sélectionné :
+        // Par exemple, "Opérateur" = 2, "Opérateur avec pouvoir" = 3.
+        roles: formData.role === 'Opérateur' ? 2 : 3,
+        // Le statut administrateur est défini à partir du radio group adminStatus.
+        isAdmin: formData.adminStatus === 'Administrateur',
         email: formData.email,
         password: homemadeHash(formData.password, 'md5'),
-        phoneNumber: totalFixed,
-        mobileNumber: totalMobile,
+        phoneNumber: formData.phoneFixedNumber,
+        mobileNumber: formData.phoneMobileNumber,
         idLoginInsert: 1
       };
 
@@ -208,10 +195,6 @@ const RegisterOP = ({ onClose }) => {
         <meta name="description" content="Inscrivez un opérateur." />
       </Helmet>
 
-      <Box sx={{ mb: 2, textAlign: 'center' }}>
-        <h2>Créer un Compte Opérateur</h2>
-      </Box>
-
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -224,10 +207,23 @@ const RegisterOP = ({ onClose }) => {
       )}
 
       <form onSubmit={handleSubmit}>
-        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-          <Button variant="outlined" onClick={toggleGender} sx={{ minWidth: 100 }}>
-            {formData.gender}
-          </Button>
+        {/* Genre via RadioGroup */}
+        <Box sx={{ mb: 2 }}>
+          <FormControl component="fieldset">
+            <FormLabel component="legend">Genre</FormLabel>
+            <RadioGroup
+              row
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+            >
+              <FormControlLabel value="Mr" control={<Radio />} label="Mr" />
+              <FormControlLabel value="Mme" control={<Radio />} label="Mme" />
+            </RadioGroup>
+          </FormControl>
+        </Box>
+
+        <Box sx={{ mb: 2 }}>
           <TextField
             label="Nom *"
             variant="outlined"
@@ -238,67 +234,41 @@ const RegisterOP = ({ onClose }) => {
           />
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-          <FormControl fullWidth variant="outlined">
-            <InputLabel htmlFor="phoneFixedCountryCode-native">Indicatif fixe</InputLabel>
-            <Select
-              native
-              label="Indicatif fixe"
-              inputProps={{
-                name: 'phoneFixedCountryCode',
-                id: 'phoneFixedCountryCode-native',
-                onKeyDown: handleCountryKeyDown('phoneFixedCountryCode')
-              }}
-              value={formData.phoneFixedCountryCode}
-              onChange={handleChange}
-            >
-              {countryCodes.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.flag} {country.name} ({country.code})
-                </option>
-              ))}
-            </Select>
-          </FormControl>
+        {/* Téléphone fixe */}
+        <Box sx={{ mb: 2 }}>
           <TextField
-            label="Téléphone fixe *"
+            label="Téléphone fixe * (format international)"
             variant="outlined"
             name="phoneFixedNumber"
             value={formData.phoneFixedNumber}
             onChange={handleChange}
             fullWidth
-            inputProps={{ maxLength: 9 }}
+            inputProps={{ maxLength: 12 }}
+            error={phoneFixedError}
+            helperText={
+              phoneFixedError
+                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
+                : ""
+            }
           />
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-          <FormControl fullWidth variant="outlined">
-            <InputLabel htmlFor="phoneMobileCountryCode-native">Indicatif portable</InputLabel>
-            <Select
-              native
-              label="Indicatif portable"
-              inputProps={{
-                name: 'phoneMobileCountryCode',
-                id: 'phoneMobileCountryCode-native',
-                onKeyDown: handleCountryKeyDown('phoneMobileCountryCode')
-              }}
-              value={formData.phoneMobileCountryCode}
-              onChange={handleChange}
-            >
-              {countryCodes.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.flag} {country.name} ({country.code})
-                </option>
-              ))}
-            </Select>
-          </FormControl>
+        {/* Téléphone portable */}
+        <Box sx={{ mb: 2 }}>
           <TextField
-            label="Téléphone portable *"
+            label="Téléphone portable * (format international)"
             variant="outlined"
             name="phoneMobileNumber"
             value={formData.phoneMobileNumber}
             onChange={handleChange}
             fullWidth
-            inputProps={{ maxLength: 9 }}
+            inputProps={{ maxLength: 12 }}
+            error={phoneMobileError}
+            helperText={
+              phoneMobileError
+                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
+                : ""
+            }
           />
         </Box>
 
@@ -334,27 +304,36 @@ const RegisterOP = ({ onClose }) => {
           />
         </Box>
 
+        {/* Rôle via RadioGroup */}
         <Box sx={{ mb: 2 }}>
-          <FormControl component="fieldset" fullWidth>
-            <FormLabel component="legend">Rôle *</FormLabel>
-            <RadioGroup row name="role" value={formData.role} onChange={handleChange}>
+          <FormControl component="fieldset">
+            <FormLabel component="legend">Rôle</FormLabel>
+            <RadioGroup
+              row
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+            >
               <FormControlLabel value="Opérateur" control={<Radio />} label="Opérateur" />
               <FormControlLabel value="Opérateur avec pouvoir" control={<Radio />} label="Opérateur avec pouvoir" />
             </RadioGroup>
           </FormControl>
         </Box>
 
+        {/* Statut administrateur via RadioGroup */}
         <Box sx={{ mb: 2 }}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                name="isAdmin"
-                checked={formData.isAdmin}
-                onChange={handleCheckboxChange}
-              />
-            }
-            label={formData.isAdmin ? 'Administrateur' : 'Non Administrateur'}
-          />
+          <FormControl component="fieldset">
+            <FormLabel component="legend">Statut Administrateur</FormLabel>
+            <RadioGroup
+              row
+              name="adminStatus"
+              value={formData.adminStatus}
+              onChange={handleChange}
+            >
+              <FormControlLabel value="Administrateur" control={<Radio />} label="Administrateur" />
+              <FormControlLabel value="Non Administrateur" control={<Radio />} label="Non Administrateur" />
+            </RadioGroup>
+          </FormControl>
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>

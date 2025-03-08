@@ -66,18 +66,7 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
       </Box>
 
       <Box className="header-right">
-        {/* Notifications */}
-        <Box
-          className="header-icon-container"
-          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-        >
-          <Badge badgeContent={mailNotificationCount} color="error" anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-            <FontAwesomeIcon icon={faBell} style={{ fontSize: '1rem' }} />
-          </Badge>
-          <Typography variant="caption" className="icon-label">
-            Notifications
-          </Typography>
-        </Box>
+        
 
         {/* Inscriptions */}
         <Box
