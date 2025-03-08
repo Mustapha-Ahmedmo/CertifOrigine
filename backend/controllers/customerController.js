@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const FRONTEND_URL = "http://51.195.203.178"
+const FRONTEND_URL = "http://146.59.239.14"
 
 const sendEmail = async (to, subject, text) => {
   try {
