@@ -39,8 +39,6 @@ import {
   faEnvelope,
   faLock,
   faIndustry,
-  faEye,           // Import the eye icon
-  faEyeSlash,      // Optionally import an eye-slash icon
 } from '@fortawesome/free-solid-svg-icons';
 
 // Autres imports internes
@@ -71,8 +69,6 @@ const Alert = forwardRef(function Alert(props, ref) {
 
 const Register = () => {
   const navigate = useNavigate();
-
-  const [showPassword, setShowPassword] = useState(false);
   const allowedFileTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
 
   // States (inchangés, suppression des indicatifs séparés)
@@ -788,77 +784,6 @@ const Register = () => {
           <FormControlLabel
             control={
               <Checkbox
-            {/* Email */}
-            <div className="register-client-form-row">
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Email"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Mot de passe + confirmation */}
-            <div className="register-client-form-row">
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Mot de passe"
-                  />
-                  <span
-                    className="toggle-password"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}
-                  >
-                    <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                  </span>
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Confirmer mot de passe"
-                  />
-                  <span
-                    className="toggle-password"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}
-                  >
-                    <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                  </span>
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Conditions */}
-          <div className="register-client-form-section">
-            <label className="register-client-checkbox-label">
-              <input
-                type="checkbox"
                 name="acceptsConditions"
                 checked={formData.acceptsConditions}
                 onChange={handleChange}
