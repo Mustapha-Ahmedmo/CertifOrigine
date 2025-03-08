@@ -1,4 +1,3 @@
-// ContactsList.jsx
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
@@ -26,11 +25,43 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Snackbar,
   Alert,
+  Tabs,
+  Tab,
+  AppBar,
 } from '@mui/material';
 
-// (optionnel) si tu voulais chiffrer le mot de passe
-// import { homemadeHash } from '../utils/hashUtils';
+// Helpers pour l'accessibilité des onglets
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`inscriptions-tabpanel-${index}`}
+      aria-labelledby={`inscriptions-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 2 }}>{children}</Box>}
+    </div>
+  );
+}
+
+function a11yProps(index) {
+  return {
+    id: `inscriptions-tab-${index}`,
+    'aria-controls': `inscriptions-tabpanel-${index}`,
+  };
+}
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+// Validation du numéro de téléphone international : 
+// Le numéro doit commencer par '+' suivi uniquement de chiffres et ne doit pas dépasser 12 caractères.
+const isValidInternationalPhone = (number) => {
+  return /^\+[0-9]+$/.test(number) && number.length <= 12;
+};
 
 const ContactsList = () => {
   const { user } = useSelector((state) => state.auth);
@@ -60,10 +91,25 @@ const ContactsList = () => {
     phone_number: '',
     mobile_number: '',
     ismain_user: false,
-    // On retire totalement password si on veut
     password: '',
     confirmPassword: '',
   });
+
+  // Calcul des erreurs pour les numéros de téléphone dans la modale
+  const phoneFixedError =
+    currentContact.phone_number !== '' && !isValidInternationalPhone(currentContact.phone_number);
+  const phoneMobileError =
+    currentContact.mobile_number !== '' && !isValidInternationalPhone(currentContact.mobile_number);
+
+  // Snackbar
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbarOpen(false);
+  };
 
   // Récupération des contacts
   useEffect(() => {
@@ -92,23 +138,7 @@ const ContactsList = () => {
     fetchContacts();
   }, [custAccountId]);
 
-  // Filtrage local via searchTerm
-  const filteredContacts = contacts.filter((contact) => {
-    const search = searchTerm.toLowerCase().trim();
-    if (!search) return true;
-    const fieldsToSearch = [
-      contact.full_name,
-      contact.position,
-      contact.email,
-      contact.phone_number,
-      contact.mobile_number,
-    ]
-      .filter(Boolean)
-      .map((val) => val.toLowerCase());
-    return fieldsToSearch.some((field) => field.includes(search));
-  });
-
-  // Ouvrir la modale en mode Ajout (pas de champs mot de passe)
+  // Ouvrir la modale en mode Ajout
   const handleOpenAddModal = () => {
     setModalError('');
     setIsEditing(false);
@@ -120,7 +150,6 @@ const ContactsList = () => {
       phone_number: '',
       mobile_number: '',
       ismain_user: false,
-      // Pour l'add, on ignore password/confirmPassword
       password: '',
       confirmPassword: '',
     });
@@ -139,8 +168,6 @@ const ContactsList = () => {
       phone_number: contact.phone_number || '',
       mobile_number: contact.mobile_number || '',
       ismain_user: contact.ismain_user || false,
-      // Ici, on propose un champ password si on veut
-      // ex : nouveau mot de passe facultatif
       password: '',
       confirmPassword: '',
     });
@@ -157,12 +184,8 @@ const ContactsList = () => {
     setCurrentContact((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Sauvegarder
+  // Sauvegarder le contact
   const handleSaveContact = async () => {
-    // Si on ne veut pas du tout de mot de passe en ajout, on ignore tout ça
-    // et on enverra pwd = null au back pour la création
-    // (afin que le user reçoive un mail de "réinitialisation" côté back)
-
     const {
       id_cust_user,
       full_name,
@@ -175,13 +198,21 @@ const ContactsList = () => {
       confirmPassword,
     } = currentContact;
 
-    // Vérif champs obligatoires
     if (!full_name || !email) {
       setModalError("Veuillez renseigner au minimum le nom et l'email du contact.");
       return;
     }
 
-    // Si on est en mode édition ET qu'on veut permettre un nouveau mot de passe :
+    // Vérification du format international pour les numéros (champs obligatoires)
+    if (!phone_number || !isValidInternationalPhone(phone_number)) {
+      setModalError("Le téléphone fixe est obligatoire et doit être au format international (doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères).");
+      return;
+    }
+    if (!mobile_number || !isValidInternationalPhone(mobile_number)) {
+      setModalError("Le téléphone portable est obligatoire et doit être au format international (doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères).");
+      return;
+    }
+
     if (isEditing && (password || confirmPassword)) {
       if (password !== confirmPassword) {
         setModalError('Les mots de passe ne correspondent pas.');
@@ -191,24 +222,19 @@ const ContactsList = () => {
 
     try {
       setModalError('');
-
       let pwdToSend = null;
       if (isEditing) {
-        // en édition, si le password est non vide, on met ce champ
         if (password.trim()) {
-          // => si tu veux le chiffrer : pwdToSend = homemadeHash(password.trim());
           pwdToSend = password.trim();
         }
-        // si password est vide, on envoie null => pas de changement
       } else {
-        // on est en création => on ne met pas de password => le contact recevra un mail
         pwdToSend = null;
       }
 
       const payload = {
         id_cust_user: isEditing ? id_cust_user : 0,
         id_cust_account: custAccountId,
-        gender: 0, // ou 1 si besoin
+        gender: 0,
         full_name,
         position,
         email,
@@ -220,22 +246,13 @@ const ContactsList = () => {
         id_login_insert: user?.id_login_user || 1,
         id_login_modify: isEditing ? (user?.id_login_user || 1) : null,
         password: 'account123password',
-        idlogin: idLogin
+        idlogin: user?.id_login_user || 1,
       };
 
       await setCustSmallUser(payload);
-
-      // Rechargement
       const updated = await getCustUsersByAccount(custAccountId, null, 'true', 'true', null);
       setContacts(updated.data || []);
-
       setShowModal(false);
-
-      // Ici, tu peux appeler ton endpoint "sendMailForNewContact" si c'est un nouveau contact
-      // if (!isEditing) {
-      //   await sendMailForNewContact(email);
-      // }
-
     } catch (err) {
       console.error('Erreur lors de la création/édition du contact:', err);
       setModalError(
@@ -261,7 +278,22 @@ const ContactsList = () => {
     }
   };
 
-  // Affichage conditionnel en cas de chargement ou erreur
+  // Filtrage local via searchTerm
+  const filteredContacts = contacts.filter((contact) => {
+    const search = searchTerm.toLowerCase().trim();
+    if (!search) return true;
+    const fieldsToSearch = [
+      contact.full_name,
+      contact.position,
+      contact.email,
+      contact.phone_number,
+      contact.mobile_number,
+    ]
+      .filter(Boolean)
+      .map((val) => val.toLowerCase());
+    return fieldsToSearch.some((field) => field.includes(search));
+  });
+
   if (loading) {
     return <Box sx={{ ml: '240px', p: 3 }}>Chargement en cours...</Box>;
   }
@@ -275,7 +307,7 @@ const ContactsList = () => {
 
   return (
     <Box sx={{ ml: '240px', p: 3 }}>
-      {/* Entête façon "DestinataireList" */}
+      {/* Entête */}
       <Paper elevation={1} sx={{ mb: 2 }}>
         <Box
           sx={{
@@ -320,7 +352,7 @@ const ContactsList = () => {
                 <TableCell>Email</TableCell>
                 <TableCell>Tél</TableCell>
                 <TableCell>Portable</TableCell>
-                <TableCell>Principal ?</TableCell>
+                <TableCell>Contact Principal</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -335,11 +367,7 @@ const ContactsList = () => {
                   <TableCell>{contact.phone_number}</TableCell>
                   <TableCell>{contact.mobile_number}</TableCell>
                   <TableCell>
-                    <input
-                      type="checkbox"
-                      checked={contact.ismain_user}
-                      disabled
-                    />
+                    <input type="checkbox" checked={contact.ismain_user} disabled />
                   </TableCell>
                   <TableCell>
                     <Button
@@ -351,7 +379,6 @@ const ContactsList = () => {
                     >
                       Modifier
                     </Button>
-                    {/* Si c'est un contact principal, on ne montre pas le bouton Supprimer */}
                     {!contact.ismain_user && (
                       <Button
                         variant="outlined"
@@ -366,7 +393,6 @@ const ContactsList = () => {
                   </TableCell>
                 </TableRow>
               ))}
-
               {filteredContacts.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} align="center">
@@ -379,24 +405,15 @@ const ContactsList = () => {
         </TableContainer>
       </Paper>
 
-      {/* Modale AJOUT/EDIT */}
-      <Dialog
-        open={showModal}
-        onClose={handleCloseModal}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          {isEditing ? 'Modifier le contact' : 'Ajouter un contact'}
-        </DialogTitle>
+      {/* Modale d'ajout/édition */}
+      <Dialog open={showModal} onClose={handleCloseModal} maxWidth="sm" fullWidth>
+        <DialogTitle>{isEditing ? 'Modifier le contact' : 'Ajouter un contact'}</DialogTitle>
         <DialogContent dividers>
           {modalError && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {modalError}
             </Alert>
           )}
-
-          {/* Nom */}
           <TextField
             label="Nom du contact *"
             variant="outlined"
@@ -405,8 +422,6 @@ const ContactsList = () => {
             onChange={(e) => handleChange('full_name', e.target.value)}
             sx={{ mb: 2 }}
           />
-
-          {/* Fonction */}
           <TextField
             label="Fonction"
             variant="outlined"
@@ -415,8 +430,6 @@ const ContactsList = () => {
             onChange={(e) => handleChange('position', e.target.value)}
             sx={{ mb: 2 }}
           />
-
-          {/* Email */}
           <TextField
             label="Email *"
             variant="outlined"
@@ -425,28 +438,38 @@ const ContactsList = () => {
             onChange={(e) => handleChange('email', e.target.value)}
             sx={{ mb: 2 }}
           />
-
-          {/* Téléphone fixe */}
           <TextField
-            label="Téléphone fixe"
+            label="Téléphone fixe (format international)"
             variant="outlined"
             fullWidth
             value={currentContact.phone_number}
             onChange={(e) => handleChange('phone_number', e.target.value)}
             sx={{ mb: 2 }}
+            inputProps={{ maxLength: 12 }}
+            error={phoneFixedError}
+            helperText={
+              phoneFixedError
+                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
+                : ""
+            }
+            required
           />
-
-          {/* Téléphone portable */}
           <TextField
-            label="Téléphone portable"
+            label="Téléphone portable (format international)"
             variant="outlined"
             fullWidth
             value={currentContact.mobile_number}
             onChange={(e) => handleChange('mobile_number', e.target.value)}
             sx={{ mb: 2 }}
+            inputProps={{ maxLength: 12 }}
+            error={phoneMobileError}
+            helperText={
+              phoneMobileError
+                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
+                : ""
+            }
+            required
           />
-
-          {/* MDP : seulement si on édite (et encore c'est facultatif) */}
           {isEditing && (
             <>
               <TextField
@@ -472,10 +495,16 @@ const ContactsList = () => {
         <DialogActions>
           <Button onClick={handleCloseModal}>Annuler</Button>
           <Button variant="contained" onClick={handleSaveContact}>
-            {isEditing ? 'Enregistrer' : 'Enregistrer'}
+            Enregistrer
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
