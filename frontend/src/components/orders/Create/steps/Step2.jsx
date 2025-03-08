@@ -33,7 +33,6 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Alert from '@mui/material/Alert';
 import Checkbox from '@mui/material/Checkbox';
-
 import Typography from '@mui/material/Typography';
 
 const customFieldStyle = {
@@ -84,11 +83,11 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   const fieldsForNewRecipient = [
     'receiverName',
     'receiverAddress',
-    'receiverPostalCode',
+    'receiverAddress2', // Complément d'adresse
     'receiverCity',
     'receiverCountry',
-    'receiverPhone',
   ];
+
   const fieldsForExistingRecipient = ['selectedRecipientId'];
 
   // Mapping des champs obligatoires par section
@@ -327,6 +326,12 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Définir la fonction getCountryId pour convertir le symbole du pays en son ID
+    const getCountryId = (countryName) => {
+      const found = countries.find((c) => c.symbol_fr === countryName);
+      return found ? found.id_country : null;
+    };
+
     // Vérifications minimales sur la dernière section
     if (!safeValues.loadingPort) {
       setErrorMessage('Veuillez sélectionner un port de chargement.');
@@ -363,7 +368,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           address1: safeValues.receiverAddress,
           address2: safeValues.receiverAddress2,
           address3: safeValues.receiverPostalCode,
-          idCity: 1,
+          idCountry: getCountryId(safeValues.receiverCountry),
           statutFlag: 1,
           activationDate: new Date().toISOString(),
           deactivationDate: new Date('9999-12-31').toISOString(),
@@ -390,12 +395,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         return;
       }
     }
-
-    // Conversion pays -> ID
-    const getCountryId = (countryName) => {
-      const found = countries.find((c) => c.symbol_fr === countryName);
-      return found ? found.id_country : null;
-    };
 
     // Création du certificat
     try {
@@ -584,20 +583,31 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                     sx={{ mb: 2, ...customFieldStyle }}
                   />
                   <TextField
-                    label={t('step1.addressNext')}
+                    label={`${t('step1.addressNext')}`}
                     fullWidth
                     value={safeValues.receiverAddress2 || ''}
                     onChange={(e) => handleChange('receiverAddress2', e.target.value)}
                     sx={{ mb: 2, ...customFieldStyle }}
                   />
                   <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                    <TextField
-                      label={`${t('step1.postalCode')} *`}
-                      fullWidth
-                      value={safeValues.receiverPostalCode || ''}
-                      onChange={(e) => handleChange('receiverPostalCode', e.target.value)}
-                      sx={{ ...customFieldStyle }}
-                    />
+                    <FormControl fullWidth variant="outlined" sx={{ ...customFieldStyle }}>
+                      <InputLabel id="receiver-country-label">{t('step1.country')} *</InputLabel>
+                      <Select
+                        labelId="receiver-country-label"
+                        value={safeValues.receiverCountry || ''}
+                        onChange={(e) => handleChange('receiverCountry', e.target.value)}
+                        label={`${t('step1.country')} *`}
+                      >
+                        <MenuItem value="">
+                          <em>-- Sélectionnez un pays --</em>
+                        </MenuItem>
+                        {countries.map((c) => (
+                          <MenuItem key={c.id_country} value={c.symbol_fr}>
+                            {c.symbol_fr}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                     <TextField
                       label={`${t('step1.city')} *`}
                       fullWidth
@@ -606,31 +616,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       sx={{ ...customFieldStyle }}
                     />
                   </Box>
-                  <FormControl fullWidth variant="outlined" sx={{ mb: 2, ...customFieldStyle }}>
-                    <InputLabel id="receiver-country-label">{t('step1.country')} *</InputLabel>
-                    <Select
-                      labelId="receiver-country-label"
-                      value={safeValues.receiverCountry || ''}
-                      onChange={(e) => handleChange('receiverCountry', e.target.value)}
-                      label={`${t('step1.country')} *`}
-                    >
-                      <MenuItem value="">
-                        <em>-- Sélectionnez un pays --</em>
-                      </MenuItem>
-                      {countries.map((c) => (
-                        <MenuItem key={c.id_country} value={c.symbol_fr}>
-                          {c.symbol_fr}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <TextField
-                    label="Numéro de téléphone *"
-                    fullWidth
-                    value={safeValues.receiverPhone || ''}
-                    onChange={(e) => handleChange('receiverPhone', e.target.value)}
-                    sx={{ mb: 2, ...customFieldStyle }}
-                  />
                 </>
               )}
             </div>

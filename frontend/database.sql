@@ -1120,7 +1120,7 @@ CREATE OR REPLACE PROCEDURE set_op_user(
     p_email VARCHAR(32),
     p_password VARCHAR(128),
     p_phone_number VARCHAR(32),
-    p_mobile_number VARCHAR(32),
+    p_mobile_number VARCHAR(12),
     p_idlogin INT
 	)
 AS
@@ -1177,15 +1177,18 @@ BEGIN
     ELSE
      IF p_email IS NOT NULL AND LENGTH(TRIM(p_email, ' '))>0 AND p_password IS NOT NULL OR LENGTH(TRIM(p_password, ' '))>0
      THEN
-        UPDATE login_user 
-        SET 
-            username = p_email,
-            pwd = p_password 
-        WHERE login_user."id_login_user" = (
-            SELECT "id_login_user"
-            FROM op_user
-            WHERE "id_op_user" = p_id_op_user
-        );
+		 UPDATE login_user 
+		 SET 
+			username = p_email,
+			pwd = p_password,
+			isadmin_login= p_isadmin
+		 FROM login_user INNER JOIN op_user ON login_user."id_login_user" = op_user."id_login_user"
+		 WHERE "id_op_user" = p_id_op_user;
+	 ELSE
+		 UPDATE login_user 
+		 SET isadmin_login= p_isadmin
+		 FROM login_user INNER JOIN op_user ON login_user."id_login_user" = op_user."id_login_user"
+		 WHERE "id_op_user" = p_id_op_user;
        END IF; 
      UPDATE op_user
         SET
@@ -1199,7 +1202,6 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
-
 
 DROP PROCEDURE IF EXISTS set_sector;
 CREATE OR REPLACE PROCEDURE set_sector(
@@ -1667,7 +1669,7 @@ BEGIN
     WHERE id_cust_account_files = p_id_cust_account_files;
 
     
-    CALL del_files_repo(v_id_files_repo, p_mode);
+    CALL del_files_repo(v_id_files_repo);
 
     
     IF p_mode IS NULL OR p_mode = 0 THEN
@@ -1936,12 +1938,13 @@ RETURNS TABLE(
     roles INT,
     email VARCHAR(32),
     phone_number VARCHAR(32),
-    mobile_number VARCHAR(32),
+    mobile_number VARCHAR(12),
     idlogin_insert INT,
     insertdate TIMESTAMP,
     deactivation_date TIMESTAMP,
     username VARCHAR(32),
-    lastlogin_time TIMESTAMP
+    lastlogin_time TIMESTAMP,
+    isAdmin BOOLEAN
 ) AS
 $$
 BEGIN
@@ -1959,7 +1962,8 @@ BEGIN
         ou."insertdate",
         ou."deactivation_date",
         lu."username",
-        lu."lastlogin_time"
+        lu."lastlogin_time",
+		lu."isadmin_login"
     FROM 
         op_user ou
     JOIN 
@@ -2721,7 +2725,7 @@ CREATE OR REPLACE FUNCTION add_or_update_recipient(
     p_address_1 VARCHAR(160),
     p_address_2 VARCHAR(160),
     p_address_3 VARCHAR(160),
-    p_id_city INT,
+    p_id_country INT,
     p_statut_flag INT,
     p_activation_date TIMESTAMP,
     p_deactivation_date TIMESTAMP,
@@ -2740,7 +2744,7 @@ BEGIN
             address_1,
             address_2,
             address_3,
-            id_city,
+            id_country,
             statut_flag,
             activation_date,
             deactivation_date,
@@ -2751,7 +2755,7 @@ BEGIN
             p_address_1,
             p_address_2,
             p_address_3,
-            p_id_city,
+            p_id_country,
             p_statut_flag,
             p_activation_date,
             p_deactivation_date,
@@ -2767,7 +2771,7 @@ BEGIN
             address_1 = p_address_1,
             address_2 = p_address_2,
             address_3 = p_address_3,
-            id_city = p_id_city,
+            id_country = p_id_country,
             statut_flag = p_statut_flag,
             activation_date = p_activation_date,
             deactivation_date = p_deactivation_date,

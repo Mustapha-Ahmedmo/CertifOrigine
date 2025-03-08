@@ -79,9 +79,15 @@ const RegisterOP = ({ onClose }) => {
               password: '',
               confirmPassword: '',
               // Pour le rôle, on garde l'option initiale "Opérateur"
-              role: 'Opérateur',
+              //role: 'Opérateur',
               // Pour le statut admin, on déduit en fonction de operator.roles : ici on suppose que 1 signifie administrateur.
-              adminStatus: operator.roles === 1 ? 'Administrateur' : 'Non Administrateur',
+              //adminStatus: operator.roles === 1 ? 'Administrateur' : 'Non Administrateur',
+              adminStatus: operator.isAdmin ? 'Administrateur' : 'Non Administrateur',
+              role: operator.role==0 ? 'Opérateur' : 'Opérateur avec pouvoir',
+
+
+
+
             });
           }
         } catch (err) {
@@ -148,12 +154,13 @@ const RegisterOP = ({ onClose }) => {
         gender: formData.gender === 'Mr' ? 1 : 2,
         fullName: formData.name,
         // On définit "roles" en fonction du rôle sélectionné :
-        // Par exemple, "Opérateur" = 2, "Opérateur avec pouvoir" = 3.
-        roles: formData.role === 'Opérateur' ? 2 : 3,
+        // Par exemple, "Opérateur" = 0, "Opérateur avec pouvoir" = 1.
+        roles: formData.role.trim() === 'Opérateur' ? 0 : 1,
         // Le statut administrateur est défini à partir du radio group adminStatus.
         isAdmin: formData.adminStatus === 'Administrateur',
         email: formData.email,
-        password: homemadeHash(formData.password, 'md5'),
+        //password: homemadeHash(formData.password, 'md5'),
+        password: id ? null : homemadeHash(formData.password, 'md5'),
         phoneNumber: formData.phoneFixedNumber,
         mobileNumber: formData.phoneMobileNumber,
         idLoginInsert: 1
@@ -280,29 +287,33 @@ const RegisterOP = ({ onClose }) => {
             value={formData.email}
             onChange={handleChange}
             fullWidth
+            disabled={!!id} // Désactive le champ si id est présent
           />
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-          <TextField
-            label="Mot de passe *"
-            variant="outlined"
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            fullWidth
-          />
-          <TextField
-            label="Confirmer mot de passe *"
-            variant="outlined"
-            type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            fullWidth
-          />
-        </Box>
+        {!id && (
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+            <TextField
+              label="Mot de passe *"
+              variant="outlined"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              fullWidth
+            />
+            <TextField
+              label="Confirmer mot de passe *"
+              variant="outlined"
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Box>
+        )}
+
 
         {/* Rôle via RadioGroup */}
         <Box sx={{ mb: 2 }}>

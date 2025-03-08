@@ -94,12 +94,14 @@ const OperatorsList = () => {
     fetchOperators();
   }, []);
 
-  const getGroupLabel = (roles) => {
+  const getGroupLabel = (roles, opIsAdmin) => {
     const labels = [];
-    if (roles === 1) labels.push('Administrateur');
-    if (roles === 2) labels.push('Opérateur avec pouvoir');
+    if (roles === 0) labels.push('Opérateur');
+    if (roles === 1) labels.push('Opérateur avec pouvoir');
+    if (opIsAdmin) labels.push('Administrateur');
     return labels.join(' ET ');
   };
+  
 
   const handleEdit = (operatorId) => {
     // Pour l'édition, vous pouvez soit naviguer vers une autre page, soit utiliser une modal similaire.
@@ -200,6 +202,7 @@ const OperatorsList = () => {
               </TableHead>
               <TableBody>
                 {operators.map((op) => (
+                  console.log(op),
                   <TableRow key={op.id_op_user}>
                     <TableCell>{op.full_name}</TableCell>
                     <TableCell>{op.username}</TableCell>
@@ -208,7 +211,7 @@ const OperatorsList = () => {
                     </TableCell>
                     <TableCell>{op.phone_number}</TableCell>
                     <TableCell>{op.mobile_number}</TableCell>
-                    <TableCell>{getGroupLabel(op.roles)}</TableCell>
+                    <TableCell>{getGroupLabel(op.roles, op.isadmin)}</TableCell>
                     <TableCell>
                       <Box display="flex" gap={1}>
                         <Button
