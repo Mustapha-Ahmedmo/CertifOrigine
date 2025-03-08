@@ -222,15 +222,6 @@ const OperatorsList = () => {
                         >
                           Modifier
                         </Button>
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          size="small"
-                          onClick={() => handleDelete(op.id_op_user)}
-                          startIcon={<FontAwesomeIcon icon={faTrashAlt} />}
-                        >
-                          Supprimer
-                        </Button>
                       </Box>
                     </TableCell>
                   </TableRow>
