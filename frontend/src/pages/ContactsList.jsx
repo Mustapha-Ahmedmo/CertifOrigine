@@ -437,6 +437,7 @@ const ContactsList = () => {
             value={currentContact.email}
             onChange={(e) => handleChange('email', e.target.value)}
             sx={{ mb: 2 }}
+            disabled={isEditing}
           />
           <TextField
             label="Téléphone fixe (format international)"
