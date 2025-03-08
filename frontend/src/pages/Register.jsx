@@ -22,10 +22,16 @@ import {
   Button,
   Grid,
   CssBaseline,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
 
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
+
+// Import des icônes pour la visibilité du mot de passe
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 // Icônes FontAwesome (import inchangé, même si non utilisées dans MUI)
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -42,7 +48,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 // Autres imports internes
-import './Register.css'; // vous pouvez conserver ou adapter le CSS existant
+import './Register.css';
 import logo from '../assets/logo.jpg';
 import countryCodes from '../components/countryCodes';
 import {
@@ -56,8 +62,7 @@ import {
 } from '../services/apiServices';
 import { homemadeHash } from '../utils/hashUtils';
 
-// Validation du numéro de téléphone international : 
-// Le numéro doit commencer par '+' suivi uniquement de chiffres et ne doit pas dépasser 12 caractères.
+// Validation du numéro de téléphone international
 const isValidInternationalPhone = (number) => {
   return /^\+[0-9]+$/.test(number) && number.length <= 12;
 };
@@ -71,7 +76,10 @@ const Register = () => {
   const navigate = useNavigate();
   const allowedFileTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
 
-  // States (inchangés, suppression des indicatifs séparés)
+  // État pour afficher ou masquer le mot de passe
+  const [showPassword, setShowPassword] = useState(false);
+
+  // State du formulaire
   const [formData, setFormData] = useState({
     gender: 'Mr',
     name: '',
@@ -84,8 +92,8 @@ const Register = () => {
     companyName: '',
     address: '',
     city: '',
-    country: '',
-    originCountry: '',
+    country: '', // pour "Pays de résidence" (sera forcé)
+    originCountry: '', // pour "Pays d'origine" (choix libre)
     companyCategory: '',
     otherCompanyCategory: '',
     sector: '',
@@ -103,33 +111,44 @@ const Register = () => {
     companyType: '',
   });
 
-  // Utilisé pour afficher un message d'erreur global (autres erreurs)
+  // États pour gérer erreurs, secteurs et pays
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [sectors, setSectors] = useState([]);
-  const [countries, setCountries] = useState([]);
+  // allCountries pour "Pays d'origine"
+  const [allCountries, setAllCountries] = useState([]);
+  // residenceCountries pour "Pays de résidence"
+  const [residenceCountries, setResidenceCountries] = useState([]);
 
   // Snackbar
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  // Fermeture Snackbar
+  // Fermeture de la Snackbar
   const handleSnackbarClose = (event, reason) => {
-    if (reason === 'clickaway') {
-      return;
-    }
+    if (reason === 'clickaway') return;
     setSnackbarOpen(false);
   };
 
-  // Récupération des secteurs et pays au chargement
+  // Récupération des secteurs et des pays au chargement
   useEffect(() => {
     const fetchData = async () => {
       try {
         const sectorData = await fetchSectors();
         setSectors(sectorData);
         const countryData = await fetchCountries();
-        setCountries(countryData);
+        setAllCountries(countryData);
+        // Filtrer pour ne conserver que "Rep. de djibouti" pour "Pays de résidence"
+        const djibouti = countryData.find(
+          (country) =>
+            country.symbol_fr.toLowerCase() === 'rep. de djibouti'.toLowerCase()
+        );
+        setResidenceCountries(djibouti ? [djibouti] : []);
+        setFormData((prev) => ({
+          ...prev,
+          country: djibouti ? djibouti.symbol_fr : '',
+        }));
       } catch (err) {
         console.error('Error fetching data:', err);
         setError('Échec du chargement des secteurs ou des pays');
@@ -144,21 +163,17 @@ const Register = () => {
 
   // Validation de type de fichier
   const validateFileType = (file) => {
-    if (!file) return true; // Aucun fichier => OK
+    if (!file) return true;
     return allowedFileTypes.includes(file.type);
   };
 
-  // Gestion du changement
+  // Gestion du changement dans les champs du formulaire
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
-
-    // Checkbox
     if (type === 'checkbox') {
       setFormData((prev) => ({ ...prev, [name]: checked }));
       return;
     }
-
-    // Fichier
     if (type === 'file') {
       const file = files[0];
       if (file && !validateFileType(file)) {
@@ -172,8 +187,6 @@ const Register = () => {
       setFormData((prev) => ({ ...prev, [name]: file }));
       return;
     }
-
-    // companyType => conditionnel
     if (name === 'companyType') {
       setFormData((prev) => ({
         ...prev,
@@ -183,20 +196,16 @@ const Register = () => {
       }));
       return;
     }
-
-    // Pour les autres champs, mise à jour de formData
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Calcul des erreurs pour les numéros de téléphone
+  // Vérification des erreurs pour les numéros de téléphone
   const phoneFixedError = formData.phoneFixedNumber !== "" && !isValidInternationalPhone(formData.phoneFixedNumber);
   const phoneMobileError = formData.phoneMobileNumber !== "" && !isValidInternationalPhone(formData.phoneMobileNumber);
 
-  // Soumission
+  // Soumission du formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Vérification des fichiers
     const filesToValidate = [
       { name: 'licenseFile', file: formData.licenseFile },
       { name: 'patenteFile', file: formData.patenteFile },
@@ -214,8 +223,6 @@ const Register = () => {
         }
       }
     }
-
-    // Validation des numéros de téléphone
     if (!isValidInternationalPhone(formData.phoneFixedNumber)) {
       setSnackbarMessage('Le numéro de téléphone fixe est invalide. Format international requis (max 12 caractères, commence par "+").');
       setSnackbarSeverity('error');
@@ -228,7 +235,6 @@ const Register = () => {
       setSnackbarOpen(true);
       return;
     }
-    // Validation des mots de passe
     if (formData.password !== formData.confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       setSnackbarMessage('Les mots de passe ne correspondent pas');
@@ -236,19 +242,12 @@ const Register = () => {
       setSnackbarOpen(true);
       return;
     }
-
     try {
-      // Utilisation directe du numéro saisi (format international)
       const fullPhoneFixed = formData.phoneFixedNumber;
       const fullPhoneMobile = formData.phoneMobileNumber;
-      const legalForm =
-        formData.companyCategory === 'Autre' ? null : formData.companyCategory;
-      const otherLegalForm =
-        formData.companyCategory === 'Autre'
-          ? formData.otherCompanyCategory
-          : null;
+      const legalForm = formData.companyCategory === 'Autre' ? null : formData.companyCategory;
+      const otherLegalForm = formData.companyCategory === 'Autre' ? formData.otherCompanyCategory : null;
 
-      // userData (non utilisé plus loin, mais inchangé)
       const userData = {
         username: formData.email,
         gender: formData.gender,
@@ -263,8 +262,7 @@ const Register = () => {
         city: formData.city,
         country: formData.country,
         companyCategory: formData.companyCategory,
-        sector:
-          formData.sector === 'Autres' ? formData.otherSector : formData.sector,
+        sector: formData.sector === 'Autres' ? formData.otherSector : formData.sector,
         isFreeZoneCompany: formData.isFreeZoneCompany,
         isOtherCompany: formData.isOtherCompany,
         licenseNumber: formData.licenseNumber,
@@ -274,14 +272,9 @@ const Register = () => {
         acceptsDataProcessing: formData.acceptsDataProcessing,
       };
 
-      // Préparation subscriptionData
       const selectedSector = sectors.find((s) => s.symbol_fr === formData.sector);
-      const selectedCountry = countries.find(
-        (c) => c.symbol_fr === formData.country
-      );
-      const selectedHeadOfficeCountry = countries.find(
-        (c) => c.symbol_fr === formData.originCountry
-      );
+      const selectedCountry = allCountries.find((c) => c.symbol_fr === formData.country);
+      const selectedHeadOfficeCountry = allCountries.find((c) => c.symbol_fr === formData.originCountry);
 
       const subscriptionData = {
         uploadType: 'inscriptions',
@@ -301,15 +294,12 @@ const Register = () => {
         id_sector: selectedSector ? selectedSector.id_sector : null,
         other_sector: formData.otherSector || null,
         id_country: selectedCountry ? selectedCountry.id_country : null,
-        id_country_headoffice: selectedHeadOfficeCountry
-          ? selectedHeadOfficeCountry.id_country
-          : null,
+        id_country_headoffice: selectedHeadOfficeCountry ? selectedHeadOfficeCountry.id_country : null,
         other_legal_form: formData.otherCompanyCategory,
         statut_flag: 1,
         idlogin: 1,
         billed_cust_name: formData.billed_cust_name,
         bill_full_address: formData.bill_full_address,
-        // Données utilisateur
         gender: formData.gender === 'Mr' ? 0 : 1,
         full_name: formData.name,
         ismain_user: true,
@@ -318,7 +308,6 @@ const Register = () => {
         phone_number: fullPhoneFixed,
         mobile_number: fullPhoneMobile,
         position: formData.position,
-        // Fichiers
         licenseFile: formData.isFreeZoneCompany ? formData.licenseFile : null,
         patenteFile: formData.isOtherCompany ? formData.patenteFile : null,
         rchFile: null,
@@ -336,33 +325,35 @@ const Register = () => {
       setSnackbarMessage(err.message);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
-      // Suppression de la redirection en cas d'erreur
     }
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="md" sx={{ mt: 4, mb: 8 }}>
       <Helmet>
         <title>Créer un Compte</title>
         <meta name="description" content="Inscrivez-vous pour créer un compte." />
       </Helmet>
       <CssBaseline />
 
-      {/* Logo */}
+      {/* Logo agrandi légèrement */}
       <Box display="flex" justifyContent="center" mb={2}>
         <Box
           component="img"
           src={logo}
           alt="Logo"
           sx={{
-            width: 80,
+            width: 220,
             height: 'auto',
           }}
         />
       </Box>
 
+      {/* Titre sans personnalisation excessive (même police que pour "Information(s) Entreprise") */}
       <Box textAlign="center" mb={2}>
-        <Typography variant="h4">Créer son compte</Typography>
+        <Typography variant="h4" align="center">
+          Créer son compte
+        </Typography>
         {error && (
           <Typography variant="body1" color="error" sx={{ mt: 1 }}>
             {error}
@@ -482,15 +473,11 @@ const Register = () => {
                 name="country"
                 value={formData.country}
                 label="Pays de résidence"
-                onChange={handleChange}
+                disabled
               >
-                <MenuItem value="" disabled hidden>
-                  Choisir
-                </MenuItem>
-                {countries.map((country) => (
+                {residenceCountries.map((country) => (
                   <MenuItem key={country.id_country} value={country.symbol_fr}>
-                    {country.symbol_fr.charAt(0).toUpperCase() +
-                      country.symbol_fr.slice(1).toLowerCase()}
+                    {country.symbol_fr}
                   </MenuItem>
                 ))}
               </Select>
@@ -509,7 +496,7 @@ const Register = () => {
                 <MenuItem value="" disabled hidden>
                   Choisir
                 </MenuItem>
-                {countries.map((country) => (
+                {allCountries.map((country) => (
                   <MenuItem key={country.id_country} value={country.symbol_fr}>
                     {country.symbol_fr.charAt(0).toUpperCase() +
                       country.symbol_fr.slice(1).toLowerCase()}
@@ -554,7 +541,6 @@ const Register = () => {
           {/* Champs conditionnels basés sur companyType */}
           {formData.isFreeZoneCompany && (
             <>
-              {/* Numéro de licence */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   required
@@ -566,7 +552,6 @@ const Register = () => {
                   onChange={handleChange}
                 />
               </Grid>
-              {/* Upload licence */}
               <Grid item xs={12} sm={6}>
                 <Typography variant="body2" sx={{ mb: 1 }}>
                   Licence (Fichier)
@@ -596,7 +581,6 @@ const Register = () => {
 
           {formData.isOtherCompany && (
             <>
-              {/* NIF + patente */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   required
@@ -632,8 +616,6 @@ const Register = () => {
                   </Typography>
                 )}
               </Grid>
-
-              {/* Numéro d'immatriculation RCS */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -656,23 +638,16 @@ const Register = () => {
         </Box>
 
         <Grid container spacing={2}>
-          {/* Civilité */}
           <Grid item xs={12} sm={6}>
             <FormControl component="fieldset">
               <FormLabel component="legend">Civilité</FormLabel>
-              <RadioGroup
-                row
-                name="gender"
-                value={formData.gender}
-                onChange={handleChange}
-              >
+              <RadioGroup row name="gender" value={formData.gender} onChange={handleChange}>
                 <FormControlLabel value="Mr" control={<Radio />} label="Mr" />
                 <FormControlLabel value="Mme" control={<Radio />} label="Mme" />
               </RadioGroup>
             </FormControl>
           </Grid>
 
-          {/* Nom */}
           <Grid item xs={12} sm={6}>
             <TextField
               required
@@ -685,7 +660,6 @@ const Register = () => {
             />
           </Grid>
 
-          {/* Fonction */}
           <Grid item xs={12} sm={6}>
             <TextField
               required
@@ -698,7 +672,6 @@ const Register = () => {
             />
           </Grid>
 
-          {/* Téléphone fixe (champ unique au format international) */}
           <Grid item xs={12} sm={6}>
             <TextField
               required
@@ -710,15 +683,10 @@ const Register = () => {
               onChange={handleChange}
               inputProps={{ maxLength: 12 }}
               error={phoneFixedError}
-              helperText={
-                phoneFixedError
-                  ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
-                  : ""
-              }
+              helperText={phoneFixedError ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères." : ""}
             />
           </Grid>
 
-          {/* Téléphone portable (champ unique au format international) */}
           <Grid item xs={12} sm={6}>
             <TextField
               required
@@ -730,15 +698,10 @@ const Register = () => {
               onChange={handleChange}
               inputProps={{ maxLength: 12 }}
               error={phoneMobileError}
-              helperText={
-                phoneMobileError
-                  ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
-                  : ""
-              }
+              helperText={phoneMobileError ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères." : ""}
             />
           </Grid>
 
-          {/* Email */}
           <Grid item xs={12} sm={6}>
             <TextField
               required
@@ -752,29 +715,49 @@ const Register = () => {
             />
           </Grid>
 
-          {/* Mots de passe */}
+          {/* Mot de passe avec possibilité d'afficher/masquer */}
           <Grid item xs={12} sm={6}>
             <TextField
               required
               fullWidth
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               label="Mot de passe"
               name="password"
               placeholder="Mot de passe"
               value={formData.password}
               onChange={handleChange}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton aria-label="toggle password visibility" onClick={() => setShowPassword(!showPassword)} edge="end">
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
+
+          {/* Confirmer mot de passe avec possibilité d'afficher/masquer */}
           <Grid item xs={12} sm={6}>
             <TextField
               required
               fullWidth
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               label="Confirmer mot de passe"
               name="confirmPassword"
               placeholder="Confirmer mot de passe"
               value={formData.confirmPassword}
               onChange={handleChange}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton aria-label="toggle password visibility" onClick={() => setShowPassword(!showPassword)} edge="end">
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
         </Grid>
@@ -782,31 +765,16 @@ const Register = () => {
         {/* SECTION Conditions */}
         <Box mt={4}>
           <FormControlLabel
-            control={
-              <Checkbox
-                name="acceptsConditions"
-                checked={formData.acceptsConditions}
-                onChange={handleChange}
-                required
-              />
-            }
+            control={<Checkbox name="acceptsConditions" checked={formData.acceptsConditions} onChange={handleChange} required />}
             label="Je certifie être habilité à faire des formalités export pour la société que je viens de désigner ci-dessus."
           />
           <br />
           <FormControlLabel
-            control={
-              <Checkbox
-                name="acceptsDataProcessing"
-                checked={formData.acceptsDataProcessing}
-                onChange={handleChange}
-                required
-              />
-            }
+            control={<Checkbox name="acceptsDataProcessing" checked={formData.acceptsDataProcessing} onChange={handleChange} required />}
             label="J'accepte les conditions générales de vente"
           />
         </Box>
 
-        {/* Bouton d'envoi */}
         <Box mt={4} textAlign="center">
           <Button variant="contained" color="primary" type="submit">
             Créer
@@ -814,25 +782,15 @@ const Register = () => {
         </Box>
       </Box>
 
-      {/* Lien vers la page de connexion */}
       <Box mt={2} textAlign="center">
         <Typography variant="body2">
-          <Box
-            component={RouterLink}
-            to="/login"
-            sx={{ textDecoration: 'none', color: 'primary.main' }}
-          >
+          <Box component={RouterLink} to="/login" sx={{ textDecoration: 'none', color: 'primary.main' }}>
             Revenir à la page de connexion
           </Box>
         </Typography>
       </Box>
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-      >
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
         <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
           {snackbarMessage}
         </Alert>
