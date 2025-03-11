@@ -34,34 +34,24 @@ import {
 } from '@mui/material';
 
 const DestinataireList = () => {
-  // On récupère l’utilisateur depuis Redux
+  // Récupération de l’utilisateur depuis Redux
   const user = useSelector((state) => state.auth.user);
-  // On en déduit l’ID du compte client
   const customerAccountId = user?.id_cust_account;
 
   const [recipients, setRecipients] = useState([]);
   const [countries, setCountries] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Modale d'ajout
+  // Gestion de la modale d'ajout
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Comme dans Step2, on a : 
-  //  - recipientName
-  //  - address1
-  //  - address2 (facultatif)
-  //  - address3 (pour code postal ou complément)
-  //  - idCity: 1 (forcé, comme Step2)
-  //  - country
-  //  - phone
+  // Données du nouveau destinataire
   const [newRecipient, setNewRecipient] = useState({
     recipientName: '',
     address1: '',
     address2: '',
-    address3: '',  // Dans Step2, c'est le postalCode
-    // city est remplacé par idCity forcé à 1
-    idCity: 1,
-    country: '',
+    address3: '',
+    country: '',  // Doit contenir l'ID numérique du pays
     phone: '',
   });
 
@@ -75,7 +65,6 @@ const DestinataireList = () => {
 
   const loadRecipients = async () => {
     try {
-      // Filtrer par compte client
       const response = await fetchRecipients({ idListCA: customerAccountId });
       const data = response.data || [];
       setRecipients(data);
@@ -93,16 +82,13 @@ const DestinataireList = () => {
     }
   };
 
-  // Gère la recherche
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  // Filtrer la liste selon la recherche
   const filteredRecipients = recipients.filter((recipient) => {
     const search = searchTerm.toLowerCase().trim();
     if (!search) return true;
-
     const dateString = formatDate(recipient.insertdate);
     const fields = [
       recipient.recipient_name,
@@ -113,11 +99,9 @@ const DestinataireList = () => {
     ]
       .filter(Boolean)
       .map((val) => String(val).toLowerCase());
-
     return fields.some((field) => field.includes(search));
   });
 
-  // Ouvre la modale "Ajouter un destinataire"
   const handleOpenAddModal = () => {
     setErrorMessage('');
     setNewRecipient({
@@ -125,26 +109,22 @@ const DestinataireList = () => {
       address1: '',
       address2: '',
       address3: '',
-      idCity: 1,  // Forcé comme dans Step2
       country: '',
       phone: '',
     });
     setShowAddModal(true);
   };
 
-  // Ferme la modale "Ajouter un destinataire"
   const handleCloseAddModal = () => {
     setShowAddModal(false);
   };
 
-  // Gestion des champs du nouveau destinataire
   const handleNewRecipientChange = (field, value) => {
     setNewRecipient((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Ajoute un nouveau destinataire (similaire Step2 : "idCity: 1")
+  // Construction du payload sans préfixe pour le front-end
   const handleSaveNewRecipient = async () => {
-    // Vérif minimal : nom, adresse1, pays => obligatoires
     if (!newRecipient.recipientName || !newRecipient.address1 || !newRecipient.country) {
       setErrorMessage("Veuillez remplir au minimum le nom, l'adresse et le pays.");
       return;
@@ -153,7 +133,6 @@ const DestinataireList = () => {
     try {
       setErrorMessage('');
 
-      // Payload pour l'API : on utilise idCity: 1 (comme Step2)
       const payload = {
         idRecipientAccount: null,
         idCustAccount: customerAccountId,
@@ -161,10 +140,7 @@ const DestinataireList = () => {
         address1: newRecipient.address1,
         address2: newRecipient.address2,
         address3: newRecipient.address3,
-        // Au lieu de "city", on envoie "idCity"
-        idCity: 1,
-        country: newRecipient.country,
-        phone: newRecipient.phone,
+        idCountry: newRecipient.country, // valeur numérique du pays
         statutFlag: 1,
         activationDate: new Date().toISOString(),
         deactivationDate: new Date('9999-12-31').toISOString(),
@@ -173,9 +149,7 @@ const DestinataireList = () => {
       };
 
       await addRecipient(payload);
-      // Recharge la liste
       await loadRecipients();
-      // Ferme la modale
       setShowAddModal(false);
     } catch (err) {
       console.error("Erreur lors de l'ajout du destinataire:", err);
@@ -185,7 +159,6 @@ const DestinataireList = () => {
 
   return (
     <Box sx={{ ml: '240px', p: 3 }}>
-      {/* Barre avec titre et bouton "Ajouter un destinataire" */}
       <AppBar position="static" color="default">
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography variant="h6">Liste des Destinataires</Typography>
@@ -195,7 +168,6 @@ const DestinataireList = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Barre de recherche */}
       <Box mb={2} mt={2} display="flex" alignItems="center" gap={2}>
         <Typography>Rechercher :</Typography>
         <TextField
@@ -208,7 +180,6 @@ const DestinataireList = () => {
         />
       </Box>
 
-      {/* Tableau des destinataires (4 colonnes seulement) */}
       <Paper>
         <TableContainer>
           <Table>
@@ -235,7 +206,6 @@ const DestinataireList = () => {
                   </TableCell>
                 </TableRow>
               ))}
-
               {filteredRecipients.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} align="center">
@@ -248,7 +218,6 @@ const DestinataireList = () => {
         </TableContainer>
       </Paper>
 
-      {/* Modale d'ajout d'un destinataire (similaire Step2) */}
       <Dialog open={showAddModal} onClose={handleCloseAddModal} maxWidth="sm" fullWidth>
         <DialogTitle>Ajouter un destinataire</DialogTitle>
         <DialogContent dividers>
@@ -258,7 +227,6 @@ const DestinataireList = () => {
             </Alert>
           )}
 
-          {/* Nom du destinataire */}
           <TextField
             label="Nom du destinataire *"
             fullWidth
@@ -268,7 +236,6 @@ const DestinataireList = () => {
             sx={{ mb: 2 }}
           />
 
-          {/* Adresse1 obligatoire */}
           <TextField
             label="Adresse 1 *"
             fullWidth
@@ -278,7 +245,6 @@ const DestinataireList = () => {
             sx={{ mb: 2 }}
           />
 
-          {/* Adresse2 facultative */}
           <TextField
             label="Adresse 2"
             fullWidth
@@ -288,7 +254,6 @@ const DestinataireList = () => {
             sx={{ mb: 2 }}
           />
 
-          {/* address3 => ex. Code postal */}
           <TextField
             label="Adresse 3 (ex: Code postal)"
             fullWidth
@@ -298,7 +263,7 @@ const DestinataireList = () => {
             sx={{ mb: 2 }}
           />
 
-          {/* Pays */}
+          {/* Sélection du pays */}
           <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
             <InputLabel>Pays *</InputLabel>
             <Select
@@ -310,14 +275,13 @@ const DestinataireList = () => {
                 <em>-- Sélectionnez un pays --</em>
               </MenuItem>
               {countries.map((c) => (
-                <MenuItem key={c.id_country} value={c.symbol_fr}>
+                <MenuItem key={c.id_country} value={c.id_country}>
                   {c.symbol_fr}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
 
-          {/* Téléphone */}
           <TextField
             label="Téléphone"
             fullWidth
