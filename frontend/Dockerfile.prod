@@ -15,7 +15,7 @@ ARG VITE_API_URL
 
 # Set environment variables for the build
 ENV VITE_API_URL=${VITE_API_URL}
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 
 # Build the frontend (this creates the dist folder)
 RUN npm run build
