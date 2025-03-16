@@ -59,10 +59,23 @@ function a11yProps(index) {
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-// Helper function to ensure safe values (avoiding "undefined" as a string)
+// Helper pour ne pas afficher "undefined"
 const safeValue = (val) => {
-  return (val === undefined || val === null || val === "undefined") ? "" : val;
+  return val === undefined || val === null || val === 'undefined' ? '' : val;
 };
+
+// Retourne le texte pour la colonne "Implantation"
+function getImplantationLabel(registration) {
+  if (registration.in_free_zone) {
+    return 'Zone franche';
+  } else if (registration.other_business_type) {
+    // Si tu préfères afficher directement registration.other_business_type,
+    // tu peux remplacer par `return registration.other_business_type;`
+    return 'Autre';
+  } else {
+    return 'Entreprise';
+  }
+}
 
 const ClientsValides = () => {
   const [custAccounts, setCustAccounts] = useState([]);
@@ -71,15 +84,22 @@ const ClientsValides = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [tabIndex, setTabIndex] = useState(0);
   const [selectedFilter, setSelectedFilter] = useState('validé');
-  const currentYear = new Date().getFullYear();
 
-  // States for the edit modal
+  // Modale édition
   const [openEditModal, setOpenEditModal] = useState(false);
   const [selectedEditAccount, setSelectedEditAccount] = useState(null);
   const [editFormData, setEditFormData] = useState({});
   const [sectors, setSectors] = useState([]);
 
-  // Fetch accounts based on the selected filter.
+  // Modale fichiers
+  const [openFileModal, setOpenFileModal] = useState(false);
+  const [selectedFileAccount, setSelectedFileAccount] = useState(null);
+  const [fileData, setFileData] = useState({
+    justificatifFile: null,
+    justificatifFileName: ''
+  });
+
+  // Récupère les comptes selon le filtre
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
@@ -95,13 +115,13 @@ const ClientsValides = () => {
         const data = response.data || [];
         setCustAccounts(data);
       } catch (err) {
-        console.error("Error fetching accounts:", err);
+        console.error('Error fetching accounts:', err);
       }
     };
     fetchAccounts();
   }, [selectedFilter]);
 
-  // Fetch sectors for the dropdown in the edit modal
+  // Récupère les secteurs pour la liste déroulante
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -114,14 +134,7 @@ const ClientsValides = () => {
     fetchData();
   }, []);
 
-  // New state for file modal
-  const [openFileModal, setOpenFileModal] = useState(false);
-  const [selectedFileAccount, setSelectedFileAccount] = useState(null);
-  const [fileData, setFileData] = useState({
-    justificatifFile: null,
-    justificatifFileName: ""
-  });
-
+  // Ouvrir/fermer la modale "gérer fichiers"
   const handleOpenFileModal = (account) => {
     setSelectedFileAccount(account);
     setOpenFileModal(true);
@@ -132,26 +145,26 @@ const ClientsValides = () => {
     setSelectedFileAccount(null);
   };
 
-  // Handler for deleting a file
+  // Suppression fichier
   const handleDeleteFile = async (fileId) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce fichier ?")) {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce fichier ?')) {
       try {
         await deleteCustAccountFile(fileId, 0);
-        // Update the selectedFileAccount's files list after deletion
+        // Mise à jour du state local
         setSelectedFileAccount((prev) => ({
           ...prev,
-          files: prev.files.filter(file => file.id_cust_account_files !== fileId)
+          files: prev.files.filter((file) => file.id_cust_account_files !== fileId)
         }));
 
+        // Rafraîchit la liste globale
         let status;
-        if (selectedFilter === "validé") {
+        if (selectedFilter === 'validé') {
           status = 2;
-        } else if (selectedFilter === "non validé") {
+        } else if (selectedFilter === 'non validé') {
           status = 1;
-        } else if (selectedFilter === "rejeté") {
+        } else if (selectedFilter === 'rejeté') {
           status = 4;
         }
-
         const response = await getCustAccountInfo(null, status, true);
         const data = response.data || [];
         const sortedData = data.sort(
@@ -159,6 +172,7 @@ const ClientsValides = () => {
         );
         setCustAccounts(sortedData);
 
+        // Met à jour selectedFileAccount s'il s'agit du même compte
         if (selectedFileAccount) {
           const updatedAccount = sortedData.find(
             (acc) => acc.id_cust_account === selectedFileAccount.id_cust_account
@@ -166,12 +180,13 @@ const ClientsValides = () => {
           setSelectedFileAccount(updatedAccount);
         }
       } catch (error) {
-        console.error("Error deleting file:", error);
-        alert("Erreur lors de la suppression du fichier");
+        console.error('Error deleting file:', error);
+        alert('Erreur lors de la suppression du fichier');
       }
     }
   };
 
+  // Sélection nouveau fichier
   const handleFileModalChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -179,14 +194,17 @@ const ClientsValides = () => {
     }
   };
 
-  // Handler to update the file
+  // Sauvegarde du fichier (exemple, non implémenté)
   const handleSaveFileModal = async () => {
-    console.log("Saving file changes for account", selectedFileAccount.id_cust_account, fileData);
-
-    const status = selectedFilter === 'validé' ? 2
-                  : selectedFilter === 'non validé' ? 1
-                  : 4;
-
+    console.log('Saving file changes for account', selectedFileAccount.id_cust_account, fileData);
+    let status;
+    if (selectedFilter === 'validé') {
+      status = 2;
+    } else if (selectedFilter === 'non validé') {
+      status = 1;
+    } else if (selectedFilter === 'rejeté') {
+      status = 4;
+    }
     const response = await getCustAccountInfo(null, status, true);
     const data = response.data || [];
     setCustAccounts(data);
@@ -194,26 +212,25 @@ const ClientsValides = () => {
     handleCloseFileModal();
   };
 
+  // Préremplir si un compte a déjà un fichier
   useEffect(() => {
-    if (
-      selectedEditAccount &&
-      selectedEditAccount.files &&
-      selectedEditAccount.files.length > 0
-    ) {
+    if (selectedEditAccount && selectedEditAccount.files && selectedEditAccount.files.length > 0) {
       const existingFile = selectedEditAccount.files[0];
       setEditFormData((prev) => ({
         ...prev,
-        justificatifFileName: safeValue(existingFile.file_origin_name),
+        justificatifFileName: safeValue(existingFile.file_origin_name)
       }));
     } else {
-      setEditFormData((prev) => ({ ...prev, justificatifFileName: "" }));
+      setEditFormData((prev) => ({ ...prev, justificatifFileName: '' }));
     }
   }, [selectedEditAccount]);
 
+  // Gère le changement d'onglet
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
   };
 
+  // Contact principal
   const handleOpenContactsModal = (account) => {
     setSelectedAccount(account);
     setShowContactModal(true);
@@ -224,16 +241,18 @@ const ClientsValides = () => {
     setShowContactModal(false);
   };
 
+  // Ouvrir le fichier
   const handleFileClick = (file) => {
     const fileUrl = `${API_URL}/files/inscriptions/${new Date().getFullYear()}/${file.file_guid}`;
     window.open(fileUrl, '_blank');
   };
 
+  // Recherche
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  // Filter accounts based on the search term
+  // Filtrage
   const filteredAccounts = custAccounts.filter((registration) => {
     const search = searchTerm.toLowerCase().trim();
     if (!search) return true;
@@ -247,14 +266,14 @@ const ClientsValides = () => {
       registration.trade_registration_num,
       registration.rchNumber,
       registration.licenseNumber,
-      dateString,
+      dateString
     ]
       .filter(Boolean)
       .map((val) => String(val).toLowerCase());
     return fields.some((field) => field.includes(search));
   });
 
-  // Open edit modal and preload form data
+  // Ouvrir modale d'édition
   const handleOpenEditModal = (account) => {
     setSelectedEditAccount(account);
 
@@ -270,7 +289,7 @@ const ClientsValides = () => {
     const justificatifFileName =
       account.files && account.files.length > 0
         ? safeValue(account.files[0].file_origin_name)
-        : "";
+        : '';
 
     setEditFormData({
       companyName: safeValue(account.cust_name),
@@ -283,8 +302,8 @@ const ClientsValides = () => {
       licenseNumber: safeValue(account.identification_number),
       companyType,
       otherCompanyType: safeValue(account.other_business_type),
-      justificatifFile: "",
-      justificatifFileName,
+      justificatifFile: '',
+      justificatifFileName
     });
     setOpenEditModal(true);
   };
@@ -295,6 +314,7 @@ const ClientsValides = () => {
     setEditFormData({});
   };
 
+  // Gère le formulaire d'édition
   const handleEditChange = (e) => {
     const { name, value } = e.target;
     setEditFormData((prev) => ({ ...prev, [name]: value }));
@@ -306,17 +326,18 @@ const ClientsValides = () => {
       setEditFormData((prev) => ({
         ...prev,
         justificatifFile: file,
-        justificatifFileName: "",
+        justificatifFileName: ''
       }));
     }
   };
 
+  // Sauvegarde de l'édition
   const handleSaveEdit = async () => {
     if (
-      (selectedEditAccount.in_free_zone && editFormData.companyType !== "zoneFranche") ||
+      (selectedEditAccount.in_free_zone && editFormData.companyType !== 'zoneFranche') ||
       (!selectedEditAccount.in_free_zone &&
-        editFormData.companyType !== "autre" &&
-        editFormData.companyType !== "autres")
+        editFormData.companyType !== 'autre' &&
+        editFormData.companyType !== 'autres')
     ) {
       if (!editFormData.justificatifFile) {
         alert(
@@ -347,32 +368,32 @@ const ClientsValides = () => {
       other_business_type:
         editFormData.companyType === 'autres'
           ? safeValue(editFormData.otherCompanyType)
-          : "",
-      companyType: editFormData.companyType || "",
+          : '',
+      companyType: editFormData.companyType || ''
     };
 
-    if (editFormData.companyType === "autre") {
+    if (editFormData.companyType === 'autre') {
       updateData.trade_registration_num = safeValue(editFormData.nif);
       updateData.register_number = safeValue(editFormData.rchNumber);
-      updateData.identification_number = "";
-      updateData.other_business_type = "";
-    } else if (editFormData.companyType === "zoneFranche") {
-      updateData.trade_registration_num = "";
-      updateData.register_number = "";
+      updateData.identification_number = '';
+      updateData.other_business_type = '';
+    } else if (editFormData.companyType === 'zoneFranche') {
+      updateData.trade_registration_num = '';
+      updateData.register_number = '';
       updateData.identification_number = safeValue(editFormData.licenseNumber);
-      updateData.other_business_type = "";
+      updateData.other_business_type = '';
       updateData.in_free_zone = true;
-    } else if (editFormData.companyType === "autres") {
-      updateData.trade_registration_num = "";
-      updateData.register_number = "";
-      updateData.identification_number = "";
+    } else if (editFormData.companyType === 'autres') {
+      updateData.trade_registration_num = '';
+      updateData.register_number = '';
+      updateData.identification_number = '';
       updateData.other_business_type = safeValue(editFormData.otherCompanyType);
       updateData.in_free_zone = false;
     } else {
-      updateData.trade_registration_num = "";
-      updateData.register_number = "";
-      updateData.identification_number = "";
-      updateData.other_business_type = "";
+      updateData.trade_registration_num = '';
+      updateData.register_number = '';
+      updateData.identification_number = '';
+      updateData.other_business_type = '';
     }
 
     let status;
@@ -410,29 +431,44 @@ const ClientsValides = () => {
         </Tabs>
       </AppBar>
 
-      {/* Filter Buttons */}
+      {/* Boutons de filtre */}
       <Box sx={{ mt: 2, mb: 2, display: 'flex', gap: 2 }}>
         <Button
           variant={selectedFilter === 'validé' ? 'contained' : 'outlined'}
           onClick={() => setSelectedFilter('validé')}
+          style={
+            selectedFilter === 'validé'
+              ? { backgroundColor: '#C39408', color: '#fff' }
+              : { color: '#C39408', borderColor: '#C39408' }
+          }
         >
           Clients Validés
         </Button>
         <Button
           variant={selectedFilter === 'non validé' ? 'contained' : 'outlined'}
           onClick={() => setSelectedFilter('non validé')}
+          style={
+            selectedFilter === 'non validé'
+              ? { backgroundColor: '#C39408', color: '#fff' }
+              : { color: '#C39408', borderColor: '#C39408' }
+          }
         >
           Clients Non Validés
         </Button>
         <Button
           variant={selectedFilter === 'rejeté' ? 'contained' : 'outlined'}
           onClick={() => setSelectedFilter('rejeté')}
+          style={
+            selectedFilter === 'rejeté'
+              ? { backgroundColor: '#C39408', color: '#fff' }
+              : { color: '#C39408', borderColor: '#C39408' }
+          }
         >
           Clients Rejetés
         </Button>
       </Box>
 
-      {/* Search Field */}
+      {/* Recherche */}
       <Box mb={2} display="flex" alignItems="center" gap={2}>
         <Typography>Rechercher :</Typography>
         <TextField
@@ -446,7 +482,7 @@ const ClientsValides = () => {
         />
       </Box>
 
-      {/* Accounts Table */}
+      {/* Tableau des comptes */}
       <Paper>
         <TableContainer>
           <Table>
@@ -457,7 +493,7 @@ const ClientsValides = () => {
                 <TableCell>Secteur</TableCell>
                 <TableCell>Adresse Complète</TableCell>
                 <TableCell>Pays</TableCell>
-                <TableCell>Implantation</TableCell>
+                <TableCell>Type d'entreprise</TableCell>
                 <TableCell>Fichier Justificatifs</TableCell>
                 <TableCell>Contact Principal</TableCell>
                 <TableCell>Action</TableCell>
@@ -475,40 +511,28 @@ const ClientsValides = () => {
                   </TableCell>
                   <TableCell>{registration.full_address}</TableCell>
                   <TableCell>{registration.co_symbol_fr}</TableCell>
+                  {/* Nouvelle colonne Implantation */}
                   <TableCell>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Checkbox
-                        checked={registration.in_free_zone}
-                        readOnly
-                        size="small"
-                      />
-                      <Typography variant="body2">Zone franche</Typography>
-                    </Box>
+                    {getImplantationLabel(registration)}
                   </TableCell>
                   <TableCell>
                     {registration.files && registration.files.length > 0 ? (
                       registration.files.map((file) => {
+                        // On récupère la description
                         let fileDescription = file.txt_description_fr || 'Type inconnu';
-                        if (fileDescription === 'NIF' && registration.trade_registration_number) {
-                          fileDescription += ` (${registration.trade_registration_number})`;
-                        } else if (
-                          fileDescription === 'Immatriculation RCS' &&
-                          registration.rchNumber
-                        ) {
-                          fileDescription += ` (${registration.rchNumber})`;
-                        } else if (
-                          fileDescription === 'Numéro de licence' &&
-                          registration.licenseNumber
-                        ) {
-                          fileDescription += ` (${registration.licenseNumber})`;
+
+                        // Si la description contient "NIF", on affiche juste "Patente"
+                        if (fileDescription.toLowerCase().includes('nif')) {
+                          fileDescription = 'Patente';
                         }
+
                         return (
                           <Button
                             key={file.id_files_repo}
                             variant="text"
                             size="small"
                             onClick={() => handleFileClick(file)}
-                            style={{ marginRight: '6px' }}
+                            style={{ color: '#C39408' }}
                           >
                             {fileDescription}
                           </Button>
@@ -517,26 +541,24 @@ const ClientsValides = () => {
                     ) : (
                       <Typography variant="body2">Aucun fichier</Typography>
                     )}
-                    {registration.in_free_zone &&
-                      registration.identification_number && (
-                        <Box mt={1} fontStyle="italic">
-                          Numéro de licence :{' '}
-                          <strong>{registration.identification_number}</strong>
-                        </Box>
-                      )}
-                    {!registration.in_free_zone &&
-                      registration.trade_registration_num && (
-                        <Box mt={1} fontStyle="italic">
-                          NIF :{' '}
-                          <strong>{registration.trade_registration_num}</strong>
-                        </Box>
-                      )}
-                    {!registration.in_free_zone &&
-                      registration.register_number && (
-                        <Box mt={1} fontStyle="italic">
-                          RCS : <strong>{registration.register_number}</strong>
-                        </Box>
-                      )}
+
+                    {/* En-dessous, info patente/rcs/licence */}
+                    {registration.in_free_zone && registration.identification_number && (
+                      <Box mt={1} fontStyle="italic">
+                        Numéro de licence :{' '}
+                        <strong>{registration.identification_number}</strong>
+                      </Box>
+                    )}
+                    {!registration.in_free_zone && registration.trade_registration_num && (
+                      <Box mt={1} fontStyle="italic">
+                        Patente : <strong>{registration.trade_registration_num}</strong>
+                      </Box>
+                    )}
+                    {!registration.in_free_zone && registration.register_number && (
+                      <Box mt={1} fontStyle="italic">
+                        RCS : <strong>{registration.register_number}</strong>
+                      </Box>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -544,6 +566,7 @@ const ClientsValides = () => {
                       size="small"
                       startIcon={<FontAwesomeIcon icon={faEye} />}
                       onClick={() => handleOpenContactsModal(registration)}
+                      style={{ color: '#C39408', borderColor: '#C39408' }}
                     >
                       Ouvrir
                     </Button>
@@ -551,10 +574,10 @@ const ClientsValides = () => {
                   <TableCell>
                     <Button
                       variant="outlined"
-                      color="primary"
                       size="small"
                       startIcon={<FontAwesomeIcon icon={faEdit} />}
                       onClick={() => handleOpenEditModal(registration)}
+                      style={{ color: '#C39408', borderColor: '#C39408' }}
                     >
                       Modifier
                     </Button>
@@ -562,9 +585,9 @@ const ClientsValides = () => {
                   <TableCell>
                     <Button
                       variant="outlined"
-                      color="secondary"
                       size="small"
                       onClick={() => handleOpenFileModal(registration)}
+                      style={{ color: '#C39408', borderColor: '#C39408' }}
                     >
                       Gérer les fichiers
                     </Button>
@@ -576,7 +599,7 @@ const ClientsValides = () => {
         </TableContainer>
       </Paper>
 
-      {/* File Management Modal */}
+      {/* Modale de gestion de fichiers */}
       <Dialog
         open={openFileModal}
         onClose={handleCloseFileModal}
@@ -599,7 +622,7 @@ const ClientsValides = () => {
                     mb: 1,
                     p: 1,
                     border: '1px solid #ddd',
-                    borderRadius: '4px',
+                    borderRadius: '4px'
                   }}
                 >
                   <Typography variant="body2">
@@ -616,9 +639,7 @@ const ClientsValides = () => {
                 </Box>
               ))
             ) : (
-              <Typography variant="body2">
-                Aucun fichier associé
-              </Typography>
+              <Typography variant="body2">Aucun fichier associé</Typography>
             )}
           </Box>
         </DialogContent>
@@ -629,7 +650,7 @@ const ClientsValides = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Edit Modal */}
+      {/* Modale d'édition */}
       <Dialog
         open={openEditModal}
         onClose={handleCloseEditModal}
@@ -673,10 +694,9 @@ const ClientsValides = () => {
               disabled
               InputProps={{ style: { backgroundColor: '#f0f0f0' } }}
             />
+
             <FormControl margin="normal" fullWidth>
-              <InputLabel id="edit-company-type-label">
-                Type d'entreprise
-              </InputLabel>
+              <InputLabel id="edit-company-type-label">Type d'entreprise</InputLabel>
               <Select
                 labelId="edit-company-type-label"
                 id="edit-company-type-select"
@@ -686,12 +706,11 @@ const ClientsValides = () => {
                 label="Type d'entreprise"
               >
                 <MenuItem value="autre">Entreprise</MenuItem>
-                <MenuItem value="zoneFranche">
-                  Entreprise en zone franche
-                </MenuItem>
+                <MenuItem value="zoneFranche">Entreprise en zone franche</MenuItem>
                 <MenuItem value="autres">Autre</MenuItem>
               </Select>
             </FormControl>
+
             {safeValue(editFormData.companyType) === 'autres' && (
               <TextField
                 margin="normal"
@@ -702,6 +721,7 @@ const ClientsValides = () => {
                 onChange={handleEditChange}
               />
             )}
+
             <FormControl margin="normal" fullWidth>
               <InputLabel id="edit-sector-label">Secteur</InputLabel>
               <Select
@@ -720,6 +740,7 @@ const ClientsValides = () => {
                 ))}
               </Select>
             </FormControl>
+
             {safeValue(editFormData.companyType) === 'zoneFranche' ? (
               <TextField
                 margin="normal"
@@ -755,13 +776,17 @@ const ClientsValides = () => {
           <Button onClick={handleCloseEditModal} color="error">
             Annuler
           </Button>
-          <Button onClick={handleSaveEdit} color="primary" variant="contained">
+          <Button
+            onClick={handleSaveEdit}
+            variant="contained"
+            style={{ backgroundColor: '#C39408', color: '#fff' }}
+          >
             Sauvegarder
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Contact Principal Modal */}
+      {/* Modale Contact Principal */}
       <Dialog
         open={showContactModal && !!selectedAccount}
         onClose={handleCloseContactsModal}
@@ -808,7 +833,7 @@ const ClientsValides = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseContactsModal} color="primary">
+          <Button onClick={handleCloseContactsModal} color="error">
             Fermer
           </Button>
         </DialogActions>
