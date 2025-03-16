@@ -1182,13 +1182,15 @@ BEGIN
 			username = p_email,
 			pwd = p_password,
 			isadmin_login= p_isadmin
-		 FROM login_user INNER JOIN op_user ON login_user."id_login_user" = op_user."id_login_user"
-		 WHERE "id_op_user" = p_id_op_user;
+			FROM op_user
+		 WHERE login_user."id_login_user" = op_user."id_login_user" 
+		 AND op_user."id_op_user" = p_id_op_user;
 	 ELSE
 		 UPDATE login_user 
 		 SET isadmin_login= p_isadmin
-		 FROM login_user INNER JOIN op_user ON login_user."id_login_user" = op_user."id_login_user"
-		 WHERE "id_op_user" = p_id_op_user;
+         FROM op_user
+		 WHERE login_user."id_login_user" = op_user."id_login_user" 
+		 AND op_user."id_op_user" = p_id_op_user;
        END IF; 
      UPDATE op_user
         SET
@@ -1202,6 +1204,7 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+
 
 DROP PROCEDURE IF EXISTS set_sector;
 CREATE OR REPLACE PROCEDURE set_sector(

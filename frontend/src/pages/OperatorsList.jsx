@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEllipsisV, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import './OperatorsList.css';
 import { disableOperator, getOperatorList } from '../services/apiServices';
 import { useSelector } from 'react-redux';
-
-// --- Import MUI ---
 import {
   Box,
   AppBar,
@@ -23,27 +21,18 @@ import {
   Button,
   Dialog,
   DialogTitle,
-  DialogContent
+  DialogContent,
+  IconButton,
+  Menu,
+  MenuItem
 } from '@mui/material';
+import RegisterOP from './RegisterOP';
 
-import RegisterOP from './RegisterOP'; // Composant du formulaire dans la modal
-
-// Fonctions utilitaires pour la gestion de TabPanel
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
   return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`operators-tabpanel-${index}`}
-      aria-labelledby={`operators-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 2 }}>
-          {children}
-        </Box>
-      )}
+    <div role="tabpanel" hidden={value !== index} {...other}>
+      {value === index && <Box sx={{ p: 2 }}>{children}</Box>}
     </div>
   );
 }
@@ -59,26 +48,17 @@ const OperatorsList = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const isAdmin = user?.isadmin_login;
-
   const [operators, setOperators] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Gestion des onglets (ici, un seul onglet "Listing Opérateurs")
   const [tabIndex, setTabIndex] = useState(0);
-  const handleTabChange = (event, newValue) => {
-    setTabIndex(newValue);
-  };
-
-  // State pour l'ouverture de la modal
   const [openRegisterModal, setOpenRegisterModal] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedOp, setSelectedOp] = useState(null);
 
-  const handleModalClose = () => {
-    setOpenRegisterModal(false);
-    // Vous pouvez ici relancer une requête pour rafraîchir la liste des opérateurs si nécessaire
-  };
-
-  // Récupération des opérateurs
+  const handleTabChange = (event, newValue) => setTabIndex(newValue);
+  const handleModalClose = () => setOpenRegisterModal(false);
+  
   useEffect(() => {
     const fetchOperators = async () => {
       try {
@@ -86,7 +66,6 @@ const OperatorsList = () => {
         setOperators(response.data);
       } catch (err) {
         setError('Erreur lors de la récupération des opérateurs.');
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -101,91 +80,44 @@ const OperatorsList = () => {
     if (opIsAdmin) labels.push('Administrateur');
     return labels.join(' ET ');
   };
-  
 
-  const handleEdit = (operatorId) => {
-    // Pour l'édition, vous pouvez soit naviguer vers une autre page, soit utiliser une modal similaire.
-    navigate(`/registerop/${operatorId}`);
-  };
-
+  const handleEdit = (operatorId) => navigate(`/registerop/${operatorId}`);
   const handleDelete = async (operatorId) => {
     if (window.confirm('Êtes-vous sûr de vouloir désactiver cet opérateur ?')) {
       try {
         await disableOperator(operatorId);
-        setOperators((prevOperators) =>
-          prevOperators.filter((op) => op.id_op_user !== operatorId)
-        );
-        alert('Opérateur désactivé avec succès.');
+        setOperators((prev) => prev.filter((op) => op.id_op_user !== operatorId));
       } catch (err) {
-        alert('Erreur lors de la désactivation de l’opérateur.');
-        console.error(err);
+        alert('Erreur lors de la désactivation.');
       }
     }
   };
 
-  const handleAddNew = () => {
-    if (isAdmin) {
-      // Ouvre la modal avec le formulaire d'inscription
-      setOpenRegisterModal(true);
-    } else {
-      alert("Seul un administrateur peut créer un nouvel opérateur.");
-    }
+  const handleAddNew = () => (isAdmin ? setOpenRegisterModal(true) : alert("Seul un administrateur peut créer un opérateur."));
+
+  const handleMenuOpen = (event, op) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedOp(op);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedOp(null);
   };
 
-  // Affichage conditionnel : Loading ou Erreur
-  if (loading) {
-    return (
-      <Box sx={{ ml: '240px', p: 3 }}>
-        <Typography>Chargement...</Typography>
-      </Box>
-    );
-  }
-  if (error) {
-    return (
-      <Box sx={{ ml: '240px', p: 3 }}>
-        <Typography color="error">{error}</Typography>
-      </Box>
-    );
-  }
+  if (loading) return <Box sx={{ ml: '240px', p: 3 }}><Typography>Chargement...</Typography></Box>;
+  if (error) return <Box sx={{ ml: '240px', p: 3 }}><Typography color="error">{error}</Typography></Box>;
 
   return (
-    // Décalage pour la sidebar
     <Box sx={{ ml: '240px', p: 3 }}>
-      {/* Barre d’onglets */}
       <AppBar position="static" color="default">
-        <Tabs
-          value={tabIndex}
-          onChange={handleTabChange}
-          indicatorColor="secondary"
-          textColor="inherit"
-          variant="fullWidth"
-          aria-label="Operators Tabs"
-        >
-          <Tab
-            label={`LISTING DES OPÉRATEURS (${operators.length})`}
-            {...a11yProps(0)}
-          />
+        <Tabs value={tabIndex} onChange={handleTabChange} indicatorColor="secondary" textColor="inherit" variant="fullWidth">
+          <Tab label={`LISTING DES OPÉRATEURS (${operators.length})`} {...a11yProps(0)} />
         </Tabs>
       </AppBar>
-
-      {/* Contenu de l'onglet */}
       <TabPanel value={tabIndex} index={0}>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleAddNew}
-            startIcon={<FontAwesomeIcon icon={faPlus} />}
-          >
-            Ajouter un nouvel opérateur
-          </Button>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Button variant="contained" color="primary" onClick={handleAddNew} startIcon={<FontAwesomeIcon icon={faPlus} />}>Ajouter un nouvel opérateur</Button>
         </Box>
-
         <Paper>
           <TableContainer>
             <Table>
@@ -202,27 +134,17 @@ const OperatorsList = () => {
               </TableHead>
               <TableBody>
                 {operators.map((op) => (
-                  console.log(op),
                   <TableRow key={op.id_op_user}>
                     <TableCell>{op.full_name}</TableCell>
                     <TableCell>{op.username}</TableCell>
-                    <TableCell>
-                      <a href={`mailto:${op.email}`}>{op.email}</a>
-                    </TableCell>
+                    <TableCell><a href={`mailto:${op.email}`}>{op.email}</a></TableCell>
                     <TableCell>{op.phone_number}</TableCell>
                     <TableCell>{op.mobile_number}</TableCell>
                     <TableCell>{getGroupLabel(op.roles, op.isadmin)}</TableCell>
                     <TableCell>
-                      <Box display="flex" gap={1}>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => handleEdit(op.id_op_user)}
-                          startIcon={<FontAwesomeIcon icon={faEdit} />}
-                        >
-                          Modifier
-                        </Button>
-                      </Box>
+                      <IconButton onClick={(event) => handleMenuOpen(event, op)}>
+                        <FontAwesomeIcon icon={faEllipsisV} />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -231,18 +153,14 @@ const OperatorsList = () => {
           </TableContainer>
         </Paper>
       </TabPanel>
-
-      {/* Modal Material‑UI utilisant Dialog */}
-      <Dialog
-        open={openRegisterModal}
-        onClose={handleModalClose}
-        fullWidth
-        maxWidth="md"
-      >
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <MenuItem onClick={() => { handleEdit(selectedOp?.id_op_user); handleMenuClose(); }}>
+          <FontAwesomeIcon icon={faEdit} style={{ marginRight: 8 }} /> Modifier
+        </MenuItem>
+      </Menu>
+      <Dialog open={openRegisterModal} onClose={handleModalClose} fullWidth maxWidth="md">
         <DialogTitle>Créer un Compte Opérateur</DialogTitle>
-        <DialogContent>
-          <RegisterOP onClose={handleModalClose} />
-        </DialogContent>
+        <DialogContent><RegisterOP onClose={handleModalClose} /></DialogContent>
       </Dialog>
     </Box>
   );
