@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { deleteCustAccountFile, fetchSectors, getCustAccountInfo, setCustAccount, updateCustAccount } from '../services/apiServices';
-import './Inscriptions.css'; // Retain your CSS classes
+import {
+  deleteCustAccountFile,
+  fetchSectors,
+  getCustAccountInfo,
+  updateCustAccount
+} from '../services/apiServices';
+import './Inscriptions.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { formatDate } from '../utils/dateUtils';
@@ -27,10 +32,9 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
+  MenuItem
 } from '@mui/material';
 
-// Helper component for tab panels (unchanged)
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
   return (
@@ -66,7 +70,6 @@ const ClientsValides = () => {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [tabIndex, setTabIndex] = useState(0);
-  // State to manage the selected filter (default is "validé")
   const [selectedFilter, setSelectedFilter] = useState('validé');
   const currentYear = new Date().getFullYear();
 
@@ -98,7 +101,7 @@ const ClientsValides = () => {
     fetchAccounts();
   }, [selectedFilter]);
 
-  // Fetch sectors for the dropdown in the edit modal.
+  // Fetch sectors for the dropdown in the edit modal
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -134,12 +137,11 @@ const ClientsValides = () => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer ce fichier ?")) {
       try {
         await deleteCustAccountFile(fileId, 0);
-        // Update the selectedFileAccount's files list after deletion:
-        setSelectedFileAccount(prev => ({
+        // Update the selectedFileAccount's files list after deletion
+        setSelectedFileAccount((prev) => ({
           ...prev,
           files: prev.files.filter(file => file.id_cust_account_files !== fileId)
         }));
-
 
         let status;
         if (selectedFilter === "validé") {
@@ -149,22 +151,20 @@ const ClientsValides = () => {
         } else if (selectedFilter === "rejeté") {
           status = 4;
         }
-        // 
 
         const response = await getCustAccountInfo(null, status, true);
         const data = response.data || [];
-        // Sort the list by insert date descending (most recent first)
-        const sortedData = data.sort((a, b) => new Date(b.insertdate) - new Date(a.insertdate));
+        const sortedData = data.sort(
+          (a, b) => new Date(b.insertdate) - new Date(a.insertdate)
+        );
         setCustAccounts(sortedData);
 
-        // If the file was deleted for a currently open account, update that account's state
         if (selectedFileAccount) {
           const updatedAccount = sortedData.find(
             (acc) => acc.id_cust_account === selectedFileAccount.id_cust_account
           );
           setSelectedFileAccount(updatedAccount);
         }
-
       } catch (error) {
         console.error("Error deleting file:", error);
         alert("Erreur lors de la suppression du fichier");
@@ -179,17 +179,14 @@ const ClientsValides = () => {
     }
   };
 
-  // Handler to update the file (for example, call your delete then upload APIs)
+  // Handler to update the file
   const handleSaveFileModal = async () => {
-    // Here you can implement your logic:
-    // - If fileData.justificatifFile is set, upload this new file (using your API, e.g., setOrderFiles or a dedicated file update API)
-    // - Otherwise, if no new file is selected, do nothing (the old file remains)
-    // For now, we'll just log the file data:
     console.log("Saving file changes for account", selectedFileAccount.id_cust_account, fileData);
 
-    // Then, you might want to refetch the customer accounts to update the grid
-    // For example:
-    const status = selectedFilter === 'validé' ? 2 : selectedFilter === 'non validé' ? 1 : 4;
+    const status = selectedFilter === 'validé' ? 2
+                  : selectedFilter === 'non validé' ? 1
+                  : 4;
+
     const response = await getCustAccountInfo(null, status, true);
     const data = response.data || [];
     setCustAccounts(data);
@@ -198,12 +195,18 @@ const ClientsValides = () => {
   };
 
   useEffect(() => {
-    if (selectedEditAccount && selectedEditAccount.files && selectedEditAccount.files.length > 0) {
-      // For example, pick the first file as the justificatif
+    if (
+      selectedEditAccount &&
+      selectedEditAccount.files &&
+      selectedEditAccount.files.length > 0
+    ) {
       const existingFile = selectedEditAccount.files[0];
-      setEditFormData(prev => ({ ...prev, justificatifFileName: safeValue(existingFile.file_origin_name) }));
+      setEditFormData((prev) => ({
+        ...prev,
+        justificatifFileName: safeValue(existingFile.file_origin_name),
+      }));
     } else {
-      setEditFormData(prev => ({ ...prev, justificatifFileName: "" }));
+      setEditFormData((prev) => ({ ...prev, justificatifFileName: "" }));
     }
   }, [selectedEditAccount]);
 
@@ -269,10 +272,6 @@ const ClientsValides = () => {
         ? safeValue(account.files[0].file_origin_name)
         : "";
 
-    console.log("account => ", account.files[0]);
-
-
-    console.log("justificatifFileName => ", justificatifFileName);
     setEditFormData({
       companyName: safeValue(account.cust_name),
       legalForm: safeValue(account.legal_form),
@@ -282,10 +281,10 @@ const ClientsValides = () => {
       nif: safeValue(account.trade_registration_num),
       rchNumber: safeValue(account.register_number),
       licenseNumber: safeValue(account.identification_number),
-      companyType: companyType,
+      companyType,
       otherCompanyType: safeValue(account.other_business_type),
-      justificatifFile: "", // new field for the justificatif file if needed,
-      justificatifFileName: justificatifFileName,
+      justificatifFile: "",
+      justificatifFileName,
     });
     setOpenEditModal(true);
   };
@@ -304,28 +303,21 @@ const ClientsValides = () => {
   const handleJustificatifChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // When a new file is selected, update the state.
       setEditFormData((prev) => ({
         ...prev,
         justificatifFile: file,
-        // You might clear the existing file name so that the new file is used:
         justificatifFileName: "",
       }));
     }
   };
 
-  // Handler to save modifications (update API call should be implemented here)
   const handleSaveEdit = async () => {
-    console.log('Saving updated account data:', editFormData);
-
     if (
       (selectedEditAccount.in_free_zone && editFormData.companyType !== "zoneFranche") ||
       (!selectedEditAccount.in_free_zone &&
         editFormData.companyType !== "autre" &&
         editFormData.companyType !== "autres")
     ) {
-      // In this example, if the company type has changed so that the file requirements differ,
-      // we force the user to upload a new file.
       if (!editFormData.justificatifFile) {
         alert(
           "Le type d'entreprise a changé. Veuillez réuploader le fichier justificatif."
@@ -352,43 +344,37 @@ const ClientsValides = () => {
       bill_full_address: selectedEditAccount.bill_full_address || '',
       id_country_headoffice: selectedEditAccount.id_country_headoffice || null,
       other_legal_form: selectedEditAccount.other_legal_form || '',
-      // Set other_business_type based on companyType selection:
-      other_business_type: editFormData.companyType === 'autres' ? safeValue(editFormData.otherCompanyType) : "",
+      other_business_type:
+        editFormData.companyType === 'autres'
+          ? safeValue(editFormData.otherCompanyType)
+          : "",
       companyType: editFormData.companyType || "",
     };
 
-    // Now conditionally update the identification fields based on company type.
     if (editFormData.companyType === "autre") {
-      // Entreprise: keep NIF and RCS; empty license and other business type.
       updateData.trade_registration_num = safeValue(editFormData.nif);
       updateData.register_number = safeValue(editFormData.rchNumber);
       updateData.identification_number = "";
       updateData.other_business_type = "";
     } else if (editFormData.companyType === "zoneFranche") {
-      // Entreprise en zone franche: keep license number; empty NIF, RCS, and other business type.
       updateData.trade_registration_num = "";
       updateData.register_number = "";
       updateData.identification_number = safeValue(editFormData.licenseNumber);
       updateData.other_business_type = "";
-      // Also, update in_free_zone to true
       updateData.in_free_zone = true;
     } else if (editFormData.companyType === "autres") {
-      // Autre: empty NIF, RCS, and license; set other business type from the additional field.
       updateData.trade_registration_num = "";
       updateData.register_number = "";
       updateData.identification_number = "";
       updateData.other_business_type = safeValue(editFormData.otherCompanyType);
-      // Also, update in_free_zone to false
       updateData.in_free_zone = false;
     } else {
-      // Default: empty all identification fields.
       updateData.trade_registration_num = "";
       updateData.register_number = "";
       updateData.identification_number = "";
       updateData.other_business_type = "";
     }
 
-    console.log('Updating customer account with:', updateData);
     let status;
     if (selectedFilter === 'validé') {
       status = 2;
@@ -398,13 +384,12 @@ const ClientsValides = () => {
       status = 4;
     }
 
-    // Call the API service function to update the account.
-    const result = await updateCustAccount(updateData);
-    console.log('Update result:', result);
+    await updateCustAccount(updateData);
     const response = await getCustAccountInfo(null, status, true);
     const data = response.data || [];
-    // Optionally, sort by date (keeping the same order)
-    const sortedData = data.sort((a, b) => new Date(b.insertdate) - new Date(a.insertdate));
+    const sortedData = data.sort(
+      (a, b) => new Date(b.insertdate) - new Date(a.insertdate)
+    );
     setCustAccounts(sortedData);
 
     handleCloseEditModal();
@@ -485,12 +470,18 @@ const ClientsValides = () => {
                   <TableCell>
                     {registration.legal_form} {registration.cust_name}
                   </TableCell>
-                  <TableCell>{registration.sectorName?.symbol_fr || 'N/A'}</TableCell>
+                  <TableCell>
+                    {registration.sectorName?.symbol_fr || 'N/A'}
+                  </TableCell>
                   <TableCell>{registration.full_address}</TableCell>
                   <TableCell>{registration.co_symbol_fr}</TableCell>
                   <TableCell>
                     <Box display="flex" alignItems="center" gap={1}>
-                      <Checkbox checked={registration.in_free_zone} readOnly size="small" />
+                      <Checkbox
+                        checked={registration.in_free_zone}
+                        readOnly
+                        size="small"
+                      />
                       <Typography variant="body2">Zone franche</Typography>
                     </Box>
                   </TableCell>
@@ -500,9 +491,15 @@ const ClientsValides = () => {
                         let fileDescription = file.txt_description_fr || 'Type inconnu';
                         if (fileDescription === 'NIF' && registration.trade_registration_number) {
                           fileDescription += ` (${registration.trade_registration_number})`;
-                        } else if (fileDescription === 'Immatriculation RCS' && registration.rchNumber) {
+                        } else if (
+                          fileDescription === 'Immatriculation RCS' &&
+                          registration.rchNumber
+                        ) {
                           fileDescription += ` (${registration.rchNumber})`;
-                        } else if (fileDescription === 'Numéro de licence' && registration.licenseNumber) {
+                        } else if (
+                          fileDescription === 'Numéro de licence' &&
+                          registration.licenseNumber
+                        ) {
                           fileDescription += ` (${registration.licenseNumber})`;
                         }
                         return (
@@ -520,21 +517,26 @@ const ClientsValides = () => {
                     ) : (
                       <Typography variant="body2">Aucun fichier</Typography>
                     )}
-                    {registration.in_free_zone && registration.identification_number && (
-                      <Box mt={1} fontStyle="italic">
-                        Numéro de licence : <strong>{registration.identification_number}</strong>
-                      </Box>
-                    )}
-                    {!registration.in_free_zone && registration.trade_registration_num && (
-                      <Box mt={1} fontStyle="italic">
-                        NIF : <strong>{registration.trade_registration_num}</strong>
-                      </Box>
-                    )}
-                    {!registration.in_free_zone && registration.register_number && (
-                      <Box mt={1} fontStyle="italic">
-                        RCS : <strong>{registration.register_number}</strong>
-                      </Box>
-                    )}
+                    {registration.in_free_zone &&
+                      registration.identification_number && (
+                        <Box mt={1} fontStyle="italic">
+                          Numéro de licence :{' '}
+                          <strong>{registration.identification_number}</strong>
+                        </Box>
+                      )}
+                    {!registration.in_free_zone &&
+                      registration.trade_registration_num && (
+                        <Box mt={1} fontStyle="italic">
+                          NIF :{' '}
+                          <strong>{registration.trade_registration_num}</strong>
+                        </Box>
+                      )}
+                    {!registration.in_free_zone &&
+                      registration.register_number && (
+                        <Box mt={1} fontStyle="italic">
+                          RCS : <strong>{registration.register_number}</strong>
+                        </Box>
+                      )}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -575,18 +577,30 @@ const ClientsValides = () => {
       </Paper>
 
       {/* File Management Modal */}
-      <Dialog open={openFileModal} onClose={handleCloseFileModal} fullWidth maxWidth="sm">
+      <Dialog
+        open={openFileModal}
+        onClose={handleCloseFileModal}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle>Gérer les fichiers justificatifs</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
-            {selectedFileAccount && selectedFileAccount.files && selectedFileAccount.files.length > 0 ? (
+            {selectedFileAccount &&
+            selectedFileAccount.files &&
+            selectedFileAccount.files.length > 0 ? (
               selectedFileAccount.files.map((file) => (
                 <Box
                   key={file.id_cust_account_files}
                   display="flex"
                   justifyContent="space-between"
                   alignItems="center"
-                  sx={{ mb: 1, p: 1, border: '1px solid #ddd', borderRadius: '4px' }}
+                  sx={{
+                    mb: 1,
+                    p: 1,
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                  }}
                 >
                   <Typography variant="body2">
                     {file.txt_description_fr}: {file.file_origin_name}
@@ -602,7 +616,9 @@ const ClientsValides = () => {
                 </Box>
               ))
             ) : (
-              <Typography variant="body2">Aucun fichier associé</Typography>
+              <Typography variant="body2">
+                Aucun fichier associé
+              </Typography>
             )}
           </Box>
         </DialogContent>
@@ -614,7 +630,12 @@ const ClientsValides = () => {
       </Dialog>
 
       {/* Edit Modal */}
-      <Dialog open={openEditModal} onClose={handleCloseEditModal} fullWidth maxWidth="sm">
+      <Dialog
+        open={openEditModal}
+        onClose={handleCloseEditModal}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle>Modifier les informations du client</DialogTitle>
         <DialogContent>
           <Box component="form" noValidate sx={{ mt: 2 }}>
@@ -653,7 +674,9 @@ const ClientsValides = () => {
               InputProps={{ style: { backgroundColor: '#f0f0f0' } }}
             />
             <FormControl margin="normal" fullWidth>
-              <InputLabel id="edit-company-type-label">Type d'entreprise</InputLabel>
+              <InputLabel id="edit-company-type-label">
+                Type d'entreprise
+              </InputLabel>
               <Select
                 labelId="edit-company-type-label"
                 id="edit-company-type-select"
@@ -663,11 +686,12 @@ const ClientsValides = () => {
                 label="Type d'entreprise"
               >
                 <MenuItem value="autre">Entreprise</MenuItem>
-                <MenuItem value="zoneFranche">Entreprise en zone franche</MenuItem>
+                <MenuItem value="zoneFranche">
+                  Entreprise en zone franche
+                </MenuItem>
                 <MenuItem value="autres">Autre</MenuItem>
               </Select>
             </FormControl>
-            {/* When "autres" is selected, display an additional text field */}
             {safeValue(editFormData.companyType) === 'autres' && (
               <TextField
                 margin="normal"
@@ -690,12 +714,12 @@ const ClientsValides = () => {
               >
                 {sectors.map((sector) => (
                   <MenuItem key={sector.id_sector} value={sector.symbol_fr}>
-                    {sector.symbol_fr.charAt(0).toUpperCase() + sector.symbol_fr.slice(1).toLowerCase()}
+                    {sector.symbol_fr.charAt(0).toUpperCase() +
+                      sector.symbol_fr.slice(1).toLowerCase()}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            {/* Conditionally render identification fields based on company type */}
             {safeValue(editFormData.companyType) === 'zoneFranche' ? (
               <TextField
                 margin="normal"
@@ -725,7 +749,6 @@ const ClientsValides = () => {
                 />
               </>
             ) : null}
-
           </Box>
         </DialogContent>
         <DialogActions>
@@ -734,6 +757,59 @@ const ClientsValides = () => {
           </Button>
           <Button onClick={handleSaveEdit} color="primary" variant="contained">
             Sauvegarder
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Contact Principal Modal */}
+      <Dialog
+        open={showContactModal && !!selectedAccount}
+        onClose={handleCloseContactsModal}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Contact Principal</DialogTitle>
+        <DialogContent>
+          {selectedAccount?.main_contact ? (
+            <TableContainer component={Paper}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Nom</TableCell>
+                    <TableCell>Fonction</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Tél</TableCell>
+                    <TableCell>Portable</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>
+                      {selectedAccount.main_contact.full_name || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {selectedAccount.main_contact.position || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {selectedAccount.main_contact.email || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {selectedAccount.main_contact.phone_number || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {selectedAccount.main_contact.mobile_number || 'N/A'}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography>Aucun contact principal trouvé</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseContactsModal} color="primary">
+            Fermer
           </Button>
         </DialogActions>
       </Dialog>
