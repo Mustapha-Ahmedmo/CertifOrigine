@@ -31,7 +31,13 @@ import {
   Select,
   InputLabel,
   MenuItem,
+  Menu,
+  IconButton
 } from '@mui/material';
+import { MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEdit } from '@fortawesome/free-solid-svg-icons';
+
 
 const DestinataireList = () => {
   // Récupération de l’utilisateur depuis Redux
@@ -41,10 +47,11 @@ const DestinataireList = () => {
   const [recipients, setRecipients] = useState([]);
   const [countries, setCountries] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedRecipient, setSelectedRecipient] = useState(null);
   // Gestion de la modale d'ajout
   const [showAddModal, setShowAddModal] = useState(false);
-
+  const [editingRecipientId, setEditingRecipientId] = useState(null);
   // Données du nouveau destinataire
   const [newRecipient, setNewRecipient] = useState({
     recipientName: '',
@@ -81,6 +88,33 @@ const DestinataireList = () => {
       console.error('Erreur lors du chargement des pays:', err);
     }
   };
+  const handleMenuOpen = (event, recipient) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedRecipient(recipient);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedRecipient(null);
+  };
+
+  const handleEdit = () => {
+  if (selectedRecipient) {
+    setNewRecipient({
+      recipientName: selectedRecipient.recipient_name,
+      address1: selectedRecipient.address_1,
+      address2: selectedRecipient.address_2 || '',
+      address3: selectedRecipient.address_3 || '',
+      country: selectedRecipient.id_country,
+      phone: selectedRecipient.phone_number || '',
+    });
+    setEditingRecipientId(selectedRecipient.id_recipient_account); // Stocker l'ID pour savoir si on modifie
+    setShowAddModal(true);
+  }
+  if (!selectedRecipient) return;
+  handleMenuClose();
+};
+
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -104,6 +138,7 @@ const DestinataireList = () => {
 
   const handleOpenAddModal = () => {
     setErrorMessage('');
+    setEditingRecipientId(null); // On remet l'ID d'édition à null
     setNewRecipient({
       recipientName: '',
       address1: '',
@@ -114,6 +149,7 @@ const DestinataireList = () => {
     });
     setShowAddModal(true);
   };
+  
 
   const handleCloseAddModal = () => {
     setShowAddModal(false);
@@ -129,33 +165,37 @@ const DestinataireList = () => {
       setErrorMessage("Veuillez remplir au minimum le nom, l'adresse et le pays.");
       return;
     }
-
+  
     try {
       setErrorMessage('');
-
+  
       const payload = {
-        idRecipientAccount: null,
+        idRecipientAccount: editingRecipientId ? editingRecipientId : null, // Vérifie si on modifie ou ajoute
         idCustAccount: customerAccountId,
         recipientName: newRecipient.recipientName,
         address1: newRecipient.address1,
         address2: newRecipient.address2,
         address3: newRecipient.address3,
-        idCountry: newRecipient.country, // valeur numérique du pays
+        idCountry: newRecipient.country,
         statutFlag: 1,
         activationDate: new Date().toISOString(),
         deactivationDate: new Date('9999-12-31').toISOString(),
-        idLoginInsert: user?.id_login_user || 1,
-        idLoginModify: null,
+        idLoginInsert: editingRecipientId ? null : (user?.id_login_user || 1), // Seulement à l'ajout
+        idLoginModify: editingRecipientId ? (user?.id_login_user || 1) : null, // Seulement à la modification
       };
-
-      await addRecipient(payload);
+  
+      await addRecipient(payload); // Cette fonction doit être capable de gérer ajout/modification côté backend
       await loadRecipients();
+      
+      // Réinitialiser l'ID d'édition après la modification
+      setEditingRecipientId(null);
       setShowAddModal(false);
     } catch (err) {
-      console.error("Erreur lors de l'ajout du destinataire:", err);
+      console.error("Erreur lors de l'ajout/modification du destinataire:", err);
       setErrorMessage("Une erreur s'est produite lors de l'enregistrement du destinataire.");
     }
   };
+  
 
   return (
     <Box sx={{ ml: '240px', p: 3 }}>
@@ -189,34 +229,33 @@ const DestinataireList = () => {
                 <TableCell>Nom du destinataire</TableCell>
                 <TableCell>Adresse</TableCell>
                 <TableCell>Pays</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredRecipients.map((recipient) => (
+              {recipients.map((recipient) => (
                 <TableRow key={recipient.id_recipient_account}>
                   <TableCell>{formatDate(recipient.insertdate)}</TableCell>
                   <TableCell>{recipient.recipient_name}</TableCell>
+                  <TableCell>{recipient.address_1}</TableCell>
+                  <TableCell>{recipient.country_symbol_fr_recipient || 'N/A'}</TableCell>
                   <TableCell>
-                    {recipient.address_1}
-                    {recipient.address_2 ? `, ${recipient.address_2}` : ''}
-                    {recipient.address_3 ? `, ${recipient.address_3}` : ''}
-                  </TableCell>
-                  <TableCell>
-                    {recipient.country_symbol_fr_recipient || 'N/A'}
+                    <IconButton onClick={(event) => handleMenuOpen(event, recipient)}>
+                      <MoreVertIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredRecipients.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4} align="center">
-                    Aucun destinataire trouvé.
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </TableContainer>
       </Paper>
+
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <MenuItem onClick={handleEdit}>
+          <FontAwesomeIcon icon={faEdit} style={{ marginRight: 8 }} /> Modifier
+        </MenuItem>
+      </Menu>
 
       <Dialog open={showAddModal} onClose={handleCloseAddModal} maxWidth="sm" fullWidth>
         <DialogTitle>Ajouter un destinataire</DialogTitle>

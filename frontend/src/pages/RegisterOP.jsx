@@ -26,9 +26,9 @@ import {
 } from '@mui/material';
 
 // Fonction de validation pour un numéro de téléphone international : 
-// Il doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères.
+// Il doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 16 caractères.
 const isValidInternationalPhone = (number) => {
-  return /^\+[0-9]+$/.test(number) && number.length <= 12;
+  return /^(?:\+|00)[1-9][0-9]*$/.test(number) && number.length >= 8 && number.length <= 16;
 };
 
 const RegisterOP = ({ onClose }) => {
@@ -45,9 +45,9 @@ const RegisterOP = ({ onClose }) => {
     password: '',
     confirmPassword: '',
     // Pour le rôle, les options sont "Opérateur" et "Opérateur avec pouvoir"
-    role: 'Opérateur',
+    role: null,
     // Pour le statut admin, les options sont "Administrateur" et "Non Administrateur"
-    adminStatus: 'Non Administrateur',
+    adminStatus: null,
   });
 
   const [error, setError] = useState('');
@@ -63,41 +63,33 @@ const RegisterOP = ({ onClose }) => {
     formData.phoneMobileNumber !== '' && !isValidInternationalPhone(formData.phoneMobileNumber);
 
   useEffect(() => {
-    const preloadOperatorData = async () => {
-      if (id) {
-        try {
-          const response = await getOperatorList(`${id}`, null, null);
-          if (response.data && response.data.length > 0) {
-            const operator = response.data[0];
-            setFormData({
-              gender: operator.gender === 1 ? 'Mr' : 'Mme',
-              name: operator.full_name,
-              // On suppose que les numéros stockés sont déjà au format international.
-              phoneFixedNumber: operator.phone_number,
-              phoneMobileNumber: operator.mobile_number,
-              email: operator.email,
-              password: '',
-              confirmPassword: '',
-              // Pour le rôle, on garde l'option initiale "Opérateur"
-              //role: 'Opérateur',
-              // Pour le statut admin, on déduit en fonction de operator.roles : ici on suppose que 1 signifie administrateur.
-              //adminStatus: operator.roles === 1 ? 'Administrateur' : 'Non Administrateur',
-              adminStatus: operator.isAdmin ? 'Administrateur' : 'Non Administrateur',
-              role: operator.role==0 ? 'Opérateur' : 'Opérateur avec pouvoir',
-
-
-
-
-            });
-          }
-        } catch (err) {
-          setError('Erreur lors du chargement des données de l’opérateur.');
+  const preloadOperatorData = async () => {
+    if (id) {
+      try {
+        const response = await getOperatorList(`${id}`, null, null);
+        if (response.data && response.data.length > 0) {
+          const operator = response.data[0];
+          setFormData({
+            gender: operator.gender === 1 ? 'Mr' : 'Mme',
+            name: operator.full_name,
+            phoneFixedNumber: operator.phone_number,
+            phoneMobileNumber: operator.mobile_number,
+            email: operator.email,
+            password: '',
+            confirmPassword: '',
+            adminStatus: operator.isadmin ? 'Administrateur' : 'Non Administrateur',
+            role: operator.roles === 0 ? 'Opérateur' : 'Opérateur avec pouvoir', // Correction pour bien afficher la valeur
+          });   
         }
+      } catch (err) {
+        setError('Erreur lors du chargement des données de l’opérateur.');
       }
-    };
+    }
+  };
 
-    preloadOperatorData();
-  }, [id]);
+  preloadOperatorData();
+}, [id]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -105,7 +97,7 @@ const RegisterOP = ({ onClose }) => {
     if ((name === 'phoneFixedNumber' || name === 'phoneMobileNumber') && value !== '') {
       if (!isValidInternationalPhone(value)) {
         setError(
-          `Le champ ${name === 'phoneFixedNumber' ? 'téléphone fixe' : 'téléphone portable'} est invalide. Format international requis (doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères).`
+          `Le champ ${name === 'phoneFixedNumber' ? 'téléphone fixe' : 'téléphone portable'} est invalide. Format international requis (doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 16 caractères).`
         );
       } else {
         setError('');
@@ -124,13 +116,13 @@ const RegisterOP = ({ onClose }) => {
 
     // Validation des numéros de téléphone
     if (!isValidInternationalPhone(formData.phoneFixedNumber)) {
-      setSnackbarMessage('Le numéro de téléphone fixe est invalide. Format international requis (doit commencer par "+" suivi uniquement de chiffres et ne pas dépasser 12 caractères).');
+      setSnackbarMessage('Le numéro de téléphone fixe est invalide. Format international requis (doit commencer par "+" suivi uniquement de chiffres et ne pas dépasser 16 caractères).');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
     if (!isValidInternationalPhone(formData.phoneMobileNumber)) {
-      setSnackbarMessage('Le numéro de téléphone portable est invalide. Format international requis (doit commencer par "+" suivi uniquement de chiffres et ne pas dépasser 12 caractères).');
+      setSnackbarMessage('Le numéro de téléphone portable est invalide. Format international requis (doit commencer par "+" suivi uniquement de chiffres et ne pas dépasser 16 caractères).');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
@@ -176,7 +168,7 @@ const RegisterOP = ({ onClose }) => {
         if (onClose) {
           onClose();
         } else {
-          navigate('/login');
+          navigate('/dashboard/operator/operatorslist');
         }
       }, 2000);
     } catch (err) {
@@ -191,7 +183,7 @@ const RegisterOP = ({ onClose }) => {
     if (onClose) {
       onClose();
     } else {
-      navigate('/login');
+      navigate('/dashboard/operator/operatorslist');
     }
   };
 
@@ -250,11 +242,11 @@ const RegisterOP = ({ onClose }) => {
             value={formData.phoneFixedNumber}
             onChange={handleChange}
             fullWidth
-            inputProps={{ maxLength: 12 }}
+            inputProps={{ maxLength: 16 }}
             error={phoneFixedError}
             helperText={
               phoneFixedError
-                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
+                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 16 caractères."
                 : ""
             }
           />
@@ -269,11 +261,11 @@ const RegisterOP = ({ onClose }) => {
             value={formData.phoneMobileNumber}
             onChange={handleChange}
             fullWidth
-            inputProps={{ maxLength: 12 }}
+            inputProps={{ maxLength: 16 }}
             error={phoneMobileError}
             helperText={
               phoneMobileError
-                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
+                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 16 caractères."
                 : ""
             }
           />
@@ -322,12 +314,12 @@ const RegisterOP = ({ onClose }) => {
             <RadioGroup
               row
               name="role"
-              value={formData.role}
+              value={formData.role || ''}
               onChange={handleChange}
             >
               <FormControlLabel value="Opérateur" control={<Radio />} label="Opérateur" />
               <FormControlLabel value="Opérateur avec pouvoir" control={<Radio />} label="Opérateur avec pouvoir" />
-            </RadioGroup>
+          </RadioGroup>
           </FormControl>
         </Box>
 
@@ -336,14 +328,14 @@ const RegisterOP = ({ onClose }) => {
           <FormControl component="fieldset">
             <FormLabel component="legend">Statut Administrateur</FormLabel>
             <RadioGroup
-              row
-              name="adminStatus"
-              value={formData.adminStatus}
-              onChange={handleChange}
-            >
-              <FormControlLabel value="Administrateur" control={<Radio />} label="Administrateur" />
-              <FormControlLabel value="Non Administrateur" control={<Radio />} label="Non Administrateur" />
-            </RadioGroup>
+            row
+            name="adminStatus"
+            value={formData.adminStatus || ''}
+            onChange={handleChange}
+          >
+            <FormControlLabel value="Administrateur" control={<Radio />} label="Administrateur" />
+            <FormControlLabel value="Non Administrateur" control={<Radio />} label="Non Administrateur" />
+          </RadioGroup>
           </FormControl>
         </Box>
 
