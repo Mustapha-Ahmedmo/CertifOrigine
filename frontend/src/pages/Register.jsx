@@ -1,10 +1,6 @@
-// Register.jsx (version MUI v5, logique inchangée)
-
 import React, { useState, forwardRef, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-
-// MUI v5
 import {
   Container,
   Box,
@@ -25,15 +21,10 @@ import {
   InputAdornment,
   IconButton,
 } from '@mui/material';
-
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
-
-// Import des icônes pour la visibilité du mot de passe
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-
-// Icônes FontAwesome (import inchangé, même si non utilisées dans MUI)
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUser,
@@ -46,8 +37,6 @@ import {
   faLock,
   faIndustry,
 } from '@fortawesome/free-solid-svg-icons';
-
-// Autres imports internes
 import './Register.css';
 import logo from '../assets/logo.jpg';
 import countryCodes from '../components/countryCodes';
@@ -62,12 +51,10 @@ import {
 } from '../services/apiServices';
 import { homemadeHash } from '../utils/hashUtils';
 
-// Validation du numéro de téléphone international
 const isValidInternationalPhone = (number) => {
   return /^\+[0-9]+$/.test(number) && number.length <= 12;
 };
 
-// Alert pour Snackbar
 const Alert = forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
@@ -76,10 +63,8 @@ const Register = () => {
   const navigate = useNavigate();
   const allowedFileTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
 
-  // État pour afficher ou masquer le mot de passe
   const [showPassword, setShowPassword] = useState(false);
 
-  // State du formulaire
   const [formData, setFormData] = useState({
     gender: 'Mr',
     name: '',
@@ -92,8 +77,8 @@ const Register = () => {
     companyName: '',
     address: '',
     city: '',
-    country: '', // pour "Pays de résidence" (sera forcé)
-    originCountry: '', // pour "Pays d'origine" (choix libre)
+    country: '',
+    originCountry: '',
     companyCategory: '',
     otherCompanyCategory: '',
     sector: '',
@@ -111,27 +96,21 @@ const Register = () => {
     companyType: '',
   });
 
-  // États pour gérer erreurs, secteurs et pays
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [sectors, setSectors] = useState([]);
-  // allCountries pour "Pays d'origine"
   const [allCountries, setAllCountries] = useState([]);
-  // residenceCountries pour "Pays de résidence"
   const [residenceCountries, setResidenceCountries] = useState([]);
 
-  // Snackbar
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  // Fermeture de la Snackbar
   const handleSnackbarClose = (event, reason) => {
     if (reason === 'clickaway') return;
     setSnackbarOpen(false);
   };
 
-  // Récupération des secteurs et des pays au chargement
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -139,7 +118,6 @@ const Register = () => {
         setSectors(sectorData);
         const countryData = await fetchCountries();
         setAllCountries(countryData);
-        // Filtrer pour ne conserver que "Rep. de djibouti" pour "Pays de résidence"
         const djibouti = countryData.find(
           (country) =>
             country.symbol_fr.toLowerCase() === 'rep. de djibouti'.toLowerCase()
@@ -161,13 +139,11 @@ const Register = () => {
     fetchData();
   }, []);
 
-  // Validation de type de fichier
   const validateFileType = (file) => {
     if (!file) return true;
     return allowedFileTypes.includes(file.type);
   };
 
-  // Gestion du changement dans les champs du formulaire
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
     if (type === 'checkbox') {
@@ -199,11 +175,33 @@ const Register = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Vérification des erreurs pour les numéros de téléphone
   const phoneFixedError = formData.phoneFixedNumber !== "" && !isValidInternationalPhone(formData.phoneFixedNumber);
   const phoneMobileError = formData.phoneMobileNumber !== "" && !isValidInternationalPhone(formData.phoneMobileNumber);
 
-  // Soumission du formulaire
+  // Objet de style commun pour TextField et Select, avec fond dégradé
+  const commonFieldSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '8px',
+      background: 'linear-gradient(135deg, #fff, #f9f9f9)', // Dégradé du blanc pur vers un blanc légèrement cassé
+      '&.Mui-focused fieldset': {
+        borderColor: '#DCAF26',
+      },
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+      color: '#DCAF26',
+    },
+  };
+
+  const commonButtonSx = {
+    backgroundColor: '#DCAF26',
+    '&:hover': { backgroundColor: '#DCAF26' },
+  };
+
+  const commonRadioSx = {
+    color: '#DCAF26',
+    '&.Mui-checked': { color: '#DCAF26' },
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const filesToValidate = [
@@ -331,7 +329,6 @@ const Register = () => {
       </Helmet>
       <CssBaseline />
 
-      {/* Logo agrandi légèrement */}
       <Box display="flex" justifyContent="center" mb={2}>
         <Box
           component="img"
@@ -344,9 +341,8 @@ const Register = () => {
         />
       </Box>
 
-      {/* Titre sans personnalisation excessive (même police que pour "Information(s) Entreprise") */}
       <Box textAlign="center" mb={2}>
-        <Typography variant="h4" align="center">
+        <Typography variant="h4" align="center" sx={{ color: '#DCAF26' }}>
           Créer son compte
         </Typography>
         {error && (
@@ -362,13 +358,11 @@ const Register = () => {
       </Box>
 
       <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-        {/* SECTION Informations Entreprise */}
-        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#DCAF26' }}>
           Information(s) Entreprise
         </Typography>
 
         <Grid container spacing={2}>
-          {/* Nom de l'entreprise */}
           <Grid item xs={12}>
             <TextField
               required
@@ -378,18 +372,19 @@ const Register = () => {
               name="companyName"
               value={formData.companyName}
               onChange={handleChange}
+              sx={commonFieldSx}
             />
           </Grid>
 
-          {/* Statut juridique + champ "Autre" */}
           <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required>
+            <FormControl fullWidth required sx={commonFieldSx}>
               <InputLabel>Statut juridique</InputLabel>
               <Select
                 name="companyCategory"
                 value={formData.companyCategory}
                 label="Statut juridique"
                 onChange={handleChange}
+                sx={commonFieldSx}
               >
                 <MenuItem value="" disabled hidden>
                   Choisir
@@ -419,19 +414,20 @@ const Register = () => {
                 placeholder="Précisez votre statut juridique"
                 value={formData.otherCompanyCategory}
                 onChange={handleChange}
+                sx={commonFieldSx}
               />
             </Grid>
           )}
 
-          {/* Secteur + champ "Autres" */}
           <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required>
+            <FormControl fullWidth required sx={commonFieldSx}>
               <InputLabel>Secteur</InputLabel>
               <Select
                 name="sector"
                 value={formData.sector}
                 label="Secteur"
                 onChange={handleChange}
+                sx={commonFieldSx}
               >
                 <MenuItem value="" disabled hidden>
                   Choisir
@@ -456,23 +452,26 @@ const Register = () => {
                 placeholder="Veuillez préciser votre secteur d'activité"
                 value={formData.otherSector}
                 onChange={handleChange}
+                sx={commonFieldSx}
               />
             </Grid>
           )}
 
-          {/* Pays de résidence + Pays d'origine */}
           <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required>
+            <FormControl fullWidth required sx={commonFieldSx}>
               <InputLabel>Pays de résidence</InputLabel>
               <Select
                 name="country"
                 value={formData.country}
                 label="Pays de résidence"
                 disabled
+                sx={commonFieldSx}
               >
                 {residenceCountries.map((country) => (
                   <MenuItem key={country.id_country} value={country.symbol_fr}>
-                    {country.symbol_fr}
+                    {country.symbol_fr.toLowerCase() === 'rep. de djibouti'
+                      ? 'République de Djibouti'
+                      : country.symbol_fr}
                   </MenuItem>
                 ))}
               </Select>
@@ -480,13 +479,14 @@ const Register = () => {
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required>
+            <FormControl fullWidth required sx={commonFieldSx}>
               <InputLabel>Pays d'origine</InputLabel>
               <Select
                 name="originCountry"
                 value={formData.originCountry}
                 label="Pays d'origine"
                 onChange={handleChange}
+                sx={commonFieldSx}
               >
                 <MenuItem value="" disabled hidden>
                   Choisir
@@ -501,15 +501,15 @@ const Register = () => {
             </FormControl>
           </Grid>
 
-          {/* Type d'entreprise + Adresse */}
           <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required>
+            <FormControl fullWidth required sx={commonFieldSx}>
               <InputLabel>Type d'entreprise</InputLabel>
               <Select
                 name="companyType"
                 value={formData.companyType}
                 label="Type d'entreprise"
                 onChange={handleChange}
+                sx={commonFieldSx}
               >
                 <MenuItem value="" disabled hidden>
                   Choisir
@@ -530,10 +530,10 @@ const Register = () => {
               placeholder="Adresse complète"
               value={formData.address}
               onChange={handleChange}
+              sx={commonFieldSx}
             />
           </Grid>
 
-          {/* Champs conditionnels basés sur companyType */}
           {formData.isFreeZoneCompany && (
             <>
               <Grid item xs={12} sm={6}>
@@ -545,13 +545,14 @@ const Register = () => {
                   placeholder="Numéro de licence"
                   value={formData.licenseNumber}
                   onChange={handleChange}
+                  sx={commonFieldSx}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Typography variant="body2" sx={{ mb: 1 }}>
                   Licence (Fichier)
                 </Typography>
-                <Button variant="contained" component="label">
+                <Button variant="contained" component="label" sx={commonButtonSx}>
                   Upload
                   <input
                     hidden
@@ -585,13 +586,14 @@ const Register = () => {
                   placeholder="NIF"
                   value={formData.nif}
                   onChange={handleChange}
+                  sx={commonFieldSx}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Typography variant="body2" sx={{ mb: 1 }}>
                   Patente (Fichier)
                 </Typography>
-                <Button variant="contained" component="label">
+                <Button variant="contained" component="label" sx={commonButtonSx}>
                   Upload
                   <input
                     hidden
@@ -619,15 +621,15 @@ const Register = () => {
                   placeholder="Numéro d'immatriculation RCS"
                   value={formData.rchNumber}
                   onChange={handleChange}
+                  sx={commonFieldSx}
                 />
               </Grid>
             </>
           )}
         </Grid>
 
-        {/* SECTION Informations Contact */}
         <Box mt={4}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#DCAF26' }}>
             Information(s) Contact
           </Typography>
         </Box>
@@ -637,8 +639,8 @@ const Register = () => {
             <FormControl component="fieldset">
               <FormLabel component="legend">Civilité</FormLabel>
               <RadioGroup row name="gender" value={formData.gender} onChange={handleChange}>
-                <FormControlLabel value="Mr" control={<Radio />} label="Mr" />
-                <FormControlLabel value="Mme" control={<Radio />} label="Mme" />
+                <FormControlLabel value="Mr" control={<Radio sx={commonRadioSx} />} label="Mr" />
+                <FormControlLabel value="Mme" control={<Radio sx={commonRadioSx} />} label="Mme" />
               </RadioGroup>
             </FormControl>
           </Grid>
@@ -652,6 +654,7 @@ const Register = () => {
               placeholder="Nom"
               value={formData.name}
               onChange={handleChange}
+              sx={commonFieldSx}
             />
           </Grid>
 
@@ -664,6 +667,7 @@ const Register = () => {
               placeholder="Fonction"
               value={formData.position}
               onChange={handleChange}
+              sx={commonFieldSx}
             />
           </Grid>
 
@@ -678,7 +682,12 @@ const Register = () => {
               onChange={handleChange}
               inputProps={{ maxLength: 12 }}
               error={phoneFixedError}
-              helperText={phoneFixedError ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères." : ""}
+              helperText={
+                phoneFixedError
+                  ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
+                  : ""
+              }
+              sx={commonFieldSx}
             />
           </Grid>
 
@@ -693,7 +702,12 @@ const Register = () => {
               onChange={handleChange}
               inputProps={{ maxLength: 12 }}
               error={phoneMobileError}
-              helperText={phoneMobileError ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères." : ""}
+              helperText={
+                phoneMobileError
+                  ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
+                  : ""
+              }
+              sx={commonFieldSx}
             />
           </Grid>
 
@@ -707,10 +721,10 @@ const Register = () => {
               placeholder="Email"
               value={formData.email}
               onChange={handleChange}
+              sx={commonFieldSx}
             />
           </Grid>
 
-          {/* Mot de passe avec possibilité d'afficher/masquer */}
           <Grid item xs={12} sm={6}>
             <TextField
               required
@@ -721,10 +735,15 @@ const Register = () => {
               placeholder="Mot de passe"
               value={formData.password}
               onChange={handleChange}
+              sx={commonFieldSx}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton aria-label="toggle password visibility" onClick={() => setShowPassword(!showPassword)} edge="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
@@ -733,7 +752,6 @@ const Register = () => {
             />
           </Grid>
 
-          {/* Confirmer mot de passe avec possibilité d'afficher/masquer */}
           <Grid item xs={12} sm={6}>
             <TextField
               required
@@ -744,10 +762,15 @@ const Register = () => {
               placeholder="Confirmer mot de passe"
               value={formData.confirmPassword}
               onChange={handleChange}
+              sx={commonFieldSx}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton aria-label="toggle password visibility" onClick={() => setShowPassword(!showPassword)} edge="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
@@ -757,21 +780,34 @@ const Register = () => {
           </Grid>
         </Grid>
 
-        {/* SECTION Conditions */}
         <Box mt={4}>
           <FormControlLabel
-            control={<Checkbox name="acceptsConditions" checked={formData.acceptsConditions} onChange={handleChange} required />}
+            control={
+              <Checkbox
+                name="acceptsConditions"
+                checked={formData.acceptsConditions}
+                onChange={handleChange}
+                required
+              />
+            }
             label="Je certifie être habilité à faire des formalités export pour la société que je viens de désigner ci-dessus."
           />
           <br />
           <FormControlLabel
-            control={<Checkbox name="acceptsDataProcessing" checked={formData.acceptsDataProcessing} onChange={handleChange} required />}
+            control={
+              <Checkbox
+                name="acceptsDataProcessing"
+                checked={formData.acceptsDataProcessing}
+                onChange={handleChange}
+                required
+              />
+            }
             label="J'accepte les conditions générales de vente"
           />
         </Box>
 
         <Box mt={4} textAlign="center">
-          <Button variant="contained" color="primary" type="submit">
+          <Button variant="contained" type="submit" sx={commonButtonSx}>
             Créer
           </Button>
         </Box>
@@ -779,7 +815,7 @@ const Register = () => {
 
       <Box mt={2} textAlign="center">
         <Typography variant="body2">
-          <Box component={RouterLink} to="/login" sx={{ textDecoration: 'none', color: 'primary.main' }}>
+          <Box component={RouterLink} to="/login" sx={{ textDecoration: 'none', color: '#DCAF26' }}>
             Revenir à la page de connexion
           </Box>
         </Typography>

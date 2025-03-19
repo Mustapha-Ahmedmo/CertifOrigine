@@ -104,19 +104,46 @@ const OperatorsList = () => {
     setSelectedOp(null);
   };
 
-  if (loading) return <Box sx={{ ml: '240px', p: 3 }}><Typography>Chargement...</Typography></Box>;
-  if (error) return <Box sx={{ ml: '240px', p: 3 }}><Typography color="error">{error}</Typography></Box>;
+  if (loading)
+    return (
+      <Box sx={{ ml: '240px', p: 3 }}>
+        <Typography>Chargement...</Typography>
+      </Box>
+    );
+  if (error)
+    return (
+      <Box sx={{ ml: '240px', p: 3 }}>
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
 
   return (
     <Box sx={{ ml: '240px', p: 3 }}>
       <AppBar position="static" color="default">
-        <Tabs value={tabIndex} onChange={handleTabChange} indicatorColor="secondary" textColor="inherit" variant="fullWidth">
+        <Tabs
+          value={tabIndex}
+          onChange={handleTabChange}
+          indicatorColor="secondary"
+          textColor="inherit"
+          variant="fullWidth"
+          sx={{
+            '& .MuiTabs-indicator': { backgroundColor: '#DCAF26' },
+            '& .MuiTab-root.Mui-selected': { color: '#DCAF26' },
+          }}
+        >
           <Tab label={`LISTING DES OPÉRATEURS (${operators.length})`} {...a11yProps(0)} />
         </Tabs>
       </AppBar>
       <TabPanel value={tabIndex} index={0}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Button variant="contained" color="primary" onClick={handleAddNew} startIcon={<FontAwesomeIcon icon={faPlus} />}>Ajouter un nouvel opérateur</Button>
+          <Button
+            variant="contained"
+            onClick={handleAddNew}
+            startIcon={<FontAwesomeIcon icon={faPlus} style={{ color: '#DCAF26' }} />}
+            style={{ backgroundColor: '#DCAF26', borderColor: '#DCAF26' }}
+          >
+            Ajouter un nouvel opérateur
+          </Button>
         </Box>
         <Paper>
           <TableContainer>
@@ -137,13 +164,17 @@ const OperatorsList = () => {
                   <TableRow key={op.id_op_user}>
                     <TableCell>{op.full_name}</TableCell>
                     <TableCell>{op.username}</TableCell>
-                    <TableCell><a href={`mailto:${op.email}`}>{op.email}</a></TableCell>
+                    <TableCell>
+                      <a href={`mailto:${op.email}`} style={{ color: '#DCAF26' }}>
+                        {op.email}
+                      </a>
+                    </TableCell>
                     <TableCell>{op.phone_number}</TableCell>
                     <TableCell>{op.mobile_number}</TableCell>
                     <TableCell>{getGroupLabel(op.roles, op.isadmin)}</TableCell>
                     <TableCell>
                       <IconButton onClick={(event) => handleMenuOpen(event, op)}>
-                        <FontAwesomeIcon icon={faEllipsisV} />
+                        <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -154,13 +185,20 @@ const OperatorsList = () => {
         </Paper>
       </TabPanel>
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={() => { handleEdit(selectedOp?.id_op_user); handleMenuClose(); }}>
-          <FontAwesomeIcon icon={faEdit} style={{ marginRight: 8 }} /> Modifier
+        <MenuItem
+          onClick={() => {
+            handleEdit(selectedOp?.id_op_user);
+            handleMenuClose();
+          }}
+        >
+          <FontAwesomeIcon icon={faEdit} style={{ color: '#DCAF26', marginRight: 8 }} /> Modifier
         </MenuItem>
       </Menu>
       <Dialog open={openRegisterModal} onClose={handleModalClose} fullWidth maxWidth="md">
         <DialogTitle>Créer un Compte Opérateur</DialogTitle>
-        <DialogContent><RegisterOP onClose={handleModalClose} /></DialogContent>
+        <DialogContent>
+          <RegisterOP onClose={handleModalClose} />
+        </DialogContent>
       </Dialog>
     </Box>
   );

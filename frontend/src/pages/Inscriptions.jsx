@@ -25,7 +25,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Checkbox,
   Tabs,
   Tab,
   AppBar,
@@ -213,8 +212,15 @@ const Inscriptions = () => {
           textColor="inherit"
           variant="fullWidth"
           aria-label="Inscriptions Tabs"
+          sx={{
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#DCAF26',
+            },
+            '& .MuiTab-root.Mui-selected': {
+              color: '#DCAF26',
+            },
+          }}
         >
-          {/* Ici, on pourrait ajouter d'autres Tab si besoin */}
           <Tab
             label={`Inscriptions à valider (${custAccounts.length})`}
             {...a11yProps(0)}
@@ -274,21 +280,19 @@ const Inscriptions = () => {
                       <TableCell>{registration.full_address}</TableCell>
                       <TableCell>{registration.co_symbol_fr}</TableCell>
                       <TableCell>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Checkbox
-                            checked={registration.in_free_zone}
-                            readOnly
-                            size="small"
-                          />
-                          <Typography variant="body2">Zone franche</Typography>
-                        </Box>
+                        {/* Remplacement du checkbox par une valeur textuelle */}
+                        <Typography variant="body2">
+                          {registration.in_free_zone ? "Zone franche" : "Entreprise"}
+                        </Typography>
                       </TableCell>
                       <TableCell>
                         {/* Affichage des fichiers existants */}
                         {registration.files && registration.files.length > 0 ? (
                           registration.files.map((file) => {
                             let fileDescription = file.txt_description_fr || 'Type inconnu';
-                            if (fileDescription === 'NIF' && registration.nif) {
+                            if (fileDescription.toLowerCase().includes('nif')) {
+                              fileDescription = 'Patente';
+                            } else if (fileDescription === 'NIF' && registration.nif) {
                               fileDescription += ` (${registration.nif})`;
                             } else if (
                               fileDescription === 'Immatriculation RCS' &&
@@ -308,7 +312,7 @@ const Inscriptions = () => {
                                 variant="text"
                                 onClick={() => handleFileClick(file)}
                                 size="small"
-                                style={{ marginRight: '6px' }}
+                                style={{ marginRight: '6px', color: '#DCAF26' }}
                               >
                                 {fileDescription}
                               </Button>
@@ -339,8 +343,9 @@ const Inscriptions = () => {
                         <Button
                           variant="outlined"
                           size="small"
-                          startIcon={<FontAwesomeIcon icon={faEye} />}
+                          startIcon={<FontAwesomeIcon icon={faEye} style={{ color: '#DCAF26' }} />}
                           onClick={() => handleOpenContactsModal(registration)}
+                          style={{ color: '#DCAF26', borderColor: '#DCAF26' }}
                         >
                           Ouvrir
                         </Button>

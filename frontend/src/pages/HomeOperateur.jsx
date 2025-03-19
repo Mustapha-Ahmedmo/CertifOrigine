@@ -26,8 +26,6 @@ import { formatDate } from '../utils/dateUtils';
 import PaymentModal from './PaymentModal'; // Chemin à adapter si nécessaire
 import { getOrderOpInfo } from '../services/apiServices';
 
-
-
 // Composant TabPanel pour l'affichage du contenu de chaque onglet
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -102,7 +100,7 @@ const HomeOperateur = () => {
   }, [operatorId]);
 
   // Pour l'opérateur :
-  // Nouvelles commandes : filtre sur id_order_status === 2
+  // Nouvelles commandes : filtre sur id_order_status === 2 ou 7
   // Commandes en attente de paiement : filtre sur id_order_status === 3
   const ordersNew = orders.filter(order => order.id_order_status === 2 || order.id_order_status === 7);
   const ordersPayment = orders.filter(order => order.id_order_status === 3);
@@ -146,6 +144,10 @@ const HomeOperateur = () => {
               textColor="inherit"
               variant="fullWidth"
               aria-label="Operator Dashboard Tabs"
+              sx={{
+                '& .MuiTabs-indicator': { backgroundColor: '#DCAF26' },
+                '& .MuiTab-root.Mui-selected': { color: '#DCAF26' },
+              }}
             >
               {options.map((option, index) => (
                 <Tab key={option.value} label={option.label} {...a11yProps(index)} />
@@ -203,7 +205,6 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
     // Rafraîchissez la liste des commandes après le paiement
     refreshOrders();
   };
-
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -280,9 +281,10 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                         <button
                           className="icon-button minimal-button"
                           onClick={() => goToOrderDetails(order)}
+                          style={{ color: '#DCAF26', border: '1px solid #DCAF26' }}
                         >
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Consulter</span>
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" style={{ color: '#DCAF26' }} />
+                          <span className="button-text" style={{ color: '#DCAF26' }}>Consulter</span>
                         </button>
                       ) : (
                         <span>-</span>
@@ -290,9 +292,13 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                     </TableCell>
                     <TableCell>
                       {order.id_ord_com_invoice ? (
-                        <button className="icon-button minimal-button" onClick={() => goToOrderDetails(order)}>
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Consulter</span>
+                        <button
+                          className="icon-button minimal-button"
+                          onClick={() => goToOrderDetails(order)}
+                          style={{ color: '#DCAF26', border: '1px solid #DCAF26' }}
+                        >
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" style={{ color: '#DCAF26' }} />
+                          <span className="button-text" style={{ color: '#DCAF26' }}>Consulter</span>
                         </button>
                       ) : (
                         <span>-</span>
@@ -300,9 +306,13 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                     </TableCell>
                     <TableCell>
                       {order.id_ord_legalization ? (
-                        <button className="icon-button minimal-button" onClick={() => goToOrderDetails(order)}>
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Consulter</span>
+                        <button
+                          className="icon-button minimal-button"
+                          onClick={() => goToOrderDetails(order)}
+                          style={{ color: '#DCAF26', border: '1px solid #DCAF26' }}
+                        >
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" style={{ color: '#DCAF26' }} />
+                          <span className="button-text" style={{ color: '#DCAF26' }}>Consulter</span>
                         </button>
                       ) : (
                         <span>-</span>
@@ -312,11 +322,11 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                       <button
                         className="submit-button minimal-button"
                         onClick={() => handleOpenPayment(order)}
+                        style={{ color: '#DCAF26', border: '1px solid #DCAF26' }}
                       >
                         Payer
                       </button>
                     </TableCell>
-
                   </TableRow>
                 ) : (
                   // Rendu par défaut pour les autres modes (exemple existant)
@@ -335,9 +345,10 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                         <button
                           className="icon-button minimal-button"
                           onClick={() => goToOrderDetails(order)}
+                          style={{ color: '#DCAF26', border: '1px solid #DCAF26' }}
                         >
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Vérifier</span>
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" style={{ color: '#DCAF26' }} />
+                          <span className="button-text" style={{ color: '#DCAF26' }}>Vérifier</span>
                         </button>
                       ) : (
                         <span>-</span>
@@ -345,9 +356,13 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                     </TableCell>
                     <TableCell>
                       {order.id_ord_com_invoice ? (
-                        <button className="icon-button minimal-button" onClick={() => goToOrderDetails(order)}>
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Vérifier</span>
+                        <button
+                          className="icon-button minimal-button"
+                          onClick={() => goToOrderDetails(order)}
+                          style={{ color: '#DCAF26', border: '1px solid #DCAF26' }}
+                        >
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" style={{ color: '#DCAF26' }} />
+                          <span className="button-text" style={{ color: '#DCAF26' }}>Vérifier</span>
                         </button>
                       ) : (
                         <span>-</span>
@@ -355,9 +370,13 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                     </TableCell>
                     <TableCell>
                       {order.id_ord_legalization ? (
-                        <button className="icon-button minimal-button" onClick={() => goToOrderDetails(order)}>
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Vérifier</span>
+                        <button
+                          className="icon-button minimal-button"
+                          onClick={() => goToOrderDetails(order)}
+                          style={{ color: '#DCAF26', border: '1px solid #DCAF26' }}
+                        >
+                          <FontAwesomeIcon icon={faEye} title="Vérifier" style={{ color: '#DCAF26' }} />
+                          <span className="button-text" style={{ color: '#DCAF26' }}>Vérifier</span>
                         </button>
                       ) : (
                         <span>-</span>
@@ -401,6 +420,5 @@ OrderTable.propTypes = {
   goToOrderDetails: PropTypes.func,
   mode: PropTypes.string, // 'payment' pour le mode Commandes en attente de paiement
 };
-
 
 export default HomeOperateur;

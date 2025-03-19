@@ -14,7 +14,11 @@ import {
   Alert,
   useMediaQuery,
   useTheme,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import logo from '../assets/logo3.jpeg';
 import backgroundImage from '../assets/image_ccd.jpeg';
 
@@ -27,6 +31,7 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,6 +47,20 @@ const Login = () => {
     } catch (error) {
       setErrorMessage("Certaines de vos informations sont incorrectes. Réessayez.");
     }
+  };
+
+  const textFieldSx = {
+    mb: 2,
+    backgroundColor: '#eaeaea',
+    borderRadius: 1,
+    '& .MuiOutlinedInput-root': {
+      '&.Mui-focused fieldset': {
+        borderColor: '#DCAF26',
+      },
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+      color: '#DCAF26',
+    },
   };
 
   return (
@@ -74,6 +93,7 @@ const Login = () => {
             fontSize: isMobile ? '40px' : '70px',
             color: '#FFD863',
             mb: 1,
+            fontWeight: 'bold',
           }}
         >
           Certificat d'origine Électronique
@@ -81,10 +101,11 @@ const Login = () => {
         <Typography
           variant="body1"
           sx={{
-            fontWeight: 'bold',
             fontSize: isMobile ? '18px' : '22px',
             mb: 2,
             color: '#ffffff',
+            fontWeight: 'normal',
+            textAlign: 'justify',
           }}
         >
           La Chambre de Commerce de Djibouti (CCD) est habilitée à effectuer une partie des
@@ -115,9 +136,11 @@ const Login = () => {
           component="img"
           src={logo}
           alt="Logo"
-          sx={{ width: isMobile ? 100 : 120, mb: 2 }}
+          sx={{
+            width: isMobile ? 100 : 120,
+            mb: 2,
+          }}
         />
-        {/* Titre "Connexion" avec taille 25px */}
         <Typography
           variant="h4"
           sx={{
@@ -145,23 +168,24 @@ const Login = () => {
             fullWidth
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            sx={{
-              mb: 2,
-              backgroundColor: '#eaeaea',
-              borderRadius: 1,
-            }}
+            sx={textFieldSx}
           />
           <TextField
             label="Mot de passe"
             variant="outlined"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             fullWidth
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            sx={{
-              mb: 2,
-              backgroundColor: '#eaeaea',
-              borderRadius: 1,
+            sx={textFieldSx}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
             }}
           />
           {errorMessage && (
