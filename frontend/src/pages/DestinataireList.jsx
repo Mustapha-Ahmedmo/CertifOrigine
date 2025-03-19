@@ -1,10 +1,10 @@
-// DestinataireList.jsx
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux'; 
 import {
   fetchRecipients,
   addRecipient,
   fetchCountries,
+  deleteCustUser,
 } from '../services/apiServices';
 import './Inscriptions.css';
 import { formatDate } from '../utils/dateUtils';
@@ -31,13 +31,9 @@ import {
   Select,
   InputLabel,
   MenuItem,
-  Menu,
-  IconButton
 } from '@mui/material';
-import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit } from '@fortawesome/free-solid-svg-icons';
-
+import { faEdit, faPlus, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 
 const DestinataireList = () => {
   // Récupération de l’utilisateur depuis Redux
@@ -47,9 +43,7 @@ const DestinataireList = () => {
   const [recipients, setRecipients] = useState([]);
   const [countries, setCountries] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedRecipient, setSelectedRecipient] = useState(null);
-  // Gestion de la modale d'ajout
+  // Gestion de la modale d'ajout/édition
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingRecipientId, setEditingRecipientId] = useState(null);
   // Données du nouveau destinataire
@@ -58,7 +52,7 @@ const DestinataireList = () => {
     address1: '',
     address2: '',
     address3: '',
-    country: '',  // Doit contenir l'ID numérique du pays
+    country: '',
     phone: '',
   });
 
@@ -88,33 +82,21 @@ const DestinataireList = () => {
       console.error('Erreur lors du chargement des pays:', err);
     }
   };
-  const handleMenuOpen = (event, recipient) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedRecipient(recipient);
-  };
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedRecipient(null);
-  };
-
-  const handleEdit = () => {
-  if (selectedRecipient) {
+  // Ouvrir la modale en mode Édition
+  const handleOpenEditModal = (recipient) => {
+    setErrorMessage('');
+    setEditingRecipientId(recipient.id_recipient_account);
     setNewRecipient({
-      recipientName: selectedRecipient.recipient_name,
-      address1: selectedRecipient.address_1,
-      address2: selectedRecipient.address_2 || '',
-      address3: selectedRecipient.address_3 || '',
-      country: selectedRecipient.id_country,
-      phone: selectedRecipient.phone_number || '',
+      recipientName: recipient.recipient_name,
+      address1: recipient.address_1,
+      address2: recipient.address_2 || '',
+      address3: recipient.address_3 || '',
+      country: recipient.id_country,
+      phone: recipient.phone_number || '',
     });
-    setEditingRecipientId(selectedRecipient.id_recipient_account); // Stocker l'ID pour savoir si on modifie
     setShowAddModal(true);
-  }
-  if (!selectedRecipient) return;
-  handleMenuClose();
-};
-
+  };
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -138,7 +120,7 @@ const DestinataireList = () => {
 
   const handleOpenAddModal = () => {
     setErrorMessage('');
-    setEditingRecipientId(null); // On remet l'ID d'édition à null
+    setEditingRecipientId(null);
     setNewRecipient({
       recipientName: '',
       address1: '',
@@ -149,7 +131,6 @@ const DestinataireList = () => {
     });
     setShowAddModal(true);
   };
-  
 
   const handleCloseAddModal = () => {
     setShowAddModal(false);
@@ -159,7 +140,6 @@ const DestinataireList = () => {
     setNewRecipient((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Construction du payload sans préfixe pour le front-end
   const handleSaveNewRecipient = async () => {
     if (!newRecipient.recipientName || !newRecipient.address1 || !newRecipient.country) {
       setErrorMessage("Veuillez remplir au minimum le nom, l'adresse et le pays.");
@@ -170,7 +150,7 @@ const DestinataireList = () => {
       setErrorMessage('');
   
       const payload = {
-        idRecipientAccount: editingRecipientId ? editingRecipientId : null, // Vérifie si on modifie ou ajoute
+        idRecipientAccount: editingRecipientId ? editingRecipientId : null,
         idCustAccount: customerAccountId,
         recipientName: newRecipient.recipientName,
         address1: newRecipient.address1,
@@ -180,14 +160,13 @@ const DestinataireList = () => {
         statutFlag: 1,
         activationDate: new Date().toISOString(),
         deactivationDate: new Date('9999-12-31').toISOString(),
-        idLoginInsert: editingRecipientId ? null : (user?.id_login_user || 1), // Seulement à l'ajout
-        idLoginModify: editingRecipientId ? (user?.id_login_user || 1) : null, // Seulement à la modification
+        idLoginInsert: editingRecipientId ? null : (user?.id_login_user || 1),
+        idLoginModify: editingRecipientId ? (user?.id_login_user || 1) : null,
       };
   
-      await addRecipient(payload); // Cette fonction doit être capable de gérer ajout/modification côté backend
+      await addRecipient(payload);
       await loadRecipients();
       
-      // Réinitialiser l'ID d'édition après la modification
       setEditingRecipientId(null);
       setShowAddModal(false);
     } catch (err) {
@@ -195,14 +174,30 @@ const DestinataireList = () => {
       setErrorMessage("Une erreur s'est produite lors de l'enregistrement du destinataire.");
     }
   };
-  
+
+  // Suppression en base
+  const handleDelete = async (recipientId) => {
+    if (!window.confirm('Voulez-vous vraiment supprimer ce destinataire ?')) return;
+    try {
+      await deleteCustUser(recipientId);
+      setRecipients((prev) => prev.filter((r) => r.id_recipient_account !== recipientId));
+      alert('Destinataire supprimé avec succès.');
+    } catch (err) {
+      console.error('Erreur lors de la suppression du destinataire:', err);
+      alert('Impossible de supprimer ce destinataire.');
+    }
+  };
 
   return (
     <Box sx={{ ml: '240px', p: 3 }}>
       <AppBar position="static" color="default">
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography variant="h6">Liste des Destinataires</Typography>
-          <Button variant="contained" onClick={handleOpenAddModal}>
+          <Button
+            variant="contained"
+            onClick={handleOpenAddModal}
+            sx={{ backgroundColor: '#DCAF26' }}
+          >
             Ajouter un destinataire
           </Button>
         </Toolbar>
@@ -240,22 +235,45 @@ const DestinataireList = () => {
                   <TableCell>{recipient.address_1}</TableCell>
                   <TableCell>{recipient.country_symbol_fr_recipient || 'N/A'}</TableCell>
                   <TableCell>
-                    <IconButton onClick={(event) => handleMenuOpen(event, recipient)}>
-                      <MoreVertIcon />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={
+                          <FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />
+                        }
+                        onClick={() => handleOpenEditModal(recipient)}
+                        sx={{ border: 'none', '&:hover': { border: 'none' } }}
+                      >
+                        Modifier
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="error"
+                        startIcon={
+                          <FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />
+                        }
+                        onClick={() => handleDelete(recipient.id_recipient_account)}
+                        sx={{ border: 'none', '&:hover': { border: 'none' } }}
+                      >
+                        Supprimer
+                      </Button>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}
+              {recipients.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} align="center">
+                    Aucun destinataire trouvé.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
       </Paper>
-
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={handleEdit}>
-          <FontAwesomeIcon icon={faEdit} style={{ marginRight: 8 }} /> Modifier
-        </MenuItem>
-      </Menu>
 
       <Dialog open={showAddModal} onClose={handleCloseAddModal} maxWidth="sm" fullWidth>
         <DialogTitle>Ajouter un destinataire</DialogTitle>
@@ -302,7 +320,6 @@ const DestinataireList = () => {
             sx={{ mb: 2 }}
           />
 
-          {/* Sélection du pays */}
           <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
             <InputLabel>Pays *</InputLabel>
             <Select
@@ -330,10 +347,9 @@ const DestinataireList = () => {
             sx={{ mb: 2 }}
           />
         </DialogContent>
-
         <DialogActions>
           <Button onClick={handleCloseAddModal}>Annuler</Button>
-          <Button variant="contained" onClick={handleSaveNewRecipient}>
+          <Button variant="contained" onClick={handleSaveNewRecipient} sx={{ backgroundColor: '#DCAF26' }}>
             Enregistrer
           </Button>
         </DialogActions>

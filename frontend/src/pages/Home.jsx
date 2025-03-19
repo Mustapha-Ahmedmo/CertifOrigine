@@ -13,7 +13,7 @@ import {
   faEye,
   faUndo,
 } from '@fortawesome/free-solid-svg-icons';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, createTheme, ThemeProvider } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -29,6 +29,15 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import TablePagination from '@mui/material/TablePagination';
 import './Home.css';
+
+// Création d'un thème personnalisé qui remplace la couleur primaire par #DCAF26
+const customTheme = createTheme({
+  palette: {
+    primary: {
+      main: '#DCAF26',
+    },
+  },
+});
 
 // Composant TabPanel pour l'affichage du contenu de chaque onglet
 function TabPanel(props) {
@@ -79,7 +88,6 @@ const Home = () => {
   const idLogin = user?.id_login_user;
   const idCustAccount = user?.id_cust_account;
   const navigate = useNavigate();
-  const theme = useTheme();
 
   // Fonction pour récupérer et classer les commandes
   const fetchOrders = async () => {
@@ -128,43 +136,44 @@ const Home = () => {
   }
 
   return (
-    <div className="home-container">
-      <Helmet>
-        <title>Dashboard</title>
-      </Helmet>
-      {/* Conteneur centré pour les onglets et le tableau */}
-      <div className="home-tabs-container">
-        <Box sx={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
-          <AppBar position="static" color="default">
-            <Tabs
-              value={tabIndex}
-              onChange={handleTabChange}
-              indicatorColor="secondary"
-              textColor="inherit"
-              variant="fullWidth"
-              aria-label="Dashboard Tabs"
-            >
-              {options.map((option, index) => (
-                <Tab key={option.value} label={option.label} {...a11yProps(index)} />
-              ))}
-            </Tabs>
-          </AppBar>
-          <TabPanel value={tabIndex} index={0} dir={theme.direction}>
-            <OrderTable orders={ordersVisa} refreshOrders={fetchOrders} />
-          </TabPanel>
-          <TabPanel value={tabIndex} index={1} dir={theme.direction}>
-            <OrderTable orders={ordersValidation} refreshOrders={fetchOrders} />
-          </TabPanel>
-          <TabPanel value={tabIndex} index={2} dir={theme.direction}>
-            {/* For orders waiting for payment, hide the action column */}
-            <OrderTable orders={ordersPayment} refreshOrders={fetchOrders} hideActions={true} />
-          </TabPanel>
-          <TabPanel value={tabIndex} index={3} dir={theme.direction}>
-            <OrderTable orders={ordersReturned} refreshOrders={fetchOrders} />
-          </TabPanel>
-        </Box>
+    <ThemeProvider theme={customTheme}>
+      <div className="home-container">
+        <Helmet>
+          <title>Dashboard</title>
+        </Helmet>
+        {/* Conteneur centré pour les onglets et le tableau */}
+        <div className="home-tabs-container">
+          <Box sx={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+            <AppBar position="static" color="default">
+              <Tabs
+                value={tabIndex}
+                onChange={handleTabChange}
+                indicatorColor="primary"  
+                textColor="primary"       
+                variant="fullWidth"
+                aria-label="Dashboard Tabs"
+              >
+                {options.map((option, index) => (
+                  <Tab key={option.value} label={option.label} {...a11yProps(index)} />
+                ))}
+              </Tabs>
+            </AppBar>
+            <TabPanel value={tabIndex} index={0} dir={customTheme.direction}>
+              <OrderTable orders={ordersVisa} refreshOrders={fetchOrders} />
+            </TabPanel>
+            <TabPanel value={tabIndex} index={1} dir={customTheme.direction}>
+              <OrderTable orders={ordersValidation} refreshOrders={fetchOrders} />
+            </TabPanel>
+            <TabPanel value={tabIndex} index={2} dir={customTheme.direction}>
+              <OrderTable orders={ordersPayment} refreshOrders={fetchOrders} hideActions={true} />
+            </TabPanel>
+            <TabPanel value={tabIndex} index={3} dir={customTheme.direction}>
+              <OrderTable orders={ordersReturned} refreshOrders={fetchOrders} />
+            </TabPanel>
+          </Box>
+        </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 };
 
@@ -174,7 +183,7 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
   const user = useSelector((state) => state.auth.user);
   const currentUserId = user?.id_login_user;
 
-  // État de pagination
+  // États de pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -210,7 +219,7 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
     try {
       const payload = {
         p_id_order: orderId,
-        p_idlogin_modify: currentUserId
+        p_idlogin_modify: currentUserId,
       };
       console.log("Payload : ", payload);
       const response = await submitOrder(payload);
@@ -222,7 +231,7 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
     }
   };
 
-  // Slicing orders for pagination
+  // Pagination des commandes
   const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
@@ -292,7 +301,6 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
                   {!hideActions && (
                     <TableCell>
                       {(order.id_order_status === 1 || order.id_order_status === 6) ? (
-                        // Affiche "Supprimer" + "Soumettre"
                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', alignItems: 'center' }}>
                           <Button
                             variant="contained"
@@ -312,15 +320,12 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
                           </Button>
                         </Box>
                       ) : order.id_order_status === 2 ? (
-                        // Si statut = 2, on n'affiche rien
                         null
                       ) : order.id_order_status === 3 ? (
-                        // Si statut = 3, affiche "Payer"
                         <Button variant="contained" color="primary" size="small">
                           Payer
                         </Button>
                       ) : (
-                        // Sinon, par défaut, affiche "Soumettre"
                         <Button
                           variant="contained"
                           color="primary"

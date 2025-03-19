@@ -203,7 +203,6 @@ const ContactsList = () => {
       return;
     }
 
-    // Vérification du format international pour les numéros (champs obligatoires)
     if (!phone_number || !isValidInternationalPhone(phone_number)) {
       setModalError("Le téléphone fixe est obligatoire et doit être au format international (doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères).");
       return;
@@ -320,8 +319,9 @@ const ContactsList = () => {
           <Typography variant="h6">LISTE DES CONTACTS</Typography>
           <Button
             variant="contained"
-            startIcon={<FontAwesomeIcon icon={faPlus} />}
+            startIcon={<FontAwesomeIcon icon={faPlus} style={{ color: '#DCAF26' }} />}
             onClick={handleOpenAddModal}
+            sx={{ backgroundColor: '#DCAF26', border: 'none' }}
           >
             Ajouter un contact
           </Button>
@@ -362,7 +362,9 @@ const ContactsList = () => {
                   <TableCell>{contact.full_name}</TableCell>
                   <TableCell>{contact.position}</TableCell>
                   <TableCell>
-                    <a href={`mailto:${contact.email}`}>{contact.email}</a>
+                    <a href={`mailto:${contact.email}`} style={{ color: '#DCAF26' }}>
+                      {contact.email}
+                    </a>
                   </TableCell>
                   <TableCell>{contact.phone_number}</TableCell>
                   <TableCell>{contact.mobile_number}</TableCell>
@@ -373,9 +375,13 @@ const ContactsList = () => {
                     <Button
                       variant="outlined"
                       size="small"
-                      startIcon={<FontAwesomeIcon icon={faEdit} />}
+                      startIcon={<FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />}
                       onClick={() => handleOpenEditModal(contact)}
-                      sx={{ mr: 1 }}
+                      sx={{
+                        mr: 1,
+                        border: 'none',
+                        '&:hover': { border: 'none' },
+                      }}
                     >
                       Modifier
                     </Button>
@@ -384,8 +390,12 @@ const ContactsList = () => {
                         variant="outlined"
                         size="small"
                         color="error"
-                        startIcon={<FontAwesomeIcon icon={faTrashAlt} />}
+                        startIcon={<FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />}
                         onClick={() => handleDelete(contact.id_cust_user)}
+                        sx={{
+                          border: 'none',
+                          '&:hover': { border: 'none' },
+                        }}
                       >
                         Supprimer
                       </Button>
@@ -495,7 +505,7 @@ const ContactsList = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseModal}>Annuler</Button>
-          <Button variant="contained" onClick={handleSaveContact}>
+          <Button variant="contained" onClick={handleSaveContact} sx={{ backgroundColor: '#DCAF26' }}>
             Enregistrer
           </Button>
         </DialogActions>
