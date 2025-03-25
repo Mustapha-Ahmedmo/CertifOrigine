@@ -40,11 +40,25 @@ const HeaderLayout = () => {
             className="header-left"
             style={{ display: 'flex', alignItems: 'center' }}
           >
+            {/* Bouton hamburger */}
+            <button
+              className="hamburger-button"
+              onClick={toggleMenu}
+              style={{
+                /* Tu peux enlever ce style si tu veux, 
+                   la classe s’occupe déjà de l’affichage */
+              }}
+            >
+              ☰
+            </button>
+
+            {/* Logo (sera masqué en mobile via CSS) */}
             <img
               src={logo}
               alt="Logo"
+              className="logo"
               style={{
-                height: '250px',
+                height: '80px',
                 width: 'auto',
               }}
             />
@@ -56,12 +70,12 @@ const HeaderLayout = () => {
             style={{ flexGrow: 1, textAlign: 'center' }}
           >
             <ul
+              className={`nav-links ${menuOpen ? 'open' : ''}`}
               style={{
-                display: 'inline-flex',
-                gap: '2rem',
                 listStyle: 'none',
                 margin: 0,
                 padding: 0,
+                gap: '2rem',
               }}
             >
               <li>
@@ -77,7 +91,7 @@ const HeaderLayout = () => {
                   to="/conditions"
                   style={{ color: 'white', textDecoration: 'none' }}
                 >
-                  Les conditions de délivrance de certificats d'origine
+                  Conditions de délivrance
                 </Link>
               </li>
               <li>
@@ -88,27 +102,32 @@ const HeaderLayout = () => {
                   FAQ
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/contact-us"
+                  className="contact-button"
+                  style={{
+                    color: 'white',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Contactez-nous
+                </Link>
+              </li>
             </ul>
-          </div>
-
-          {/* Section droite : Bouton "Contactez-nous" */}
-          <div
-            className="header-right"
-            style={{ display: 'flex', alignItems: 'center' }}
-          >
-            <Link
-              to="/contact-us"
-              className="contact-button"
-              style={{ color: 'white', textDecoration: 'none' }}
-            >
-              Contactez-nous
-            </Link>
           </div>
         </nav>
       </header>
 
-      {/* Le contenu principal s'affiche juste en dessous (aucun offset marginTop) */}
-      <main style={{ margin: 0, padding: 0 }}>
+      {/* Le contenu principal :
+          on décale vers le bas pour pas être masqué par le header */}
+      <main
+        style={{
+          margin: 0,
+          padding: 0,
+          marginTop: '100px', // Ajuste en fonction de la hauteur désirée
+        }}
+      >
         <Outlet />
       </main>
     </div>

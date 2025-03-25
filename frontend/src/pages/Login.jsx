@@ -84,7 +84,9 @@ const Login = () => {
           maxWidth: isMobile ? '90%' : 600,
           color: 'white',
           textAlign: isMobile ? 'center' : 'left',
-          mt: isMobile ? 2 : '10rem',
+          /* Au lieu de '10rem' (160px) on met moins pour éviter
+             de trop pousser le contenu et générer un scroll */
+          mt: isMobile ? 2 : '3rem',
         }}
       >
         <Typography
@@ -126,7 +128,8 @@ const Login = () => {
           boxShadow: 3,
           maxWidth: 400,
           width: '100%',
-          mt: isMobile ? 2 : '10rem',
+          /* On réduit également ici pour éviter de trop descendre la carte */
+          mt: isMobile ? 2 : '3rem',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

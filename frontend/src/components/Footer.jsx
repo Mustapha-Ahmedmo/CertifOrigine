@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Container, Typography, IconButton } from '@mui/material';
+import { Box, Container, Typography, IconButton, useTheme, useMediaQuery } from '@mui/material';
 import LanguageIcon from '@mui/icons-material/Language';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import TwitterIcon from '@mui/icons-material/Twitter';
 
 const Footer = () => {
   const [isBottom, setIsBottom] = useState(false);
+
+  const theme = useTheme();
+  // Pour détecter si on est en petit écran (ex: moins de 600px)
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     const handleScroll = () => {
@@ -45,7 +49,15 @@ const Footer = () => {
           alignItems: 'center',
           gap: 1,
           position: 'relative',
-          ml: '300px', // Décalage vers la droite pour recentrer le contenu
+          /*
+            Au lieu de ml: "300px" fixe, on utilise un objet responsive :
+            - xs, sm: pas de margin-left
+            - md (>= 900px) et au-delà : ml: "300px" (ou tu peux ajuster le breakpoint si tu veux)
+          */
+          ml: {
+            xs: 0,
+            md: '300px',
+          },
         }}
       >
         {/* Ligne 1 : Titre centré */}
