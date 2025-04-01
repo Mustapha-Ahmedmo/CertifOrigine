@@ -1,220 +1,101 @@
 import React, { useEffect, useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
-import './Step5.css';
-
-// On suppose que Step5 peut importer addRecipient, fetchRecipients
-import { addRecipient, fetchCountries, fetchRecipients, getOrderFilesInfo, getOrdersForCustomer, renameOrder, updateCertificate, getUnitWeightInfo, submitOrder, deleteCertifGoods, addOrUpdateGoods, getTransmodeInfo, setOrdCertifTranspMode, removeCertifTranspMode, removeSingleCertifTranspMode, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles } from '../../../../services/apiServices';
 import { useSelector } from 'react-redux';
+import {
+  Box,
+  Typography,
+  Button,
+  TextField,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  Checkbox,
+  FormControlLabel,
+  Card,
+  CardContent,
+  useTheme,
+  useMediaQuery
+} from '@mui/material';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPencilAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
 
-const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handleChange }) => {
-  const safeValues = { ...values, recipients: values.recipients || [] };
-  const [countries, setCountries] = useState([]);
+import {
+  addRecipient,
+  fetchCountries,
+  fetchRecipients,
+  getOrderFilesInfo,
+  getOrdersForCustomer,
+  renameOrder,
+  updateCertificate,
+  getUnitWeightInfo,
+  submitOrder,
+  deleteCertifGoods,
+  addOrUpdateGoods,
+  getTransmodeInfo,
+  setOrdCertifTranspMode,
+  removeSingleCertifTranspMode,
+  getFilesRepoTypeofInfo,
+  setOrderFiles,
+  delOrderFiles,
+} from '../../../../services/apiServices';
 
-  // Local state for file info (documents)
-  const [documentsInfo, setDocumentsInfo] = useState([]);
-
-  // Valeur fixe pour le Demandeur (Société)
-
+const Step5 = ({
+  prevStep,
+  values,
+  handleSubmit,
+  isModal,
+  openSecondModal,
+  handleChange,
+}) => {
+  // --- Récupération des infos user / état commande ---
   const user = useSelector((state) => state.auth.user);
   const idLogin = user?.id_login_user;
-  const idCustAccount = user?.id_cust_account;
+  const customerAccountId = user?.id_cust_account;
   const companyName = user?.companyname;
-  const customerAccountId = user?.id_cust_account; // Customer Account ID
-  const [unitWeights, setUnitWeights] = useState([]);
 
-  const [transpMode, settransportModes] = useState({});
-  const isModifiable = (values.orderStatus === 1 || values.orderStatus === 6);
-
-
-  console.log("isModifiable ", isModifiable);
-
-  const API_URL = import.meta.env.VITE_API_URL;
-  // Extract query params (certifId and orderId)
+  // Query params
   const params = new URLSearchParams(location.search);
   const certifId = params.get('certifId');
   const orderId = params.get('orderId') || values.orderId;
 
-  const [formData, setFormData] = useState({
-    orderId: orderId || null,
-    certifId: certifId || null,
-    orderName: '',
-    merchandises: [],
-    goodsOrigin: '',        // Will hold a country ID
-    goodsDestination: '',   // Will hold a country ID
-    transportModes: { air: false, mer: false, terre: false, mixte: false },
-    transportRemarks: '',
-    exporterName: 'INDIGO TRADING FZCO',
-    exporterCompany2: '',
-    exporterAddress: '',
-    exporterAddress2: '',
-    exporterPostalCode: '',
-    exporterCity: '',
-    exporterCountry: '',
-    receiverName: '',
-    receiverCompany2: '',
-    receiverAddress: '',
-    receiverAddress2: '',
-    receiverPostalCode: '',
-    receiverCity: '',
-    receiverCountry: '',
-    receiverPhone: '',
-    copies: '',
-    remarks: '',
-    isCommitted: false,
-    documents: [],
-    // New country/port fields (using country IDs)
-    loadingPort: '',        // Country ID for loading port
-    dischargingPort: '',    // Country ID for discharge port
-    // For recipient selection (if needed)
-    selectedRecipientId: '',
-  });
+  // Commande modifiable ?
+  const isModifiable = values.orderStatus === 1 || values.orderStatus === 6;
 
+  // --- Responsivité : “cartes” sur mobile, “table” sur desktop ---
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // État local pour gérer l'édition du libellé de commande
+  // --- Champs “généraux” ---
+  const [orderLabel, setOrderLabel] = useState(values.orderLabel || values.orderName || '');
   const [isEditingLabel, setIsEditingLabel] = useState(false);
 
-  const [orderLabel, setOrderLabel] = useState(values.orderName || '');
-  const [localRecipients, setLocalRecipients] = useState(safeValues.recipients);
-  const [selectedRecipientId, setSelectedRecipientId] = useState(safeValues.selectedRecipientId || '');
-  // État local pour gérer temporairement les modes de transport
-  const [tempTransportModes, setTempTransportModes] = useState(values.transportModes || {});
-  const [merchandises, setMerchandises] = useState(values.merchandises || []);
-  useEffect(() => {
-    setMerchandises(values.merchandises || []);
-  }, [values.merchandises]);
-  // Pour "Copies certifiées"
-  const [isEditingCopies, setIsEditingCopies] = useState(false);
   const [copies, setCopies] = useState(values.copies || '');
-  useEffect(() => {
-    setCopies(values.copies || '');
-  }, [values.copies]);
+  const [isEditingCopies, setIsEditingCopies] = useState(false);
 
-  useEffect(() => {
-    const fetchUnitWeights = async () => {
-      try {
-        // Appel à l'API pour récupérer les unités de poids.
-        const response = await getUnitWeightInfo(null, true);
-        // On suppose que la réponse contient les données dans response.data.
-        setUnitWeights(response.data || []);
-      } catch (error) {
-        console.error('Erreur lors de la récupération des unités de poids:', error);
-      }
-    };
-    fetchUnitWeights();
-  }, []);
-
-
-  const saveCopies = () => {
-    if (handleChange) {
-      handleChange('copies', copies);
-    }
-    setIsEditingCopies(false);
-  };
-
-  // Pour "Remarques"
-  const [isEditingRemarks, setIsEditingRemarks] = useState(false);
   const [remarks, setRemarks] = useState(values.remarks || '');
-  useEffect(() => {
-    setRemarks(values.remarks || '');
-  }, [values.remarks]);
+  const [isEditingRemarks, setIsEditingRemarks] = useState(false);
 
-  const saveRemarks = () => {
-    if (handleChange) {
-      handleChange('remarks', remarks);
-    }
-    setIsEditingRemarks(false);
-  };
+  // --- Pays, destinataires, modes de transport, etc. ---
+  const [countries, setCountries] = useState([]);
+  const [localRecipients, setLocalRecipients] = useState(values.recipients || []);
+  const [selectedRecipientId, setSelectedRecipientId] = useState(values.selectedRecipientId || '');
+  const [transpModeList, setTranspModeList] = useState([]);
+  const [tempTransportModes, setTempTransportModes] = useState(values.transportModes || {});
+  const [unitWeights, setUnitWeights] = useState([]);
 
-  const handleDeleteMerchandise = async (indexToDelete) => {
-    try {
-      const merchandiseToDelete = merchandises[indexToDelete];
+  // --- Marchandises ---
+  const [merchandises, setMerchandises] = useState(values.merchandises || []);
 
-      console.log(merchandiseToDelete)
-      // Check if the merchandise item has an associated ID in the database
-      if (merchandiseToDelete.id_ord_certif_goods) {
-        await deleteCertifGoods(merchandiseToDelete.id_ord_certif_goods, idLogin, 0);
-        console.log("Merchandise deleted from DB");
-      }
+  // --- Documents ---
+  const [documentsInfo, setDocumentsInfo] = useState([]);
 
-      // Remove the merchandise from the local state
-      const updatedMerchandises = merchandises.filter((_, i) => i !== indexToDelete);
-      setMerchandises(updatedMerchandises);
-      if (handleChange) {
-        handleChange('merchandises', updatedMerchandises);
-      }
-    } catch (error) {
-      console.error("Error deleting merchandise:", error);
-      alert("Erreur lors de la suppression de la marchandise.");
-    }
-  };
-
-  const handleFileClick = (file) => {
-    // Construct the file URL
-    const fileUrl = `${API_URL}/files/commandes/${new Date().getFullYear()}/${file.file_guid}`;
-    // Open in a new browser tab
-    window.open(fileUrl, '_blank');
-  };
-
-  useEffect(() => {
-    const fetchTransportModes = async () => {
-      try {
-        const fetched = await getTransmodeInfo(null, true);
-        // Assume fetched.data is an object like { air: true, mer: false, terre: true, mixte: false }
-        settransportModes(fetched.data || {});
-      } catch (error) {
-        console.error("Error fetching transport modes:", error);
-      }
-    };
-    fetchTransportModes();
-  }, []);
-
-  // Synchroniser cet état local si values.transportModes change
-  useEffect(() => {
-    setTempTransportModes(values.transportModes || {});
-  }, [values.transportModes]);
-
-  // Fonction pour mettre à jour l'état local lors du clic sur une case
-  const handleCheckboxChange = (modeKey, checked) => {
-    setTempTransportModes((prev) => ({
-      ...prev,
-      [modeKey]: checked,
-    }));
-  };
-
-
-
-  // Fonction pour enregistrer les modifications dans le state global (via handleChange)
-  const handleTransportModesSave = () => {
-    if (handleChange) {
-      handleChange('transportModes', tempTransportModes);
-    }
-    alert('Contenu du Certificat enregistré');
-  };
-
-
-  const handleSubmitOrder = async () => {
-    if (!values.orderId || !idLogin) {
-      console.error('Missing orderId or idLogin.');
-      return;
-    }
-    try {
-      const response = await submitOrder(values.orderId, idLogin);
-      console.log('Order submitted successfully:', response);
-      alert('Commande soumise avec succès.');
-      // Optionally, call the parent's handleSubmit if needed:
-      if (handleSubmit) {
-        handleSubmit();
-      }
-    } catch (error) {
-      console.error('Error submitting order:', error);
-      alert('Erreur lors de la soumission de la commande.');
-    }
-  };
-
-
-  // Other local state for modals and form fields (new recipient, new merchandise, etc.)
-  const [showNewRecipientModal, setShowNewRecipientModal] = useState(false);
+  // --- Dialog states (uniques, pas de doublons) ---
+  const [showNewRecipientDialog, setShowNewRecipientDialog] = useState(false);
   const [newRecipientLocal, setNewRecipientLocal] = useState({
     receiverName: '',
     receiverAddress: '',
@@ -225,192 +106,162 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
     receiverPhone: '',
   });
 
+  const [showNewMerchDialog, setShowNewMerchDialog] = useState(false);
+  const [newMerchLocal, setNewMerchLocal] = useState({
+    designation: '',
+    boxReference: '',
+    docReference: '',
+    quantity: '',
+    unit: '',
+  });
 
+  const [showNewDocumentDialog, setShowNewDocumentDialog] = useState(false);
+  const [newDocumentData, setNewDocumentData] = useState({
+    file: null,
+    selectedFileType: '',
+  });
+  const [mandatoryFileTypes, setMandatoryFileTypes] = useState([]);
 
+  // Pour gérer d'éventuels messages d'erreur
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // --- CHARGEMENT INITIAL ---
   useEffect(() => {
-    setOrderLabel(values.orderLabel || '');
-  }, [values.orderLabel]);
-
-
-  useEffect(() => {
-    const loadCountries = async () => {
+    const loadInitData = async () => {
       try {
-        const response = await fetchCountries();
-        // Assuming the response is an object with a 'data' property or directly an array
-        const countriesData = response.data || response;
-        setCountries(countriesData);
+        // Pays
+        const ctries = await fetchCountries();
+        setCountries(ctries.data || ctries);
+
+        // Destinataires
+        if ((!localRecipients || localRecipients.length === 0) && customerAccountId) {
+          const resp = await fetchRecipients({ idListCA: customerAccountId });
+          setLocalRecipients(resp.data || []);
+          handleChange?.('recipients', resp.data || []);
+        }
+
+        // Modes de transport
+        const tModes = await getTransmodeInfo(null, true);
+        setTranspModeList(tModes.data || []);
+
+        // Unités de poids
+        const uw = await getUnitWeightInfo(null, true);
+        setUnitWeights(uw.data || []);
+
+        // Documents de la commande
+        if (orderId) {
+          const files = await getOrderFilesInfo({
+            p_id_order_list: orderId,
+            p_isactive: true,
+            p_id_custaccount: customerAccountId,
+          });
+          setDocumentsInfo(files);
+        }
+
+        // Types de fichiers
+        const fileTypesResp = await getFilesRepoTypeofInfo({
+          p_id_files_repo_typeof_first: 500,
+          p_id_files_repo_typeof_last: 649,
+          p_ismandatory: null,
+        });
+        setMandatoryFileTypes(fileTypesResp.data || []);
       } catch (error) {
-        console.error('Error fetching countries in Step5:', error);
+        console.error('Step5 init error:', error);
       }
     };
-    loadCountries();
+    loadInitData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
-  // Fetch recipients if not present locally and if we have a customerAccountId
+  // Sync des marchandises
   useEffect(() => {
-    const loadRecipients = async () => {
-      if ((!localRecipients || localRecipients.length === 0) && customerAccountId) {
-        try {
-          const response = await fetchRecipients({ idListCA: customerAccountId });
-          console.log("Fetched recipients in Step5:", response.data);
-          setLocalRecipients(response.data);
-          // Also update the parent's state if needed:
-          if (handleChange) {
-            handleChange('recipients', response.data);
-          }
-        } catch (error) {
-          console.error("Error fetching recipients in Step5:", error);
-        }
-      }
-    };
-    loadRecipients();
-  }, [customerAccountId, localRecipients, handleChange]);
+    setMerchandises(values.merchandises || []);
+  }, [values.merchandises]);
 
-  // If no recipient is selected yet, choose the first one from localRecipients
+  // Sync copies & remarks
   useEffect(() => {
-    if ((!selectedRecipientId || selectedRecipientId === "") && localRecipients.length > 0) {
+    setCopies(values.copies || '');
+    setRemarks(values.remarks || '');
+  }, [values.copies, values.remarks]);
+
+  // Sync label
+  useEffect(() => {
+    setOrderLabel(values.orderLabel || values.orderName || '');
+  }, [values.orderLabel, values.orderName]);
+
+  // Sync modes de transport
+  useEffect(() => {
+    setTempTransportModes(values.transportModes || {});
+  }, [values.transportModes]);
+
+  // Sélection auto destinataire s'il n'y en a pas
+  useEffect(() => {
+    if ((!selectedRecipientId || selectedRecipientId === '') && localRecipients.length > 0) {
       const defaultId = localRecipients[0].id_recipient_account;
       setSelectedRecipientId(String(defaultId));
-      if (handleChange) {
-        handleChange('selectedRecipientId', defaultId);
-      }
+      handleChange?.('selectedRecipientId', defaultId);
     }
   }, [selectedRecipientId, localRecipients, handleChange]);
 
-
-  console.log(values)
+  // ------------------------------------------------
+  // 1) GESTION DU LABEL
+  // ------------------------------------------------
   const saveOrderLabel = async () => {
-    // We assume values.orderId is present and values.id_login_user holds the current user ID
-    if (!values.orderId || !idLogin) {
-      console.error('Missing orderId or id_login_user in values.');
-      return;
-    }
-
+    if (!values.orderId || !idLogin) return;
     try {
-      const payload = {
+      await renameOrder({
         p_id_order: values.orderId,
         p_order_title: orderLabel,
-        p_idlogin_modify: idLogin, // or pass the current user ID
-      };
-      const response = await renameOrder(payload);
-      console.log('Rename order API response:', response);
+        p_idlogin_modify: idLogin,
+      });
       setIsEditingLabel(false);
-      // Update parent's state with the new order label
-      if (handleChange) {
-        handleChange('orderLabel', orderLabel);
-      }
+      handleChange?.('orderLabel', orderLabel);
     } catch (error) {
-      console.error('Error renaming order:', error);
-      // Optionally, you can show an error message here
+      console.error('Rename order error:', error);
     }
   };
 
-
-  const handleSaveExporter = () => {
-    if (handleChange) {
-      handleChange('orderLabel', orderLabel);
-    }
-    alert('Les informations du demandeur/expéditeur ont été enregistrées.');
-  };
-
-
-
-
-
-  // Compute the currently selected recipient
-  const selectedRecipient = values.recipients
-    ? values.recipients.find(
-      (r) => String(r.id_recipient_account) === String(selectedRecipientId)
-    )
-    : null;
-
+  // ------------------------------------------------
+  // 2) DESTINATAIRE
+  // ------------------------------------------------
   const handleRecipientChange = (e) => {
-    const newSelected = e.target.value;
-    setSelectedRecipientId(newSelected);
-    // Optionally, update parent's state so that the selected recipient can be used elsewhere
-    if (handleChange) {
-      handleChange('selectedRecipientId', newSelected);
-    }
+    const newVal = e.target.value;
+    setSelectedRecipientId(newVal);
+    handleChange?.('selectedRecipientId', newVal);
   };
 
-  // New: Handler for submitting the recipient change (update the order with the new recipient)
   const handleRecipientSubmit = async () => {
-    if (!safeValues.orderId || !selectedRecipientId || !idLogin) {
-      console.error('Missing orderId, selectedRecipientId, or id_login_user.');
-      return;
-    }
     try {
+      if (!values.orderId || !selectedRecipientId || !idLogin) return;
 
       const ordersResponse = await getOrdersForCustomer({
-        idCustAccountList: idCustAccount,
+        idCustAccountList: customerAccountId,
         idLogin,
       });
       const orders = ordersResponse.data || [];
+      const currentOrder = orders.find((o) => Number(o.id_order) === Number(orderId));
+      if (!currentOrder) return;
 
-      // Filter to get the order that matches the current orderId
-      const currentOrder = orders.find(order => order.id_order == orderId);
-      if (!currentOrder) {
-        console.error('Order not found.');
-        return;
-      }
-
-      // Assume that the certificate data is stored in a property like certData in the order
-      // (Adjust the property names based on your actual API response)
       const certData = currentOrder.certData || currentOrder;
 
-      // Build the update payload using the certificate data from the current order
       const certUpdateData = {
-        p_id_ord_certif_ori: certData.id_ord_certif_ori, // Use the certificate ID from the order
-        p_id_recipient_account: selectedRecipientId,       // New recipient ID
+        p_id_ord_certif_ori: certData.id_ord_certif_ori,
+        p_id_recipient_account: selectedRecipientId,
         p_id_country_origin: certData.id_country_origin,
         p_id_country_destination: certData.id_country_destination,
         p_id_country_port_loading: certData.id_country_port_loading,
         p_id_country_port_discharge: certData.id_country_port_discharge,
         p_notes: certData.notes || '',
-        p_copy_count: certData.copy_count || safeValues.copies,
-        p_idlogin_modify: idLogin,
-        p_transport_remains: safeValues.transportRemarks || '',
-      };
-
-
-      const response = await updateCertificate(certUpdateData);
-      console.log('Certificate updated:', response);
-      alert('Le destinataire et autres informations du certificat ont été mis à jour.');
-      if (handleChange) {
-        handleChange('selectedRecipientId', selectedRecipientId);
-      }
-    } catch (error) {
-      console.error('Error updating order recipient:', error);
-      alert("Erreur lors de la mise à jour du destinataire.");
-    }
-  };
-  const handleCountryUpdateSubmit = async () => {
-    if (!values.orderId || !values.certifId || !values.selectedRecipientId) {
-      console.error("Missing required fields for country update");
-      return;
-    }
-    try {
-      const payload = {
-        p_id_ord_certif_ori: values.certifId, // Assuming certifId is stored here
-        p_id_recipient_account: values.selectedRecipientId, // This may remain unchanged
-        p_id_country_origin: parseInt(values.goodsOrigin, 10),
-        p_id_country_destination: parseInt(values.goodsDestination, 10),
-        p_id_country_port_loading: parseInt(values.loadingPort, 10),
-        p_id_country_port_discharge: parseInt(values.dischargingPort, 10),
-        p_notes: values.remarks || '',
-        p_copy_count: values.copies ?? 0,
+        p_copy_count: certData.copy_count || values.copies,
         p_idlogin_modify: idLogin,
         p_transport_remains: values.transportRemarks || '',
       };
-
-      console.log("Payload : ", payload)
-      const res = await updateCertificate(payload);
-      console.log("Certificate updated with country/port fields:", res);
-      alert("Les informations relatives aux pays et ports ont été mises à jour.");
+      await updateCertificate(certUpdateData);
+      alert('Le destinataire a bien été mis à jour.');
+      handleChange?.('selectedRecipientId', selectedRecipientId);
     } catch (error) {
-      console.error("Error updating country fields:", error);
-      alert("Erreur lors de la mise à jour des pays/ports.");
+      console.error('Error updating recipient:', error);
+      alert("Erreur lors de la mise à jour du destinataire.");
     }
   };
 
@@ -438,25 +289,16 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
         country_symbol_fr_recipient: newRecipientLocal.receiverCountry,
       };
 
-      const recipientResponse = await addRecipient(newRecipientData);
-      console.log('New recipient creation response:', recipientResponse);
-      const newRecipientId = recipientResponse?.newRecipientId;
-      console.log('New recipient ID =', newRecipientId);
+      const resp = await addRecipient(newRecipientData);
+      const newRecipientId = resp?.newRecipientId;
+      const updatedList = await fetchRecipients({ idListCA: customerAccountId });
+      setLocalRecipients(updatedList.data);
+      handleChange?.('recipients', updatedList.data);
 
-      // Fetch updated recipients and update parent state
-      const updatedRecipientsResponse = await fetchRecipients({ idListCA: customerAccountId });
-      console.log('Updated recipients:', updatedRecipientsResponse.data);
-      if (handleChange) {
-        handleChange('recipients', updatedRecipientsResponse.data);
-      }
       setSelectedRecipientId(String(newRecipientId));
-      if (handleChange) {
-        handleChange('selectedRecipientId', newRecipientId);
-      }
-      setLocalRecipients(updatedRecipientsResponse.data);
+      handleChange?.('selectedRecipientId', newRecipientId);
 
-
-      setShowNewRecipientModal(false);
+      setShowNewRecipientDialog(false);
       setNewRecipientLocal({
         receiverName: '',
         receiverAddress: '',
@@ -471,62 +313,62 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
     }
   };
 
-  // -------------------- SECTION 2/7 : DESTINATAIRE --------------------
-  const recipients = values.recipients || [];
-
-
-  // -------------------- SECTION 3/7 : DESCRIPTION DE LA MARCHANDISE --------------------
-  const [showNewMerchModal, setShowNewMerchModal] = useState(false);
-  const [newMerchLocal, setNewMerchLocal] = useState({
-    designation: '',
-    boxReference: '',
-    quantity: '',
-    unit: '',
-  });
+  // ------------------------------------------------
+  // 3) MARCHANDISES
+  // ------------------------------------------------
+  const handleDeleteMerchandise = async (index) => {
+    const merchandiseToDelete = merchandises[index];
+    if (merchandiseToDelete?.id_ord_certif_goods) {
+      try {
+        await deleteCertifGoods(merchandiseToDelete.id_ord_certif_goods, idLogin, 0);
+      } catch (error) {
+        console.error('Error deleting merch from DB:', error);
+        alert("Erreur lors de la suppression de la marchandise.");
+      }
+    }
+    const updated = merchandises.filter((_, i) => i !== index);
+    setMerchandises(updated);
+    handleChange?.('merchandises', updated);
+  };
 
   const handleNewMerchChange = (field, value) => {
     setNewMerchLocal((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Updated: When adding a new merchandise, also save it in the database
   const handleSaveNewMerch = async () => {
+    if (
+      !newMerchLocal.designation ||
+      !newMerchLocal.boxReference ||
+      !newMerchLocal.quantity ||
+      !newMerchLocal.unit
+    ) {
+      alert("Veuillez remplir tous les champs de la marchandise.");
+      return;
+    }
     try {
-      if (!newMerchLocal.designation || !newMerchLocal.boxReference || !newMerchLocal.quantity || !newMerchLocal.unit) {
-        alert("Veuillez remplir tous les champs de la marchandise.");
-        return;
-      }
-      // Find the matching unit in unitWeights by comparing the unit symbol
-      const matchedUnit = unitWeights.find(unit => unit.symbol_fr === newMerchLocal.unit);
+      const matchedUnit = unitWeights.find((u) => u.symbol_fr === newMerchLocal.unit);
       if (!matchedUnit) {
         alert("Unité non valide.");
         return;
       }
-      // Build goodsData to save the merchandise in the database
       const goodsData = {
-        idOrdCertifOri: certifId, // using certifId from query string
+        idOrdCertifOri: certifId,
         goodDescription: newMerchLocal.designation,
         goodReferences: newMerchLocal.boxReference,
-        goodDocReferences: newMerchLocal.docReference,
+        docReferences: newMerchLocal.docReference,
         weight_qty: newMerchLocal.quantity,
         idUnitWeight: matchedUnit.id_unit_weight,
       };
-      // Call the API function to add or update goods
-      const apiResponse = await addOrUpdateGoods(goodsData);
-      console.log("Goods added/updated successfully:", apiResponse);
-
-      // Optionally, update the new merchandise with the generated id from the API
-      const newMerchandise = {
+      const response = await addOrUpdateGoods(goodsData);
+      const newMerchItem = {
         ...newMerchLocal,
-        id_ord_certif_goods: apiResponse.new_ord_certif_goods_id, // Adjust according to your API response
+        id_ord_certif_goods: response?.new_ord_certif_goods_id,
       };
-      // Update local state: add the new merchandise to the list
-      const updatedMerchandises = [...merchandises, newMerchandise];
-      setMerchandises(updatedMerchandises);
-      if (handleChange) {
-        handleChange('merchandises', updatedMerchandises);
-      }
-      // Reset modal state
-      setShowNewMerchModal(false);
+      const updatedMerch = [...merchandises, newMerchItem];
+      setMerchandises(updatedMerch);
+      handleChange?.('merchandises', updatedMerch);
+
+      setShowNewMerchDialog(false);
       setNewMerchLocal({
         designation: '',
         boxReference: '',
@@ -535,88 +377,213 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
         unit: '',
       });
     } catch (error) {
-      console.error("Error adding/updating merchandise:", error);
-      alert("Erreur lors de l'ajout ou de la mise à jour de la marchandise.");
+      console.error('Error adding new merch:', error);
+      alert("Erreur lors de l'ajout de la marchandise.");
     }
   };
 
-  // -------------------- SECTION 4/7 : ORIGINE ET DESTINATION DES MARCHANDISES --------------------
-  const handleChangeCountryOrigin = (e) => {
-    if (handleChange) {
-      handleChange('goodsOrigin', e.target.value);
+  // Affichage “table” sur desktop
+  const renderMerchDesktop = () => {
+    return (
+      <Box sx={{ overflowX: 'auto' }}>
+        <Box component="table" sx={{ borderCollapse: 'collapse', width: '100%' }}>
+          <Box component="thead" sx={{ backgroundColor: '#f9f9f9' }}>
+            <Box component="tr">
+              <Box component="th" sx={tableCellStyle}>Désignation</Box>
+              <Box component="th" sx={tableCellStyle}>Référence / HSCODE</Box>
+              <Box component="th" sx={tableCellStyle}>Réf. doc</Box>
+              <Box component="th" sx={tableCellStyle}>Quantité</Box>
+              <Box component="th" sx={tableCellStyle}>Unité</Box>
+              {isModifiable && <Box component="th" sx={tableCellStyle}></Box>}
+            </Box>
+          </Box>
+          <Box component="tbody">
+            {merchandises.map((m, idx) => (
+              <Box
+                component="tr"
+                key={idx}
+                sx={{ '&:nth-of-type(even)': { backgroundColor: '#f1f1f1' } }}
+              >
+                <Box component="td" sx={tableCellStyle}>
+                  {m.designation || 'Non spécifié'}
+                </Box>
+                <Box component="td" sx={tableCellStyle}>
+                  {m.boxReference || 'Non spécifié'}
+                </Box>
+                <Box component="td" sx={tableCellStyle}>
+                  {m.docReference || 'Non spécifié'}
+                </Box>
+                <Box component="td" sx={tableCellStyle}>
+                  {m.quantity || 'Non spécifié'}
+                </Box>
+                <Box component="td" sx={tableCellStyle}>
+                  {m.unit || 'Non spécifié'}
+                </Box>
+                {isModifiable && (
+                  <Box component="td" sx={tableCellStyle}>
+                    <Button
+                      variant="text"
+                      color="error"
+                      onClick={() => handleDeleteMerchandise(idx)}
+                    >
+                      Supprimer
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      </Box>
+    );
+  };
+
+  // Affichage “cartes” sur mobile
+  const renderMerchMobile = () => {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {merchandises.map((m, idx) => (
+          <Box
+            key={idx}
+            sx={{
+              border: '1px solid #ddd',
+              borderRadius: 1,
+              backgroundColor: '#f9f9f9',
+              p: 2
+            }}
+          >
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              <strong>Désignation :</strong> {m.designation || 'Non spécifié'}
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              <strong>Référence / HSCODE :</strong> {m.boxReference || 'Non spécifié'}
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              <strong>Doc Justif :</strong> {m.docReference || 'Non spécifié'}
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              <strong>Quantité :</strong> {m.quantity || 'Non spécifié'}
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              <strong>Unité :</strong> {m.unit || 'Non spécifié'}
+            </Typography>
+            {isModifiable && (
+              <Box sx={{ textAlign: 'right' }}>
+                <Button
+                  variant="text"
+                  color="error"
+                  startIcon={<FontAwesomeIcon icon={faTimes} />}
+                  onClick={() => handleDeleteMerchandise(idx)}
+                >
+                  Supprimer
+                </Button>
+              </Box>
+            )}
+          </Box>
+        ))}
+      </Box>
+    );
+  };
+
+  // ------------------------------------------------
+  // 4) ORIGINE / DESTINATION
+  // ------------------------------------------------
+  const handleCountryUpdateSubmit = async () => {
+    if (!values.orderId || !values.certifId) return;
+    try {
+      const payload = {
+        p_id_ord_certif_ori: values.certifId,
+        p_id_recipient_account: values.selectedRecipientId,
+        p_id_country_origin: parseInt(values.goodsOrigin, 10),
+        p_id_country_destination: parseInt(values.goodsDestination, 10),
+        p_id_country_port_loading: parseInt(values.loadingPort, 10),
+        p_id_country_port_discharge: parseInt(values.dischargingPort, 10),
+        p_notes: values.remarks || '',
+        p_copy_count: values.copies ?? 0,
+        p_idlogin_modify: idLogin,
+        p_transport_remains: values.transportRemarks || '',
+      };
+      await updateCertificate(payload);
+      alert('Les pays/ports ont été mis à jour.');
+    } catch (error) {
+      console.error('Error updating countries/ports:', error);
+      alert("Erreur lors de la mise à jour des pays/ports.");
     }
   };
 
-  const handleChangeCountryDestination = (e) => {
-    if (handleChange) {
-      handleChange('goodsDestination', e.target.value);
-    }
-  };
+  // ------------------------------------------------
+  // 5) TRANSPORT
+  // ------------------------------------------------
+  const handleTransportModeChange = async (mode, checked) => {
+    if (!isModifiable) return;
+    const newKey = mode.symbol_fr.toLowerCase();
+    setTempTransportModes((prev) => ({ ...prev, [newKey]: checked }));
 
-  // -------------------- SECTION 5/7 : TRANSPORT --------------------
-  const handleTransportModeChange = (modeKey, checked) => {
-    if (handleChange) {
-      const updatedModes = { ...values.transportModes, [modeKey]: checked };
-      handleChange('transportModes', updatedModes);
-    }
-  };
-
-  // -------------------- SECTION 6/7 : AUTRES --------------------
-  // Les valeurs (copies et remarques) sont déjà renseignées dans values (Step2)
-
-
-
-
-
-  // =======================================================================
-  // NEW: Retrieve file information for the current order using getOrderFilesInfo
-  // =======================================================================
-  useEffect(() => {
-    const loadDocumentsInfo = async () => {
+    if (checked) {
       try {
-        // Prepare parameters for the function.
-        // Here we pass the current orderId. You may add more parameters as needed.
-        const queryParams = {
-          p_id_order_list: orderId || values.orderId,
-          p_isactive: true,
-          p_id_custaccount: customerAccountId,
-        };
-        const result = await getOrderFilesInfo(queryParams);
-        // Update our state with the retrieved documents info
-        setDocumentsInfo(result);
+        await setOrdCertifTranspMode({
+          id_ord_certif_transp_mode: null,
+          id_ord_certif_ori: certifId,
+          id_transport_mode: mode.id_transport_mode,
+        });
       } catch (error) {
-        console.error('Error retrieving documents info:', error);
+        console.error('Error adding transport mode:', error);
       }
-    };
-
-    if (orderId) {
-      loadDocumentsInfo();
+    } else {
+      try {
+        await removeSingleCertifTranspMode(certifId, mode.id_transport_mode, idLogin);
+      } catch (error) {
+        console.error('Error removing transport mode:', error);
+      }
     }
-  }, [orderId, values.orderId]);
-
-  console.log("tempTransportModes => ", tempTransportModes);
-
-
-  const [mandatoryFileTypes, setMandatoryFileTypes] = useState([]);
-
-  const [showNewDocumentModal, setShowNewDocumentModal] = useState(false);
-  const [newDocumentData, setNewDocumentData] = useState({
-    file: null,
-    selectedFileType: '',
-  });
-
-  // --------------------------
-  // DOCUMENT MODAL HANDLERS
-  // --------------------------
-  // Open new document modal when "Upload" is clicked
-  const handleShowNewDocumentModal = () => {
-    setShowNewDocumentModal(true);
   };
 
-  // Save new document: upload the file and update documentsInfo state
+  const handleTransportModesSave = () => {
+    handleChange?.('transportModes', tempTransportModes);
+    alert('Modes de transport enregistrés.');
+  };
+
+  // ------------------------------------------------
+  // 6) COPIES / REMARQUES
+  // ------------------------------------------------
+  const saveCopies = () => {
+    handleChange?.('copies', copies);
+    setIsEditingCopies(false);
+  };
+
+  const saveRemarks = () => {
+    handleChange?.('remarks', remarks);
+    setIsEditingRemarks(false);
+  };
+
+  // ------------------------------------------------
+  // 7) DOCUMENTS
+  // ------------------------------------------------
+  const handleFileClick = (doc) => {
+    if (!doc.file_guid) return;
+    const fileUrl = `${import.meta.env.VITE_API_URL}/files/commandes/${new Date().getFullYear()}/${doc.file_guid}`;
+    window.open(fileUrl, '_blank');
+  };
+
+  const handleDeleteDocument = async (docId) => {
+    try {
+      await delOrderFiles(docId);
+      const files = await getOrderFilesInfo({
+        p_id_order_list: orderId,
+        p_isactive: true,
+        p_id_custaccount: customerAccountId,
+      });
+      setDocumentsInfo(files);
+      alert('Document supprimé avec succès.');
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      alert("Erreur lors de la suppression du document.");
+    }
+  };
+
   const handleSaveNewDocument = async () => {
     if (!newDocumentData.file || !newDocumentData.selectedFileType) {
-      alert("Veuillez sélectionner un fichier et un type de document.");
+      alert('Veuillez sélectionner un fichier ET un type de document.');
       return;
     }
     try {
@@ -625,770 +592,778 @@ const Step5 = ({ prevStep, values, handleSubmit, isModal, openSecondModal, handl
         p_id_order: orderId,
         p_idfiles_repo_typeof: newDocumentData.selectedFileType,
         p_file_origin_name: newDocumentData.file.name,
-        p_typeof_order: 1, // adjust if needed
+        p_typeof_order: 1,
         p_idlogin_insert: idLogin,
         file: newDocumentData.file,
       };
+      await setOrderFiles(orderFileData);
 
-      const response = await setOrderFiles(orderFileData);
-
-      const queryParams = {
-        p_id_order_list: orderId || values.orderId,
+      const files = await getOrderFilesInfo({
+        p_id_order_list: orderId,
         p_isactive: true,
         p_id_custaccount: customerAccountId,
-      };
-      const newDocs = await getOrderFilesInfo(queryParams);
-      setDocumentsInfo(newDocs);
+      });
+      setDocumentsInfo(files);
 
-      alert("Document uploadé avec succès.");
-      setShowNewDocumentModal(false);
+      alert('Document uploadé avec succès.');
+      setShowNewDocumentDialog(false);
       setNewDocumentData({ file: null, selectedFileType: '' });
     } catch (error) {
-      console.error("Erreur lors de l'upload du document:", error);
+      console.error('Error uploading document:', error);
       alert("Erreur lors de l'upload du document.");
     }
   };
 
-
-  useEffect(() => {
-    const fetchMandatoryFileTypes = async () => {
-      try {
-        const response = await getFilesRepoTypeofInfo({
-          p_id_files_repo_typeof_first: 500,
-          p_id_files_repo_typeof_last: 649,
-          p_ismandatory: null,
-          p_id_files_repo_typeof_list: null,
-        });
-        setMandatoryFileTypes(response.data || []);
-      } catch (error) {
-        console.error("Error fetching mandatory file types:", error);
-      }
-    };
-    fetchMandatoryFileTypes();
-  }, []);
-
-  const handleNewDocumentChange = (field, value) => {
-    setNewDocumentData(prev => ({ ...prev, [field]: value }));
+  // Affichage “table” (desktop) pour docs
+  const renderDocsDesktop = () => {
+    return (
+      <Box sx={{ overflowX: 'auto' }}>
+        <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+          <Box component="thead" sx={{ backgroundColor: '#f9f9f9' }}>
+            <Box component="tr">
+              <Box component="th" sx={tableCellStyle}>Type</Box>
+              <Box component="th" sx={tableCellStyle}>Fichier</Box>
+              {isModifiable && <Box component="th" sx={tableCellStyle}></Box>}
+            </Box>
+          </Box>
+          <Box component="tbody">
+            {documentsInfo.map((doc, i) => (
+              <Box
+                component="tr"
+                key={i}
+                sx={{ '&:nth-of-type(even)': { backgroundColor: '#f1f1f1' } }}
+              >
+                <Box component="td" sx={tableCellStyle}>
+                  {doc.txt_description_fr}
+                </Box>
+                <Box component="td" sx={tableCellStyle}>
+                  {doc.file_guid ? (
+                    <Typography
+                      sx={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}
+                      onClick={() => handleFileClick(doc)}
+                    >
+                      {doc.file_origin_name || 'Voir le fichier'}
+                    </Typography>
+                  ) : (
+                    'Aucun fichier'
+                  )}
+                </Box>
+                {isModifiable && (
+                  <Box component="td" sx={tableCellStyle}>
+                    <Button variant="text" color="error" onClick={() => handleDeleteDocument(doc.id_order_files)}>
+                      Supprimer
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      </Box>
+    );
   };
 
-  const handleDeleteDocument = async (docId) => {
+  // Affichage “cartes” (mobile) pour docs
+  const renderDocsMobile = () => {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {documentsInfo.map((doc, i) => (
+          <Box
+            key={i}
+            sx={{
+              border: '1px solid #ddd',
+              borderRadius: 1,
+              backgroundColor: '#f9f9f9',
+              p: 2
+            }}
+          >
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              <strong>Type :</strong> {doc.txt_description_fr}
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              <strong>Fichier :</strong>{' '}
+              {doc.file_guid ? (
+                <Box
+                  component="span"
+                  sx={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}
+                  onClick={() => handleFileClick(doc)}
+                >
+                  {doc.file_origin_name || 'Voir le fichier'}
+                </Box>
+              ) : (
+                'Aucun fichier'
+              )}
+            </Typography>
+            {isModifiable && (
+              <Box sx={{ textAlign: 'right' }}>
+                <Button
+                  variant="text"
+                  color="error"
+                  startIcon={<FontAwesomeIcon icon={faTimes} />}
+                  onClick={() => handleDeleteDocument(doc.id_order_files)}
+                >
+                  Supprimer
+                </Button>
+              </Box>
+            )}
+          </Box>
+        ))}
+      </Box>
+    );
+  };
+
+  // ------------------------------------------------
+  // 8) SOUMETTRE LA COMMANDE
+  // ------------------------------------------------
+  const handleSubmitOrder = async () => {
+    if (!values.orderId || !idLogin) return;
     try {
-      await delOrderFiles(docId);
-      // Re-fetch documents list
-      const queryParams = {
-        p_id_order_list: orderId || values.orderId,
-        p_isactive: true,
-        p_id_custaccount: customerAccountId,
-      };
-      const newDocs = await getOrderFilesInfo(queryParams);
-      setDocumentsInfo(newDocs);
-      alert("Document supprimé avec succès.");
+      await submitOrder(values.orderId, idLogin);
+      alert('Commande soumise avec succès.');
+      handleSubmit?.();
     } catch (error) {
-      console.error("Erreur lors de la suppression du document:", error);
-      alert("Erreur lors de la suppression du document.");
+      console.error('Error submitting order:', error);
+      alert("Erreur lors de la soumission de la commande.");
     }
   };
 
-  // -------------------- RENDU DU COMPOSANT --------------------
+  // ------------------------------------------------
+  // RENDU PRINCIPAL
+  // ------------------------------------------------
   return (
-    <div className="step5-form">
-      <h3 className="step5-title">Récapitulatif</h3>
+    <Box
+      sx={{
+        maxWidth: '1200px',
+        mx: 'auto',
+        p: { xs: 0, sm: 2, md: 3 },
+      }}
+    >
+      <Typography variant="h5" sx={{ textAlign: 'center', fontWeight: 'bold', mb: 2 }}>
+        Récapitulatif
+      </Typography>
 
-      {/* Titre "Désignation de la commande" */}
-      <h4 className="step5-main-title">Désignation commande</h4>
+      {/* (1) DEMANDEUR / EXPEDITEUR */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#C39408', mb: 2 }}>
+            1/7 Demandeur / Expéditeur
+          </Typography>
 
-      {/* 1/7 Demandeur / Expediteur */}
-      <div className="step5-designation-commande">
-        <h5 className="step5-sub-title">1/7 Demandeur / Expediteur</h5>
-        <div className="step5-field-row">
-          <span className="step5-field-label">Société :</span>
-          <span className="step5-field-value step5-fixed-field">
-            {isModal ? (
-              <span
-                className="step5-clickable"
-                onClick={() =>
-                  openSecondModal({
-                    name: companyName,
-                    address: '123 Rue Principale, Ville, Pays',
-                    address2: 'Suite 456',
-                    contact: 'M. Vladimir Outof\nManager',
-                    activity: 'Construction',
-                    statut: 'Actif',
-                  })
-                }
-              >
-                {companyName}
-              </span>
-            ) : (
-              companyName
-            )}
-          </span>
-        </div>
-        <div className="step5-field-row">
-          <span className="step5-field-label">Libellé de commande :</span>
-          <span className="step5-field-value">
-            {isEditingLabel ? (
-              <div className="step5-editable-field">
-                <input
-                  type="text"
-                  value={orderLabel}
-                  onChange={(e) => setOrderLabel(e.target.value)}
-                  className="step5-editable-input step5-white-input"
-                />
-                <div className="step5-save-container">
-                  <button type="button" className="step5-save-button" onClick={saveOrderLabel}>
-                    Enregistrer
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="step5-editable-display">
-                <span>{orderLabel || 'Aucun libellé spécifié'}</span>
-                {isModifiable && (
-          <FontAwesomeIcon
-            icon={faPencilAlt}
-            className="step5-pencil-icon"
-            onClick={() => setIsEditingLabel(true)}
-          />
-        )}
-              </div>
-            )}
-          </span>
-        </div>
-      </div>
+          {/* Société */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+            <Typography sx={{ width: 180, fontWeight: 600 }}>Société :</Typography>
+            <Box
+              sx={{
+                flex: 1,
+                backgroundColor: '#e0e0e0',
+                p: 1,
+                borderRadius: 1,
+                cursor: isModal ? 'pointer' : 'default',
+              }}
+              onClick={
+                isModal
+                  ? () => openSecondModal?.({
+                      name: companyName,
+                      address: '123 Rue Principale, Ville, Pays',
+                      address2: 'Suite 456',
+                      contact: 'M. Vladimir Outof\nManager',
+                      activity: 'Construction',
+                      statut: 'Actif',
+                    })
+                  : undefined
+              }
+            >
+              {companyName || 'Société non renseignée'}
+            </Box>
+          </Box>
 
-      {/* Titre et bouton "Modifier" pour Certificat d'origine */}
-      <div className="step5-designation-header">
-        <h4>Contenu du Certificat d'origine</h4>
-      </div>
+          {/* Libellé commande */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+            <Typography sx={{ width: 180, fontWeight: 600 }}>Libellé :</Typography>
+            <Box sx={{ flex: 1 }}>
+              {isEditingLabel ? (
+                <Box>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={orderLabel}
+                    onChange={(e) => setOrderLabel(e.target.value)}
+                  />
+                  <Box sx={{ textAlign: 'right', mt: 1 }}>
+                    <Button variant="contained" color="success" onClick={saveOrderLabel}>
+                      Enregistrer
+                    </Button>
+                  </Box>
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    backgroundColor: '#e0e0e0',
+                    p: 1,
+                    borderRadius: 1,
+                  }}
+                >
+                  <Typography sx={{ flex: 1 }}>
+                    {orderLabel || 'Aucun libellé spécifié'}
+                  </Typography>
+                  {isModifiable && (
+                    <IconButton size="small" onClick={() => setIsEditingLabel(true)}>
+                      <FontAwesomeIcon icon={faPencilAlt} style={{ color: '#DCAF26' }} />
+                    </IconButton>
+                  )}
+                </Box>
+              )}
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
 
-      {/* Section Contenu du Certificat d'origine */}
-      <div className="step5-contenu-certificat">
-        {/* 2/7 Destinataire */}
-        <div className="step5-recap-section">
-          <h5>2/7 Destinataire</h5>
-          <div className="step5-form-group">
-            <select
-              id="recipientSelect"
-              className="step5-recipient-select"
+      {/* (2) DESTINATAIRE */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#C39408', mb: 2 }}>
+            2/7 Destinataire
+          </Typography>
+
+          <FormControl sx={{ minWidth: 220, mb: 1 }} size="small">
+            <InputLabel>Destinataire</InputLabel>
+            <Select
+              label="Destinataire"
               value={selectedRecipientId}
               onChange={isModifiable ? handleRecipientChange : undefined}
               disabled={!isModifiable}
             >
-              <option value="">-- Sélectionnez un destinataire --</option>
-              {localRecipients.map((recipient) => (
-                <option key={recipient.id_recipient_account} value={recipient.id_recipient_account}>
-                  {recipient.recipient_name}
-                </option>
+              <MenuItem value="">-- Sélectionnez --</MenuItem>
+              {localRecipients.map((r) => (
+                <MenuItem key={r.id_recipient_account} value={String(r.id_recipient_account)}>
+                  {r.recipient_name}
+                </MenuItem>
               ))}
-            </select>
-          </div>
-          <div style={{ marginTop: '10px' }}>
-            {isModifiable && (
-              <button
-                type="button"
-                className="step5-add-merch-button"
-                onClick={() => setShowNewRecipientModal(true)}
-              >
-                + Ajouter un destinataire
-              </button>
-            )}
-          </div>
-        </div>
+            </Select>
+          </FormControl>
+          {isModifiable && (
+            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+              <Button variant="outlined" onClick={handleRecipientSubmit}>
+                Enregistrer
+              </Button>
+              <Button variant="contained" onClick={() => setShowNewRecipientDialog(true)}>
+                + Nouveau
+              </Button>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
 
-
-        {/* 3/7 Description de la marchandise */}
-        <div className="step5-recap-section">
-          <h5>3/7 Description de la marchandise</h5>
-          {merchandises && merchandises.length > 0 ? (
-            <div className="step5-table-responsive">
-              <table className="step5-merchandise-table">
-                <thead>
-                  <tr>
-                    <th>Désignation</th>
-                    <th>Référence / HSCODE</th>
-                    <th>Référence doc. Justificatif</th>
-                    <th>Quantité</th>
-                    <th>Unité</th>
-                    {isModifiable && <th>Action</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {merchandises.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.designation || 'Non spécifié'}</td>
-                      <td>{item.boxReference || 'Non spécifié'}</td>
-                      <td>{item.docReference || 'Non spécifié'}</td>
-                      <td>{item.quantity || 'Non spécifié'}</td>
-                      <td>{item.unit || 'Non spécifié'}</td>
-                      {isModifiable && (
-                        <td>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteMerchandise(index)}
-                            style={{
-                              border: 'none',
-                              background: 'transparent',
-                              cursor: 'pointer',
-                              color: 'red',
-                              fontSize: '16px'
-                            }}
-                            title="Supprimer cette marchandise"
-                          >
-                            ❌
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p>Aucune marchandise ajoutée.</p>
+      {/* (3) MARCHANDISES */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#C39408', mb: 2 }}>
+            3/7 Description de la marchandise
+          </Typography>
+          {merchandises.length === 0 && (
+            <Typography>Aucune marchandise ajoutée.</Typography>
+          )}
+          {merchandises.length > 0 && (
+            isSmallScreen ? renderMerchMobile() : renderMerchDesktop()
           )}
           {isModifiable && (
-            <button
-              type="button"
-              className="step5-add-merch-button"
-              style={{ marginTop: '10px' }}
-              onClick={() => setShowNewMerchModal(true)}
+            <Button
+              variant="contained"
+              sx={{ mt: 2 }}
+              onClick={() => setShowNewMerchDialog(true)}
             >
               + Ajouter une marchandise
-            </button>
+            </Button>
           )}
-        </div>
+        </CardContent>
+      </Card>
 
+      {/* (4) ORIGINE & DESTINATION */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#C39408', mb: 2 }}>
+            4/7 Origine et Destination
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <FormControl size="small" sx={{ minWidth: 220 }}>
+              <InputLabel>Pays d'origine</InputLabel>
+              <Select
+                label="Pays d'origine"
+                value={values.goodsOrigin || ''}
+                onChange={
+                  isModifiable
+                    ? (e) => handleChange?.('goodsOrigin', e.target.value)
+                    : undefined
+                }
+                disabled={!isModifiable}
+              >
+                <MenuItem value="">-- Sélectionnez --</MenuItem>
+                {countries.map((c) => (
+                  <MenuItem key={c.id_country} value={String(c.id_country)}>
+                    {c.symbol_fr}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
+            <FormControl size="small" sx={{ minWidth: 220 }}>
+              <InputLabel>Pays de destination</InputLabel>
+              <Select
+                label="Pays de destination"
+                value={values.goodsDestination || ''}
+                onChange={
+                  isModifiable
+                    ? (e) => handleChange?.('goodsDestination', e.target.value)
+                    : undefined
+                }
+                disabled={!isModifiable}
+              >
+                <MenuItem value="">-- Sélectionnez --</MenuItem>
+                {countries.map((c) => (
+                  <MenuItem key={c.id_country} value={String(c.id_country)}>
+                    {c.symbol_fr}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </CardContent>
+      </Card>
 
-        <div className="step5-recap-section">
-        <h5>4/7 Origine et Destination des Marchandises</h5>
-        <div className="step5-country-selection">
-          <div className="step5-form-group">
-            <label>Pays d'origine :</label>
-            <select
-              value={values.goodsOrigin}
-              onChange={isModifiable ? (e) => handleChange('goodsOrigin', e.target.value) : undefined}
-              disabled={!isModifiable}
-            >
-              <option value="">-- Sélectionnez un pays --</option>
-              {countries.map((country) => (
-                <option key={country.id_country} value={country.id_country}>
-                  {country.symbol_fr}
-                </option>
-              ))}
-            </select>
-          </div>
+      {/* (5) TRANSPORT */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#C39408', mb: 2 }}>
+            5/7 Transport
+          </Typography>
 
-          <div className="step5-form-group">
-            <label>Pays de destination :</label>
-            <select
-              value={values.goodsDestination}
-              onChange={isModifiable ? (e) => handleChange('goodsDestination', e.target.value) : undefined}
-              disabled={!isModifiable}
-            >
-              <option value="">-- Sélectionnez un pays --</option>
-              {countries.map((country) => (
-                <option key={country.id_country} value={country.id_country}>
-                  {country.symbol_fr}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        </div>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 2 }}>
+            <FormControl size="small" sx={{ minWidth: 220 }}>
+              <InputLabel>Port de chargement</InputLabel>
+              <Select
+                label="Port de chargement"
+                value={values.loadingPort || ''}
+                onChange={
+                  isModifiable
+                    ? (e) => handleChange?.('loadingPort', e.target.value)
+                    : undefined
+                }
+                disabled={!isModifiable}
+              >
+                <MenuItem value="">-- Sélectionnez --</MenuItem>
+                {countries.map((c) => (
+                  <MenuItem key={c.id_country} value={String(c.id_country)}>
+                    {c.symbol_fr}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
+            <FormControl size="small" sx={{ minWidth: 220 }}>
+              <InputLabel>Port de déchargement</InputLabel>
+              <Select
+                label="Port de déchargement"
+                value={values.dischargingPort || ''}
+                onChange={
+                  isModifiable
+                    ? (e) => handleChange?.('dischargingPort', e.target.value)
+                    : undefined
+                }
+                disabled={!isModifiable}
+              >
+                <MenuItem value="">-- Sélectionnez --</MenuItem>
+                {countries.map((c) => (
+                  <MenuItem key={c.id_country} value={String(c.id_country)}>
+                    {c.symbol_fr}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
+            {isModifiable && (
+              <Box>
+                <Button variant="outlined" onClick={handleCountryUpdateSubmit}>
+                  Enregistrer pays/ports
+                </Button>
+              </Box>
+            )}
+          </Box>
 
-
-        {/* 5/7 Transport */}
-        <div className="step5-recap-section">
-          <h5>5/7 Transport</h5>
-
-          <div className="step5-form-group">
-            <label>Port de chargement :</label>
-            <select
-              value={values.loadingPort}
-              onChange={isModifiable ? (e) => handleChange('loadingPort', e.target.value) : undefined}
-              disabled={!isModifiable}
-            >
-              <option value="">-- Sélectionnez un pays --</option>
-              {countries.map((country) => (
-                <option key={country.id_country} value={country.id_country}>
-                  {country.symbol_fr}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="step5-form-group">
-            <label>Port de déchargement :</label>
-            <select
-              value={values.dischargingPort}
-              onChange={isModifiable ? (e) => handleChange('dischargingPort', e.target.value) : undefined}
-              disabled={!isModifiable}
-            >
-              <option value="">-- Sélectionnez un pays --</option>
-              {countries.map((country) => (
-                <option key={country.id_country} value={country.id_country}>
-                  {country.symbol_fr}
-                </option>
-              ))}
-            </select>
-          </div>
-          {isModifiable &&
-
-            <button
-              type="button"
-              onClick={handleCountryUpdateSubmit}
-              style={{
-                backgroundColor: '#28a745',
-                color: '#fff',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Enregistrer les pays/ports
-            </button>
-          }
-         <div className="step5-form-group">
-          <label>Modes de transport :</label>
-          <div className="transport-options">
-            {transpMode && transpMode.length > 0 ? (
-              transpMode.map((mode) => {
-                // On utilise le symbole en minuscules comme clé
+          <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
+            Modes de transport
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+            {transpModeList && transpModeList.length > 0 ? (
+              transpModeList.map((mode) => {
                 const key = mode.symbol_fr.toLowerCase();
                 return (
-                  <label key={mode.id_transport_mode} style={{ marginRight: '10px' }}>
-                    <input
-                      type="checkbox"
-                      checked={tempTransportModes[key] === true}
-                      onChange={
-                        isModifiable
-                          ? async (e) => {
-                              const checked = e.target.checked;
-                              // Mise à jour immédiate de l'état local
-                              setTempTransportModes((prev) => ({ ...prev, [key]: checked }));
-                              if (checked) {
-                                try {
-                                  await setOrdCertifTranspMode({
-                                    id_ord_certif_transp_mode: null, // null pour insertion
-                                    id_ord_certif_ori: certifId,       // ID du certificat depuis la query
-                                    id_transport_mode: mode.id_transport_mode,
-                                  });
-                                  console.log("Transport mode added:", mode);
-                                } catch (error) {
-                                  console.error("Error adding transport mode:", error);
-                                }
-                              } else {
-                                try {
-                                  await removeSingleCertifTranspMode(certifId, mode.id_transport_mode, idLogin);
-                                  console.log("Transport mode removed:", mode);
-                                } catch (error) {
-                                  console.error("Error removing transport mode:", error);
-                                }
-                              }
-                            }
-                          : undefined
-                      }
-                      disabled={!isModifiable}
-                    />
-                    {mode.symbol_fr}
-                  </label>
+                  <FormControlLabel
+                    key={mode.id_transport_mode}
+                    label={mode.symbol_fr}
+                    control={
+                      <Checkbox
+                        checked={!!tempTransportModes[key]}
+                        onChange={(e) => handleTransportModeChange(mode, e.target.checked)}
+                        disabled={!isModifiable}
+                      />
+                    }
+                  />
                 );
               })
             ) : (
-              <p>Aucun mode de transport disponible.</p>
+              <Typography>Aucun mode de transport disponible.</Typography>
             )}
-          </div>
-        </div>
+          </Box>
 
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+              Remarques sur le transport
+            </Typography>
+            <TextField
+              multiline
+              minRows={3}
+              fullWidth
+              value={values.transportRemarks || ''}
+              onChange={
+                isModifiable
+                  ? (e) => handleChange?.('transportRemarks', e.target.value)
+                  : undefined
+              }
+              disabled={!isModifiable}
+            />
+          </Box>
 
-          {/* Ajout du champ "Remarques sur le transport" */}
-          <div className="step5-form-group">
-            <label>Remarques sur le transport :</label>
-            <span className="step5-recap-value">
-              {values.transportRemarks || "Aucune remarque"}
-            </span>
-          </div>
+          {isModifiable && (
+            <Button variant="contained" color="success" onClick={handleTransportModesSave}>
+              Enregistrer modes de transport
+            </Button>
+          )}
+        </CardContent>
+      </Card>
 
-          <div className="step5-form-group">
-            {isModifiable &&
-              <button
-                type="button"
-                onClick={handleTransportModesSave}
-                style={{
-                  backgroundColor: '#28a745',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Enregistrer
-              </button>
-            }
-          </div>
-        </div>
+      {/* (6) AUTRES */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#C39408', mb: 2 }}>
+            6/7 Autres
+          </Typography>
 
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Typography sx={{ width: 180, fontWeight: 600 }}>Copies certifiées :</Typography>
+            <Box sx={{ flex: 1 }}>
+              {isModifiable ? (
+                isEditingCopies ? (
+                  <Box>
+                    <TextField
+                      type="number"
+                      size="small"
+                      fullWidth
+                      value={copies}
+                      onChange={(e) => setCopies(e.target.value)}
+                    />
+                    <Box sx={{ textAlign: 'right', mt: 1 }}>
+                      <Button variant="contained" color="success" onClick={saveCopies}>
+                        Enregistrer
+                      </Button>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      backgroundColor: '#e0e0e0',
+                      p: 1,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography sx={{ flex: 1 }}>
+                      {copies || 'Non spécifié'}
+                    </Typography>
+                    <IconButton size="small" onClick={() => setIsEditingCopies(true)}>
+                      <FontAwesomeIcon icon={faPencilAlt} style={{ color: '#DCAF26' }} />
+                    </IconButton>
+                  </Box>
+                )
+              ) : (
+                <TextField
+                  type="number"
+                  size="small"
+                  fullWidth
+                  value={copies}
+                  disabled
+                />
+              )}
+            </Box>
+          </Box>
 
+          <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <Typography sx={{ width: 180, fontWeight: 600, mt: 1 }}>Remarques :</Typography>
+            <Box sx={{ flex: 1 }}>
+              {isModifiable ? (
+                isEditingRemarks ? (
+                  <Box>
+                    <TextField
+                      multiline
+                      minRows={3}
+                      fullWidth
+                      value={remarks}
+                      onChange={(e) => setRemarks(e.target.value)}
+                    />
+                    <Box sx={{ textAlign: 'right', mt: 1 }}>
+                      <Button variant="contained" color="success" onClick={saveRemarks}>
+                        Enregistrer
+                      </Button>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      backgroundColor: '#e0e0e0',
+                      p: 1,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography sx={{ flex: 1 }}>
+                      {remarks || 'Aucune remarque'}
+                    </Typography>
+                    <IconButton size="small" onClick={() => setIsEditingRemarks(true)}>
+                      <FontAwesomeIcon icon={faPencilAlt} style={{ color: '#DCAF26' }} />
+                    </IconButton>
+                  </Box>
+                )
+              ) : (
+                <TextField
+                  multiline
+                  minRows={3}
+                  fullWidth
+                  value={remarks}
+                  disabled
+                />
+              )}
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
 
+      {/* (7) PIÈCES JUSTIFICATIVES */}
+      <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#DCAF26', mb: 2 }}>
+        Pièces Justificatives (7/7)
+      </Typography>
+      <Card>
+        <CardContent>
+          {documentsInfo.length === 0 && (
+            <Typography>Aucune pièce justificative ajoutée.</Typography>
+          )}
+          {documentsInfo.length > 0 && (
+            isSmallScreen ? renderDocsMobile() : renderDocsDesktop()
+          )}
+          {isModifiable && (
+            <Button variant="contained" sx={{ mt: 2 }} onClick={() => setShowNewDocumentDialog(true)}>
+              Upload
+            </Button>
+          )}
+        </CardContent>
+      </Card>
 
-
-
-        {/* 6/7 Autres */}
-
-        <div className="step5-recap-section">
-          <h5>6/7 Autres</h5>
-          <div className="step5-recap-item">
-  <span className="step5-recap-label">Copies certifiées :</span>
-  <span className="step5-recap-value step5-fixed-field">
-    {isModifiable ? (
-      isEditingCopies ? (
-        <div className="step5-editable-field">
-          <input
-            type="number"
-            value={copies}
-            onChange={(e) => setCopies(e.target.value)}
-            className="step5-editable-input"  // sans 'step5-white-input'
-          />
-          <div className="step5-save-container">
-            <button type="button" className="step5-save-button" onClick={saveCopies}>
-              Enregistrer
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="step5-editable-display">
-          <span>{copies || 'Non spécifié'}</span>
-          <FontAwesomeIcon
-            icon={faPencilAlt}
-            className="step5-pencil-icon"
-            onClick={() => setIsEditingCopies(true)}
-          />
-        </div>
-      )
-    ) : (
-      // Utilisation d'une classe spécifique pour le style en lecture seule
-      <input
-        type="number"
-        value={copies}
-        disabled
-        className="step5-disabled-input"
-      />
-    )}
-  </span>
-</div>
-
-
-          <div className="step5-recap-item">
-            <span className="step5-recap-label">Remarques :</span>
-            <span className="step5-recap-value step5-fixed-field">
-            {isEditingRemarks ? (
-  <div className="step5-editable-field">
-    <textarea
-      value={remarks}
-      onChange={isModifiable ? (e) => setRemarks(e.target.value) : undefined}
-      className={isModifiable ? "step5-editable-input" : "step5-disabled-input"}
-      disabled={!isModifiable}
-    />
-    <div className="step5-save-container">
-      {isModifiable && (
-        <button type="button" className="step5-save-button" onClick={saveRemarks}>
-          Enregistrer
-        </button>
-      )}
-    </div>
-  </div>
-) : (
-  <div className="step5-editable-display">
-    <span>{remarks || 'Aucune remarque'}</span>
-    {isModifiable && (
-      <FontAwesomeIcon
-        icon={faPencilAlt}
-        className="step5-pencil-icon"
-        onClick={() => setIsEditingRemarks(true)}
-      />
-    )}
-  </div>
-)}
-
-            </span>
-          </div>
-        </div>
-        <div className="step5-form-group">
-        {isModifiable && 
-          <button
-            type="button"
-            onClick={handleTransportModesSave}
-            style={{
-              backgroundColor: '#28a745',
-              color: '#fff',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Enregistrer
-          </button>
-}
-        </div>
-
-
-      </div>
-
-      <h4 className="step5-main-title">Pièce justificatives</h4>
-      {/* 7/7 Pièce Justificatives dans un rectangle gris avec titre en orange */}
-      <div className="step5-designation-commande">
-  <h5 className="step5-sub-title">7/7 Pièce Justificatives</h5>
-  <div className="step5-pieces-justificatives-rectangle">
-    {documentsInfo && documentsInfo.length > 0 ? (
-      <div className="step5-table-responsive">
-        <table className="step5-document-table">
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Fichier</th>
-              {isModifiable && <th>Actions</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {documentsInfo.map((doc, index) => (
-              <tr key={index}>
-                <td>{doc.txt_description_fr}</td>
-                <td>
-                  {doc.file_guid ? (
-                    <span
-                      onClick={() => handleFileClick(doc)}
-                      style={{
-                        cursor: 'pointer',
-                        color: 'blue',
-                        textDecoration: 'underline'
-                      }}
-                    >
-                      {doc.file_origin_name || 'Télécharger le fichier'}
-                    </span>
-                  ) : (
-                    "Aucun fichier"
-                  )}
-                </td>
-                {isModifiable && (
-                  <td>
-                    <button
-                      onClick={() => handleDeleteDocument(doc.id_order_files)}
-                      style={{ color: 'red' }}
-                      title="Supprimer"
-                    >
-                      ❌
-                    </button>
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    ) : (
-      <p>Aucune pièce justificative ajoutée.</p>
-    )}
-    {isModifiable && (
-      <button type="button" className="step5-upload-button" onClick={handleShowNewDocumentModal}>
-        Upload
-      </button>
-    )}
-  </div>
-</div>
-
-
-      {/* Actions */}
-      {!isModal && (
-        <div className="step5-submit-section">
-          {isModifiable &&
-            <button type="button" className="step5-next-button" onClick={handleSubmitOrder}>
-              Soumettre
-            </button>
-          }
-        </div>
+      {/* BOUTON FINAL "SOUMETTRE" */}
+      {!isModal && isModifiable && (
+        <Box sx={{ textAlign: 'center', mt: 3 }}>
+          <Button variant="contained" color="success" onClick={handleSubmitOrder}>
+            Soumettre la commande
+          </Button>
+        </Box>
       )}
 
-      {/* Modal pour créer un nouveau destinataire */}
-      {showNewRecipientModal && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <h3>Créer un nouveau destinataire</h3>
-            <div className="form-group">
-              <label>Nom de l'entreprise *</label>
-              <input
-                type="text"
-                value={newRecipientLocal.receiverName}
-                onChange={(e) => handleNewRecipientChange('receiverName', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Adresse *</label>
-              <input
-                type="text"
-                value={newRecipientLocal.receiverAddress}
-                onChange={(e) => handleNewRecipientChange('receiverAddress', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Complément d'adresse</label>
-              <input
-                type="text"
-                value={newRecipientLocal.receiverAddress2}
-                onChange={(e) => handleNewRecipientChange('receiverAddress2', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Code postal *</label>
-              <input
-                type="text"
-                value={newRecipientLocal.receiverPostalCode}
-                onChange={(e) => handleNewRecipientChange('receiverPostalCode', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Ville *</label>
-              <input
-                type="text"
-                value={newRecipientLocal.receiverCity}
-                onChange={(e) => handleNewRecipientChange('receiverCity', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Pays *</label>
-              <select
-                value={newRecipientLocal.receiverCountry}
+      {/* ---------- DIALOGS ---------- */}
+
+      {/* Dialog : Nouveau destinataire */}
+      <Dialog open={showNewRecipientDialog} onClose={() => setShowNewRecipientDialog(false)}>
+        <DialogTitle>Créer un nouveau destinataire</DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              label="Nom de l'entreprise *"
+              value={newRecipientLocal.receiverName}
+              onChange={(e) => handleNewRecipientChange('receiverName', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Adresse *"
+              value={newRecipientLocal.receiverAddress}
+              onChange={(e) => handleNewRecipientChange('receiverAddress', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Complément d'adresse"
+              value={newRecipientLocal.receiverAddress2}
+              onChange={(e) => handleNewRecipientChange('receiverAddress2', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Code postal *"
+              value={newRecipientLocal.receiverPostalCode}
+              onChange={(e) => handleNewRecipientChange('receiverPostalCode', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Ville *"
+              value={newRecipientLocal.receiverCity}
+              onChange={(e) => handleNewRecipientChange('receiverCity', e.target.value)}
+              fullWidth
+            />
+            <FormControl fullWidth>
+              <InputLabel>Pays *</InputLabel>
+              <Select
+                label="Pays *"
+                value={newRecipientLocal.receiverCountry || ''}
                 onChange={(e) => handleNewRecipientChange('receiverCountry', e.target.value)}
               >
-                <option value="">-- Sélectionnez un pays --</option>
-                {countries.map((country) => (
-                  <option key={country.id_country} value={country.symbol_fr}>
-                    {country.symbol_fr}
-                  </option>
+                <MenuItem value="">-- Sélectionnez un pays --</MenuItem>
+                {countries.map((c) => (
+                  <MenuItem key={c.id_country} value={c.symbol_fr}>
+                    {c.symbol_fr}
+                  </MenuItem>
                 ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Numéro de téléphone *</label>
-              <input
-                type="tel"
-                value={newRecipientLocal.receiverPhone}
-                onChange={(e) => handleNewRecipientChange('receiverPhone', e.target.value)}
-              />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px', gap: '10px' }}>
-              <button type="button" onClick={() => setShowNewRecipientModal(false)}>
-                Annuler
-              </button>
-              <button type="button" onClick={handleSaveNewRecipient}>
-                Enregistrer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Numéro de téléphone *"
+              value={newRecipientLocal.receiverPhone}
+              onChange={(e) => handleNewRecipientChange('receiverPhone', e.target.value)}
+              fullWidth
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowNewRecipientDialog(false)}>Annuler</Button>
+          <Button variant="contained" onClick={handleSaveNewRecipient}>
+            Enregistrer
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      {/* Modal pour créer une nouvelle marchandise */}
-      {showNewMerchModal && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <h3>Ajouter une nouvelle marchandise</h3>
-            <div className="form-group">
-              <label>Désignation</label>
-              <input
-                type="text"
-                value={newMerchLocal.designation}
-                onChange={(e) => handleNewMerchChange('designation', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Référence / HSCODE</label>
-              <input
-                type="text"
-                value={newMerchLocal.boxReference}
-                onChange={(e) => handleNewMerchChange('boxReference', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Quantité</label>
-              <input
-                type="number"
-                value={newMerchLocal.quantity}
-                onChange={(e) => handleNewMerchChange('quantity', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Unité</label>
-              <select
-                value={newMerchLocal.unit}
+      {/* Dialog : Nouvelle marchandise */}
+      <Dialog open={showNewMerchDialog} onClose={() => setShowNewMerchDialog(false)}>
+        <DialogTitle>Ajouter une nouvelle marchandise</DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              label="Désignation"
+              value={newMerchLocal.designation}
+              onChange={(e) => handleNewMerchChange('designation', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Référence / HSCODE"
+              value={newMerchLocal.boxReference}
+              onChange={(e) => handleNewMerchChange('boxReference', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Référence doc justificatif"
+              value={newMerchLocal.docReference}
+              onChange={(e) => handleNewMerchChange('docReference', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Quantité"
+              type="number"
+              value={newMerchLocal.quantity}
+              onChange={(e) => handleNewMerchChange('quantity', e.target.value)}
+              fullWidth
+            />
+            <FormControl fullWidth>
+              <InputLabel>Unité</InputLabel>
+              <Select
+                label="Unité"
+                value={newMerchLocal.unit || ''}
                 onChange={(e) => handleNewMerchChange('unit', e.target.value)}
               >
+                <MenuItem value="">-- Sélectionnez l'unité --</MenuItem>
                 {unitWeights
-                  .filter((unit) => unit.id_unit_weight >= 1)
-                  .map((unit) => (
-                    <option key={unit.id_unit_weight} value={unit.symbol_fr}>
-                      {unit.symbol_fr}
-                    </option>
+                  .filter((u) => u.id_unit_weight >= 1)
+                  .map((u) => (
+                    <MenuItem key={u.id_unit_weight} value={u.symbol_fr}>
+                      {u.symbol_fr}
+                    </MenuItem>
                   ))}
-              </select>
-            </div>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowNewMerchDialog(false)}>Annuler</Button>
+          <Button variant="contained" onClick={handleSaveNewMerch}>
+            Enregistrer
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px', gap: '10px' }}>
-              <button type="button" onClick={() => setShowNewMerchModal(false)}>
-                Annuler
-              </button>
-              <button type="button" onClick={handleSaveNewMerch}>
-                Enregistrer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {/* Modal for new document upload */}
-      {showNewDocumentModal && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <h3>Ajouter une nouvelle pièce justificative</h3>
-            <div className="form-group">
-              <label>Télécharger le fichier</label>
+      {/* Dialog : Nouveau document */}
+      <Dialog open={showNewDocumentDialog} onClose={() => setShowNewDocumentDialog(false)}>
+        <DialogTitle>Ajouter une nouvelle pièce justificative</DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Button variant="outlined" component="label">
+              Choisir un fichier
               <input
                 type="file"
-                onChange={(e) => handleNewDocumentChange('file', e.target.files[0])}
-                required
+                hidden
+                onChange={(e) =>
+                  setNewDocumentData((prev) => ({
+                    ...prev,
+                    file: e.target.files ? e.target.files[0] : null
+                  }))
+                }
               />
-            </div>
-            <div className="form-group">
-              <label>Type de document (obligatoire)</label>
-              <select
-                value={newDocumentData.selectedFileType}
-                onChange={(e) => handleNewDocumentChange('selectedFileType', e.target.value)}
-                required
+            </Button>
+            {newDocumentData.file && (
+              <Typography variant="body2">{newDocumentData.file.name}</Typography>
+            )}
+            <FormControl fullWidth>
+              <InputLabel>Type de document (obligatoire)</InputLabel>
+              <Select
+                label="Type de document (obligatoire)"
+                value={newDocumentData.selectedFileType || ''}
+                onChange={(e) =>
+                  setNewDocumentData((prev) => ({ ...prev, selectedFileType: e.target.value }))
+                }
               >
+                <MenuItem value="">-- Sélectionnez --</MenuItem>
                 {mandatoryFileTypes.map((type) => (
-                  <option key={type.id_files_repo_typeof} value={type.id_files_repo_typeof}>
+                  <MenuItem key={type.id_files_repo_typeof} value={type.id_files_repo_typeof}>
                     {type.txt_description_fr} - {type.txt_description_eng}
-                  </option>
+                  </MenuItem>
                 ))}
-              </select>
-            </div>
-            {isModifiable &&
-              <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-                <button type="button" onClick={() => setShowNewDocumentModal(false)}>Annuler</button>
-                <button type="button" onClick={handleSaveNewDocument}>Enregistrer</button>
-              </div>}
-          </div>
-        </div>
-      )}
-    </div>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowNewDocumentDialog(false)}>Annuler</Button>
+          {isModifiable && (
+            <Button variant="contained" onClick={handleSaveNewDocument}>
+              Enregistrer
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
+};
+
+// Style minimaliste pour chaque cellule <td> en mode "desktop table"
+const tableCellStyle = {
+  border: '1px solid #ddd',
+  p: 1,
+  textAlign: 'left',
+  fontSize: '14px',
+  wordWrap: 'break-word',
 };
 
 export default Step5;

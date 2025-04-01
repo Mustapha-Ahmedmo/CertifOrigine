@@ -4,12 +4,10 @@ import Step2 from './steps/Step2';
 import Step4 from './steps/Step4'; // Étape 3
 import Step5 from './steps/Step5'; // Étape 4
 
-// --- Vos imports CSS et vos services comme avant ---
 import './CreateOrder.css';
 import { createOrder } from '../../../services/apiServices';
 import { useSelector } from 'react-redux';
 
-// ------ IMPORTS MUI ------
 import Box from '@mui/material/Box';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
@@ -91,7 +89,7 @@ const CreateOrder = () => {
   // Soumission finale
   const handleSubmit = () => {
     console.log('Order Submitted:', formData);
-    // Placez ici votre action finale, par exemple generatePDF(formData)
+    // Placez ici votre action finale, ex : generatePDF(formData)
   };
 
   // Création de la commande (étape 1)
@@ -154,8 +152,7 @@ const CreateOrder = () => {
     }
   };
 
-  // Mise à jour de la barre d'étape (Stepper) pour refléter le nouveau processus
-  // On précise dans l'intitulé que l'étape 2 comporte 8 sections
+  // Étapes du Stepper
   const steps = [
     "Étape 1 : Création de la commande",
     "Étape 2 : Certificat d'origine ",
