@@ -22,6 +22,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@mui/icons-material": "^6.4.5",
+    "@mui/joy": "^5.0.0-beta.52",
     "@mui/material": "^6.4.5",
     "@mui/styled-engine-sc": "^6.4.3",
     "@mui/x-charts": "^7.27.1",

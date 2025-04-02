@@ -8,6 +8,7 @@ import {
 } from '../services/apiServices';
 import './Inscriptions.css';
 import { formatDate } from '../utils/dateUtils';
+
 import {
   Box,
   Typography,
@@ -31,7 +32,10 @@ import {
   Select,
   InputLabel,
   MenuItem,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faPlus, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 
@@ -40,13 +44,16 @@ const DestinataireList = () => {
   const user = useSelector((state) => state.auth.user);
   const customerAccountId = user?.id_cust_account;
 
+  // État
   const [recipients, setRecipients] = useState([]);
   const [countries, setCountries] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  // Gestion de la modale d'ajout/édition
+
+  // Modale
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingRecipientId, setEditingRecipientId] = useState(null);
-  // Données du nouveau destinataire
+
+  // Données destinataire
   const [newRecipient, setNewRecipient] = useState({
     recipientName: '',
     address1: '',
@@ -55,10 +62,13 @@ const DestinataireList = () => {
     country: '',
     phone: '',
   });
-
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Chargement initial
+  // Responsive
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Load
   useEffect(() => {
     loadRecipients();
     loadCountries();
@@ -83,7 +93,7 @@ const DestinataireList = () => {
     }
   };
 
-  // Ouvrir la modale en mode Édition
+  // Ouvrir la modale Édition
   const handleOpenEditModal = (recipient) => {
     setErrorMessage('');
     setEditingRecipientId(recipient.id_recipient_account);
@@ -98,6 +108,7 @@ const DestinataireList = () => {
     setShowAddModal(true);
   };
 
+  // Recherche
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -118,6 +129,7 @@ const DestinataireList = () => {
     return fields.some((field) => field.includes(search));
   });
 
+  // Ouvrir la modale Ajout
   const handleOpenAddModal = () => {
     setErrorMessage('');
     setEditingRecipientId(null);
@@ -148,7 +160,6 @@ const DestinataireList = () => {
   
     try {
       setErrorMessage('');
-  
       const payload = {
         idRecipientAccount: editingRecipientId ? editingRecipientId : null,
         idCustAccount: customerAccountId,
@@ -175,7 +186,7 @@ const DestinataireList = () => {
     }
   };
 
-  // Suppression en base
+  // Suppression
   const handleDelete = async (recipientId) => {
     if (!window.confirm('Voulez-vous vraiment supprimer ce destinataire ?')) return;
     try {
@@ -188,16 +199,152 @@ const DestinataireList = () => {
     }
   };
 
+  // ----- RENDU Desktop : Table -----
+  const renderDesktopTable = () => (
+    <Paper>
+      <TableContainer sx={{ overflowX: 'auto' }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Date Création</TableCell>
+              <TableCell>Nom du destinataire</TableCell>
+              <TableCell>Adresse</TableCell>
+              <TableCell>Pays</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredRecipients.map((recipient) => (
+              <TableRow key={recipient.id_recipient_account}>
+                <TableCell>{formatDate(recipient.insertdate)}</TableCell>
+                <TableCell>{recipient.recipient_name}</TableCell>
+                <TableCell>{recipient.address_1}</TableCell>
+                <TableCell>{recipient.country_symbol_fr_recipient || 'N/A'}</TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={
+                        <FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />
+                      }
+                      onClick={() => handleOpenEditModal(recipient)}
+                      sx={{ border: 'none', '&:hover': { border: 'none' } }}
+                    >
+                      Modifier
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="error"
+                      startIcon={
+                        <FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />
+                      }
+                      onClick={() => handleDelete(recipient.id_recipient_account)}
+                      sx={{ border: 'none', '&:hover': { border: 'none' } }}
+                    >
+                      Supprimer
+                    </Button>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+            {filteredRecipients.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  Aucun destinataire trouvé.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
+  );
+
+  // ----- RENDU Mobile : Cards -----
+  const renderMobileCards = () => (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {filteredRecipients.map((recipient) => (
+        <Paper
+          key={recipient.id_recipient_account}
+          sx={{
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1,
+          }}
+        >
+          <Typography variant="body2">
+            <strong>Date Création : </strong> {formatDate(recipient.insertdate)}
+          </Typography>
+          <Typography variant="body2">
+            <strong>Nom du destinataire : </strong> {recipient.recipient_name}
+          </Typography>
+          <Typography variant="body2">
+            <strong>Adresse : </strong> {recipient.address_1}
+          </Typography>
+          <Typography variant="body2">
+            <strong>Pays : </strong> {recipient.country_symbol_fr_recipient || 'N/A'}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />}
+              onClick={() => handleOpenEditModal(recipient)}
+              sx={{ border: 'none', '&:hover': { border: 'none' } }}
+            >
+              Modifier
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />}
+              onClick={() => handleDelete(recipient.id_recipient_account)}
+              sx={{ border: 'none', '&:hover': { border: 'none' } }}
+            >
+              Supprimer
+            </Button>
+          </Box>
+        </Paper>
+      ))}
+      {filteredRecipients.length === 0 && (
+        <Paper sx={{ p: 2 }}>
+          <Typography align="center">Aucun destinataire trouvé.</Typography>
+        </Paper>
+      )}
+    </Box>
+  );
+
   return (
-    <Box sx={{ ml: '240px', p: 3 }}>
+    <Box
+      sx={{
+        ml: { xs: 0, md: '240px' }, // 240px de marge à gauche en mode desktop
+        maxWidth: '1200px',
+        mx: 'auto',
+        px: { xs: 2, sm: 3 },
+        py: { xs: 2, sm: 3 },
+      }}
+    >
       <AppBar position="static" color="default">
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography variant="h6">Liste des Destinataires</Typography>
+
+          {/* BOUTON plus petit en mobile */}
           <Button
             variant="contained"
             onClick={handleOpenAddModal}
-            sx={{ backgroundColor: '#DCAF26' }}
+            size="small"
+            sx={{
+              backgroundColor: '#DCAF26',
+              fontSize: { xs: '0.7rem', sm: '0.85rem' },
+              px: { xs: 1, sm: 2 },
+              py: { xs: 0.5, sm: 1 },
+            }}
           >
+            <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
             Ajouter un destinataire
           </Button>
         </Toolbar>
@@ -215,68 +362,13 @@ const DestinataireList = () => {
         />
       </Box>
 
-      <Paper>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Date Création</TableCell>
-                <TableCell>Nom du destinataire</TableCell>
-                <TableCell>Adresse</TableCell>
-                <TableCell>Pays</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {recipients.map((recipient) => (
-                <TableRow key={recipient.id_recipient_account}>
-                  <TableCell>{formatDate(recipient.insertdate)}</TableCell>
-                  <TableCell>{recipient.recipient_name}</TableCell>
-                  <TableCell>{recipient.address_1}</TableCell>
-                  <TableCell>{recipient.country_symbol_fr_recipient || 'N/A'}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={
-                          <FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />
-                        }
-                        onClick={() => handleOpenEditModal(recipient)}
-                        sx={{ border: 'none', '&:hover': { border: 'none' } }}
-                      >
-                        Modifier
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        color="error"
-                        startIcon={
-                          <FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />
-                        }
-                        onClick={() => handleDelete(recipient.id_recipient_account)}
-                        sx={{ border: 'none', '&:hover': { border: 'none' } }}
-                      >
-                        Supprimer
-                      </Button>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {recipients.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    Aucun destinataire trouvé.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+      {/* Affichage conditionnel : table ou cards */}
+      {isSmallScreen ? renderMobileCards() : renderDesktopTable()}
 
       <Dialog open={showAddModal} onClose={handleCloseAddModal} maxWidth="sm" fullWidth>
-        <DialogTitle>Ajouter un destinataire</DialogTitle>
+        <DialogTitle>
+          {editingRecipientId ? 'Modifier un destinataire' : 'Ajouter un destinataire'}
+        </DialogTitle>
         <DialogContent dividers>
           {errorMessage && (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -349,7 +441,11 @@ const DestinataireList = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseAddModal}>Annuler</Button>
-          <Button variant="contained" onClick={handleSaveNewRecipient} sx={{ backgroundColor: '#DCAF26' }}>
+          <Button
+            variant="contained"
+            onClick={handleSaveNewRecipient}
+            sx={{ backgroundColor: '#DCAF26' }}
+          >
             Enregistrer
           </Button>
         </DialogActions>

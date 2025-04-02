@@ -8,7 +8,7 @@ import {
 } from '../services/apiServices';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import './ContactsList.css'; 
+import './ContactsList.css';
 import {
   Box,
   Typography,
@@ -30,6 +30,8 @@ import {
   Tabs,
   Tab,
   AppBar,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 
 // Helpers pour l'accessibilité des onglets
@@ -110,6 +112,10 @@ const ContactsList = () => {
     if (reason === 'clickaway') return;
     setSnackbarOpen(false);
   };
+
+  // Responsive
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Récupération des contacts
   useEffect(() => {
@@ -239,7 +245,7 @@ const ContactsList = () => {
         email,
         phone_number,
         mobile_number,
-        pwd: pwdToSend, 
+        pwd: pwdToSend,
         ismain_user,
         statut_flag: 1,
         id_login_insert: user?.id_login_user || 1,
@@ -293,19 +299,85 @@ const ContactsList = () => {
     return fieldsToSearch.some((field) => field.includes(search));
   });
 
+  const renderMobileCards = () => (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {filteredContacts.map((contact) => (
+        <Paper
+          key={contact.id_cust_user}
+          sx={{
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1,
+          }}
+        >
+          <Typography variant="body2">
+            <strong>Nom : </strong> {contact.full_name}
+          </Typography>
+          <Typography variant="body2">
+            <strong>Fonction : </strong> {contact.position}
+          </Typography>
+          <Typography variant="body2">
+            <strong>Email : </strong>
+            <a href={`mailto:${contact.email}`} style={{ color: '#DCAF26' }}>
+              {contact.email}
+            </a>
+          </Typography>
+          <Typography variant="body2">
+            <strong>Tél : </strong> {contact.phone_number}
+          </Typography>
+          <Typography variant="body2">
+            <strong>Portable : </strong> {contact.mobile_number}
+          </Typography>
+          <Typography variant="body2">
+            <strong>Contact Principal : </strong> {contact.ismain_user ? 'Oui' : 'Non'}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />}
+              onClick={() => handleOpenEditModal(contact)}
+              sx={{ border: 'none', '&:hover': { border: 'none' } }}
+            >
+              Modifier
+            </Button>
+            {!contact.ismain_user && (
+              <Button
+                variant="outlined"
+                size="small"
+                color="error"
+                startIcon={<FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />}
+                onClick={() => handleDelete(contact.id_cust_user)}
+                sx={{ border: 'none', '&:hover': { border: 'none' } }}
+              >
+                Supprimer
+              </Button>
+            )}
+          </Box>
+        </Paper>
+      ))}
+      {filteredContacts.length === 0 && (
+        <Paper sx={{ p: 2 }}>
+          <Typography align="center">Aucun contact trouvé.</Typography>
+        </Paper>
+      )}
+    </Box>
+  );
+
   if (loading) {
-    return <Box sx={{ ml: '240px', p: 3 }}>Chargement en cours...</Box>;
+    return <Box sx={{ ml: { xs: 0, md: '240px' }, p: 3 }}>Chargement en cours...</Box>;
   }
   if (error) {
     return (
-      <Box sx={{ ml: '240px', p: 3 }}>
+      <Box sx={{ ml: { xs: 0, md: '240px' }, p: 3 }}>
         <Typography color="error">{error}</Typography>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ ml: '240px', p: 3 }}>
+    <Box sx={{ ml: { xs: 0, md: '240px' }, maxWidth: '1200px', mx: 'auto', px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
       {/* Entête */}
       <Paper elevation={1} sx={{ mb: 2 }}>
         <Box
@@ -319,10 +391,17 @@ const ContactsList = () => {
           <Typography variant="h6">LISTE DES CONTACTS</Typography>
           <Button
             variant="contained"
-            startIcon={<FontAwesomeIcon icon={faPlus} style={{ color: '#DCAF26' }} />}
             onClick={handleOpenAddModal}
-            sx={{ backgroundColor: '#DCAF26', border: 'none' }}
+            size="small"
+            sx={{
+              backgroundColor: '#DCAF26',
+              fontSize: { xs: '0.7rem', sm: '0.85rem' },
+              px: { xs: 1, sm: 2 },
+              py: { xs: 0.5, sm: 1 },
+              border: 'none'
+            }}
           >
+            <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
             Ajouter un contact
           </Button>
         </Box>
@@ -341,79 +420,81 @@ const ContactsList = () => {
         />
       </Box>
 
-      {/* Tableau */}
-      <Paper>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Nom</TableCell>
-                <TableCell>Fonction</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Tél</TableCell>
-                <TableCell>Portable</TableCell>
-                <TableCell>Contact Principal</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredContacts.map((contact) => (
-                <TableRow key={contact.id_cust_user}>
-                  <TableCell>{contact.full_name}</TableCell>
-                  <TableCell>{contact.position}</TableCell>
-                  <TableCell>
-                    <a href={`mailto:${contact.email}`} style={{ color: '#DCAF26' }}>
-                      {contact.email}
-                    </a>
-                  </TableCell>
-                  <TableCell>{contact.phone_number}</TableCell>
-                  <TableCell>{contact.mobile_number}</TableCell>
-                  <TableCell>
-                    <input type="checkbox" checked={contact.ismain_user} disabled />
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />}
-                      onClick={() => handleOpenEditModal(contact)}
-                      sx={{
-                        mr: 1,
-                        border: 'none',
-                        '&:hover': { border: 'none' },
-                      }}
-                    >
-                      Modifier
-                    </Button>
-                    {!contact.ismain_user && (
+      {/* Affichage conditionnel : tableau ou cartes mobiles */}
+      {isSmallScreen ? renderMobileCards() : (
+        <Paper>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Nom</TableCell>
+                  <TableCell>Fonction</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Tél</TableCell>
+                  <TableCell>Portable</TableCell>
+                  <TableCell>Contact Principal</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredContacts.map((contact) => (
+                  <TableRow key={contact.id_cust_user}>
+                    <TableCell>{contact.full_name}</TableCell>
+                    <TableCell>{contact.position}</TableCell>
+                    <TableCell>
+                      <a href={`mailto:${contact.email}`} style={{ color: '#DCAF26' }}>
+                        {contact.email}
+                      </a>
+                    </TableCell>
+                    <TableCell>{contact.phone_number}</TableCell>
+                    <TableCell>{contact.mobile_number}</TableCell>
+                    <TableCell>
+                      <input type="checkbox" checked={contact.ismain_user} disabled />
+                    </TableCell>
+                    <TableCell>
                       <Button
                         variant="outlined"
                         size="small"
-                        color="error"
-                        startIcon={<FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />}
-                        onClick={() => handleDelete(contact.id_cust_user)}
+                        startIcon={<FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />}
+                        onClick={() => handleOpenEditModal(contact)}
                         sx={{
+                          mr: 1,
                           border: 'none',
                           '&:hover': { border: 'none' },
                         }}
                       >
-                        Supprimer
+                        Modifier
                       </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredContacts.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    Aucun contact trouvé.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+                      {!contact.ismain_user && (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          color="error"
+                          startIcon={<FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />}
+                          onClick={() => handleDelete(contact.id_cust_user)}
+                          sx={{
+                            border: 'none',
+                            '&:hover': { border: 'none' },
+                          }}
+                        >
+                          Supprimer
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredContacts.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center">
+                      Aucun contact trouvé.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+      )}
 
       {/* Modale d'ajout/édition */}
       <Dialog open={showModal} onClose={handleCloseModal} maxWidth="sm" fullWidth>
