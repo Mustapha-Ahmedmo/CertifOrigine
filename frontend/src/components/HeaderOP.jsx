@@ -66,8 +66,6 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
       </Box>
 
       <Box className="header-right">
-        
-
         {/* Inscriptions */}
         <Box
           className="header-icon-container"

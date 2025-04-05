@@ -496,7 +496,7 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
       >
         <TableHead>
           <TableRow>
-            <TableCell sx={{ width: '10%', textAlign: 'center' }}>Date</TableCell>
+            <TableCell sx={{ width: '10%', textAlign: 'center' }}>Date de soumission</TableCell>
             <TableCell sx={{ width: '10%', textAlign: 'center' }}>N° de Commande</TableCell>
             <TableCell sx={{ width: '20%', textAlign: 'center' }}>Désignation</TableCell>
             <TableCell sx={{ width: '15%', textAlign: 'center' }}>Certificat d'Origine</TableCell>

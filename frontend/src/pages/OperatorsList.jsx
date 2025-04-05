@@ -24,7 +24,13 @@ import {
   DialogContent,
   IconButton,
   Menu,
-  MenuItem
+  MenuItem,
+  Card,
+  CardContent,
+  CardActions,
+  Grid,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import RegisterOP from './RegisterOP';
 
@@ -56,9 +62,12 @@ const OperatorsList = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedOp, setSelectedOp] = useState(null);
 
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
   const handleTabChange = (event, newValue) => setTabIndex(newValue);
   const handleModalClose = () => setOpenRegisterModal(false);
-  
+
   useEffect(() => {
     const fetchOperators = async () => {
       try {
@@ -104,21 +113,116 @@ const OperatorsList = () => {
     setSelectedOp(null);
   };
 
+  // Rendu du tableau (desktop)
+  const renderTableView = () => (
+    <Paper>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Nom</TableCell>
+              <TableCell>Login</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Tél</TableCell>
+              <TableCell>Portable</TableCell>
+              <TableCell>Groupe</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {operators.map((op) => (
+              <TableRow key={op.id_op_user}>
+                <TableCell>{op.full_name}</TableCell>
+                <TableCell>{op.username}</TableCell>
+                <TableCell>
+                  <a href={`mailto:${op.email}`} style={{ color: '#DCAF26' }}>
+                    {op.email}
+                  </a>
+                </TableCell>
+                <TableCell>{op.phone_number}</TableCell>
+                <TableCell>{op.mobile_number}</TableCell>
+                <TableCell>{getGroupLabel(op.roles, op.isadmin)}</TableCell>
+                <TableCell>
+                  <IconButton onClick={(event) => handleMenuOpen(event, op)}>
+                    <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
+  );
+
+  // Rendu en mode Card (mobile)
+  const renderCardView = () => (
+    <Grid container spacing={2}>
+      {operators.map((op) => (
+        <Grid item xs={12} key={op.id_op_user}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle2">
+                <strong>Nom :</strong> {op.full_name}
+              </Typography>
+              <Typography variant="subtitle2">
+                <strong>Login :</strong> {op.username}
+              </Typography>
+              <Typography variant="subtitle2">
+                <strong>Email :</strong>{' '}
+                <a href={`mailto:${op.email}`} style={{ color: '#DCAF26' }}>
+                  {op.email}
+                </a>
+              </Typography>
+              <Typography variant="subtitle2">
+                <strong>Tél :</strong> {op.phone_number}
+              </Typography>
+              <Typography variant="subtitle2">
+                <strong>Portable :</strong> {op.mobile_number}
+              </Typography>
+              <Typography variant="subtitle2">
+                <strong>Groupe :</strong> {getGroupLabel(op.roles, op.isadmin)}
+              </Typography>
+            </CardContent>
+            <CardActions>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => handleEdit(op.id_op_user)}
+                style={{ color: '#DCAF26', borderColor: '#DCAF26' }}
+              >
+                Modifier
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => handleDelete(op.id_op_user)}
+                style={{ color: '#DCAF26', borderColor: '#DCAF26' }}
+              >
+                Désactiver
+              </Button>
+            </CardActions>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+
   if (loading)
     return (
-      <Box sx={{ ml: '240px', p: 3 }}>
+      <Box sx={{ ml: { xs: '2px', md: '240px' }, p: 3 }}>
         <Typography>Chargement...</Typography>
       </Box>
     );
   if (error)
     return (
-      <Box sx={{ ml: '240px', p: 3 }}>
+      <Box sx={{ ml: { xs: '2px', md: '240px' }, p: 3 }}>
         <Typography color="error">{error}</Typography>
       </Box>
     );
 
   return (
-    <Box sx={{ ml: '240px', p: 3 }}>
+    <Box sx={{ ml: { xs: '2px', md: '240px' }, p: 3 }} className="operators-page-container">
       <AppBar position="static" color="default">
         <Tabs
           value={tabIndex}
@@ -145,44 +249,7 @@ const OperatorsList = () => {
             Ajouter un nouvel opérateur
           </Button>
         </Box>
-        <Paper>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Nom</TableCell>
-                  <TableCell>Login</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Tél</TableCell>
-                  <TableCell>Portable</TableCell>
-                  <TableCell>Groupe</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {operators.map((op) => (
-                  <TableRow key={op.id_op_user}>
-                    <TableCell>{op.full_name}</TableCell>
-                    <TableCell>{op.username}</TableCell>
-                    <TableCell>
-                      <a href={`mailto:${op.email}`} style={{ color: '#DCAF26' }}>
-                        {op.email}
-                      </a>
-                    </TableCell>
-                    <TableCell>{op.phone_number}</TableCell>
-                    <TableCell>{op.mobile_number}</TableCell>
-                    <TableCell>{getGroupLabel(op.roles, op.isadmin)}</TableCell>
-                    <TableCell>
-                      <IconButton onClick={(event) => handleMenuOpen(event, op)}>
-                        <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
+        {isSmallScreen ? renderCardView() : renderTableView()}
       </TabPanel>
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem

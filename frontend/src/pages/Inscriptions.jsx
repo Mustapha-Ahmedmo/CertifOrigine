@@ -28,6 +28,13 @@ import {
   Tabs,
   Tab,
   AppBar,
+  Checkbox,
+  Card,
+  CardContent,
+  CardActions,
+  Grid,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 
 // --- CSS perso ---
@@ -160,12 +167,12 @@ const Inscriptions = () => {
     }
   };
 
-  // Gère la recherche textuelle
+  // Gestion de la recherche
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  // Filtrage : recherche sur plusieurs champs
+  // Filtrage des inscriptions
   const filteredAccounts = custAccounts.filter((registration) => {
     const search = searchTerm.toLowerCase().trim();
     if (!search) return true;
@@ -189,17 +196,276 @@ const Inscriptions = () => {
     return fields.some((field) => field.includes(search));
   });
 
-  // Ouvre la modal de contacts
+  // Ouverture/fermeture de la modal de contacts
   const handleOpenContactsModal = (account) => {
     setSelectedAccount(account);
     setShowContactModal(true);
   };
 
-  // Ferme la modal de contacts
   const handleCloseContactsModal = () => {
     setSelectedAccount(null);
     setShowContactModal(false);
   };
+
+  // Détection de l'affichage mobile
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Rendu en mode Table (desktop)
+  const renderTableView = () => (
+    <Paper>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>Client</TableCell>
+              <TableCell>Secteur</TableCell>
+              <TableCell>Adresse Complète</TableCell>
+              <TableCell>Pays</TableCell>
+              <TableCell>Implantation</TableCell>
+              <TableCell>Fichier Justificatifs</TableCell>
+              <TableCell>Contact Principal</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredAccounts.map((registration) => {
+              const isRemoving = removingAccounts.includes(registration.id_cust_account);
+              return (
+                <TableRow
+                  key={registration.id_cust_account}
+                  className={isRemoving ? 'fade-out' : ''}
+                >
+                  <TableCell>{formatDate(registration.insertdate)}</TableCell>
+                  <TableCell>
+                    {registration.other_legal_form
+                      ? registration.other_legal_form
+                      : registration.legal_form}{' '}
+                    {registration.cust_name}
+                  </TableCell>
+                  <TableCell>
+                    {registration.sectorName?.symbol_fr || 'N/A'}
+                  </TableCell>
+                  <TableCell>{registration.full_address}</TableCell>
+                  <TableCell>{registration.co_symbol_fr}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {registration.in_free_zone ? 'Zone franche' : 'Entreprise'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    {registration.files && registration.files.length > 0 ? (
+                      registration.files.map((file) => {
+                        let fileDescription = file.txt_description_fr || 'Type inconnu';
+                        if (fileDescription.toLowerCase().includes('nif')) {
+                          fileDescription = 'Patente';
+                        } else if (fileDescription === 'NIF' && registration.nif) {
+                          fileDescription += ` (${registration.nif})`;
+                        } else if (
+                          fileDescription === 'Immatriculation RCS' &&
+                          registration.rchNumber
+                        ) {
+                          fileDescription += ` (${registration.rchNumber})`;
+                        } else if (
+                          fileDescription === 'Numéro de licence' &&
+                          registration.licenseNumber
+                        ) {
+                          fileDescription += ` (${registration.licenseNumber})`;
+                        }
+                        return (
+                          <Button
+                            key={file.id_files_repo}
+                            variant="text"
+                            onClick={() => handleFileClick(file)}
+                            size="small"
+                            style={{ marginRight: '6px', color: '#DCAF26' }}
+                          >
+                            {fileDescription}
+                          </Button>
+                        );
+                      })
+                    ) : (
+                      <Typography variant="body2">Aucun fichier</Typography>
+                    )}
+                    {registration.in_free_zone && registration.identification_number && (
+                      <Box mt={1} fontStyle="italic">
+                        Numéro de licence :{' '}
+                        <strong>{registration.identification_number}</strong>
+                      </Box>
+                    )}
+                    {!registration.in_free_zone && registration.trade_registration_num && (
+                      <Box mt={1} fontStyle="italic">
+                        NIF : <strong>{registration.trade_registration_num}</strong>
+                      </Box>
+                    )}
+                    {!registration.in_free_zone && registration.register_number && (
+                      <Box mt={1} fontStyle="italic">
+                        RCS : <strong>{registration.register_number}</strong>
+                      </Box>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={
+                        <FontAwesomeIcon icon={faEye} style={{ color: '#DCAF26' }} />
+                      }
+                      onClick={() => handleOpenContactsModal(registration)}
+                      style={{ color: '#DCAF26', borderColor: '#DCAF26' }}
+                    >
+                      Ouvrir
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <Box display="flex" flexDirection="column" gap={1}>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        onClick={() => handleValidate(registration.id_cust_account)}
+                      >
+                        Valider
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        size="small"
+                        onClick={() => handleReject(registration.id_cust_account)}
+                      >
+                        Rejeter
+                      </Button>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
+  );
+
+  // Rendu en mode Card (mobile)
+  const renderCardView = () => (
+    <Grid container spacing={2}>
+      {filteredAccounts.map((registration) => {
+        const isRemoving = removingAccounts.includes(registration.id_cust_account);
+        return (
+          <Grid item xs={12} key={registration.id_cust_account}>
+            <Card className={isRemoving ? 'fade-out' : ''}>
+              <CardContent>
+                <Typography variant="subtitle2">
+                  <strong>Date :</strong> {formatDate(registration.insertdate)}
+                </Typography>
+                <Typography variant="subtitle2">
+                  <strong>Client :</strong> {registration.other_legal_form
+                    ? registration.other_legal_form
+                    : registration.legal_form}{' '}
+                  {registration.cust_name}
+                </Typography>
+                <Typography variant="subtitle2">
+                  <strong>Secteur :</strong> {registration.sectorName?.symbol_fr || 'N/A'}
+                </Typography>
+                <Typography variant="subtitle2">
+                  <strong>Adresse :</strong> {registration.full_address}
+                </Typography>
+                <Typography variant="subtitle2">
+                  <strong>Pays :</strong> {registration.co_symbol_fr}
+                </Typography>
+                <Typography variant="subtitle2">
+                  <strong>Implantation :</strong> {registration.in_free_zone ? 'Zone franche' : 'Entreprise'}
+                </Typography>
+                <Typography variant="subtitle2">
+                  <strong>Fichiers :</strong>
+                </Typography>
+                {registration.files && registration.files.length > 0 ? (
+                  registration.files.map((file) => {
+                    let fileDescription = file.txt_description_fr || 'Type inconnu';
+                    if (fileDescription.toLowerCase().includes('nif')) {
+                      fileDescription = 'Patente';
+                    } else if (fileDescription === 'NIF' && registration.nif) {
+                      fileDescription += ` (${registration.nif})`;
+                    } else if (
+                      fileDescription === 'Immatriculation RCS' &&
+                      registration.rchNumber
+                    ) {
+                      fileDescription += ` (${registration.rchNumber})`;
+                    } else if (
+                      fileDescription === 'Numéro de licence' &&
+                      registration.licenseNumber
+                    ) {
+                      fileDescription += ` (${registration.licenseNumber})`;
+                    }
+                    return (
+                      <Button
+                        key={file.id_files_repo}
+                        variant="text"
+                        onClick={() => handleFileClick(file)}
+                        size="small"
+                        style={{ marginRight: '6px', color: '#DCAF26' }}
+                      >
+                        {fileDescription}
+                      </Button>
+                    );
+                  })
+                ) : (
+                  <Typography variant="body2">Aucun fichier</Typography>
+                )}
+                {registration.in_free_zone && registration.identification_number && (
+                  <Box mt={1} fontStyle="italic">
+                    Numéro de licence : <strong>{registration.identification_number}</strong>
+                  </Box>
+                )}
+                {!registration.in_free_zone && registration.trade_registration_num && (
+                  <Box mt={1} fontStyle="italic">
+                    NIF : <strong>{registration.trade_registration_num}</strong>
+                  </Box>
+                )}
+                {!registration.in_free_zone && registration.register_number && (
+                  <Box mt={1} fontStyle="italic">
+                    RCS : <strong>{registration.register_number}</strong>
+                  </Box>
+                )}
+              </CardContent>
+              <CardActions>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={
+                    <FontAwesomeIcon icon={faEye} style={{ color: '#DCAF26' }} />
+                  }
+                  onClick={() => handleOpenContactsModal(registration)}
+                  style={{ color: '#DCAF26', borderColor: '#DCAF26' }}
+                >
+                  Ouvrir
+                </Button>
+                <Box display="flex" flexDirection="column" gap={1} ml={1}>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    size="small"
+                    onClick={() => handleValidate(registration.id_cust_account)}
+                  >
+                    Valider
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    size="small"
+                    onClick={() => handleReject(registration.id_cust_account)}
+                  >
+                    Rejeter
+                  </Button>
+                </Box>
+              </CardActions>
+            </Card>
+          </Grid>
+        );
+      })}
+    </Grid>
+  );
 
   return (
     <Box sx={{ p: 3 }} className="inscriptions-page-container">
@@ -244,139 +510,7 @@ const Inscriptions = () => {
           />
         </Box>
 
-        {/* Tableau */}
-        <Paper>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Client</TableCell>
-                  <TableCell>Secteur</TableCell>
-                  <TableCell>Adresse Complète</TableCell>
-                  <TableCell>Pays</TableCell>
-                  <TableCell>Implantation</TableCell>
-                  <TableCell>Fichier Justificatifs</TableCell>
-                  <TableCell>Contact Principal</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredAccounts.map((registration) => {
-                  const isRemoving = removingAccounts.includes(registration.id_cust_account);
-
-                  return (
-                    <TableRow
-                      key={registration.id_cust_account}
-                      className={isRemoving ? 'fade-out' : ''}
-                    >
-                      <TableCell>{formatDate(registration.insertdate)}</TableCell>
-                      <TableCell>
-                        {registration.other_legal_form ? registration.other_legal_form : registration.legal_form} {registration.cust_name}
-                      </TableCell>
-                      <TableCell>
-                        {registration.sectorName?.symbol_fr || 'N/A'}
-                      </TableCell>
-                      <TableCell>{registration.full_address}</TableCell>
-                      <TableCell>{registration.co_symbol_fr}</TableCell>
-                      <TableCell>
-                        {/* Remplacement du checkbox par une valeur textuelle */}
-                        <Typography variant="body2">
-                          {registration.in_free_zone ? "Zone franche" : "Entreprise"}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {/* Affichage des fichiers existants */}
-                        {registration.files && registration.files.length > 0 ? (
-                          registration.files.map((file) => {
-                            let fileDescription = file.txt_description_fr || 'Type inconnu';
-                            if (fileDescription.toLowerCase().includes('nif')) {
-                              fileDescription = 'Patente';
-                            } else if (fileDescription === 'NIF' && registration.nif) {
-                              fileDescription += ` (${registration.nif})`;
-                            } else if (
-                              fileDescription === 'Immatriculation RCS' &&
-                              registration.rchNumber
-                            ) {
-                              fileDescription += ` (${registration.rchNumber})`;
-                            } else if (
-                              fileDescription === 'Numéro de licence' &&
-                              registration.licenseNumber
-                            ) {
-                              fileDescription += ` (${registration.licenseNumber})`;
-                            }
-
-                            return (
-                              <Button
-                                key={file.id_files_repo}
-                                variant="text"
-                                onClick={() => handleFileClick(file)}
-                                size="small"
-                                style={{ marginRight: '6px', color: '#DCAF26' }}
-                              >
-                                {fileDescription}
-                              </Button>
-                            );
-                          })
-                        ) : (
-                          <Typography variant="body2">Aucun fichier</Typography>
-                        )}
-
-                        {registration.in_free_zone && registration.identification_number && (
-                          <Box mt={1} fontStyle="italic">
-                            Numéro de licence :{' '}
-                            <strong>{registration.identification_number}</strong>
-                          </Box>
-                        )}
-                        {!registration.in_free_zone && registration.trade_registration_num && (
-                          <Box mt={1} fontStyle="italic">
-                            NIF : <strong>{registration.trade_registration_num}</strong>
-                          </Box>
-                        )}
-                        {!registration.in_free_zone && registration.register_number && (
-                          <Box mt={1} fontStyle="italic">
-                            RCS : <strong>{registration.register_number}</strong>
-                          </Box>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<FontAwesomeIcon icon={faEye} style={{ color: '#DCAF26' }} />}
-                          onClick={() => handleOpenContactsModal(registration)}
-                          style={{ color: '#DCAF26', borderColor: '#DCAF26' }}
-                        >
-                          Ouvrir
-                        </Button>
-                      </TableCell>
-                      <TableCell>
-                        <Box display="flex" flexDirection="column" gap={1}>
-                          <Button
-                            variant="contained"
-                            color="success"
-                            size="small"
-                            onClick={() => handleValidate(registration.id_cust_account)}
-                          >
-                            Valider
-                          </Button>
-                          <Button
-                            variant="contained"
-                            color="error"
-                            size="small"
-                            onClick={() => handleReject(registration.id_cust_account)}
-                          >
-                            Rejeter
-                          </Button>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
+        {isSmallScreen ? renderCardView() : renderTableView()}
       </TabPanel>
 
       {/* Dialog pour fiche de contacts */}
@@ -404,21 +538,11 @@ const Inscriptions = () => {
                 </TableHead>
                 <TableBody>
                   <TableRow>
-                    <TableCell>
-                      {selectedAccount.main_contact.full_name}
-                    </TableCell>
-                    <TableCell>
-                      {selectedAccount.main_contact.position || 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      {selectedAccount.main_contact.email || 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      {selectedAccount.main_contact.phone_number || 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      {selectedAccount.main_contact.mobile_number || 'N/A'}
-                    </TableCell>
+                    <TableCell>{selectedAccount.main_contact.full_name}</TableCell>
+                    <TableCell>{selectedAccount.main_contact.position || 'N/A'}</TableCell>
+                    <TableCell>{selectedAccount.main_contact.email || 'N/A'}</TableCell>
+                    <TableCell>{selectedAccount.main_contact.phone_number || 'N/A'}</TableCell>
+                    <TableCell>{selectedAccount.main_contact.mobile_number || 'N/A'}</TableCell>
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={1}>
                         <Checkbox checked readOnly size="small" />
@@ -457,17 +581,10 @@ const Inscriptions = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={submitRejection}
-            variant="contained"
-            color="error"
-          >
+          <Button onClick={submitRejection} variant="contained" color="error">
             Confirmer le rejet
           </Button>
-          <Button
-            onClick={() => setShowRejectModal(false)}
-            variant="outlined"
-          >
+          <Button onClick={() => setShowRejectModal(false)} variant="outlined">
             Annuler
           </Button>
         </DialogActions>
