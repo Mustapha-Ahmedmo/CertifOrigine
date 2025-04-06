@@ -1,6 +1,7 @@
 // DashboardClient.jsx
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 // MUI Components
 import {
@@ -22,8 +23,8 @@ import {
   ArrowDown as ArrowDownIcon,
   ArrowUp as ArrowUpIcon,
   Activity as ActivityIcon,      // Icône "onde" verte
-  CreditCard as CreditCardIcon,  // Icône "carte bleue"
-  BagSimple as BagSimpleIcon,    // Icône "sac"
+  CreditCard as CreditCardIcon,    // Icône "carte bleue"
+  BagSimple as BagSimpleIcon,      // Icône "sac"
 } from '@phosphor-icons/react';
 
 // ApexCharts
@@ -81,7 +82,6 @@ function StatCard({
                 justifyContent: 'center',
               }}
             >
-              {/* On force la couleur de l’icône si iconColor est défini */}
               {React.cloneElement(icon, { size: 28, color: iconColor || '#66bb6a' })}
             </Avatar>
           </Stack>
@@ -111,26 +111,20 @@ function StatCard({
  ******************************************************************************/
 function SpendChartCard() {
   const theme = useTheme();
-
-  // Jours de la semaine en abscisse
   const categories = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  // Deux séries : "Payer" (vert) et "Valider" (bleu)
-  // Avec certaines valeurs > 40k
   const chartSeries = [
     { name: 'Payer', data: [12000, 21000, 15000, 42000, 30000, 65000, 10000] },
     { name: 'Valider', data: [8000, 12000, 18000, 25000, 40000, 15000, 45000] },
   ];
 
-  // Configuration ApexCharts
   const chartOptions = useMemo(() => {
     return {
       chart: {
         background: 'transparent',
         stacked: false,
-        toolbar: { show: false }, // Pas de barre d'outils
+        toolbar: { show: false },
       },
-      // 1ère série en vert (#66bb6a), 2ème en bleu (#42a5f5)
       colors: ['#66bb6a', '#42a5f5'],
       dataLabels: { enabled: false },
       fill: { opacity: 1, type: 'solid' },
@@ -165,12 +159,10 @@ function SpendChartCard() {
         },
       },
       yaxis: {
-        // On veut 0$ -> 75k$ avec 6 paliers
         min: 0,
         max: 75000,
-        tickAmount: 5, // crée 6 "points" (0, 15k, 30k, 45k, 60k, 75k)
+        tickAmount: 5,
         labels: {
-          // On affiche "0$", "15k$", "30k$", etc.
           formatter: (value) => {
             if (value === 0) return '0$';
             return `${value / 1000}k$`;
@@ -184,10 +176,7 @@ function SpendChartCard() {
 
   return (
     <Card>
-      <CardHeader
-        title="Montant dépensé par Certificat d'Origine"
-        // On enlève l'action (le bouton "Sync")
-      />
+      <CardHeader title="Montant dépensé par Certificat d'Origine" />
       <CardContent>
         <ReactApexChart
           type="bar"
@@ -197,7 +186,6 @@ function SpendChartCard() {
           height={350}
         />
       </CardContent>
-      {/* Pas de Divider ni de CardActions pour le bouton "Voir plus" */}
     </Card>
   );
 }
@@ -207,14 +195,16 @@ function SpendChartCard() {
  ******************************************************************************/
 export default function DashboardClient() {
   const user = useSelector((state) => state.auth.user);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <Box
       sx={{
         p: 2,
-        // Décale vers la droite pour laisser la place au menu (240px)
-        ml: `${drawerWidth}px`,
-        width: `calc(100% - ${drawerWidth}px)`,
+        // Si mobile, on n'applique pas de marginLeft (car le menu est souvent masqué)
+        ml: isMobile ? 0 : `${drawerWidth}px`,
+        width: isMobile ? '100%' : `calc(100% - ${drawerWidth}px)`,
       }}
     >
       {/* Titre "Bienvenue <nom>" */}
@@ -222,7 +212,7 @@ export default function DashboardClient() {
         Bienvenue <span className="home-highlight-text">{user?.companyname}</span>
       </div>
 
-      {/* --- Card parent : "Overview" avec le faux filtre "This Week" --- */}
+      {/* Card Overview */}
       <Card sx={{ mb: 4 }}>
         <CardHeader
           title="Overview"
@@ -234,7 +224,7 @@ export default function DashboardClient() {
         />
         <CardContent>
           <Grid container spacing={3}>
-            {/* 1) Nombre de C.O effectue (vert) */}
+            {/* Stat Card 1 */}
             <Grid item xs={12} sm={6} md={4}>
               <StatCard
                 title="Nombre de C.O effectue"
@@ -249,7 +239,7 @@ export default function DashboardClient() {
               />
             </Grid>
 
-            {/* 2) Nombre facture commercial visé (bleu) */}
+            {/* Stat Card 2 */}
             <Grid item xs={12} sm={6} md={4}>
               <StatCard
                 title="Nombre facture commercial visé"
@@ -264,7 +254,7 @@ export default function DashboardClient() {
               />
             </Grid>
 
-            {/* 3) Nombre de document legalisé (jaune) */}
+            {/* Stat Card 3 */}
             <Grid item xs={12} sm={6} md={4}>
               <StatCard
                 title="Nombre de document legalisé"
@@ -282,7 +272,7 @@ export default function DashboardClient() {
         </CardContent>
       </Card>
 
-      {/* --- Nouveau Card pour le bar chart "Montant dépensé par Certificat d'Origine" --- */}
+      {/* Spend Chart Card */}
       <SpendChartCard />
     </Box>
   );

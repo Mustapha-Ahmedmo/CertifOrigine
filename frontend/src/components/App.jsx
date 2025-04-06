@@ -1,5 +1,5 @@
 // App.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Routes,
   Route,
@@ -61,7 +61,27 @@ const App = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Détermine si l'utilisateur est opérateur (on suppose que user.isopuser est true pour les opérateurs)
+  // Au montage, on relit localStorage pour restaurer l'état d'auth :
+  useEffect(() => {
+    const storedIsAuth = localStorage.getItem('isAuthenticated') === 'true';
+    const storedUser = localStorage.getItem('user');
+    const storedToken = localStorage.getItem('token');
+
+    dispatch(
+      restoreAuthState({
+        isAuthenticated: storedIsAuth,
+        user: storedUser ? JSON.parse(storedUser) : null,
+        token: storedToken || null,
+      })
+    );
+  }, [dispatch]);
+
+  // Pendant qu'on restaure l'authentification, on peut afficher un "Chargement..."
+  if (loading) {
+    return <div>Chargement...</div>;
+  }
+
+  // Détermine si l'utilisateur est opérateur (ex: user.isopuser === true)
   const isOperator = user?.isopuser;
 
   // Conditionne le padding en bas : aucun padding sur la page /login
@@ -71,16 +91,37 @@ const App = () => {
     <>
       {isAuthenticated && <InactivityHandler timeout={600000} />}
 
-      {/* Ajout conditionnel du paddingBottom */}
       <div style={{ paddingBottom: paddingBottomValue }}>
         <Routes>
+          {/* 
+            Chemin racine "/":
+            - si isAuthenticated => redirige vers /dashboard
+            - sinon => redirige vers /login
+          */}
           <Route
             path="/"
             element={
-              isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+              isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
             }
           />
 
+          {/* 
+            Page Login sous HeaderLayout => 
+            si isAuthenticated => go /dashboard
+            sinon => afficher <HeaderLayout> + <Login />
+          */}
+          <Route
+            path="/login"
+            element={
+              isAuthenticated ? <Navigate to="/dashboard" replace /> : <HeaderLayout />
+            }
+          >
+            <Route index element={<Login />} />
+          </Route>
+
+          {/* 
+            Dashboard protégé => ProtectedRoute
+          */}
           <Route
             path="/dashboard"
             element={
@@ -121,18 +162,7 @@ const App = () => {
             </Route>
           </Route>
 
-          <Route
-            path="/login"
-            element={
-              isAuthenticated ? <Navigate to="/dashboard" replace /> : <HeaderLayout />
-            }
-          >
-            <Route index element={<Login />} />
-          </Route>
-
-          <Route path="/register" element={<Register />}>
-            <Route index element={<Login />} />
-          </Route>
+          {/* Autres routes publiques */}
           <Route path="/contact-us" element={<ContactUs />}>
             <Route index element={<ContactUs />} />
           </Route>
@@ -151,12 +181,16 @@ const App = () => {
             <Route index element={<AccountCreated />} />
           </Route>
           <Route path="/create-order/step2" element={<Step2 />} />
+          <Route path="/register" element={<Register />}>
+            <Route index element={<Login />} />
+          </Route>
 
+          {/* Catch-all (404) : renvoie vers "/" */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
 
-      {/* N'affiche le footer que si le chemin n'est pas /login */}
+      {/* N'affiche pas le footer sur /login */}
       {location.pathname !== '/login' && <Footer />}
     </>
   );

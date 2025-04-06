@@ -31,11 +31,15 @@ const isValidInternationalPhone = (number) => {
   return /^(?:\+|00)[1-9][0-9]*$/.test(number) && number.length >= 8 && number.length <= 16;
 };
 
+// Fonction de validation d'un email selon le format standard
+const isValidEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
 const RegisterOP = ({ onClose }) => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // On conserve dans l'état le numéro complet international et on ajoute un champ pour le statut admin.
   const [formData, setFormData] = useState({
     gender: 'Mr', // "Mr" ou "Mme"
     name: '',
@@ -44,9 +48,7 @@ const RegisterOP = ({ onClose }) => {
     email: '',
     password: '',
     confirmPassword: '',
-    // Pour le rôle, les options sont "Opérateur" et "Opérateur avec pouvoir"
     role: null,
-    // Pour le statut admin, les options sont "Administrateur" et "Non Administrateur"
     adminStatus: null,
   });
 
@@ -56,49 +58,52 @@ const RegisterOP = ({ onClose }) => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  // Calcul des indicateurs d'erreur pour les champs de téléphone
   const phoneFixedError =
     formData.phoneFixedNumber !== '' && !isValidInternationalPhone(formData.phoneFixedNumber);
   const phoneMobileError =
     formData.phoneMobileNumber !== '' && !isValidInternationalPhone(formData.phoneMobileNumber);
 
   useEffect(() => {
-  const preloadOperatorData = async () => {
-    if (id) {
-      try {
-        const response = await getOperatorList(`${id}`, null, null);
-        if (response.data && response.data.length > 0) {
-          const operator = response.data[0];
-          setFormData({
-            gender: operator.gender === 1 ? 'Mr' : 'Mme',
-            name: operator.full_name,
-            phoneFixedNumber: operator.phone_number,
-            phoneMobileNumber: operator.mobile_number,
-            email: operator.email,
-            password: '',
-            confirmPassword: '',
-            adminStatus: operator.isadmin ? 'Administrateur' : 'Non Administrateur',
-            role: operator.roles === 0 ? 'Opérateur' : 'Opérateur avec pouvoir', // Correction pour bien afficher la valeur
-          });   
+    const preloadOperatorData = async () => {
+      if (id) {
+        try {
+          const response = await getOperatorList(`${id}`, null, null);
+          if (response.data && response.data.length > 0) {
+            const operator = response.data[0];
+            setFormData({
+              gender: operator.gender === 1 ? 'Mr' : 'Mme',
+              name: operator.full_name,
+              phoneFixedNumber: operator.phone_number,
+              phoneMobileNumber: operator.mobile_number,
+              email: operator.email,
+              password: '',
+              confirmPassword: '',
+              adminStatus: operator.isadmin ? 'Administrateur' : 'Non Administrateur',
+              role: operator.roles === 0 ? 'Opérateur' : 'Opérateur avec pouvoir',
+            });
+          }
+        } catch (err) {
+          setError('Erreur lors du chargement des données de l’opérateur.');
         }
-      } catch (err) {
-        setError('Erreur lors du chargement des données de l’opérateur.');
       }
-    }
-  };
-
-  preloadOperatorData();
-}, [id]);
-
+    };
+    preloadOperatorData();
+  }, [id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Pour les champs de téléphone, validation du format international
     if ((name === 'phoneFixedNumber' || name === 'phoneMobileNumber') && value !== '') {
       if (!isValidInternationalPhone(value)) {
         setError(
           `Le champ ${name === 'phoneFixedNumber' ? 'téléphone fixe' : 'téléphone portable'} est invalide. Format international requis (doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 16 caractères).`
         );
+      } else {
+        setError('');
+      }
+    }
+    if (name === 'email' && value !== '') {
+      if (!isValidEmail(value)) {
+        setError('Le format de l’email est invalide.');
       } else {
         setError('');
       }
@@ -114,15 +119,20 @@ const RegisterOP = ({ onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation des numéros de téléphone
+    if (!isValidEmail(formData.email)) {
+      setSnackbarMessage('Le format de l’email est invalide.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
     if (!isValidInternationalPhone(formData.phoneFixedNumber)) {
-      setSnackbarMessage('Le numéro de téléphone fixe est invalide. Format international requis (doit commencer par "+" suivi uniquement de chiffres et ne pas dépasser 16 caractères).');
+      setSnackbarMessage('Le numéro de téléphone fixe est invalide. Format international requis.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
     if (!isValidInternationalPhone(formData.phoneMobileNumber)) {
-      setSnackbarMessage('Le numéro de téléphone portable est invalide. Format international requis (doit commencer par "+" suivi uniquement de chiffres et ne pas dépasser 16 caractères).');
+      setSnackbarMessage('Le numéro de téléphone portable est invalide. Format international requis.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
@@ -145,17 +155,13 @@ const RegisterOP = ({ onClose }) => {
         id_op_user: id || 0,
         gender: formData.gender === 'Mr' ? 1 : 2,
         fullName: formData.name,
-        // On définit "roles" en fonction du rôle sélectionné :
-        // Par exemple, "Opérateur" = 0, "Opérateur avec pouvoir" = 1.
         roles: formData.role.trim() === 'Opérateur' ? 0 : 1,
-        // Le statut administrateur est défini à partir du radio group adminStatus.
         isAdmin: formData.adminStatus === 'Administrateur',
         email: formData.email,
-        //password: homemadeHash(formData.password, 'md5'),
         password: id ? null : homemadeHash(formData.password, 'md5'),
         phoneNumber: formData.phoneFixedNumber,
         mobileNumber: formData.phoneMobileNumber,
-        idLoginInsert: 1
+        idLoginInsert: 1,
       };
 
       await createOperator(operatorData);
@@ -206,7 +212,6 @@ const RegisterOP = ({ onClose }) => {
       )}
 
       <form onSubmit={handleSubmit}>
-        {/* Genre via RadioGroup */}
         <Box sx={{ mb: 2 }}>
           <FormControl component="fieldset">
             <FormLabel component="legend">Genre</FormLabel>
@@ -233,7 +238,6 @@ const RegisterOP = ({ onClose }) => {
           />
         </Box>
 
-        {/* Téléphone fixe */}
         <Box sx={{ mb: 2 }}>
           <TextField
             label="Téléphone fixe * (format international)"
@@ -246,13 +250,12 @@ const RegisterOP = ({ onClose }) => {
             error={phoneFixedError}
             helperText={
               phoneFixedError
-                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 16 caractères."
+                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres."
                 : ""
             }
           />
         </Box>
 
-        {/* Téléphone portable */}
         <Box sx={{ mb: 2 }}>
           <TextField
             label="Téléphone portable * (format international)"
@@ -265,7 +268,7 @@ const RegisterOP = ({ onClose }) => {
             error={phoneMobileError}
             helperText={
               phoneMobileError
-                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 16 caractères."
+                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres."
                 : ""
             }
           />
@@ -276,10 +279,11 @@ const RegisterOP = ({ onClose }) => {
             label="Email *"
             variant="outlined"
             name="email"
+            type="email"
             value={formData.email}
             onChange={handleChange}
             fullWidth
-            disabled={!!id} // Désactive le champ si id est présent
+            disabled={!!id}
           />
         </Box>
 
@@ -306,8 +310,6 @@ const RegisterOP = ({ onClose }) => {
           </Box>
         )}
 
-
-        {/* Rôle via RadioGroup */}
         <Box sx={{ mb: 2 }}>
           <FormControl component="fieldset">
             <FormLabel component="legend">Rôle</FormLabel>
@@ -319,23 +321,22 @@ const RegisterOP = ({ onClose }) => {
             >
               <FormControlLabel value="Opérateur" control={<Radio />} label="Opérateur" />
               <FormControlLabel value="Opérateur avec pouvoir" control={<Radio />} label="Opérateur avec pouvoir" />
-          </RadioGroup>
+            </RadioGroup>
           </FormControl>
         </Box>
 
-        {/* Statut administrateur via RadioGroup */}
         <Box sx={{ mb: 2 }}>
           <FormControl component="fieldset">
             <FormLabel component="legend">Statut Administrateur</FormLabel>
             <RadioGroup
-            row
-            name="adminStatus"
-            value={formData.adminStatus || ''}
-            onChange={handleChange}
-          >
-            <FormControlLabel value="Administrateur" control={<Radio />} label="Administrateur" />
-            <FormControlLabel value="Non Administrateur" control={<Radio />} label="Non Administrateur" />
-          </RadioGroup>
+              row
+              name="adminStatus"
+              value={formData.adminStatus || ''}
+              onChange={handleChange}
+            >
+              <FormControlLabel value="Administrateur" control={<Radio />} label="Administrateur" />
+              <FormControlLabel value="Non Administrateur" control={<Radio />} label="Non Administrateur" />
+            </RadioGroup>
           </FormControl>
         </Box>
 

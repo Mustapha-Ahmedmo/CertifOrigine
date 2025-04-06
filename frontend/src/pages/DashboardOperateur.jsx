@@ -1,17 +1,8 @@
-// DashboardOperateur.jsx
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
-import {
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  CardHeader,
-  Typography,
-  Button
-} from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
+import { Box, Grid, Card, CardContent, CardHeader, Typography, Button } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { ArrowUp as ArrowUpIcon, ArrowDown as ArrowDownIcon } from '@phosphor-icons/react';
 import { Gauge } from '@mui/x-charts/Gauge';
 import { getOrderStaticsByServices } from '../services/apiServices';
@@ -148,7 +139,13 @@ const DashboardOperateur = () => {
   const paymentOrdersDiff = 20;
 
   return (
-    <Box sx={{ ml: '240px', p: 2, width: `calc(100% - 240px)` }}>
+    <Box
+      sx={{
+        ml: { xs: '2px', md: '240px' },
+        p: 2,
+        width: { xs: '100%', md: `calc(100% - 240px)` }
+      }}
+    >
       <Helmet>
         <title>Dashboard Opérateur</title>
       </Helmet>

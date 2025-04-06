@@ -5,30 +5,41 @@ import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+
 import AppBar from '@mui/material/AppBar';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
 import TablePagination from '@mui/material/TablePagination';
-import './HomeOperateur.css';
+
+import Card from '@mui/material/Card';
+import CardHeader from '@mui/material/CardHeader';
+import CardContent from '@mui/material/CardContent';
+import CardActions from '@mui/material/CardActions';
+import Divider from '@mui/material/Divider';
+import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
+
 import { formatDate } from '../utils/dateUtils';
-import PaymentModal from './PaymentModal'; // Chemin à adapter si nécessaire
+import PaymentModal from './PaymentModal';
 import { getOrderOpInfo } from '../services/apiServices';
+import './HomeOperateur.css';
 
-
-
-// Composant TabPanel pour l'affichage du contenu de chaque onglet
+// ---------------------------------------------------
+// Composant TabPanel pour la gestion des onglets
+// ---------------------------------------------------
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
   return (
@@ -61,21 +72,26 @@ function a11yProps(index) {
   };
 }
 
+// ---------------------------------------------------
+// Composant principal HomeOperateur
+// ---------------------------------------------------
 const HomeOperateur = () => {
-  // États pour les commandes
+  // États pour les commandes et le chargement / erreur
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // État pour l'onglet actif (0 pour "Nouvelles commandes", 1 pour "Commandes en attente de paiement")
+  // État pour l'onglet actif
   const [tabIndex, setTabIndex] = useState(0);
 
   const user = useSelector((state) => state.auth.user);
   const operatorId = user?.id_login_user;
   const navigate = useNavigate();
   const theme = useTheme();
+  // Détection si l'écran est en mobile (largeur <= 768px)
+  const isMobile = useMediaQuery('(max-width:768px)');
 
-  // Fonction pour charger les commandes pour l'opérateur
+  // Chargement des commandes de l'opérateur
   const fetchOrders = async () => {
     if (!operatorId) return;
     try {
@@ -102,8 +118,8 @@ const HomeOperateur = () => {
   }, [operatorId]);
 
   // Pour l'opérateur :
-  // Nouvelles commandes : filtre sur id_order_status === 2
-  // Commandes en attente de paiement : filtre sur id_order_status === 3
+  // - Nouvelles commandes : id_order_status === 2 ou 7
+  // - Commandes en attente de paiement : id_order_status === 3
   const ordersNew = orders.filter(order => order.id_order_status === 2 || order.id_order_status === 7);
   const ordersPayment = orders.filter(order => order.id_order_status === 3);
 
@@ -130,12 +146,11 @@ const HomeOperateur = () => {
   }
 
   return (
-    // On ajoute une marge à gauche pour décaler le contenu (largeur du menu)
-    <div className="operator-home-container" style={{ marginLeft: '240px' }}>
+    // Appliquer la marge à gauche uniquement en version desktop
+    <div className="operator-home-container" style={{ marginLeft: isMobile ? '0px' : '240px' }}>
       <Helmet>
         <title>Dashboard Opérateur</title>
       </Helmet>
-      {/* Onglets et tableau */}
       <div className="operator-tabs-container" style={{ width: '100%' }}>
         <Box sx={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
           <AppBar position="static" color="default">
@@ -146,6 +161,10 @@ const HomeOperateur = () => {
               textColor="inherit"
               variant="fullWidth"
               aria-label="Operator Dashboard Tabs"
+              sx={{
+                '& .MuiTabs-indicator': { backgroundColor: '#DCAF26' },
+                '& .MuiTab-root.Mui-selected': { color: '#DCAF26' },
+              }}
             >
               {options.map((option, index) => (
                 <Tab key={option.value} label={option.label} {...a11yProps(index)} />
@@ -153,14 +172,18 @@ const HomeOperateur = () => {
             </Tabs>
           </AppBar>
           <TabPanel value={tabIndex} index={0} dir={theme.direction}>
-            <OrderTable orders={ordersNew} refreshOrders={fetchOrders} goToOrderDetails={goToOrderDetails} />
+            <OrderTable
+              orders={ordersNew}
+              refreshOrders={fetchOrders}
+              goToOrderDetails={goToOrderDetails}
+            />
           </TabPanel>
           <TabPanel value={tabIndex} index={1} dir={theme.direction}>
             <OrderTable
               orders={ordersPayment}
               refreshOrders={fetchOrders}
               goToOrderDetails={goToOrderDetails}
-              mode="payment"  // indique que l'affichage sera pour les commandes en attente de paiement
+              mode="payment"  // Mode pour les commandes en attente de paiement
             />
           </TabPanel>
         </Box>
@@ -169,16 +192,21 @@ const HomeOperateur = () => {
   );
 };
 
+// ---------------------------------------------------
+// Composant OrderTable : affichage en tableau (desktop) et en cartes (mobile)
+// ---------------------------------------------------
 const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
   // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // === 1) État pour la modale de paiement ===
+  // États pour la modale de paiement (utilisée en mode "payment")
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // === 2) Fonctions pour gérer l'ouverture/fermeture de la modale ===
+  const theme = useTheme();
+  const isMobile = useMediaQuery('(max-width:768px)');
+
   const handleOpenPayment = (order) => {
     setSelectedOrder(order);
     setOpenPaymentModal(true);
@@ -189,21 +217,13 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
     setSelectedOrder(null);
   };
 
-  // === 3) Fonction appelée quand on valide le paiement dans la modale ===
   const handlePaymentSubmit = async (paymentData) => {
-    // Ici, vous pouvez faire un appel API pour valider le paiement
+    // Ajoutez ici l'appel API pour valider le paiement
     console.log('Payment submitted:', paymentData);
-
-    // Exemple : await validatePaymentAPI(paymentData);
-
-    // Fermez la modale
     setOpenPaymentModal(false);
     setSelectedOrder(null);
-
-    // Rafraîchissez la liste des commandes après le paiement
     refreshOrders();
   };
-
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -214,37 +234,174 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
     setPage(0);
   };
 
-  // Découpage pour la pagination
   const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
+  // -----------------------------
+  // Affichage MOBILE : version cartes
+  // -----------------------------
+  if (isMobile) {
+    return (
+      <>
+        <Grid container spacing={2}>
+          {paginatedOrders.length > 0 ? (
+            paginatedOrders.map((order) => {
+              const dateStr = order.insertdate_order ? new Date(order.insertdate_order).toLocaleDateString() : '-';
+              return (
+                <Grid item xs={12} key={order.id_order}>
+                  <Card sx={{ borderRadius: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.12)', ml: '2px' }}>
+                    <CardHeader
+                      title={`Commande #${order.id_order || '-'}`}
+                      subheader={dateStr}
+                      sx={{
+                        paddingBottom: 0,
+                        '& .MuiCardHeader-title': { fontWeight: 'bold', fontSize: '1rem' },
+                        '& .MuiCardHeader-subheader': { fontSize: '0.85rem', color: '#888' },
+                      }}
+                    />
+                    <CardContent sx={{ pt: 1 }}>
+                      <Box sx={{ mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Client
+                        </Typography>
+                        <Typography variant="body1">
+                          {order.cust_name || '-'}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Désignation
+                        </Typography>
+                        <Typography variant="body1">
+                          {order.order_title || '-'}
+                        </Typography>
+                      </Box>
+                    
+                      <Divider sx={{ my: 1 }} />
+                      <Box sx={{ mb: 1, display: 'flex', justifyContent: 'space-between' }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">
+                            Certificat d'Origine
+                          </Typography>
+                          {order.id_ord_certif_ori ? (
+                            <Button size="small" onClick={() => goToOrderDetails(order)} sx={{ textTransform: 'none' }}>
+                              <FontAwesomeIcon icon={faEye} /> Consulter
+                            </Button>
+                          ) : (
+                            <Typography variant="body1">-</Typography>
+                          )}
+                        </Box>
+                      </Box>
+                      <Box sx={{ mb: 1, display: 'flex', justifyContent: 'space-between' }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">
+                            Facture Commerciale
+                          </Typography>
+                          {order.id_ord_com_invoice ? (
+                            <Button size="small" onClick={() => goToOrderDetails(order)} sx={{ textTransform: 'none' }}>
+                              <FontAwesomeIcon icon={faEye} /> Consulter
+                            </Button>
+                          ) : (
+                            <Typography variant="body1">-</Typography>
+                          )}
+                        </Box>
+                      </Box>
+                      <Box sx={{ mb: 1, display: 'flex', justifyContent: 'space-between' }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">
+                            Légalisations
+                          </Typography>
+                          {order.id_ord_legalization ? (
+                            <Button size="small" onClick={() => goToOrderDetails(order)} sx={{ textTransform: 'none' }}>
+                              <FontAwesomeIcon icon={faEye} /> Consulter
+                            </Button>
+                          ) : (
+                            <Typography variant="body1">-</Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </CardContent>
+                    <CardActions
+                      sx={{ justifyContent: 'center', backgroundColor: '#f9f9f9', borderTop: '1px solid #eee' }}
+                    >
+                      {mode === "payment" ? (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          onClick={() => handleOpenPayment(order)}
+                          sx={{ textTransform: 'none' }}
+                        >
+                          Payer
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          onClick={() => goToOrderDetails(order)}
+                          sx={{ textTransform: 'none' }}
+                        >
+                          Consulter
+                        </Button>
+                      )}
+                    </CardActions>
+                  </Card>
+                </Grid>
+              );
+            })
+          ) : (
+            <Grid item xs={12}>
+              <Typography>Aucune commande trouvée.</Typography>
+            </Grid>
+          )}
+        </Grid>
+        <TablePagination
+          component="div"
+          count={orders.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[10, 25, 50, 100]}
+        />
+        <PaymentModal
+          open={openPaymentModal}
+          onClose={handleClosePaymentModal}
+          onSubmit={handlePaymentSubmit}
+          order={selectedOrder}
+        />
+      </>
+    );
+  }
+
+  // -----------------------------
+  // Affichage DESKTOP : version tableau classique
+  // -----------------------------
   return (
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-      <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+    <>
+      <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
         <Table stickyHeader aria-label="orders table" sx={{ minWidth: 800 }}>
           {mode === "payment" ? (
-            // En mode "payment", affichage simplifié sans icônes œil
             <TableHead>
               <TableRow>
-                <TableCell>Date de création</TableCell>
+                <TableCell>Date de soumission</TableCell>
                 <TableCell>N° de Commande</TableCell>
                 <TableCell>Client</TableCell>
                 <TableCell>Désignation</TableCell>
-                <TableCell>Date de soumission</TableCell>
                 <TableCell>Date d'approbation</TableCell>
                 <TableCell>Certificat d'Origine</TableCell>
                 <TableCell>Facture Commerciale</TableCell>
                 <TableCell>Légalisations</TableCell>
+                <TableCell>Payer</TableCell>
               </TableRow>
             </TableHead>
           ) : (
-            // Mode par défaut (pour les autres onglets)
             <TableHead>
               <TableRow>
-                <TableCell>Date</TableCell>
+                <TableCell>Date de soumission</TableCell>
                 <TableCell>N° de Commande</TableCell>
                 <TableCell>Client</TableCell>
                 <TableCell>Désignation</TableCell>
-                <TableCell>Date soumission</TableCell>
                 <TableCell>Certificat d'Origine</TableCell>
                 <TableCell>Facture Commerciale</TableCell>
                 <TableCell>Légalisations</TableCell>
@@ -281,31 +438,34 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                           className="icon-button minimal-button"
                           onClick={() => goToOrderDetails(order)}
                         >
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Consulter</span>
+                          <FontAwesomeIcon icon={faEye} /> Consulter
                         </button>
                       ) : (
-                        <span>-</span>
+                        '-'
                       )}
                     </TableCell>
                     <TableCell>
                       {order.id_ord_com_invoice ? (
-                        <button className="icon-button minimal-button" onClick={() => goToOrderDetails(order)}>
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Consulter</span>
+                        <button
+                          className="icon-button minimal-button"
+                          onClick={() => goToOrderDetails(order)}
+                        >
+                          <FontAwesomeIcon icon={faEye} /> Consulter
                         </button>
                       ) : (
-                        <span>-</span>
+                        '-'
                       )}
                     </TableCell>
                     <TableCell>
                       {order.id_ord_legalization ? (
-                        <button className="icon-button minimal-button" onClick={() => goToOrderDetails(order)}>
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Consulter</span>
+                        <button
+                          className="icon-button minimal-button"
+                          onClick={() => goToOrderDetails(order)}
+                        >
+                          <FontAwesomeIcon icon={faEye} /> Consulter
                         </button>
                       ) : (
-                        <span>-</span>
+                        '-'
                       )}
                     </TableCell>
                     <TableCell>
@@ -316,10 +476,8 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                         Payer
                       </button>
                     </TableCell>
-
                   </TableRow>
                 ) : (
-                  // Rendu par défaut pour les autres modes (exemple existant)
                   <TableRow key={order.id_order} hover>
                     <TableCell>{formatDate(order.insertdate_order)}</TableCell>
                     <TableCell>{order.id_order}</TableCell>
@@ -336,39 +494,52 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                           className="icon-button minimal-button"
                           onClick={() => goToOrderDetails(order)}
                         >
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Vérifier</span>
+                          <FontAwesomeIcon icon={faEye} /> Consulter
                         </button>
                       ) : (
-                        <span>-</span>
+                        '-'
                       )}
                     </TableCell>
                     <TableCell>
                       {order.id_ord_com_invoice ? (
-                        <button className="icon-button minimal-button" onClick={() => goToOrderDetails(order)}>
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Vérifier</span>
+                        <button
+                          className="icon-button minimal-button"
+                          onClick={() => goToOrderDetails(order)}
+                        >
+                          <FontAwesomeIcon icon={faEye} /> Consulter
                         </button>
                       ) : (
-                        <span>-</span>
+                        '-'
                       )}
                     </TableCell>
                     <TableCell>
                       {order.id_ord_legalization ? (
-                        <button className="icon-button minimal-button" onClick={() => goToOrderDetails(order)}>
-                          <FontAwesomeIcon icon={faEye} title="Vérifier" />
-                          <span className="button-text">Vérifier</span>
+                        <button
+                          className="icon-button minimal-button"
+                          onClick={() => goToOrderDetails(order)}
+                        >
+                          <FontAwesomeIcon icon={faEye} /> Consulter
                         </button>
                       ) : (
-                        <span>-</span>
+                        '-'
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        className="icon-button minimal-button"
+                        onClick={() => goToOrderDetails(order)}
+                      >
+                        Consulter
+                      </button>
                     </TableCell>
                   </TableRow>
                 )
               )
             ) : (
               <TableRow>
-                <TableCell colSpan={mode === "payment" ? 7 : 9}>Aucune commande trouvée.</TableCell>
+                <TableCell colSpan={mode === "payment" ? 10 : 9}>
+                  Aucune commande trouvée.
+                </TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -383,15 +554,13 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
         onRowsPerPageChange={handleChangeRowsPerPage}
         rowsPerPageOptions={[10, 25, 50, 100]}
       />
-
       <PaymentModal
         open={openPaymentModal}
         onClose={handleClosePaymentModal}
         onSubmit={handlePaymentSubmit}
         order={selectedOrder}
       />
-
-    </Paper>
+    </>
   );
 };
 
@@ -401,6 +570,5 @@ OrderTable.propTypes = {
   goToOrderDetails: PropTypes.func,
   mode: PropTypes.string, // 'payment' pour le mode Commandes en attente de paiement
 };
-
 
 export default HomeOperateur;

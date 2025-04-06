@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import './Step1.css'; // Conserve vos CSS existants
 import {
   addOrUpdateGoods,
   addRecipient,

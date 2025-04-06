@@ -13,14 +13,15 @@ import {
   DialogContentText,
   DialogActions,
   Snackbar,
-  IconButton,
+  IconButton, 
   Link as MuiLink,
   Divider
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { ackMemoCust, getMemo } from '../../services/apiServices';
 import { format } from 'date-fns';
-import './NotificationPage.css';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 const safeFormatDate = (dateString) => {
   if (!dateString) return '-';
@@ -57,6 +58,8 @@ const Notifications = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Récupération de l'utilisateur depuis Redux
   const user = useSelector((state) => state.auth.user);
@@ -136,16 +139,14 @@ const Notifications = () => {
 
   if (loading) {
     return (
-      <Box sx={{ p: 2, ml: '240px' }}>
+      <Box sx={{ p: 2, ml: isMobile ? 0 : '240px', width: isMobile ? '100%' : `calc(100% - 240px)` }}>
         <Typography sx={{ fontSize: '0.8rem' }}>Chargement des notifications...</Typography>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: 2, ml: '240px' }}>
-     
-
+    <Box sx={{ p: 2, ml: isMobile ? 0 : '240px', width: isMobile ? '100%' : `calc(100% - 240px)` }}>
       {memos.length === 0 ? (
         <Typography sx={{ fontSize: '0.8rem' }}>Aucune notification.</Typography>
       ) : (
@@ -165,12 +166,10 @@ const Notifications = () => {
 
             const dateFormatted = safeFormatDate(memo_date);
             const dateAckFormatted = ack_date ? safeFormatDate(ack_date) : null;
-            // Utilisation de la fonction d'origine pour le Chip
             const chipProps = getChipPropsBySubject(memo_subject);
 
             return (
               <Box key={id_memo} sx={{ mb: index < memos.length - 1 ? 1 : 0 }}>
-                {/* Ligne du haut : bouton d'acquittement et date */}
                 <Box
                   sx={{
                     display: 'flex',
@@ -203,7 +202,6 @@ const Notifications = () => {
                   </Box>
                 </Box>
 
-                {/* Contenu de la notification */}
                 <Box sx={{ mt: 0.5 }}>
                   <Chip size="small" {...chipProps} />
                   <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '0.8rem' }}>
@@ -232,7 +230,6 @@ const Notifications = () => {
                     </MuiLink>
                   </Box>
                 </Box>
-                {/* Divider léger entre notifications, sauf pour la dernière */}
                 {index < memos.length - 1 && <Divider sx={{ my: 1 }} />}
               </Box>
             );

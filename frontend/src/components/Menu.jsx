@@ -1,4 +1,3 @@
-// Menu.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -12,6 +11,9 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Collapse from '@mui/material/Collapse';
 import { Box, Toolbar, Divider } from '@mui/material';
+
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -65,6 +67,12 @@ const logoutStyle = {
 };
 
 const Menu = ({ isMenuOpen, toggleMenu }) => {
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+  
+  // En mode desktop, le menu sera toujours affiché
+  // Ainsi, pour le Drawer, on force open à true si isDesktop est vrai.
+  
   // Initialisation des sous-menus
   const [openSubmenus, setOpenSubmenus] = useState({
     newOrder: false,
@@ -108,14 +116,12 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
 
   // Pour les menus qui ouvrent des sous-menus, on ferme les autres
   const handleToggleSubmenu = (menu) => {
-    setOpenSubmenus((prev) => {
-      return {
-        newOrder: false,
-        pastOrders: false,
-        clients: false,
-        [menu]: !prev[menu],
-      };
-    });
+    setOpenSubmenus((prev) => ({
+      newOrder: false,
+      pastOrders: false,
+      clients: false,
+      [menu]: !prev[menu],
+    }));
   };
 
   // Fermer tous les sous-menus
@@ -127,17 +133,17 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
     });
   };
 
-  // Pour les parents sans sous-menu, fermer tous les sous-menus et, sur mobile, fermer le menu
+  // Pour les parents sans sous-menu, fermer tous les sous-menus et, en mobile, fermer le menu
   const handleParentClick = () => {
     closeAllSubmenus();
-    if (window.innerWidth <= 768) {
+    if (!isDesktop) {
       toggleMenu();
     }
   };
 
-  // Fermer le menu sur mobile après un clic
+  // Fermer le menu en mobile après un clic
   const handleLinkClick = () => {
-    if (window.innerWidth <= 768) {
+    if (!isDesktop) {
       toggleMenu();
     }
   };
@@ -152,9 +158,9 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
 
   return (
     <Drawer
-      variant="persistent"
+      variant={isDesktop ? "persistent" : "temporary"}
       anchor="left"
-      open={true}
+      open={isDesktop ? true : isMenuOpen}
       sx={{
         width: drawerWidth,
         flexShrink: 0,
@@ -348,7 +354,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           </Collapse>
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-         {/* Mes destinataires (sous-menu) */}
+          {/* Mes destinataires (sous-menu) */}
           <ListItem disablePadding>
             <ListItemButton onClick={() => handleToggleSubmenu("destinataires")}>
               <ListItemIcon sx={{ color: "black" }}>
@@ -404,7 +410,6 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
             </List>
           </Collapse>
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
-
 
           {/* Bouton de déconnexion */}
           <Box sx={{ marginTop: "auto" }}>

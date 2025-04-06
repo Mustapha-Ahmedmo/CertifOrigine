@@ -4,17 +4,22 @@ import Step2 from './steps/Step2';
 import Step4 from './steps/Step4'; // Étape 3
 import Step5 from './steps/Step5'; // Étape 4
 
-// --- Vos imports CSS et vos services comme avant ---
 import './CreateOrder.css';
 import { createOrder } from '../../../services/apiServices';
 import { useSelector } from 'react-redux';
 
-// ------ IMPORTS MUI ------
 import Box from '@mui/material/Box';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import Slide from '@mui/material/Slide';
+import Typography from '@mui/material/Typography';
+
+// Import MUI / FontAwesome pour l'icône
+import { useTheme, useMediaQuery } from '@mui/material';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faListCheck } from '@fortawesome/free-solid-svg-icons'; 
+// (Vous pouvez changer l'icône)
 
 const CreateOrder = () => {
   // Récupération de l'utilisateur depuis Redux
@@ -27,11 +32,11 @@ const CreateOrder = () => {
   const existingOrderId = params.get('orderId');
   const existingCertifId = params.get('certifId');
 
-  // Gestion des étapes globales (4 étapes)
+  // Steps
   const [currentStep, setCurrentStep] = useState(1);
   const [transitionDirection, setTransitionDirection] = useState('left');
 
-  // État global du formulaire
+  // FormData global
   const [formData, setFormData] = useState({
     orderId: existingOrderId || null,
     orderStatus: 1,
@@ -62,12 +67,15 @@ const CreateOrder = () => {
     receiverCountry: '',
   });
 
-  // Debug
   useEffect(() => {
     console.log('formData updated:', formData);
   }, [formData]);
 
-  // Fonctions de navigation globales
+  // Détection mobile
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Navigation
   const nextStep = () => {
     setTransitionDirection('left');
     setCurrentStep((prev) => (prev < 4 ? prev + 1 : prev));
@@ -91,10 +99,10 @@ const CreateOrder = () => {
   // Soumission finale
   const handleSubmit = () => {
     console.log('Order Submitted:', formData);
-    // Placez ici votre action finale, par exemple generatePDF(formData)
+    // ...
   };
 
-  // Création de la commande (étape 1)
+  // Création commande (étape 1)
   const createEmptyOrder = async () => {
     try {
       const { orderName } = formData;
@@ -111,7 +119,7 @@ const CreateOrder = () => {
     }
   };
 
-  // Rendu conditionnel du contenu de chaque étape globale
+  // Rendu conditionnel de chaque étape
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -154,8 +162,7 @@ const CreateOrder = () => {
     }
   };
 
-  // Mise à jour de la barre d'étape (Stepper) pour refléter le nouveau processus
-  // On précise dans l'intitulé que l'étape 2 comporte 8 sections
+  // Liste des étapes
   const steps = [
     "Étape 1 : Création de la commande",
     "Étape 2 : Certificat d'origine ",
@@ -165,18 +172,34 @@ const CreateOrder = () => {
 
   return (
     <div className="create-order-container">
-      {/* Barre d'étape global (Stepper MUI) */}
-      <Box sx={{ width: '100%', marginBottom: '20px' }}>
-        <Stepper activeStep={currentStep - 1} alternativeLabel>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-      </Box>
+      {/* Sur mobile, petite barre + icône, sinon Stepper complet */}
+      {isSmallScreen ? (
+        <Box 
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+            mb: 2
+          }}
+        >
+          <FontAwesomeIcon icon={faListCheck} size="lg" style={{ color: '#DCAF26' }} />
+          <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+            {`${steps[currentStep - 1]}`}
+          </Typography>
+        </Box>
+      ) : (
+        <Box sx={{ width: '100%', marginBottom: '20px' }}>
+          <Stepper activeStep={currentStep - 1} alternativeLabel>
+            {steps.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+        </Box>
+      )}
 
-      {/* Transition Slide MUI pour animer le contenu de l'étape globale */}
       <Slide
         key={currentStep}
         direction={transitionDirection}

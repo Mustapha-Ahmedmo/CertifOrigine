@@ -1,4 +1,3 @@
-// MenuOP.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -12,6 +11,8 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Collapse from '@mui/material/Collapse';
 import { Box, Toolbar, Divider } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -73,6 +74,10 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Utilisation de useMediaQuery pour détecter le mode desktop
+  const theme = useTheme();
+  const isDesktop = useMediaQuery('(min-width:768px)');
+
   // Fonction pour basculer l'ouverture d'un sous-menu
   const toggleSubmenu = (menu) => {
     setOpenMenu((prev) => ({ ...prev, [menu]: !prev[menu] }));
@@ -84,7 +89,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
     // Si nécessaire, on peut forcer l'ouverture du sous-menu parent
     setOpenMenu((prev) => ({ ...prev, [menu]: true }));
     // Ferme le menu sur mobile
-    if (window.innerWidth <= 768) {
+    if (!isDesktop) {
       toggleMenu();
     }
   };
@@ -99,9 +104,9 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
 
   return (
     <Drawer
-      variant="persistent"
+      variant={isDesktop ? "permanent" : "persistent"}
       anchor="left"
-      open={true}
+      open={isDesktop ? true : isMenuOpen}
       sx={{
         width: drawerWidth,
         flexShrink: 0,
