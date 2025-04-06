@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import './HeaderLayout.css';
 
-import logo from '../assets/logo_vect.png';
+import logo from '../assets/logo_vect2.png';
 
 const HeaderLayout = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -24,97 +24,35 @@ const HeaderLayout = () => {
           zIndex: 999,
         }}
       >
-        <nav
-          className="header-nav"
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 1rem',
-            boxSizing: 'border-box',
-          }}
-        >
+        <nav className="header-nav">
           {/* Section gauche : Logo */}
-          <div
-            className="header-left"
-            style={{ display: 'flex', alignItems: 'center' }}
-          >
-            {/* Bouton hamburger */}
-            <button
-              className="hamburger-button"
-              onClick={toggleMenu}
-              style={{
-                /* Tu peux enlever ce style si tu veux, 
-                   la classe s’occupe déjà de l’affichage */
-              }}
-            >
+          <div className="header-left">
+            <button className="hamburger-button" onClick={toggleMenu}>
               ☰
             </button>
-
-            {/* Logo (sera masqué en mobile via CSS) */}
-            <img
-              src={logo}
-              alt="Logo"
-              className="logo"
-              style={{
-                height: '80px',
-                width: 'auto',
-              }}
-            />
+            <img src={logo} alt="Logo" className="logo" />
           </div>
 
           {/* Section centrale : Liens de navigation */}
-          <div
-            className="header-center"
-            style={{ flexGrow: 1, textAlign: 'center' }}
-          >
-            <ul
-              className={`nav-links ${menuOpen ? 'open' : ''}`}
-              style={{
-                listStyle: 'none',
-                margin: 0,
-                padding: 0,
-                gap: '2rem',
-              }}
-            >
+          <div className="header-center">
+            <ul className={`nav-links ${menuOpen ? 'open' : ''}`}>
               <li>
-                <Link
-                  to="/guide"
-                  style={{ color: 'white', textDecoration: 'none' }}
-                >
-                  Guide d'utilisation
-                </Link>
+                <Link to="/guide">Guide d'utilisation</Link>
               </li>
               <li>
-                <Link
-                  to="/conditions"
-                  style={{ color: 'white', textDecoration: 'none' }}
-                >
-                  Conditions de délivrance
-                </Link>
+                <Link to="/conditions">Conditions de délivrance</Link>
               </li>
               <li>
-                <Link
-                  to="/faq"
-                  style={{ color: 'white', textDecoration: 'none' }}
-                >
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/contact-us"
-                  className="contact-button"
-                  style={{
-                    color: 'white',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Contactez-nous
-                </Link>
+                <Link to="/faq">FAQ</Link>
               </li>
             </ul>
+          </div>
+
+          {/* Section droite : Contactez-nous */}
+          <div className="header-right">
+            <Link to="/contact-us" className="contact-button">
+              Contactez-nous
+            </Link>
           </div>
         </nav>
       </header>
@@ -125,7 +63,7 @@ const HeaderLayout = () => {
         style={{
           margin: 0,
           padding: 0,
-          marginTop: '100px', // Ajuste en fonction de la hauteur désirée
+        
         }}
       >
         <Outlet />

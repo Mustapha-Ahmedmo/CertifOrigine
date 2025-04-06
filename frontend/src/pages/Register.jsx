@@ -51,8 +51,14 @@ import {
 } from '../services/apiServices';
 import { homemadeHash } from '../utils/hashUtils';
 
+// Fonction de validation pour un numéro de téléphone international
 const isValidInternationalPhone = (number) => {
   return /^\+[0-9]+$/.test(number) && number.length <= 12;
+};
+
+// Fonction de validation pour un email au format standard
+const isValidEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
 const Alert = forwardRef(function Alert(props, ref) {
@@ -175,14 +181,16 @@ const Register = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const phoneFixedError = formData.phoneFixedNumber !== "" && !isValidInternationalPhone(formData.phoneFixedNumber);
-  const phoneMobileError = formData.phoneMobileNumber !== "" && !isValidInternationalPhone(formData.phoneMobileNumber);
+  const phoneFixedError =
+    formData.phoneFixedNumber !== "" && !isValidInternationalPhone(formData.phoneFixedNumber);
+  const phoneMobileError =
+    formData.phoneMobileNumber !== "" && !isValidInternationalPhone(formData.phoneMobileNumber);
 
-  // Objet de style commun pour TextField et Select, avec fond dégradé
+  // Styles communs pour les champs
   const commonFieldSx = {
     '& .MuiOutlinedInput-root': {
       borderRadius: '8px',
-      background: 'linear-gradient(135deg, #fff, #f9f9f9)', // Dégradé du blanc pur vers un blanc légèrement cassé
+      background: 'linear-gradient(135deg, #fff, #f9f9f9)',
       '&.Mui-focused fieldset': {
         borderColor: '#DCAF26',
       },
@@ -220,6 +228,12 @@ const Register = () => {
           return;
         }
       }
+    }
+    if (!isValidEmail(formData.email)) {
+      setSnackbarMessage("Le format de l'email est invalide. Exemple : user@example.com");
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
     }
     if (!isValidInternationalPhone(formData.phoneFixedNumber)) {
       setSnackbarMessage('Le numéro de téléphone fixe est invalide. Format international requis (max 12 caractères, commence par "+").');
@@ -722,6 +736,12 @@ const Register = () => {
               value={formData.email}
               onChange={handleChange}
               sx={commonFieldSx}
+              error={formData.email !== '' && !isValidEmail(formData.email)}
+              helperText={
+                formData.email !== '' && !isValidEmail(formData.email)
+                  ? "Format incorrect. Exemple : user@example.com"
+                  : ""
+              }
             />
           </Grid>
 

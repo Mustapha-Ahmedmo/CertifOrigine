@@ -1356,3 +1356,24 @@ export const deleteCustAccountFile = async (id, mode = 0) => {
     throw error;
   }
 };
+
+export const setCustAccountFiles = async (formData) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/set-cust-account-files`, {
+      method: 'POST',
+      // Ne définissez pas manuellement le Content-Type pour FormData
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: formData,
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Échec de l’upload du fichier pour le compte client');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (setCustAccountFiles):', error);
+    throw error;
+  }
+};

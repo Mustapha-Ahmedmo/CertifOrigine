@@ -33,18 +33,24 @@ import {
   InputLabel,
   MenuItem,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
 } from '@mui/material';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faPlus, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+
+// Fonction de validation pour un numéro de téléphone international
+// Le numéro doit commencer par '+' ou '00', suivi uniquement de chiffres, avec une longueur comprise entre 8 et 16 caractères.
+const isValidInternationalPhone = (number) => {
+  return /^(?:\+|00)[1-9][0-9]*$/.test(number) && number.length >= 8 && number.length <= 16;
+};
 
 const DestinataireList = () => {
   // Récupération de l’utilisateur depuis Redux
   const user = useSelector((state) => state.auth.user);
   const customerAccountId = user?.id_cust_account;
 
-  // État
+  // États
   const [recipients, setRecipients] = useState([]);
   const [countries, setCountries] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,7 +74,7 @@ const DestinataireList = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Load
+  // Chargement initial
   useEffect(() => {
     loadRecipients();
     loadCountries();
@@ -78,6 +84,7 @@ const DestinataireList = () => {
     try {
       const response = await fetchRecipients({ idListCA: customerAccountId });
       const data = response.data || [];
+      console.log('Destinataires reçus:', data); // Ajoutez cette ligne pour voir la structure
       setRecipients(data);
     } catch (err) {
       console.error('Erreur lors de la récupération des destinataires:', err);
@@ -93,7 +100,7 @@ const DestinataireList = () => {
     }
   };
 
-  // Ouvrir la modale Édition
+  // Ouvrir la modale d'édition
   const handleOpenEditModal = (recipient) => {
     setErrorMessage('');
     setEditingRecipientId(recipient.id_recipient_account);
@@ -108,28 +115,7 @@ const DestinataireList = () => {
     setShowAddModal(true);
   };
 
-  // Recherche
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const filteredRecipients = recipients.filter((recipient) => {
-    const search = searchTerm.toLowerCase().trim();
-    if (!search) return true;
-    const dateString = formatDate(recipient.insertdate);
-    const fields = [
-      recipient.recipient_name,
-      recipient.address_1,
-      recipient.address_2,
-      recipient.country_symbol_fr_recipient,
-      dateString,
-    ]
-      .filter(Boolean)
-      .map((val) => String(val).toLowerCase());
-    return fields.some((field) => field.includes(search));
-  });
-
-  // Ouvrir la modale Ajout
+  // Ouvrir la modale d'ajout
   const handleOpenAddModal = () => {
     setErrorMessage('');
     setEditingRecipientId(null);
@@ -149,15 +135,27 @@ const DestinataireList = () => {
   };
 
   const handleNewRecipientChange = (field, value) => {
+    // Si le champ modifié est le téléphone, on peut effectuer une vérification instantanée
+    if (field === 'phone' && value !== '') {
+      if (!isValidInternationalPhone(value)) {
+        setErrorMessage("Format incorrect pour le numéro de téléphone. Doit commencer par '+' ou '00', suivi uniquement de chiffres, entre 8 et 16 caractères.");
+      } else {
+        setErrorMessage('');
+      }
+    }
     setNewRecipient((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Lors de la sauvegarde, vérification des champs obligatoires et du téléphone
   const handleSaveNewRecipient = async () => {
     if (!newRecipient.recipientName || !newRecipient.address1 || !newRecipient.country) {
       setErrorMessage("Veuillez remplir au minimum le nom, l'adresse et le pays.");
       return;
     }
-  
+    if (newRecipient.phone && !isValidInternationalPhone(newRecipient.phone)) {
+      setErrorMessage("Le numéro de téléphone est invalide. Format international requis (doit commencer par '+' ou '00', suivi uniquement de chiffres, et contenir entre 8 et 16 caractères).");
+      return;
+    }
     try {
       setErrorMessage('');
       const payload = {
@@ -173,8 +171,9 @@ const DestinataireList = () => {
         deactivationDate: new Date('9999-12-31').toISOString(),
         idLoginInsert: editingRecipientId ? null : (user?.id_login_user || 1),
         idLoginModify: editingRecipientId ? (user?.id_login_user || 1) : null,
+        phone_number: newRecipient.phone,
       };
-  
+
       await addRecipient(payload);
       await loadRecipients();
       
@@ -210,24 +209,24 @@ const DestinataireList = () => {
               <TableCell>Nom du destinataire</TableCell>
               <TableCell>Adresse</TableCell>
               <TableCell>Pays</TableCell>
+              <TableCell>Téléphone</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredRecipients.map((recipient) => (
+            {recipients.map((recipient) => (
               <TableRow key={recipient.id_recipient_account}>
                 <TableCell>{formatDate(recipient.insertdate)}</TableCell>
                 <TableCell>{recipient.recipient_name}</TableCell>
                 <TableCell>{recipient.address_1}</TableCell>
                 <TableCell>{recipient.country_symbol_fr_recipient || 'N/A'}</TableCell>
+                <TableCell>{recipient.phone_number}</TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
                       variant="outlined"
                       size="small"
-                      startIcon={
-                        <FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />
-                      }
+                      startIcon={<FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />}
                       onClick={() => handleOpenEditModal(recipient)}
                       sx={{ border: 'none', '&:hover': { border: 'none' } }}
                     >
@@ -237,9 +236,7 @@ const DestinataireList = () => {
                       variant="outlined"
                       size="small"
                       color="error"
-                      startIcon={
-                        <FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />
-                      }
+                      startIcon={<FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />}
                       onClick={() => handleDelete(recipient.id_recipient_account)}
                       sx={{ border: 'none', '&:hover': { border: 'none' } }}
                     >
@@ -249,9 +246,9 @@ const DestinataireList = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {filteredRecipients.length === 0 && (
+            {recipients.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} align="center">
+                <TableCell colSpan={6} align="center">
                   Aucun destinataire trouvé.
                 </TableCell>
               </TableRow>
@@ -265,7 +262,7 @@ const DestinataireList = () => {
   // ----- RENDU Mobile : Cards -----
   const renderMobileCards = () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {filteredRecipients.map((recipient) => (
+      {recipients.map((recipient) => (
         <Paper
           key={recipient.id_recipient_account}
           sx={{
@@ -286,6 +283,9 @@ const DestinataireList = () => {
           </Typography>
           <Typography variant="body2">
             <strong>Pays : </strong> {recipient.country_symbol_fr_recipient || 'N/A'}
+          </Typography>
+          <Typography variant="body2">
+            <strong>Téléphone : </strong> {recipient.phone_number}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
             <Button
@@ -310,7 +310,7 @@ const DestinataireList = () => {
           </Box>
         </Paper>
       ))}
-      {filteredRecipients.length === 0 && (
+      {recipients.length === 0 && (
         <Paper sx={{ p: 2 }}>
           <Typography align="center">Aucun destinataire trouvé.</Typography>
         </Paper>
@@ -318,10 +318,15 @@ const DestinataireList = () => {
     </Box>
   );
 
+  // Gestion de la recherche (à implémenter selon vos besoins)
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
   return (
     <Box
       sx={{
-        ml: { xs: 0, md: '240px' }, // 240px de marge à gauche en mode desktop
+        ml: { xs: 0, md: '240px' },
         maxWidth: '1200px',
         mx: 'auto',
         px: { xs: 2, sm: 3 },
@@ -331,8 +336,6 @@ const DestinataireList = () => {
       <AppBar position="static" color="default">
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography variant="h6">Liste des Destinataires</Typography>
-
-          {/* BOUTON plus petit en mobile */}
           <Button
             variant="contained"
             onClick={handleOpenAddModal}
@@ -362,7 +365,6 @@ const DestinataireList = () => {
         />
       </Box>
 
-      {/* Affichage conditionnel : table ou cards */}
       {isSmallScreen ? renderMobileCards() : renderDesktopTable()}
 
       <Dialog open={showAddModal} onClose={handleCloseAddModal} maxWidth="sm" fullWidth>
@@ -404,7 +406,7 @@ const DestinataireList = () => {
           />
 
           <TextField
-            label="Adresse 3 (ex: Code postal)"
+            label="Code postal"
             fullWidth
             variant="outlined"
             value={newRecipient.address3}
@@ -431,12 +433,19 @@ const DestinataireList = () => {
           </FormControl>
 
           <TextField
-            label="Téléphone"
+            label="Téléphone (format international)"
             fullWidth
             variant="outlined"
             value={newRecipient.phone}
             onChange={(e) => handleNewRecipientChange('phone', e.target.value)}
             sx={{ mb: 2 }}
+            inputProps={{ maxLength: 16 }}
+            error={newRecipient.phone !== '' && !isValidInternationalPhone(newRecipient.phone)}
+            helperText={
+              newRecipient.phone !== '' && !isValidInternationalPhone(newRecipient.phone)
+                ? "Format incorrect. Doit commencer par '+' ou '00' suivi uniquement de chiffres."
+                : "Doit commencer par '+' ou '00' suivi uniquement de chiffres, entre 8 et 16 caractères."
+            }
           />
         </DialogContent>
         <DialogActions>

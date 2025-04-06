@@ -31,7 +31,7 @@ import {
   Tab,
   AppBar,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
 } from '@mui/material';
 
 // Helpers pour l'accessibilité des onglets
@@ -59,10 +59,15 @@ function a11yProps(index) {
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-// Validation du numéro de téléphone international : 
+// Fonction de validation pour un numéro de téléphone international : 
 // Le numéro doit commencer par '+' suivi uniquement de chiffres et ne doit pas dépasser 12 caractères.
 const isValidInternationalPhone = (number) => {
   return /^\+[0-9]+$/.test(number) && number.length <= 12;
+};
+
+// Fonction de validation pour un email au format standard
+const isValidEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
 const ContactsList = () => {
@@ -206,6 +211,11 @@ const ContactsList = () => {
 
     if (!full_name || !email) {
       setModalError("Veuillez renseigner au minimum le nom et l'email du contact.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setModalError("Le format de l'email est invalide.");
       return;
     }
 
@@ -529,6 +539,12 @@ const ContactsList = () => {
             onChange={(e) => handleChange('email', e.target.value)}
             sx={{ mb: 2 }}
             disabled={isEditing}
+            error={currentContact.email !== '' && !isValidEmail(currentContact.email)}
+            helperText={
+              currentContact.email !== '' && !isValidEmail(currentContact.email)
+                ? "Format incorrect. Exemple : user@example.com"
+                : ""
+            }
           />
           <TextField
             label="Téléphone fixe (format international)"
