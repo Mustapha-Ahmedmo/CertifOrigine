@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   deleteCustAccountFile,
   fetchSectors,
   getCustAccountInfo,
-  updateCustAccount,
-  setCustAccountFiles // Ajout de la fonction pour uploader un fichier
+  updateCustAccount
 } from '../services/apiServices';
 import './Inscriptions.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -26,13 +25,20 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Checkbox,
   Tabs,
   Tab,
   AppBar,
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Card,
+  CardContent,
+  CardActions,
+  Grid,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 
 function TabPanel(props) {
@@ -89,7 +95,7 @@ const ClientsValides = () => {
   const [editFormData, setEditFormData] = useState({});
   const [sectors, setSectors] = useState([]);
 
-  // Modale fichiers (upload de fichier)
+  // Modale fichiers
   const [openFileModal, setOpenFileModal] = useState(false);
   const [selectedFileAccount, setSelectedFileAccount] = useState(null);
   const [fileData, setFileData] = useState({
@@ -119,7 +125,7 @@ const ClientsValides = () => {
     fetchAccounts();
   }, [selectedFilter]);
 
-  // Récupère les secteurs pour la liste déroulante
+  // Récupère les secteurs
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -132,7 +138,7 @@ const ClientsValides = () => {
     fetchData();
   }, []);
 
-  // Ouvre/ferme la modale "gérer fichiers" (pour ajouter un fichier)
+  // Modale fichiers
   const handleOpenFileModal = (account) => {
     setSelectedFileAccount(account);
     setOpenFileModal(true);
@@ -141,10 +147,43 @@ const ClientsValides = () => {
   const handleCloseFileModal = () => {
     setOpenFileModal(false);
     setSelectedFileAccount(null);
-    setFileData({ justificatifFile: null, justificatifFileName: '' });
   };
 
-  // Sélection d'un nouveau fichier
+  const handleDeleteFile = async (fileId) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce fichier ?')) {
+      try {
+        await deleteCustAccountFile(fileId, 0);
+        setSelectedFileAccount((prev) => ({
+          ...prev,
+          files: prev.files.filter((file) => file.id_cust_account_files !== fileId)
+        }));
+        let status;
+        if (selectedFilter === 'validé') {
+          status = 2;
+        } else if (selectedFilter === 'non validé') {
+          status = 1;
+        } else if (selectedFilter === 'rejeté') {
+          status = 4;
+        }
+        const response = await getCustAccountInfo(null, status, true);
+        const data = response.data || [];
+        const sortedData = data.sort(
+          (a, b) => new Date(b.insertdate) - new Date(a.insertdate)
+        );
+        setCustAccounts(sortedData);
+        if (selectedFileAccount) {
+          const updatedAccount = sortedData.find(
+            (acc) => acc.id_cust_account === selectedFileAccount.id_cust_account
+          );
+          setSelectedFileAccount(updatedAccount);
+        }
+      } catch (error) {
+        console.error('Error deleting file:', error);
+        alert('Erreur lors de la suppression du fichier');
+      }
+    }
+  };
+
   const handleFileModalChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -152,36 +191,22 @@ const ClientsValides = () => {
     }
   };
 
-  // Sauvegarde du fichier via l'upload (ajout sans suppression des anciens fichiers)
   const handleSaveFileModal = async () => {
-    if (!fileData.justificatifFile) {
-      alert("Veuillez sélectionner un fichier à uploader.");
-      return;
+    console.log('Saving file changes for account', selectedFileAccount.id_cust_account, fileData);
+    let status;
+    if (selectedFilter === 'validé') {
+      status = 2;
+    } else if (selectedFilter === 'non validé') {
+      status = 1;
+    } else if (selectedFilter === 'rejeté') {
+      status = 4;
     }
-    try {
-      const formData = new FormData();
-      formData.append('file', fileData.justificatifFile);
-      formData.append('accountId', selectedFileAccount.id_cust_account);
-      await setCustAccountFiles(formData);
-      let status;
-      if (selectedFilter === 'validé') {
-        status = 2;
-      } else if (selectedFilter === 'non validé') {
-        status = 1;
-      } else if (selectedFilter === 'rejeté') {
-        status = 4;
-      }
-      const response = await getCustAccountInfo(null, status, true);
-      const data = response.data || [];
-      setCustAccounts(data);
-      handleCloseFileModal();
-    } catch (error) {
-      console.error("Erreur lors de l'upload du fichier :", error);
-      alert("Erreur lors de l'upload du fichier");
-    }
+    const response = await getCustAccountInfo(null, status, true);
+    const data = response.data || [];
+    setCustAccounts(data);
+    handleCloseFileModal();
   };
 
-  // Préremplir si un compte a déjà un fichier (pour l'édition)
   useEffect(() => {
     if (selectedEditAccount && selectedEditAccount.files && selectedEditAccount.files.length > 0) {
       const existingFile = selectedEditAccount.files[0];
@@ -194,12 +219,11 @@ const ClientsValides = () => {
     }
   }, [selectedEditAccount]);
 
-  // Gère le changement d'onglet
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
   };
 
-  // Gestion du contact principal
+  // Contact principal
   const handleOpenContactsModal = (account) => {
     setSelectedAccount(account);
     setShowContactModal(true);
@@ -210,18 +234,15 @@ const ClientsValides = () => {
     setShowContactModal(false);
   };
 
-  // Ouvre le fichier dans un nouvel onglet
   const handleFileClick = (file) => {
     const fileUrl = `${API_URL}/files/inscriptions/${new Date().getFullYear()}/${file.file_guid}`;
     window.open(fileUrl, '_blank');
   };
 
-  // Recherche
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  // Filtrage
   const filteredAccounts = custAccounts.filter((registration) => {
     const search = searchTerm.toLowerCase().trim();
     if (!search) return true;
@@ -242,7 +263,6 @@ const ClientsValides = () => {
     return fields.some((field) => field.includes(search));
   });
 
-  // Ouvre la modale d'édition
   const handleOpenEditModal = (account) => {
     setSelectedEditAccount(account);
     let companyType = '';
@@ -280,7 +300,6 @@ const ClientsValides = () => {
     setEditFormData({});
   };
 
-  // Gère les changements dans le formulaire d'édition
   const handleEditChange = (e) => {
     const { name, value } = e.target;
     setEditFormData((prev) => ({ ...prev, [name]: value }));
@@ -297,7 +316,6 @@ const ClientsValides = () => {
     }
   };
 
-  // Sauvegarde de l'édition
   const handleSaveEdit = async () => {
     if (
       (selectedEditAccount.in_free_zone && editFormData.companyType !== 'zoneFranche') ||
@@ -312,7 +330,6 @@ const ClientsValides = () => {
         return;
       }
     }
-
     const updateData = {
       id_cust_account: selectedEditAccount.id_cust_account,
       legal_form: editFormData.legalForm,
@@ -337,7 +354,6 @@ const ClientsValides = () => {
           : '',
       companyType: editFormData.companyType || ''
     };
-
     if (editFormData.companyType === 'autre') {
       updateData.trade_registration_num = safeValue(editFormData.nif);
       updateData.register_number = safeValue(editFormData.rchNumber);
@@ -361,7 +377,6 @@ const ClientsValides = () => {
       updateData.identification_number = '';
       updateData.other_business_type = '';
     }
-
     let status;
     if (selectedFilter === 'validé') {
       status = 2;
@@ -370,7 +385,6 @@ const ClientsValides = () => {
     } else if (selectedFilter === 'rejeté') {
       status = 4;
     }
-
     await updateCustAccount(updateData);
     const response = await getCustAccountInfo(null, status, true);
     const data = response.data || [];
@@ -378,12 +392,223 @@ const ClientsValides = () => {
       (a, b) => new Date(b.insertdate) - new Date(a.insertdate)
     );
     setCustAccounts(sortedData);
-
     handleCloseEditModal();
   };
 
+  // Détection de l'affichage mobile
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Rendu en mode Table (desktop)
+  const renderTableView = () => (
+    <Paper>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>Client</TableCell>
+              <TableCell>Secteur</TableCell>
+              <TableCell>Adresse Complète</TableCell>
+              <TableCell>Pays</TableCell>
+              <TableCell>Type d'entreprise</TableCell>
+              <TableCell>Fichier Justificatifs</TableCell>
+              <TableCell>Contact Principal</TableCell>
+              <TableCell>Action</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredAccounts.map((registration) => (
+              <TableRow key={registration.id_cust_account}>
+                <TableCell>{formatDate(registration.insertdate)}</TableCell>
+                <TableCell>
+                {registration.cust_name} {registration.legal_form} 
+                </TableCell>
+                <TableCell>
+                  {registration.sectorName?.symbol_fr || 'N/A'}
+                </TableCell>
+                <TableCell>{registration.full_address}</TableCell>
+                <TableCell>{registration.co_symbol_fr}</TableCell>
+                <TableCell>{getImplantationLabel(registration)}</TableCell>
+                <TableCell>
+                  {registration.files && registration.files.length > 0 ? (
+                    registration.files.map((file) => {
+                      let fileDescription = file.txt_description_fr || 'Type inconnu';
+                      if (fileDescription.toLowerCase().includes('nif')) {
+                        fileDescription = 'Patente';
+                      }
+                      return (
+                        <Button
+                          key={file.id_files_repo}
+                          variant="text"
+                          size="small"
+                          onClick={() => handleFileClick(file)}
+                          style={{ color: '#C39408' }}
+                        >
+                          {fileDescription}
+                        </Button>
+                      );
+                    })
+                  ) : (
+                    <Typography variant="body2">Aucun fichier</Typography>
+                  )}
+                  {registration.in_free_zone && registration.identification_number && (
+                    <Box mt={1} fontStyle="italic">
+                      Numéro de licence : <strong>{registration.identification_number}</strong>
+                    </Box>
+                  )}
+                  {!registration.in_free_zone && registration.trade_registration_num && (
+                    <Box mt={1} fontStyle="italic">
+                      Patente : <strong>{registration.trade_registration_num}</strong>
+                    </Box>
+                  )}
+                  {!registration.in_free_zone && registration.register_number && (
+                    <Box mt={1} fontStyle="italic">
+                      RCS : <strong>{registration.register_number}</strong>
+                    </Box>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<FontAwesomeIcon icon={faEye} />}
+                    onClick={() => handleOpenContactsModal(registration)}
+                    style={{ color: '#C39408', borderColor: '#C39408' }}
+                  >
+                    Ouvrir
+                  </Button>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<FontAwesomeIcon icon={faEdit} />}
+                    onClick={() => handleOpenEditModal(registration)}
+                    style={{ color: '#C39408', borderColor: '#C39408' }}
+                  >
+                    Modifier
+                  </Button>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handleOpenFileModal(registration)}
+                    style={{ color: '#C39408', borderColor: '#C39408' }}
+                  >
+                    Voir les fichiers
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
+  );
+
+  // Rendu en mode Card (mobile)
+  const renderCardView = () => (
+    <Grid container spacing={2}>
+      {filteredAccounts.map((registration) => (
+        <Grid item xs={12} key={registration.id_cust_account}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle2">
+                <strong>Date :</strong> {formatDate(registration.insertdate)}
+              </Typography>
+              <Typography variant="subtitle2">
+                <strong>Client :</strong> {registration.legal_form} {registration.cust_name}
+              </Typography>
+              <Typography variant="subtitle2">
+                <strong>Secteur :</strong> {registration.sectorName?.symbol_fr || 'N/A'}
+              </Typography>
+              <Typography variant="subtitle2">
+                <strong>Adresse :</strong> {registration.full_address}
+              </Typography>
+              <Typography variant="subtitle2">
+                <strong>Pays :</strong> {registration.co_symbol_fr}
+              </Typography>
+              <Typography variant="subtitle2">
+                <strong>Type :</strong> {getImplantationLabel(registration)}
+              </Typography>
+              <Typography variant="subtitle2" sx={{ mt: 1 }}>
+                <strong>Fichiers :</strong>
+              </Typography>
+              {registration.files && registration.files.length > 0 ? (
+                registration.files.map((file) => {
+                  let fileDescription = file.txt_description_fr || 'Type inconnu';
+                  if (fileDescription.toLowerCase().includes('nif')) {
+                    fileDescription = 'Patente';
+                  }
+                  return (
+                    <Button
+                      key={file.id_files_repo}
+                      variant="text"
+                      size="small"
+                      onClick={() => handleFileClick(file)}
+                      style={{ color: '#C39408' }}
+                    >
+                      {fileDescription}
+                    </Button>
+                  );
+                })
+              ) : (
+                <Typography variant="body2">Aucun fichier</Typography>
+              )}
+              {registration.in_free_zone && registration.identification_number && (
+                <Box mt={1} fontStyle="italic">
+                  Numéro de licence : <strong>{registration.identification_number}</strong>
+                </Box>
+              )}
+              {!registration.in_free_zone && registration.trade_registration_num && (
+                <Box mt={1} fontStyle="italic">
+                  Patente : <strong>{registration.trade_registration_num}</strong>
+                </Box>
+              )}
+              {!registration.in_free_zone && registration.register_number && (
+                <Box mt={1} fontStyle="italic">
+                  RCS : <strong>{registration.register_number}</strong>
+                </Box>
+              )}
+            </CardContent>
+            <CardActions>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<FontAwesomeIcon icon={faEye} />}
+                onClick={() => handleOpenContactsModal(registration)}
+                style={{ color: '#C39408', borderColor: '#C39408' }}
+              >
+                Ouvrir
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<FontAwesomeIcon icon={faEdit} />}
+                onClick={() => handleOpenEditModal(registration)}
+                style={{ color: '#C39408', borderColor: '#C39408' }}
+              >
+                Modifier
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => handleOpenFileModal(registration)}
+                style={{ color: '#C39408', borderColor: '#C39408' }}
+              >
+                Gérer les fichiers
+              </Button>
+            </CardActions>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+
   return (
-    <Box sx={{ ml: '240px', p: 3 }}>
+    <Box sx={{ ml: { xs: '2px', md: '240px' }, p: 3 }} className="inscriptions-page-container">
       <AppBar position="static" color="default">
         <Tabs
           value={tabIndex}
@@ -448,145 +673,55 @@ const ClientsValides = () => {
         />
       </Box>
 
-      {/* Tableau des comptes */}
-      <Paper>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Date</TableCell>
-                <TableCell>Client</TableCell>
-                <TableCell>Secteur</TableCell>
-                <TableCell>Adresse Complète</TableCell>
-                <TableCell>Pays</TableCell>
-                <TableCell>Type d'entreprise</TableCell>
-                <TableCell>Fichier Justificatifs</TableCell>
-                <TableCell>Contact Principal</TableCell>
-                <TableCell>Action</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredAccounts.map((registration) => (
-                <TableRow key={registration.id_cust_account}>
-                  <TableCell>{formatDate(registration.insertdate)}</TableCell>
-                  <TableCell>
-                    {registration.legal_form} {registration.cust_name}
-                  </TableCell>
-                  <TableCell>
-                    {registration.sectorName?.symbol_fr || 'N/A'}
-                  </TableCell>
-                  <TableCell>{registration.full_address}</TableCell>
-                  <TableCell>{registration.co_symbol_fr}</TableCell>
-                  <TableCell>{getImplantationLabel(registration)}</TableCell>
-                  <TableCell>
-                    {registration.files && registration.files.length > 0 ? (
-                      registration.files.map((file) => {
-                        let fileDescription = file.txt_description_fr || 'Type inconnu';
-                        if (fileDescription.toLowerCase().includes('nif')) {
-                          fileDescription = 'Patente';
-                        }
-                        return (
-                          <Button
-                            key={file.id_files_repo}
-                            variant="text"
-                            size="small"
-                            onClick={() => handleFileClick(file)}
-                            style={{ color: '#C39408' }}
-                          >
-                            {fileDescription}
-                          </Button>
-                        );
-                      })
-                    ) : (
-                      <Typography variant="body2">Aucun fichier associé</Typography>
-                    )}
-                    {registration.in_free_zone && registration.identification_number && (
-                      <Box mt={1} fontStyle="italic">
-                        Numéro de licence : <strong>{registration.identification_number}</strong>
-                      </Box>
-                    )}
-                    {!registration.in_free_zone && registration.trade_registration_num && (
-                      <Box mt={1} fontStyle="italic">
-                        Patente : <strong>{registration.trade_registration_num}</strong>
-                      </Box>
-                    )}
-                    {!registration.in_free_zone && registration.register_number && (
-                      <Box mt={1} fontStyle="italic">
-                        RCS : <strong>{registration.register_number}</strong>
-                      </Box>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<FontAwesomeIcon icon={faEye} />}
-                      onClick={() => handleOpenContactsModal(registration)}
-                      style={{ color: '#C39408', borderColor: '#C39408' }}
-                    >
-                      Ouvrir
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<FontAwesomeIcon icon={faEdit} />}
-                      onClick={() => handleOpenEditModal(registration)}
-                      style={{ color: '#C39408', borderColor: '#C39408' }}
-                    >
-                      Modifier
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => handleOpenFileModal(registration)}
-                      style={{ color: '#C39408', borderColor: '#C39408' }}
-                    >
-                      Gérer les fichiers
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+      {isSmallScreen ? renderCardView() : renderTableView()}
 
-      {/* Modale d'upload de fichier justificatif (uniquement ajout) */}
+      {/* Modale de gestion de fichiers */}
       <Dialog
         open={openFileModal}
         onClose={handleCloseFileModal}
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Ajouter un fichier justificatif</DialogTitle>
+        <DialogTitle>Gérer les fichiers justificatifs</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
-            <input
-              type="file"
-              onChange={handleFileModalChange}
-              accept="image/*,application/pdf"
-            />
-            {fileData.justificatifFile && (
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                Fichier sélectionné : {fileData.justificatifFile.name}
-              </Typography>
+            {selectedFileAccount &&
+            selectedFileAccount.files &&
+            selectedFileAccount.files.length > 0 ? (
+              selectedFileAccount.files.map((file) => (
+                <Box
+                  key={file.id_cust_account_files}
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{
+                    mb: 1,
+                    p: 1,
+                    border: '1px solid #ddd',
+                    borderRadius: '4px'
+                  }}
+                >
+                  <Typography variant="body2">
+                    {file.txt_description_fr}: {file.file_origin_name}
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    onClick={() => handleDeleteFile(file.id_cust_account)}
+                  >
+                    Supprimer
+                  </Button>
+                </Box>
+              ))
+            ) : (
+              <Typography variant="body2">Aucun fichier associé</Typography>
             )}
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseFileModal} color="error">
-            Annuler
-          </Button>
-          <Button
-            onClick={handleSaveFileModal}
-            variant="contained"
-            style={{ backgroundColor: '#C39408', color: '#fff' }}
-          >
-            Ajouter le fichier
+            Fermer
           </Button>
         </DialogActions>
       </Dialog>
@@ -728,7 +863,7 @@ const ClientsValides = () => {
         open={showContactModal && !!selectedAccount}
         onClose={handleCloseContactsModal}
         fullWidth
-        maxWidth="md"
+        maxWidth="sm"
       >
         <DialogTitle>Contact Principal</DialogTitle>
         <DialogContent>
