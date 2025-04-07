@@ -406,7 +406,7 @@ const ClientsValides = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Date</TableCell>
+              <TableCell>Date de soumission</TableCell>
               <TableCell>Client</TableCell>
               <TableCell>Secteur</TableCell>
               <TableCell>Adresse Complète</TableCell>
@@ -865,13 +865,13 @@ const ClientsValides = () => {
         open={showContactModal && !!selectedAccount}
         onClose={handleCloseContactsModal}
         fullWidth
-        maxWidth="sm"
+        maxWidth="md"
       >
         <DialogTitle>Contact Principal</DialogTitle>
         <DialogContent>
           {selectedAccount?.main_contact ? (
             <TableContainer component={Paper}>
-              <Table size="small">
+              <Table size="medium">
                 <TableHead>
                   <TableRow>
                     <TableCell>Nom</TableCell>
