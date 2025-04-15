@@ -227,6 +227,53 @@ export const rejectCustAccount = async (id, reason, idlogin) => {
   }
 };
 
+export const disableCustAccount = async (id, reason, idlogin) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/disable-cust-account/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // or remove if not needed
+      },
+      body: JSON.stringify({ reason, idlogin }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Disabling customer account failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error disabling customer account:', error);
+    throw error;
+  }
+};
+
+
+export const reactivateCustAccount = async (id, idlogin) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/reactivate-cust-account/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ idlogin }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Reactivating customer account failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error Reactivating customer account:', error);
+    throw error;
+  }
+};
+
 export const addSubscription = async (subscriptionData) => {
   try {
     const response = await fetch(`${API_URL}/customer/add-subscription`, {
@@ -419,7 +466,7 @@ export const getCustUsersByAccount = async (custAccountId, statutflag = null, is
     params.append('isactiveCA', isactiveCA);
     params.append('isactiveCU', isactiveCU);
     params.append('ismain_user', ismain_user);
-    
+
     const response = await fetch(`${API_URL}/customer/get-cust-users?${params.toString()}`, {
       method: 'GET',
       headers: {
@@ -427,12 +474,12 @@ export const getCustUsersByAccount = async (custAccountId, statutflag = null, is
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       }
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to fetch cust users');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('API call error (getCustUsersByAccount):', error);
@@ -458,6 +505,28 @@ export const deleteCustUser = async (id) => {
     return await response.json();
   } catch (error) {
     console.error('API call error (deleteCustUser):', error);
+    throw error;
+  }
+};
+
+export const reactivateCustUser = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/reactivate-cust-user/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to reactivate customer user');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (reactivateCustUser):', error);
     throw error;
   }
 };
@@ -758,7 +827,7 @@ export const setOrdCertifTranspMode = async (payload) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-         'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
       body: JSON.stringify(payload),
     });
@@ -845,14 +914,14 @@ export const getFilesRepoTypeofInfo = async (params) => {
 export const setOrderFiles = async (orderFileData) => {
   try {
     const formData = new FormData();
-    
+
     // Append all keys from orderFileData into FormData
     for (const key in orderFileData) {
       if (orderFileData.hasOwnProperty(key)) {
         formData.append(key, orderFileData[key]);
       }
     }
-    
+
     const response = await fetch(`${API_URL}/orders/order-files`, {
       method: 'POST',
       headers: {
@@ -861,12 +930,12 @@ export const setOrderFiles = async (orderFileData) => {
       },
       body: formData,
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to set order files');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('API call error (setOrderFiles):', error);
@@ -903,12 +972,12 @@ export const getOrderFilesInfo = async (params) => {
     const response = await fetch(`${API_URL}/orders/order-files-info?${queryString}`, {
       method: 'GET',
       headers: {
-         'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       }
     });
     if (!response.ok) {
-       const errorData = await response.json();
-       throw new Error(errorData.message || 'Failed to retrieve order files info');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to retrieve order files info');
     }
     return await response.json();
   } catch (error) {
@@ -1120,21 +1189,21 @@ export const sendbackOrder = async (p_id_order, p_id_cust_account, p_idlogin_mod
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
-      body: JSON.stringify({ 
-        p_id_order, 
-        p_id_cust_account, 
-        p_idlogin_modify, 
-        returnReason, 
+      body: JSON.stringify({
+        p_id_order,
+        p_id_cust_account,
+        p_idlogin_modify,
+        returnReason,
         customerEmail,
         orderTitle
       }),
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to send back order');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('API call error (sendbackOrder):', error);
@@ -1151,12 +1220,12 @@ export const rejectOrder = async (p_id_order, p_id_cust_account, p_idlogin_modif
       },
       body: JSON.stringify({ p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail, orderTitle }),
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to reject order');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('API call error (rejectOrder):', error);
@@ -1198,12 +1267,12 @@ export const getMemo = async (params = {}) => {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to retrieve memos');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('API call error (getMemo):', error);
@@ -1221,12 +1290,12 @@ export const ackMemoCust = async (p_id_memo, p_id_cust_account, p_idlogin) => {
       },
       body: JSON.stringify({ p_id_memo, p_id_cust_account, p_idlogin }),
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to acknowledge memo');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('API call error (ackMemoCust):', error);
@@ -1274,12 +1343,12 @@ export const billOrder = async (p_id_order, p_idlogin_modify) => {
       },
       body: JSON.stringify({ p_id_order, p_idlogin_modify }),
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to bill order');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('API call error (billOrder):', error);

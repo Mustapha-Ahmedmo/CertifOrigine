@@ -19,7 +19,6 @@ const setMemo = async (req, res) => {
   
       // Validate required fields (adjust validation as needed)
       if (
-        !p_id_order ||
         !p_id_cust_account ||
         !p_typeof ||
         !p_idlogin_insert ||
@@ -29,7 +28,7 @@ const setMemo = async (req, res) => {
       ) {
         return res.status(400).json({
           message:
-            'Les champs p_id_order, p_id_cust_account, p_typeof, p_idlogin_insert, p_memo_date, p_memo_subject et p_memo_body sont requis.',
+            'Les champs p_id_cust_account, p_typeof, p_idlogin_insert, p_memo_date, p_memo_subject et p_memo_body sont requis.',
         });
       }
   

@@ -229,6 +229,21 @@ const Register = () => {
         }
       }
     }
+
+    // Check if required documents are uploaded
+    if (formData.isFreeZoneCompany && !formData.licenseFile) {
+      setSnackbarMessage("Veuillez télécharger le fichier de licence pour les entreprises en zone franche.");
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    if (formData.isOtherCompany && !formData.patenteFile) {
+      setSnackbarMessage("Veuillez télécharger le fichier de patente pour les entreprises de type Entreprise.");
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
     if (!isValidEmail(formData.email)) {
       setSnackbarMessage("Le format de l'email est invalide. Exemple : user@example.com");
       setSnackbarSeverity('error');

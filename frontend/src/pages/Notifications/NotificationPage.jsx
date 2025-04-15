@@ -13,7 +13,7 @@ import {
   DialogContentText,
   DialogActions,
   Snackbar,
-  IconButton, 
+  IconButton,
   Link as MuiLink,
   Divider
 } from '@mui/material';
@@ -215,20 +215,22 @@ const Notifications = () => {
                       Client : {cust_name}
                     </Typography>
                   )}
-                  <Box sx={{ mt: 0.5 }}>
-                    <MuiLink
-                      component="button"
-                      variant="body2"
-                      onClick={() =>
-                        navigate(
-                          `/dashboard/order-details?orderId=${id_order}&certifId=${id_ord_certif_ori || ''}`
-                        )
-                      }
-                      sx={{ textDecoration: 'underline', cursor: 'pointer', fontSize: '0.7rem' }}
-                    >
-                      Voir la commande
-                    </MuiLink>
-                  </Box>
+                  {(id_order && id_order !== 0) && (
+                    <Box sx={{ mt: 0.5 }}>
+                      <MuiLink
+                        component="button"
+                        variant="body2"
+                        onClick={() =>
+                          navigate(
+                            `/dashboard/order-details?orderId=${id_order}&certifId=${id_ord_certif_ori || ''}`
+                          )
+                        }
+                        sx={{ textDecoration: 'underline', cursor: 'pointer', fontSize: '0.7rem' }}
+                      >
+                        Voir la commande
+                      </MuiLink>
+                    </Box>
+                  )}
                 </Box>
                 {index < memos.length - 1 && <Divider sx={{ my: 1 }} />}
               </Box>

@@ -54,6 +54,7 @@ import SearchOrders from '../pages/SearchOrders/SearchOrders';
 
 // Import du footer
 import Footer from '../components/Footer';
+import CurrentOrders from '../pages/CurrentOrders/CurrentOrders';
 
 const App = () => {
   const dispatch = useDispatch();
@@ -158,6 +159,7 @@ const App = () => {
               <Route path="oporderdetails" element={<OpOrderDetails />} />
               <Route path="list-type" element={<ListTypePage />} />
               <Route path="dashboardoperateur" element={<DashboardOperateur />} />
+              <Route path="current-orders" element={<CurrentOrders />} />
               <Route path="search-orders" element={<SearchOrders />} />
             </Route>
           </Route>

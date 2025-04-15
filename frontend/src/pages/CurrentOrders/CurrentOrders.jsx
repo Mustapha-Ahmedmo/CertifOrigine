@@ -34,7 +34,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 import { fetchCountries, fetchRecipients, getCertifGoodsInfo, getCertifTranspMode, getCustAccountInfo, getOrderFilesInfo, getOrderOpInfo, getTransmodeInfo, setOrderFiles } from '../../services/apiServices';
 import { formatDate } from '../../utils/dateUtils';
-import './SearchOrders.css';
+import './CurrentOrders.css';
 import { generatePDF } from '../../components/orders/GeneratePDF';
 
 const ITEM_HEIGHT = 48;
@@ -62,7 +62,7 @@ const statusMap = {
   9: "Rejected"
 };
 
-const SearchOrders = () => {
+const CurrentOrders = () => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const operatorId = user?.id_login_user;
@@ -73,7 +73,7 @@ const SearchOrders = () => {
   const [dateEnd, setDateEnd] = useState('');
   const [orderNumber, setOrderNumber] = useState('');
   const [searchText, setSearchText] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState([5]);
+  const [selectedStatuses, setSelectedStatuses] = useState([]);
   const [filterCertificate, setFilterCertificate] = useState(false);
   const [filterLegalisation, setFilterLegalisation] = useState(false);
   const [filterInvoice, setFilterInvoice] = useState(false);
@@ -260,30 +260,8 @@ const SearchOrders = () => {
       p_idlogin_insert: operatorId,
       file: pdfFile,
     };
-
-    console.log('Sending file data to setOrderFiles:', orderFileData);
-    const result = await setOrderFiles(orderFileData);
-    console.log('Result from setOrderFiles:', result);
-
-    console.log('Fetching file info for order:', order.id_order);
-    const fileCheck = await getOrderFilesInfo({
-      p_id_order_list: order.id_order,
-      p_idfiles_repo_typeof: 1000,
-    });
-    console.log('File info (fileCheck):', fileCheck);
-
-    if (fileCheck && fileCheck.length > 0) {
-      console.log('Found file record, updating local state orderFilesMap...');
-      setOrderFilesMap((prev) => ({
-        ...prev,
-        [order.id_order]: fileCheck[0],
-      }));
-    } else {
-      console.log('No file record returned in fileCheck. Nothing to update in orderFilesMap.');
-    }
-
-    console.log('PDF generated and order file saved successfully. Now refreshing orders...');
-    await fetchOrders();
+    await setOrderFiles(orderFileData);
+    console.log("PDF generated and order file saved successfully.");
   };
 
   const handleFileClick = (file) => {
@@ -434,7 +412,7 @@ const SearchOrders = () => {
   return (
     <Box sx={{ ml: { xs: 0, md: '240px' }, p: 2 }}>
       <Typography variant="h4" sx={{ mb: 2, mt: 2 }}>
-        Recherche de Commandes - {currentYear}
+        Commandes en cours - {currentYear}
       </Typography>
       {/* Section des filtres */}
       <Paper sx={{ p: 2, mb: 2 }}>
@@ -463,7 +441,31 @@ const SearchOrders = () => {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
-
+          <FormControl sx={{ minWidth: 150 }}>
+            <InputLabel id="status-select-label">Status</InputLabel>
+            <Select
+              labelId="status-select-label"
+              id="status-select"
+              multiple
+              value={selectedStatuses}
+              onChange={handleStatusChange}
+              input={<OutlinedInput label="Status" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={statusMap[value]} size="small" />
+                  ))}
+                </Box>
+              )}
+              MenuProps={MenuProps}
+            >
+              {allStatuses.map((status) => (
+                <MenuItem key={status} value={status}>
+                  {statusMap[status]}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             <FormControlLabel
               control={<Checkbox checked={filterCertificate} onChange={(e) => setFilterCertificate(e.target.checked)} />}
@@ -503,4 +505,4 @@ const SearchOrders = () => {
   );
 };
 
-export default SearchOrders;
+export default CurrentOrders;

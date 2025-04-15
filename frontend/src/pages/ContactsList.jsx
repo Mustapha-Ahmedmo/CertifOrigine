@@ -2,13 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
   getCustUsersByAccount,
-  setCustUser,
   deleteCustUser,
   setCustSmallUser,
+  reactivateCustUser,
 } from '../services/apiServices';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import './ContactsList.css';
 import {
   Box,
   Typography,
@@ -27,45 +26,33 @@ import {
   DialogActions,
   Snackbar,
   Alert,
-  Tabs,
-  Tab,
-  AppBar,
   useTheme,
   useMediaQuery,
+  FormControlLabel,
+  Checkbox,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  Radio,
 } from '@mui/material';
+import './ContactsList.css';
 
-// Helpers pour l'accessibilité des onglets
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`inscriptions-tabpanel-${index}`}
-      aria-labelledby={`inscriptions-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 2 }}>{children}</Box>}
-    </div>
-  );
-}
+// Générer un mot de passe aléatoire si nécessaire
+const generateRandomPassword = (length = 12) => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+};
 
-function a11yProps(index) {
-  return {
-    id: `inscriptions-tab-${index}`,
-    'aria-controls': `inscriptions-tabpanel-${index}`,
-  };
-}
-
-const API_URL = import.meta.env.VITE_API_URL;
-
-// Fonction de validation pour un numéro de téléphone international : 
-// Le numéro doit commencer par '+' suivi uniquement de chiffres et ne doit pas dépasser 12 caractères.
+// Valider un numéro de téléphone international
 const isValidInternationalPhone = (number) => {
   return /^\+[0-9]+$/.test(number) && number.length <= 12;
 };
 
-// Fonction de validation pour un email au format standard
+// Valider un email standard
 const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
@@ -78,18 +65,19 @@ const ContactsList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Barre de recherche
+  // Recherche
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Modale : ajout ou édition
+  // Etats pour showActive / showInactive
+  const [showActive, setShowActive] = useState(true);
+  const [showInactive, setShowInactive] = useState(false);
+
+  // Modale d'ajout/édition
   const [showModal, setShowModal] = useState(false);
   const [modalError, setModalError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
-  const user2 = useSelector((state) => state.auth.user);
-  const idLogin = user2?.id_login_user;
-
-  // Contact en cours (pour la modale)
+  // Contact en cours d'édition
   const [currentContact, setCurrentContact] = useState({
     id_cust_user: 0,
     full_name: '',
@@ -102,7 +90,7 @@ const ContactsList = () => {
     confirmPassword: '',
   });
 
-  // Calcul des erreurs pour les numéros de téléphone dans la modale
+  // Vérifications téléphone
   const phoneFixedError =
     currentContact.phone_number !== '' && !isValidInternationalPhone(currentContact.phone_number);
   const phoneMobileError =
@@ -113,43 +101,12 @@ const ContactsList = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  const handleSnackbarClose = (event, reason) => {
-    if (reason === 'clickaway') return;
-    setSnackbarOpen(false);
-  };
-
   // Responsive
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Récupération des contacts
-  useEffect(() => {
-    const fetchContacts = async () => {
-      try {
-        if (!custAccountId) {
-          setError('Aucun compte client trouvé.');
-          setLoading(false);
-          return;
-        }
-        const result = await getCustUsersByAccount(
-          custAccountId,
-          null,
-          'true',
-          'true',
-          null
-        );
-        setContacts(result.data || []);
-      } catch (err) {
-        console.error('Error fetching contacts:', err);
-        setError('Une erreur est survenue lors de la récupération des contacts.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchContacts();
-  }, [custAccountId]);
 
-  // Ouvrir la modale en mode Ajout
+  // Ouvrir la modale d'ajout
   const handleOpenAddModal = () => {
     setModalError('');
     setIsEditing(false);
@@ -167,7 +124,47 @@ const ContactsList = () => {
     setShowModal(true);
   };
 
-  // Ouvrir la modale en mode Édition
+  const [radioValue, setRadioValue] = useState('active');
+
+  const buildIsactiveCU = () => {
+    // If radioValue === 'active' => 'true'
+    // If radioValue === 'inactive' => 'false'
+    return radioValue === 'active' ? 'true' : 'false';
+  };
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        if (!custAccountId) {
+          setError('Aucun compte client trouvé.');
+          setLoading(false);
+          return;
+        }
+        setLoading(true);
+        const isactiveCUParam = buildIsactiveCU();
+        // Récupérer contacts (actifs ou inactifs selon radioValue)
+        const result = await getCustUsersByAccount(
+          custAccountId,
+          null,      // statutflag
+          'true',    // isactiveCA => true => compte client actif
+          isactiveCUParam, // isactiveCU => 'true' ou 'false'
+          null
+        );
+        setContacts(result.data || []);
+      } catch (err) {
+        console.error('Error fetching contacts:', err);
+        setError('Une erreur est survenue lors de la récupération des contacts.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchContacts();
+  }, [custAccountId, radioValue]);
+
+  const handleRadioChange = (event) => {
+    setRadioValue(event.target.value);
+  };
+
+  // Ouvrir la modale d'édition
   const handleOpenEditModal = (contact) => {
     setModalError('');
     setIsEditing(true);
@@ -185,17 +182,16 @@ const ContactsList = () => {
     setShowModal(true);
   };
 
-  // Fermer la modale
   const handleCloseModal = () => {
     setShowModal(false);
   };
 
-  // Gérer la saisie (modale)
+  // Gérer la saisie dans la modale
   const handleChange = (field, value) => {
     setCurrentContact((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Sauvegarder le contact
+  // Sauvegarder
   const handleSaveContact = async () => {
     const {
       id_cust_user,
@@ -209,6 +205,7 @@ const ContactsList = () => {
       confirmPassword,
     } = currentContact;
 
+    // Vérifications simples
     if (!full_name || !email) {
       setModalError("Veuillez renseigner au minimum le nom et l'email du contact.");
       return;
@@ -220,11 +217,11 @@ const ContactsList = () => {
     }
 
     if (!phone_number || !isValidInternationalPhone(phone_number)) {
-      setModalError("Le téléphone fixe est obligatoire et doit être au format international (doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères).");
+      setModalError("Le téléphone fixe doit être au format international (e.g. '+123456').");
       return;
     }
     if (!mobile_number || !isValidInternationalPhone(mobile_number)) {
-      setModalError("Le téléphone portable est obligatoire et doit être au format international (doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères).");
+      setModalError("Le téléphone portable doit être au format international (e.g. '+123456').");
       return;
     }
 
@@ -237,15 +234,19 @@ const ContactsList = () => {
 
     try {
       setModalError('');
+
+      // Si on modifie, on n'envoie un pwd que si l'utilisateur a saisi qqchose
       let pwdToSend = null;
       if (isEditing) {
         if (password.trim()) {
           pwdToSend = password.trim();
         }
       } else {
+        // En création
         pwdToSend = null;
       }
 
+      // On suppose statut_flag = 1 => actif
       const payload = {
         id_cust_user: isEditing ? id_cust_user : 0,
         id_cust_account: custAccountId,
@@ -257,14 +258,15 @@ const ContactsList = () => {
         mobile_number,
         pwd: pwdToSend,
         ismain_user,
-        statut_flag: 1,
+        statut_flag: 1, // actif
         id_login_insert: user?.id_login_user || 1,
         id_login_modify: isEditing ? (user?.id_login_user || 1) : null,
-        password: 'account123password',
+        password: isEditing ? null : generateRandomPassword(),
         idlogin: user?.id_login_user || 1,
       };
 
       await setCustSmallUser(payload);
+      // Recharger la liste complète
       const updated = await getCustUsersByAccount(custAccountId, null, 'true', 'true', null);
       setContacts(updated.data || []);
       setShowModal(false);
@@ -278,7 +280,26 @@ const ContactsList = () => {
     }
   };
 
-  // Suppression
+  const handleReactivate = async (contactId) => {
+    if (!window.confirm('Voulez-vous vraiment réactiver ce contact ?')) {
+      return;
+    }
+    try {
+      await reactivateCustUser(contactId);
+  
+      // Retirer le contact réactivé de la liste locale
+      setContacts((prev) => prev.filter((c) => c.id_cust_user !== contactId));
+  
+      setSnackbarMessage('Contact réactivé avec succès.');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (err) {
+      console.error('Erreur lors de la réactivation du contact:', err);
+      alert('Impossible de réactiver ce contact.');
+    }
+  };
+
+  // Suppression => on suppose statut_flag != 1 => inactif
   const handleDelete = async (contactId) => {
     if (!window.confirm('Voulez-vous vraiment désactiver ce contact ?')) {
       return;
@@ -293,10 +314,11 @@ const ContactsList = () => {
     }
   };
 
-  // Filtrage local via searchTerm
-  const filteredContacts = contacts.filter((contact) => {
+  // Premier filtrage => Search
+  const searchFilteredContacts = contacts.filter((contact) => {
     const search = searchTerm.toLowerCase().trim();
     if (!search) return true;
+
     const fieldsToSearch = [
       contact.full_name,
       contact.position,
@@ -309,9 +331,10 @@ const ContactsList = () => {
     return fieldsToSearch.some((field) => field.includes(search));
   });
 
+
   const renderMobileCards = () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {filteredContacts.map((contact) => (
+      {searchFilteredContacts.map((contact) => (
         <Paper
           key={contact.id_cust_user}
           sx={{
@@ -352,7 +375,8 @@ const ContactsList = () => {
             >
               Modifier
             </Button>
-            {!contact.ismain_user && (
+
+            {radioValue === 'active' && !contact.ismain_user && (
               <Button
                 variant="outlined"
                 size="small"
@@ -361,13 +385,25 @@ const ContactsList = () => {
                 onClick={() => handleDelete(contact.id_cust_user)}
                 sx={{ border: 'none', '&:hover': { border: 'none' } }}
               >
-                Supprimer
+                Désactiver
+              </Button>
+            )}
+
+            {radioValue === 'inactive' && (
+              <Button
+                variant="outlined"
+                size="small"
+                color="success"
+                onClick={() => handleReactivate(contact.id_cust_user)}
+                sx={{ border: 'none', '&:hover': { border: 'none' } }}
+              >
+                Réactiver
               </Button>
             )}
           </Box>
         </Paper>
       ))}
-      {filteredContacts.length === 0 && (
+      {searchFilteredContacts.length === 0 && (
         <Paper sx={{ p: 2 }}>
           <Typography align="center">Aucun contact trouvé.</Typography>
         </Paper>
@@ -428,10 +464,24 @@ const ContactsList = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           style={{ maxWidth: 300 }}
         />
+
+        <FormControl component="fieldset">
+          <RadioGroup
+            row
+            name="contactsFilter"
+            value={radioValue}
+            onChange={handleRadioChange}
+          >
+            <FormControlLabel value="active" control={<Radio />} label="Contacts Actifs" />
+            <FormControlLabel value="inactive" control={<Radio />} label="Contacts Désactivés" />
+          </RadioGroup>
+        </FormControl>
       </Box>
 
       {/* Affichage conditionnel : tableau ou cartes mobiles */}
-      {isSmallScreen ? renderMobileCards() : (
+      {isSmallScreen ? (
+        renderMobileCards()
+      ) : (
         <Paper>
           <TableContainer>
             <Table>
@@ -447,7 +497,7 @@ const ContactsList = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredContacts.map((contact) => (
+                {searchFilteredContacts.map((contact) => (
                   <TableRow key={contact.id_cust_user}>
                     <TableCell>{contact.full_name}</TableCell>
                     <TableCell>{contact.position}</TableCell>
@@ -475,7 +525,7 @@ const ContactsList = () => {
                       >
                         Modifier
                       </Button>
-                      {!contact.ismain_user && (
+                      {radioValue === 'active' && !contact.ismain_user && (
                         <Button
                           variant="outlined"
                           size="small"
@@ -487,13 +537,28 @@ const ContactsList = () => {
                             '&:hover': { border: 'none' },
                           }}
                         >
-                          Supprimer
+                          Désactiver
+                        </Button>
+                      )}
+
+                      {radioValue === 'inactive' && (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          color="success"
+                          onClick={() => handleReactivate(contact.id_cust_user)}
+                          sx={{
+                            border: 'none',
+                            '&:hover': { border: 'none' },
+                          }}
+                        >
+                          Réactiver
                         </Button>
                       )}
                     </TableCell>
                   </TableRow>
                 ))}
-                {filteredContacts.length === 0 && (
+                {searchFilteredContacts.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={7} align="center">
                       Aucun contact trouvé.
@@ -557,7 +622,7 @@ const ContactsList = () => {
             error={phoneFixedError}
             helperText={
               phoneFixedError
-                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
+                ? "Format incorrect. Doit commencer par '+' et max 12 caractères."
                 : ""
             }
             required
@@ -573,33 +638,25 @@ const ContactsList = () => {
             error={phoneMobileError}
             helperText={
               phoneMobileError
-                ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
+                ? "Format incorrect. Doit commencer par '+' et max 12 caractères."
                 : ""
             }
             required
           />
-          {isEditing && (
-            <>
-              <TextField
-                label="Nouveau mot de passe (facultatif)"
-                variant="outlined"
-                fullWidth
-                type="password"
-                value={currentContact.password}
-                onChange={(e) => handleChange('password', e.target.value)}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                label="Confirmer le nouveau mot de passe"
-                variant="outlined"
-                fullWidth
-                type="password"
-                value={currentContact.confirmPassword}
-                onChange={(e) => handleChange('confirmPassword', e.target.value)}
-              />
-            </>
-          )}
+
         </DialogContent>
+
+        <FormControlLabel
+          sx={{ ml: 2 }}
+          control={
+            <Checkbox
+              checked={currentContact.ismain_user}
+              onChange={(e) => handleChange('ismain_user', e.target.checked)}
+              color="primary"
+            />
+          }
+          label="Contact principal"
+        />
         <DialogActions>
           <Button onClick={handleCloseModal}>Annuler</Button>
           <Button variant="contained" onClick={handleSaveContact} sx={{ backgroundColor: '#DCAF26' }}>
@@ -608,8 +665,20 @@ const ContactsList = () => {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
-        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={(e, reason) => {
+          if (reason === 'clickaway') return;
+          setSnackbarOpen(false);
+        }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
           {snackbarMessage}
         </Alert>
       </Snackbar>
