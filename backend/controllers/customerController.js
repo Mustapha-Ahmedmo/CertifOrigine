@@ -1,6 +1,7 @@
 const sequelize = require('../config/db'); // Correctly import sequelize
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const { setMemo } = require('./mailerController');
 const transporter = nodemailer.createTransport({
   host: 'mail.gandi.net',
   port: 587,
@@ -27,6 +28,20 @@ const sendEmail = async (to, subject, text) => {
     console.log(`Email envoyé à ${to}`);
   } catch (error) {
     console.error(`Erreur lors de l'envoi de l'email à ${to}:`, error);
+  }
+};
+
+const sendHtmlEmail = async (to, subject, htmlContent) => {
+  try {
+    await transporter.sendMail({
+      from: '"Chambre de commerce de Djibouti" <myfolioreport@maesys.fr>',
+      to,
+      subject,
+      html: htmlContent,
+    });
+    console.log(`Email HTML envoyé à ${to}`);
+  } catch (error) {
+    console.error(`Erreur lors de l'envoi de l'email HTML à ${to}:`, error);
   }
 };
 
@@ -255,7 +270,6 @@ const executeSetCustUser = async (req, res) => {
   }
 };
 
-
 const executeSetCustSmallUser = async (req, res) => {
   try {
     const {
@@ -265,17 +279,17 @@ const executeSetCustSmallUser = async (req, res) => {
       full_name,
       ismain_user,
       email,
-      password, // received password (may be empty when updating)
+      password, // may be empty on update
       phone_number,
       mobile_number,
       idlogin,
       position,
     } = req.body;
 
-    // Debug: log incoming data
     console.log('Received set_cust_user data:', req.body);
 
-    // Prepare replacements. If updating an existing user (id_cust_user exists) and password is empty, pass null.
+    const isUpdate = id_cust_user && Number(id_cust_user) !== 0;
+
     const replacements = {
       id_cust_user,
       id_cust_account,
@@ -287,10 +301,9 @@ const executeSetCustSmallUser = async (req, res) => {
       mobile_number,
       idlogin,
       position,
-      password: (id_cust_user && (!password || password.trim() === '')) ? null : password,
+      password: isUpdate && (!password || password.trim() === '') ? null : password,
     };
 
-    // Execute the stored procedure. Notice we pass p_password as null in update mode if no new password is provided.
     const result = await sequelize.query(
       `CALL set_cust_user(
         :id_cust_user, 
@@ -307,48 +320,47 @@ const executeSetCustSmallUser = async (req, res) => {
       )`,
       {
         replacements,
-        type: sequelize.QueryTypes.RAW, // Specify the query type
+        type: sequelize.QueryTypes.RAW,
       }
     );
 
     console.log('set_cust_user result:', result);
 
-    // Now, generate a reset token so the user can set a new password.
-    const token = crypto.randomUUID();
-    const activationDate = new Date();
-    const deactivationDate = new Date();
-    deactivationDate.setHours(deactivationDate.getHours() + 24); // Token valid for 24 hours
+    if (!isUpdate) {
+      // Création d'un compte — générer le token et envoyer le lien
+      const token = crypto.randomUUID();
+      const activationDate = new Date();
+      const deactivationDate = new Date();
+      deactivationDate.setHours(deactivationDate.getHours() + 24);
 
-    // Save the token in the database using a stored procedure (assumed to be "add_TokenResetPwd_Settings").
-    await sequelize.query(
-      `CALL add_TokenResetPwd_Settings(
-            :p_token,
-            :p_login,
-            :p_email,
-            :p_activation_date,
-            :p_deactivation,
-            :p_id
-          )`,
-      {
-        replacements: {
-          p_token: token,
-          p_login: email,
-          p_email: email,
-          p_activation_date: activationDate,
-          p_deactivation: deactivationDate,
-          p_id: null,
-        },
-        type: sequelize.QueryTypes.RAW,
-      }
-    );
+      await sequelize.query(
+        `CALL add_TokenResetPwd_Settings(
+          :p_token,
+          :p_login,
+          :p_email,
+          :p_activation_date,
+          :p_deactivation,
+          :p_id
+        )`,
+        {
+          replacements: {
+            p_token: token,
+            p_login: email,
+            p_email: email,
+            p_activation_date: activationDate,
+            p_deactivation: deactivationDate,
+            p_id: null,
+          },
+          type: sequelize.QueryTypes.RAW,
+        }
+      );
 
-    const resetLink = `${FRONTEND_URL}/forgot-password?token=${token}`;
+      const resetLink = `${FRONTEND_URL}/forgot-password?token=${token}`;
 
-    // Send an email to the user with instructions to reset the password.
-    await sendEmail(
-      email,
-      'Réinitialisation de votre mot de passe',
-      `Bonjour ${full_name},
+      await sendEmail(
+        email,
+        'Réinitialisation de votre mot de passe',
+        `Bonjour ${full_name},
 
 Votre compte a été créé avec succès. Pour sécuriser votre compte, nous vous invitons à réinitialiser votre mot de passe en cliquant sur le lien ci-dessous :
 
@@ -358,10 +370,23 @@ ${resetLink}
 
 Si vous n'avez pas initié cette demande, veuillez contacter notre support immédiatement.
 
-Cordialement,
+Cordialement,  
 L'équipe`
-    );
+      );
+    } else {
+      // Modification d'un compte — notification simple
+      await sendEmail(
+        email,
+        'Modification de votre compte',
+        `Bonjour ${full_name},
 
+Votre compte a été modifié avec succès.  
+Si vous n'avez pas initié cette demande, veuillez contacter notre support immédiatement.
+
+Cordialement,  
+Chambre de commerce de Djibouti`
+      );
+    }
 
     res.status(200).json({
       message: 'Customer user processed successfully',
@@ -625,6 +650,7 @@ Bien cordialement,
     });
   }
 };
+
 const rejectCustAccount = async (req, res) => {
   try {
     const { id } = req.params; // ID of the customer account to reject
@@ -683,18 +709,23 @@ const rejectCustAccount = async (req, res) => {
     if (mainContact.length > 0) {
       const { email, full_name } = mainContact[0];
 
+      const htmlContent = `
+      <p>Bonjour,</p>
+      <p>Votre compte a été rejeté par un opérateur.<br />
+      Raison du rejet : <strong>${reason}</strong></p>
+      <p>Prière de vous réinscrire en cliquant 
+      <a href="${FRONTEND_URL}/register" 
+         style="display:inline-block;padding:10px 20px;background-color:#DCAF26;color:white;text-decoration:none;border-radius:5px;">
+         ici
+      </a> 
+      et en prêtant attention au(x) point(s) ci-haut.</p>
+      <p>Chambre de Commerce de Djibouti</p>
+    `;
       // Send an email to notify the rejection
-      await sendEmail(
+      await sendHtmlEmail(
         email,
         'Votre compte a été rejeté',
-        `Bonjour ${full_name},
-
-Votre compte a été rejeté par un opérateur.
-
-Raison du rejet : ${reason}
-
-Cordialement,
-L'équipe.`
+        htmlContent
       );
     }
 
@@ -705,6 +736,209 @@ L'équipe.`
     console.error('Erreur lors du rejet du compte client:', error);
     res.status(500).json({
       message: 'Erreur lors du rejet du compte client.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
+
+const disableCustAccount = async (req, res) => {
+  try {
+    const { id } = req.params; // ID of the customer account to disable
+    const { reason, idlogin } = req.body; // Optional reason and operator ID
+
+    // Validate inputs
+    if (!id) {
+      return res.status(400).json({
+        message: 'ID du compte client requis.',
+      });
+    }
+
+    // Fetch the current details of the customer account
+    const account = await sequelize.query(
+      `SELECT * FROM cust_account WHERE id_cust_account = :id`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (account.length === 0) {
+      return res.status(404).json({
+        message: `Compte client avec ID ${id} non trouvé.`,
+      });
+    }
+
+    // Call the procedure with p_statut_flag = 3 => désactivé
+    await sequelize.query(
+      `CALL upd_cust_account_statut(:p_id_cust_account, :p_statut_flag, :p_idlogin)`,
+      {
+        replacements: {
+          p_id_cust_account: id,
+          p_statut_flag: 3, // 3 => désactivé
+          p_idlogin: idlogin || 1, // Fallback if not provided
+        },
+        type: sequelize.QueryTypes.RAW,
+      }
+    );
+
+    // Fetch the main contact for the account
+    const mainContact = await sequelize.query(
+      `SELECT * FROM cust_user WHERE id_cust_account = :id AND ismain_user = TRUE`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    // Optional: Notify main contact of the disable action
+    if (mainContact.length > 0) {
+      const { email, full_name } = mainContact[0];
+
+      const htmlContent = `
+        <p>Bonjour ${full_name || ''},</p>
+        <p>Votre compte a été désactivé ${reason ? `pour la raison suivante : <strong>${reason}</strong>.` : 'sans motif spécifié.'}</p>
+        <p>Pour toute réclamation ou réactivation, veuillez contacter notre support.</p>
+        <p>Chambre de Commerce de Djibouti</p>
+      `;
+
+      await sendHtmlEmail(
+        email,
+        'Votre compte a été désactivé',
+        htmlContent
+      );
+    }
+
+    const nowISO = new Date().toISOString(); // current date/time in ISO
+    const memoData = {
+      p_id_order: null,                 // or whichever order ID applies (0 if none)
+      p_id_cust_account: id,         // the disabled account
+      p_typeof: 1,   // or any label you prefer
+      p_idlogin_insert: idlogin || 1,
+      p_memo_date: nowISO,           // must be a valid ISO string
+      p_memo_subject: 'Désactivation du compte client',
+      p_memo_body: reason || 'Aucune raison spécifiée.',
+      p_mail_to: mainContact?.[0]?.email || null,
+      p_mail_bcc: null,             // or fill in if you want
+      p_mail_acc: null,             // or fill in if you want
+      p_mail_notifications: null,    // or fill in if you want
+    };
+
+    const memoResult = await setMemo(
+      { body: memoData },            // pass as if it's the Express req
+      { json: () => { }, status: () => ({ json: () => { } }) } // mock res if needed
+    );
+    // You can log or handle it as needed:
+    console.log('Memo created:', memoResult?.newMemoId || memoResult);
+
+
+    res.status(200).json({
+      message: `Compte client avec ID ${id} a été désactivé (statut_flag = 3).`,
+    });
+  } catch (error) {
+    console.error('Erreur lors de la désactivation du compte client:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la désactivation du compte client.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
+
+const reactivateCustAccount = async (req, res) => {
+  try {
+    const { id } = req.params; // ID of the customer account to reactivate
+    const { reason, idlogin } = req.body; // Optional reason and operator ID
+
+    // Validate inputs
+    if (!id) {
+      return res.status(400).json({
+        message: 'ID du compte client requis.',
+      });
+    }
+
+    // Fetch the current details of the customer account
+    const account = await sequelize.query(
+      `SELECT * FROM cust_account WHERE id_cust_account = :id`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (account.length === 0) {
+      return res.status(404).json({
+        message: `Compte client avec ID ${id} non trouvé.`,
+      });
+    }
+
+    // Call the procedure with p_statut_flag = 2 => réactivé
+    await sequelize.query(
+      `CALL upd_cust_account_statut(:p_id_cust_account, :p_statut_flag, :p_idlogin)`,
+      {
+        replacements: {
+          p_id_cust_account: id,
+          p_statut_flag: 2, // 2 => réactivé (ou “validé”)
+          p_idlogin: idlogin || 1, // Fallback if not provided
+        },
+        type: sequelize.QueryTypes.RAW,
+      }
+    );
+
+    // Fetch the main contact for the account
+    const mainContact = await sequelize.query(
+      `SELECT * FROM cust_user WHERE id_cust_account = :id AND ismain_user = TRUE`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    // Optional: Notify main contact of the reactivation
+    if (mainContact.length > 0) {
+      const { email, full_name } = mainContact[0];
+
+      const htmlContent = `
+        <p>Bonjour ${full_name || ''},</p>
+        <p>Votre compte a été réactivé</p>
+        <p>Vous pouvez désormais accéder à nouveau à votre espace client.</p>
+        <p>Chambre de Commerce de Djibouti</p>
+      `;
+
+      await sendHtmlEmail(
+        email,
+        'Votre compte a été réactivé',
+        htmlContent
+      );
+    }
+
+    // Create a memo for the reactivation
+    const nowISO = new Date().toISOString();
+    const memoData = {
+      p_id_order: null,                 // or 0 if none
+      p_id_cust_account: id,
+      p_typeof: 1,                      // distinct from the "disable" type if you prefer
+      p_idlogin_insert: idlogin || 1,
+      p_memo_date: nowISO,
+      p_memo_subject: 'Réactivation du compte client',
+      p_memo_body:  'Aucune raison spécifiée.',
+      p_mail_to: mainContact?.[0]?.email || null,
+      p_mail_bcc: null,
+      p_mail_acc: null,
+      p_mail_notifications: null,
+    };
+
+    const memoResult = await setMemo(
+      { body: memoData },
+      { json: () => { }, status: () => ({ json: () => { } }) }
+    );
+    console.log('Memo created:', memoResult);
+
+    res.status(200).json({
+      message: `Compte client avec ID ${id} a été réactivé (statut_flag = 2).`,
+    });
+  } catch (error) {
+    console.error('Erreur lors de la réactivation du compte client:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la réactivation du compte client.',
       error: error.message || 'Erreur inconnue.',
     });
   }
@@ -1344,35 +1578,32 @@ L'équipe de la Chambre de Commerce de Djibouti`
     });
   }
 };
-
 const executeDeleteCustUser = async (req, res) => {
   try {
     const { id } = req.params; // id_cust_user to be deactivated
 
-    if (!id) {
+    if (!id || isNaN(parseInt(id))) {
       return res.status(400).json({
-        message: 'L’ID du contact est requis pour la désactivation.'
+        message: "L’ID du contact est requis et doit être un entier valide."
       });
     }
 
+    // Appel de la procédure stockée
     await sequelize.query(
-      `UPDATE cust_user
-       SET DEACTIVATION_DATE = CURRENT_TIMESTAMP
-       WHERE ID_CUST_USER = :id`,
+      `CALL disable_cust_user(:id)`,
       {
-        replacements: { id },
-        type: sequelize.QueryTypes.UPDATE,
+        replacements: { id: parseInt(id) },
+        type: sequelize.QueryTypes.RAW
       }
     );
 
-
     res.status(200).json({
-      message: `Contact (ID: ${id}) désactivé avec succès.`
+      message: `Contact (ID: ${id}) désactivé avec succès via la procédure.`
     });
   } catch (error) {
-    console.error('Erreur lors de la désactivation du contact:', error);
+    console.error("Erreur lors de l'appel à la procédure disable_cust_user:", error);
     res.status(500).json({
-      message: 'Erreur lors de la désactivation du contact.',
+      message: "Erreur lors de la désactivation du contact via la procédure.",
       error: error.message || 'Erreur inconnue.'
     });
   }
@@ -1529,8 +1760,8 @@ const executeUpdCustAccount = async (req, res) => {
 
 const executeDelCustAccountFiles = async (req, res) => {
   try {
-    const { id } = req.params; 
-    const { mode } = req.body; 
+    const { id } = req.params;
+    const { mode } = req.body;
 
     if (!id) {
       return res.status(400).json({
@@ -1562,6 +1793,37 @@ const executeDelCustAccountFiles = async (req, res) => {
   }
 };
 
+const executeReactivateCustUser = async (req, res) => {
+  try {
+    const { id } = req.params; // id_cust_user à réactiver
+
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({
+        message: "L’ID du contact est requis et doit être un entier valide."
+      });
+    }
+
+    // Appel de la procédure stockée de réactivation
+    await sequelize.query(
+      `CALL enable_cust_user(:id)`,
+      {
+        replacements: { id: parseInt(id) },
+        type: sequelize.QueryTypes.RAW
+      }
+    );
+
+    res.status(200).json({
+      message: `Contact (ID: ${id}) réactivé avec succès via la procédure.`
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'appel à la procédure enable_cust_user:", error);
+    res.status(500).json({
+      message: "Erreur lors de la réactivation du contact via la procédure.",
+      error: error.message || 'Erreur inconnue.'
+    });
+  }
+};
+
 // Export the new function along with the existing ones
 module.exports = {
   executeSetCustAccount,
@@ -1579,5 +1841,8 @@ module.exports = {
   handleContactForm,
   executeSetCustSmallUser,
   executeUpdCustAccount,
-  executeDelCustAccountFiles
+  executeDelCustAccountFiles,
+  disableCustAccount,
+  reactivateCustAccount,
+  executeReactivateCustUser
 };

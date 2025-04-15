@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { executeSetCustAccount, executeSetCustUser, executeSetCustSmallUser, executeGetCustAccountInfo, updateCustAccountStatus, rejectCustAccount, executeAddSubscription, executeCreateSubscriptionWithFile, executeGetCustAccountFiles, requestPasswordReset, executeResetPassword, executeGetCustUsersByAccount, executeDeleteCustUser, handleContactForm, executeUpdCustAccount, executeDelCustAccountFiles } = require('../controllers/customerController');
+const { executeSetCustAccount, executeSetCustUser, executeSetCustSmallUser, executeGetCustAccountInfo, updateCustAccountStatus, rejectCustAccount, executeAddSubscription, executeCreateSubscriptionWithFile, executeGetCustAccountFiles, requestPasswordReset, executeResetPassword, executeGetCustUsersByAccount, executeDeleteCustUser, handleContactForm, executeUpdCustAccount, executeDelCustAccountFiles, disableCustAccount, reactivateCustAccount, executeReactivateCustUser } = require('../controllers/customerController');
 const upload = require('../src/middleware/upload');
 
 // Route to handle set_cust_account
@@ -46,5 +46,11 @@ router.post('/password-reset/reset', executeResetPassword);
 router.post('/upd-cust-account', executeUpdCustAccount);
 
 router.delete('/delete-cust-account-file/:id', executeDelCustAccountFiles);
+
+router.put('/disable-cust-account/:id', disableCustAccount);
+
+router.put('/reactivate-cust-account/:id', reactivateCustAccount);
+
+router.patch('/reactivate-cust-user/:id', executeReactivateCustUser);
 
 module.exports = router;

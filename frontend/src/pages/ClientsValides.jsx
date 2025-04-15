@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
   deleteCustAccountFile,
+  disableCustAccount,
   fetchSectors,
   getCustAccountInfo,
+  reactivateCustAccount,
   updateCustAccount
 } from '../services/apiServices';
 import './Inscriptions.css';
@@ -103,18 +105,26 @@ const ClientsValides = () => {
     justificatifFileName: ''
   });
 
+  const [openDisableModal, setOpenDisableModal] = useState(false);
+  const [selectedDisableAccount, setSelectedDisableAccount] = useState(null);
+  const [disableReason, setDisableReason] = useState('');
+
   // Récupère les comptes selon le filtre
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
         let status;
+
         if (selectedFilter === 'validé') {
           status = 2;
         } else if (selectedFilter === 'non validé') {
           status = 1;
         } else if (selectedFilter === 'rejeté') {
           status = 4;
+        } else if (selectedFilter === 'désactivé') {
+          status = 3; // <-- Désactivé
         }
+
         const response = await getCustAccountInfo(null, status, true);
         const data = response.data || [];
         setCustAccounts(data);
@@ -305,6 +315,12 @@ const ClientsValides = () => {
     setEditFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleOpenDisableModal = (account) => {
+    setSelectedDisableAccount(account);
+    setDisableReason(''); // reset reason
+    setOpenDisableModal(true);
+  };
+
   const handleJustificatifChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -399,6 +415,78 @@ const ClientsValides = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
+  const handleReactivateConfirm = async (account) => {
+    if (!account) return;
+  
+    try {
+      // If your back-end expects (id, reason, idlogin):
+      await reactivateCustAccount(
+        account.id_cust_account,      // The ID to reactivate
+        account.idlogin_modify || 1   // Operator ID
+      );
+  
+      // Refresh the list
+      let status;
+      if (selectedFilter === 'validé') {
+        status = 2;
+      } else if (selectedFilter === 'non validé') {
+        status = 1;
+      } else if (selectedFilter === 'rejeté') {
+        status = 4;
+      } else if (selectedFilter === 'désactivé') {
+        status = 3;
+      }
+      const response = await getCustAccountInfo(null, status, true);
+      setCustAccounts(response.data || []);
+  
+      alert(`Le client « ${account.cust_name} » a été réactivé avec succès.`);
+    } catch (error) {
+      console.error('Erreur lors de la réactivation du client :', error);
+      alert('Impossible de réactiver ce client.');
+    }
+  };
+
+  const handleDisableConfirm = async () => {
+    if (!selectedDisableAccount) return;
+
+    try {
+      await disableCustAccount(
+        selectedDisableAccount.id_cust_account,
+        disableReason,
+        selectedDisableAccount.idlogin_modify || 1
+      );
+
+      // Now refetch the list, based on the current filter (selectedFilter)
+      let status;
+      if (selectedFilter === 'validé') {
+        status = 2;
+      } else if (selectedFilter === 'non validé') {
+        status = 1;
+      } else if (selectedFilter === 'rejeté') {
+        status = 4;
+      } else if (selectedFilter === 'désactivé') {
+        status = 3;
+      }
+      const response = await getCustAccountInfo(null, status, true);
+      setCustAccounts(response.data || []);
+
+      // Optionally log or store the reason
+      console.log(
+        `Client « ${selectedDisableAccount.cust_name} » désactivé. Raison :`,
+        disableReason
+      );
+
+      // Close modal
+      setOpenDisableModal(false);
+      setSelectedDisableAccount(null);
+      setDisableReason('');
+      alert(`Le client « ${selectedDisableAccount.cust_name} » a été désactivé avec succès.`);
+    } catch (error) {
+      console.error('Erreur lors de la désactivation du client :', error);
+      alert('Impossible de désactiver ce client.');
+    }
+  };
+
   // Rendu en mode Table (desktop)
   const renderTableView = () => (
     <Paper>
@@ -422,7 +510,7 @@ const ClientsValides = () => {
               <TableRow key={registration.id_cust_account}>
                 <TableCell>{formatDate(registration.insertdate)}</TableCell>
                 <TableCell>
-                {registration.cust_name} {registration.legal_form} 
+                  {registration.cust_name} {registration.legal_form}
                 </TableCell>
                 <TableCell>
                   {registration.sectorName?.symbol_fr?.toLowerCase() === 'autres'
@@ -482,16 +570,43 @@ const ClientsValides = () => {
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<FontAwesomeIcon icon={faEdit} />}
-                    onClick={() => handleOpenEditModal(registration)}
-                    style={{ color: '#C39408', borderColor: '#C39408' }}
-                  >
-                    Modifier
-                  </Button>
+                  {selectedFilter !== 'rejeté' && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<FontAwesomeIcon icon={faEdit} />}
+                      onClick={() => handleOpenEditModal(registration)}
+                      style={{ color: '#C39408', borderColor: '#C39408' }}
+                    >
+                      Modifier
+                    </Button>
+                  )}
                 </TableCell>
+                {selectedFilter !== 'rejeté' && (
+                  <TableCell>
+                    {selectedFilter === 'désactivé' ? (
+                      // Show "Activer" button
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        style={{ color: '#C39408', borderColor: '#C39408' }}
+                        onClick={() => handleReactivateConfirm(registration)}
+                      >
+                        Activer
+                      </Button>
+                    ) : (
+                      // Otherwise show "Désactiver" button
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="error"
+                        onClick={() => handleOpenDisableModal(registration)}
+                      >
+                        Désactiver
+                      </Button>
+                    )}
+                  </TableCell>
+                )}
                 <TableCell>
                   <Button
                     variant="outlined"
@@ -648,6 +763,18 @@ const ClientsValides = () => {
         >
           Clients Non Validés
         </Button>
+
+        <Button
+          variant={selectedFilter === 'désactivé' ? 'contained' : 'outlined'}
+          onClick={() => setSelectedFilter('désactivé')}
+          style={
+            selectedFilter === 'désactivé'
+              ? { backgroundColor: '#C39408', color: '#fff' }
+              : { color: '#C39408', borderColor: '#C39408' }
+          }
+        >
+          Clients Désactivés
+        </Button>
         <Button
           variant={selectedFilter === 'rejeté' ? 'contained' : 'outlined'}
           onClick={() => setSelectedFilter('rejeté')}
@@ -657,7 +784,7 @@ const ClientsValides = () => {
               : { color: '#C39408', borderColor: '#C39408' }
           }
         >
-          Clients Rejetés
+          Inscriptions Rejetés
         </Button>
       </Box>
 
@@ -688,8 +815,8 @@ const ClientsValides = () => {
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             {selectedFileAccount &&
-            selectedFileAccount.files &&
-            selectedFileAccount.files.length > 0 ? (
+              selectedFileAccount.files &&
+              selectedFileAccount.files.length > 0 ? (
               selectedFileAccount.files.map((file) => (
                 <Box
                   key={file.id_cust_account_files}
@@ -856,6 +983,45 @@ const ClientsValides = () => {
             style={{ backgroundColor: '#C39408', color: '#fff' }}
           >
             Sauvegarder
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openDisableModal}
+        onClose={() => setOpenDisableModal(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Désactiver ce client</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Veuillez indiquer la raison de la désactivation du client :
+            <strong>{selectedDisableAccount?.cust_name}</strong>
+          </Typography>
+          <TextField
+            label="Raison de désactivation"
+            variant="outlined"
+            multiline
+            rows={3}
+            fullWidth
+            value={disableReason}
+            onChange={(e) => setDisableReason(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setOpenDisableModal(false)}
+            color="error"
+          >
+            Annuler
+          </Button>
+          <Button
+            onClick={handleDisableConfirm}
+            variant="contained"
+            style={{ backgroundColor: '#C39408', color: '#fff' }}
+          >
+            Désactiver
           </Button>
         </DialogActions>
       </Dialog>

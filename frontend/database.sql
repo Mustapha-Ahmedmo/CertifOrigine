@@ -808,6 +808,81 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP PROCEDURE IF EXISTS reject_cust_account;
+CREATE OR REPLACE PROCEDURE reject_cust_account(
+    p_id_cust_account INT,
+    p_cust_name VARCHAR(96),
+    p_statut_flag INT,  --4: rejet
+    p_userName VARCHAR(32),  --guid	
+    p_idlogin INT
+	)
+AS
+$$
+DECLARE
+    num_rows bigint;
+    op_id_login INT;
+BEGIN
+
+
+    IF EXISTS ( SELECT 1 FROM "login_user" WHERE username = p_userName) THEN
+        RAISE EXCEPTION 'ERROR:  Veuillez à nouveau soumettre la demande. / Please resubmit the request.';
+    END IF;
+
+
+	SELECT COUNT(lo."id_login_user")
+		FROM LOGIN_USER lo
+		INNER JOIN CUST_USER cu ON lo."id_login_user" = cu."id_login_user" 
+		WHERE cu."id_cust_account" = p_id_cust_account
+		INTO num_rows;
+	IF num_rows <> 1 THEN 
+		RAISE EXCEPTION 'ERROR : contact principal introuvable / main user not found';
+	END IF;
+
+
+
+	SELECT lo."id_login_user"
+		FROM LOGIN_USER lo
+		INNER JOIN CUST_USER cu ON lo."id_login_user" = cu."id_login_user" 
+		WHERE cu."id_cust_account" = p_id_cust_account
+		INTO op_id_login;
+
+    IF p_id_cust_account IS NULL OR p_id_cust_account = 0 OR p_idlogin IS NULL OR p_idlogin = 0 /* OR p_userName IS NULL OR LENGTH(TRIM(p_userName, ' '))=0*/ THEN 
+	        RAISE EXCEPTION 'error (empty data): unable to identify the entity';
+    ELSE
+
+		IF EXISTS (
+			SELECT 1 FROM cust_account
+			WHERE "id_cust_account" = p_id_cust_account
+			AND "statut_flag" =1
+			AND "deactivation_date" >= CURRENT_DATE
+		) THEN
+
+			UPDATE cust_account
+			SET
+				--"cust_name" = p_cust_name,
+				"statut_flag" = p_statut_flag,
+				"idlogin_modify" = p_idlogin,
+				"lastmodified" = NOW()
+				-- deactivation_date = CURRENT_TIMESTAMP - INTERVAL '1 day'
+
+			WHERE "id_cust_account" = p_id_cust_account
+			AND "statut_flag" =1
+			AND "deactivation_date" >= CURRENT_DATE;
+
+
+			 UPDATE login_user 
+			 SET 
+				username =CONCAT(op_id_login, '_' , username)-- cast(op_id_login as varchar) --p_userName
+			 WHERE "id_login_user" = op_id_login;
+	
+	 
+		ELSE
+			RAISE EXCEPTION 'error data: unable to identify the entity';
+		END IF;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 
 DROP PROCEDURE IF EXISTS upd_cust_account_statut;
 CREATE OR REPLACE PROCEDURE upd_cust_account_statut(
@@ -821,12 +896,22 @@ BEGIN
     IF p_id_cust_account IS NULL OR p_id_cust_account = 0 THEN
         RAISE EXCEPTION 'identifiant incorrect / incorrect identifier ';
     ELSE
-        UPDATE cust_account
-        SET
-            "statut_flag" = p_statut_flag,
-            "idlogin_modify" = p_idlogin,
-            "lastmodified" = NOW()
-        WHERE "id_cust_account" = p_id_cust_account;
+
+        IF p_statut_flag = 4 THEN
+            CALL reject_cust_account(
+                 p_id_cust_account,'',/*p_cust_name*/
+                 p_statut_flag,  --4: rejet
+                 ''/*p_userName=guid */,  	
+                 p_idlogin);
+        ELSE
+            UPDATE cust_account
+            SET
+                "statut_flag" = p_statut_flag,
+                "idlogin_modify" = p_idlogin,
+                "lastmodified" = NOW()
+            WHERE "id_cust_account" = p_id_cust_account;
+        END IF;
+
     END IF;
 END;
 $$ LANGUAGE plpgsql;
@@ -946,7 +1031,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
 DROP PROCEDURE IF EXISTS set_cust_user;
 CREATE OR REPLACE PROCEDURE set_cust_user(
     p_id_cust_user INT,
@@ -965,11 +1049,28 @@ AS
 $$
 DECLARE
     new_id_login INT;
+    num_rows bigint;
+
 BEGIN
     IF p_id_cust_user IS NULL OR p_id_cust_user = 0 THEN
         IF p_email IS NULL OR LENGTH(TRIM(p_email, ' '))=0 OR p_password IS NULL OR LENGTH(TRIM(p_password, ' '))=0 THEN
          RAISE EXCEPTION 'ERROR : CREDENTIALS NOT AVAILABLE';
         END IF;
+
+
+
+        	SELECT COUNT(lo."id_login_user")
+		    FROM LOGIN_USER lo
+		    INNER JOIN CUST_USER cu ON lo."id_login_user" = cu."id_login_user" 
+		    WHERE cu."id_cust_account" = p_id_cust_account
+            AND lo."deactivation_date" >= CURRENT_DATE
+            AND cu."deactivation_date" >= CURRENT_DATE
+		    INTO num_rows;
+	        IF num_rows >= 4 THEN 
+                RAISE EXCEPTION 'ERROR - vous avez atteint le maximum de contacts : 4 / you have reached the maximum number of contacts: 4.';
+	        END IF;
+
+
         INSERT INTO login_user(
          "username",
          "pwd",
@@ -1027,6 +1128,7 @@ IF p_email IS NOT NULL AND LENGTH(TRIM(p_email, ' '))>0 AND p_password IS NOT NU
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+
 
 DROP FUNCTION IF EXISTS get_custuser_info;
 CREATE OR REPLACE FUNCTION get_custuser_info(
@@ -1088,11 +1190,11 @@ BEGIN
             p_isactiveCA IS NULL
             OR (p_isactiveCA IS NOT TRUE AND (
                 ca."deactivation_date" <= CURRENT_DATE 
-                OR lu."deactivation_date" <= CURRENT_DATE
+                --OR lu."deactivation_date" <= CURRENT_DATE
             ))
             OR (p_isactiveCA IS TRUE AND (
                 ca."deactivation_date" > CURRENT_DATE 
-                AND lu."deactivation_date" > CURRENT_DATE
+                --AND lu."deactivation_date" > CURRENT_DATE
             ))
         )
         AND (
@@ -1105,7 +1207,7 @@ BEGIN
                 cu."deactivation_date" > CURRENT_DATE 
                 AND lu."deactivation_date" > CURRENT_DATE
             ))
-        );
+        ) ORDER BY lu."insert_date" DESC;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -4315,7 +4417,7 @@ BEGIN
         memo me
     JOIN 
         cust_account ca ON me."id_cust_account" = ca."id_cust_account"
-    JOIN 
+    LEFT OUTER JOIN 
         "ORDER" o ON me."id_order" = o."id_order" 
     JOIN
         login_user lu ON me."idlogin_insert" = lu."id_login_user"
@@ -4780,6 +4882,81 @@ BEGIN
         p_isopuser IS TRUE 
         OR (p_isopuser IS NOT TRUE AND ca."id_cust_account" = p_id_cust_account)
     );
+END;
+$$ LANGUAGE plpgsql;
+
+DROP PROCEDURE IF EXISTS disable_cust_user;
+CREATE OR REPLACE PROCEDURE disable_cust_user(
+    p_id_cust_user INT
+	)
+AS
+$$
+DECLARE
+    new_id_login INT;
+    num_rows bigint;
+
+BEGIN
+    IF p_id_cust_user IS NULL OR p_id_cust_user = 0 THEN
+        RAISE EXCEPTION 'ERROR: valeurs indéfinies / undefined values.';
+	END IF;
+        
+                    
+    UPDATE login_user 
+    SET "deactivation_date" = CURRENT_TIMESTAMP - INTERVAL '1 day'
+    FROM cust_user WHERE login_user."id_login_user" = cust_user."id_login_user" AND cust_user."id_cust_user" = p_id_cust_user AND cust_user."ismain_user" IS NOT TRUE;
+
+    UPDATE cust_user 
+    SET 
+    "deactivation_date" = CURRENT_TIMESTAMP - INTERVAL '1 day'
+    WHERE cust_user."id_cust_user" = p_id_cust_user
+    AND cust_user."ismain_user" IS NOT TRUE;
+
+END;
+$$ LANGUAGE plpgsql;
+
+DROP PROCEDURE IF EXISTS enable_cust_user;
+CREATE OR REPLACE PROCEDURE enable_cust_user(
+    p_id_cust_user INT
+	)
+AS
+$$
+DECLARE
+    num_rows bigint;
+    p_id_cust_account INT;
+BEGIN
+    IF p_id_cust_user IS NULL OR p_id_cust_user = 0 THEN
+        RAISE EXCEPTION 'ERROR: valeurs indéfinies / undefined values.';
+	END IF;
+        
+
+    SELECT cu."id_cust_account"
+	FROM CUST_USER cu
+	WHERE cu."id_cust_user" = p_id_cust_user
+	INTO p_id_cust_account;
+
+    SELECT COUNT(lo."id_login_user")
+	FROM LOGIN_USER lo
+	INNER JOIN CUST_USER cu ON lo."id_login_user" = cu."id_login_user" 
+	WHERE cu."id_cust_account" = p_id_cust_account
+    AND lo."deactivation_date" >= CURRENT_DATE
+    AND cu."deactivation_date" >= CURRENT_DATE
+	INTO num_rows;
+	IF num_rows >= 4 THEN 
+        RAISE EXCEPTION 'ERROR - vous avez atteint le maximum de contacts : 4 / you have reached the maximum number of contacts: 4.';
+	END IF;
+
+                    
+    UPDATE login_user 
+    SET 
+    "deactivation_date" = CURRENT_TIMESTAMP + INTERVAL '100 years'
+    FROM cust_user 
+    WHERE login_user."id_login_user" = cust_user."id_login_user" AND cust_user."id_cust_user" = p_id_cust_user;
+
+    UPDATE cust_user 
+    SET 
+    "deactivation_date" = CURRENT_TIMESTAMP + INTERVAL '100 years'
+    WHERE cust_user."id_cust_user" = p_id_cust_user;
+
 END;
 $$ LANGUAGE plpgsql;
 
