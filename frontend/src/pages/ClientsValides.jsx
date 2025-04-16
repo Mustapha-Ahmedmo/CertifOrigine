@@ -8,6 +8,7 @@ import {
   getFilesRepoTypeofInfo,
   reactivateCustAccount,
   sendEmail,
+  sendEmailAndMemo,
   updateCustAccount
 } from '../services/apiServices';
 import './Inscriptions.css';
@@ -89,6 +90,7 @@ const ClientsValides = () => {
 
   const user = useSelector((state) => state.auth.user);
   const idLogin = user?.id_login_user;
+  const isOpUser = user?.isopuser;
 
   const [custAccounts, setCustAccounts] = useState([]);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -170,8 +172,9 @@ const ClientsValides = () => {
         } else if (selectedFilter === 'désactivé') {
           status = 3; // <-- Désactivé
         }
+        const custAccountId = isOpUser ? null : user?.id_cust_account;
+        const response = await getCustAccountInfo(custAccountId, status, true);
 
-        const response = await getCustAccountInfo(null, status, true);
         const data = response.data || [];
         setCustAccounts(data);
       } catch (err) {
@@ -209,6 +212,32 @@ const ClientsValides = () => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce fichier ?')) {
       try {
         await deleteCustAccountFile(fileId, 0);
+        // 2. Envoi d'email si contact principal trouvé
+        const mainContact = selectedFileAccount?.main_contact?.find(c => c.ismain_user === true);
+
+
+        if (isOpUser && mainContact?.email && selectedFileAccount?.files) {
+          const fileInfo = selectedFileAccount.files.find(f => f.id_cust_account_files === fileId);
+
+          await sendEmailAndMemo({
+            to: mainContact.email,
+            subject: 'Un fichier a été supprimé de votre compte',
+            body: `
+                <p>Bonjour ${mainContact.full_name || ''},</p>
+                <p>Un fichier a été supprimé de votre compte client par un opérateur.</p>
+                <p>Nom du fichier supprimé : <strong>${fileInfo?.txt_description_fr} - ${fileInfo?.file_origin_name || 'Nom inconnu'}</strong></p>
+                <p>Si vous avez des questions, contactez notre support.</p>
+                <p>Chambre de Commerce de Djibouti</p>
+              `,
+            isHtml: true,
+            id_cust_account: selectedFileAccount.id_cust_account,
+            idlogin: idLogin
+          });
+        }
+
+
+
+
         setSelectedFileAccount((prev) => ({
           ...prev,
           files: prev.files.filter((file) => file.id_cust_account_files !== fileId)
@@ -220,8 +249,9 @@ const ClientsValides = () => {
           status = 1;
         } else if (selectedFilter === 'rejeté') {
           status = 4;
-        }
-        const response = await getCustAccountInfo(null, status, true);
+        } const custAccountId = isOpUser ? null : user?.id_cust_account;
+
+        const response = await getCustAccountInfo(custAccountId, status, true);
         const data = response.data || [];
         const sortedData = data.sort(
           (a, b) => new Date(b.insertdate) - new Date(a.insertdate)
@@ -246,6 +276,7 @@ const ClientsValides = () => {
       setFileData((prev) => ({ ...prev, justificatifFile: file }));
     }
   };
+
   const handleSaveFileModal = async () => {
     if (!fileData.justificatifFile || !selectedFileType || !selectedFileAccount) {
       alert('Merci de sélectionner un fichier et un type.');
@@ -278,6 +309,33 @@ const ClientsValides = () => {
 
       await addCustAccountFile(filePayload);
 
+      // Avant l'envoi de l'email
+      const selectedFileTypeLabel = fileTypes.find(t => t.id_files_repo_typeof === Number(selectedFileType))?.txt_description_fr || 'Type inconnu';
+
+
+      const mainContact = selectedFileAccount?.main_contact?.find(c => c.ismain_user === true);
+      if (isOpUser && mainContact?.email) {
+        const emailBody = `
+          <p>Bonjour ${mainContact.full_name || ''},</p>
+          <p>Un nouveau fichier a été ajouté à votre compte client par un opérateur.</p>
+          <p>Nom du fichier : <strong>${selectedFileTypeLabel} - ${fileData.justificatifFile.name}</strong></p>
+          <p>Si ce fichier n’a pas été fourni par vous, veuillez contacter notre support.</p>
+          <p>Chambre de Commerce de Djibouti</p>
+        `;
+
+        await sendEmailAndMemo({
+          to: mainContact.email,
+          subject: 'Nouveau fichier ajouté à votre compte',
+          body: emailBody,
+          isHtml: true,
+          id_cust_account: selectedFileAccount.id_cust_account,
+          idlogin: idLogin
+        });
+      }
+
+
+
+
       // Rafraîchir la liste
       let status;
       if (selectedFilter === 'validé') {
@@ -287,8 +345,9 @@ const ClientsValides = () => {
       } else if (selectedFilter === 'rejeté') {
         status = 4;
       }
+      const custAccountId = isOpUser ? null : user?.id_cust_account;
 
-      const response = await getCustAccountInfo(null, status, true);
+      const response = await getCustAccountInfo(custAccountId, status, true);
       const data = response.data || [];
       const sortedData = data.sort(
         (a, b) => new Date(b.insertdate) - new Date(a.insertdate)
@@ -397,6 +456,8 @@ const ClientsValides = () => {
       licenseNumber: safeValue(account.identification_number),
       companyType,
       otherCompanyType: safeValue(account.other_business_type),
+      otherLegalForm: safeValue(account.other_legal_form),
+      otherSector: safeValue(account.other_sector),
       justificatifFile: '',
       justificatifFileName
     });
@@ -445,6 +506,20 @@ const ClientsValides = () => {
          return;
        }*/
     }
+
+
+    let idSectorToUse = null;
+
+    const selectedSector = sectors.find(
+      s => s.symbol_fr?.toLowerCase() === editFormData.sector?.toLowerCase()
+    );
+
+    if (selectedSector) {
+      idSectorToUse = selectedSector.id_sector;
+    }
+
+
+
     const updateData = {
       id_cust_account: selectedEditAccount.id_cust_account,
       legal_form: editFormData.legalForm,
@@ -459,7 +534,7 @@ const ClientsValides = () => {
       identification_number: editFormData.licenseNumber,
       register_number: editFormData.rchNumber,
       full_address: editFormData.fullAddress,
-      id_sector: selectedEditAccount.id_sector,
+      id_sector: idSectorToUse,
       other_sector: selectedEditAccount.other_sector || '',
       id_country: selectedEditAccount.id_country,
       statut_flag: selectedEditAccount.statut_flag,
@@ -472,8 +547,13 @@ const ClientsValides = () => {
         editFormData.companyType === 'autres'
           ? safeValue(editFormData.otherCompanyType)
           : '',
-      companyType: editFormData.companyType || ''
+      companyType: editFormData.companyType || '',
+      other_legal_form: editFormData.legalForm === 'Autre' ? safeValue(editFormData.otherLegalForm) : '',
+      other_sector: editFormData.sector?.toLowerCase() === 'autres' ? safeValue(editFormData.otherSector) : '',
     };
+
+
+
     if (editFormData.companyType === 'autre') {
       updateData.trade_registration_num = safeValue(editFormData.nif);
       updateData.register_number = safeValue(editFormData.rchNumber);
@@ -505,8 +585,32 @@ const ClientsValides = () => {
     } else if (selectedFilter === 'rejeté') {
       status = 4;
     }
+
     await updateCustAccount(updateData);
-    const response = await getCustAccountInfo(null, status, true);
+    // Envoi d'un email après la mise à jour
+    const mainContact = selectedEditAccount?.main_contact?.find(c => c.ismain_user === true);
+    if (isOpUser && mainContact?.email) {
+      const emailBody = `
+        <p>Bonjour ${mainContact.full_name || ''},</p>
+        <p>Les informations de votre compte client ont été mises à jour par un opérateur.</p>
+        <p>Si vous n'êtes pas à l'origine de cette modification, veuillez contacter notre support.</p>
+        <p>Chambre de Commerce de Djibouti</p>
+      `;
+
+      await sendEmailAndMemo({
+        to: mainContact.email,
+        subject: 'Mise à jour de vos informations client',
+        body: emailBody,
+        isHtml: true,
+        id_cust_account: selectedEditAccount.id_cust_account,
+        idlogin: idLogin
+      });
+    }
+
+
+    const custAccountId = isOpUser ? null : user?.id_cust_account;
+
+    const response = await getCustAccountInfo(custAccountId, status, true);
     const data = response.data || [];
     const sortedData = data.sort(
       (a, b) => new Date(b.insertdate) - new Date(a.insertdate)
@@ -540,7 +644,9 @@ const ClientsValides = () => {
       } else if (selectedFilter === 'désactivé') {
         status = 3;
       }
-      const response = await getCustAccountInfo(null, status, true);
+      const custAccountId = isOpUser ? null : user?.id_cust_account;
+
+      const response = await getCustAccountInfo(custAccountId, status, true);
       setCustAccounts(response.data || []);
 
       alert(`Le client « ${account.cust_name} » a été réactivé avec succès.`);
@@ -590,8 +696,22 @@ const ClientsValides = () => {
       alert('Impossible de désactiver ce client.');
     }
   };
-
-  // Rendu en mode Table (desktop)
+  function getInformationsLabel(registration) {
+    if (registration.in_free_zone === true) {
+      return registration.identification_number
+        ? <span><strong>Licence :</strong> {registration.identification_number}</span>
+        : '';
+    } else if (registration.in_free_zone === false) {
+      return <strong>Autre type</strong>;
+    } else {
+      return (
+        <span>
+          <strong>NIF :</strong> {registration.trade_registration_num || 'N/A'} <br />
+          <strong>RCS :</strong> {registration.register_number || 'N/A'}
+        </span>
+      );
+    }
+  }
   const renderTableView = () => (
     <Paper>
       <TableContainer>
@@ -604,8 +724,18 @@ const ClientsValides = () => {
               <TableCell>Adresse Complète</TableCell>
               <TableCell>Pays</TableCell>
               <TableCell>Type d'entreprise</TableCell>
+              <TableCell>Informations</TableCell>
               <TableCell>Contact Principal</TableCell>
-              <TableCell>Action</TableCell>
+              {selectedFilter !== 'non validé' && selectedFilter !== 'rejeté' && (
+                <TableCell>Modifier</TableCell>
+              )}
+              {isOpUser && selectedFilter !== 'non validé' && selectedFilter !== 'rejeté' && (
+                <TableCell>Action</TableCell>
+              )}
+
+              {selectedFilter !== 'non validé' && selectedFilter !== 'rejeté' && (
+                <TableCell>Fichiers</TableCell>
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -614,6 +744,9 @@ const ClientsValides = () => {
                 <TableCell>{formatDate(registration.insertdate)}</TableCell>
                 <TableCell>
                   {registration.cust_name} {registration.legal_form}
+                  {registration.legal_form?.toLowerCase() === 'autre' && registration.other_legal_form && (
+                    <> — {registration.other_legal_form}</>
+                  )}
                 </TableCell>
                 <TableCell>
                   {registration.sectorName?.symbol_fr?.toLowerCase() === 'autres'
@@ -623,6 +756,31 @@ const ClientsValides = () => {
                 <TableCell>{registration.full_address}</TableCell>
                 <TableCell>{registration.co_symbol_fr}</TableCell>
                 <TableCell>{getImplantationLabel(registration)}</TableCell>
+                <TableCell>
+                  {getInformationsLabel(registration)}
+                  {(selectedFilter === 'non validé' || selectedFilter === 'rejeté') &&
+                    registration.files?.length > 0 && (
+                      <Box mt={1}>
+                        {registration.files.map((file) => {
+                          const fileUrl = `${API_URL}/files/inscriptions/${new Date().getFullYear()}/${file.file_guid}`;
+                          return (
+                            <Typography key={file.id_cust_account_files} variant="body2">
+                              <a
+                                href={fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: '#C39408', textDecoration: 'none' }}
+                              >
+                                📎 {file.txt_description_fr || 'Document'}
+                              </a>
+                            </Typography>
+                          );
+                        })}
+                      </Box>
+                    )}
+
+                </TableCell>
+
                 <TableCell>
                   <Button
                     variant="outlined"
@@ -634,54 +792,55 @@ const ClientsValides = () => {
                     Ouvrir
                   </Button>
                 </TableCell>
-                <TableCell>
-                  {selectedFilter !== 'rejeté' && (
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<FontAwesomeIcon icon={faEdit} />}
-                      onClick={() => handleOpenEditModal(registration)}
-                      style={{ color: '#C39408', borderColor: '#C39408' }}
-                    >
-                      Modifier
-                    </Button>
-                  )}
-                </TableCell>
-                {selectedFilter !== 'rejeté' && (
-                  <TableCell>
-                    {selectedFilter === 'désactivé' ? (
-                      // Show "Activer" button
+
+                {selectedFilter !== 'non validé' && selectedFilter !== 'rejeté' && (
+                  <>
+                    <TableCell>
                       <Button
                         variant="outlined"
                         size="small"
+                        startIcon={<FontAwesomeIcon icon={faEdit} />}
+                        onClick={() => handleOpenEditModal(registration)}
                         style={{ color: '#C39408', borderColor: '#C39408' }}
-                        onClick={() => handleReactivateConfirm(registration)}
                       >
-                        Activer
+                        Modifier
                       </Button>
-                    ) : (
-                      // Otherwise show "Désactiver" button
+                    </TableCell>
+                    {isOpUser && (
+                      <TableCell>
+                        {selectedFilter === 'désactivé' ? (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            style={{ color: '#C39408', borderColor: '#C39408' }}
+                            onClick={() => handleReactivateConfirm(registration)}
+                          >
+                            Activer
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="error"
+                            onClick={() => handleOpenDisableModal(registration)}
+                          >
+                            Désactiver
+                          </Button>
+                        )}
+                      </TableCell>
+                    )}
+                    <TableCell>
                       <Button
                         variant="outlined"
                         size="small"
-                        color="error"
-                        onClick={() => handleOpenDisableModal(registration)}
+                        onClick={() => handleOpenFileModal(registration)}
+                        style={{ color: '#C39408', borderColor: '#C39408' }}
                       >
-                        Désactiver
+                        Gérer les fichiers
                       </Button>
-                    )}
-                  </TableCell>
+                    </TableCell>
+                  </>
                 )}
-                <TableCell>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => handleOpenFileModal(registration)}
-                    style={{ color: '#C39408', borderColor: '#C39408' }}
-                  >
-                    Gérer les fichiers
-                  </Button>
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -689,6 +848,7 @@ const ClientsValides = () => {
       </TableContainer>
     </Paper>
   );
+
 
   // Rendu en mode Card (mobile)
   const renderCardView = () => (
@@ -790,6 +950,7 @@ const ClientsValides = () => {
   );
 
   return (
+
     <Box sx={{ ml: { xs: '2px', md: '240px' }, p: 3 }} className="inscriptions-page-container">
       <AppBar position="static" color="default">
         <Tabs
@@ -805,67 +966,72 @@ const ClientsValides = () => {
       </AppBar>
 
       {/* Boutons de filtre */}
-      <Box sx={{ mt: 2, mb: 2, display: 'flex', gap: 2 }}>
-        <Button
-          variant={selectedFilter === 'validé' ? 'contained' : 'outlined'}
-          onClick={() => setSelectedFilter('validé')}
-          style={
-            selectedFilter === 'validé'
-              ? { backgroundColor: '#C39408', color: '#fff' }
-              : { color: '#C39408', borderColor: '#C39408' }
-          }
-        >
-          Clients Validés
-        </Button>
-        <Button
-          variant={selectedFilter === 'non validé' ? 'contained' : 'outlined'}
-          onClick={() => setSelectedFilter('non validé')}
-          style={
-            selectedFilter === 'non validé'
-              ? { backgroundColor: '#C39408', color: '#fff' }
-              : { color: '#C39408', borderColor: '#C39408' }
-          }
-        >
-          Clients Non Validés
-        </Button>
+      {isOpUser && (
+        <Box sx={{ mt: 2, mb: 2, display: 'flex', gap: 2 }}>
+          <Button
+            variant={selectedFilter === 'validé' ? 'contained' : 'outlined'}
+            onClick={() => setSelectedFilter('validé')}
+            style={
+              selectedFilter === 'validé'
+                ? { backgroundColor: '#C39408', color: '#fff' }
+                : { color: '#C39408', borderColor: '#C39408' }
+            }
+          >
+            Clients Validés
+          </Button>
+          <Button
+            variant={selectedFilter === 'non validé' ? 'contained' : 'outlined'}
+            onClick={() => setSelectedFilter('non validé')}
+            style={
+              selectedFilter === 'non validé'
+                ? { backgroundColor: '#C39408', color: '#fff' }
+                : { color: '#C39408', borderColor: '#C39408' }
+            }
+          >
+            Clients Non Validés
+          </Button>
 
-        <Button
-          variant={selectedFilter === 'désactivé' ? 'contained' : 'outlined'}
-          onClick={() => setSelectedFilter('désactivé')}
-          style={
-            selectedFilter === 'désactivé'
-              ? { backgroundColor: '#C39408', color: '#fff' }
-              : { color: '#C39408', borderColor: '#C39408' }
-          }
-        >
-          Clients Désactivés
-        </Button>
-        <Button
-          variant={selectedFilter === 'rejeté' ? 'contained' : 'outlined'}
-          onClick={() => setSelectedFilter('rejeté')}
-          style={
-            selectedFilter === 'rejeté'
-              ? { backgroundColor: '#C39408', color: '#fff' }
-              : { color: '#C39408', borderColor: '#C39408' }
-          }
-        >
-          Inscriptions Rejetés
-        </Button>
-      </Box>
+          <Button
+            variant={selectedFilter === 'désactivé' ? 'contained' : 'outlined'}
+            onClick={() => setSelectedFilter('désactivé')}
+            style={
+              selectedFilter === 'désactivé'
+                ? { backgroundColor: '#C39408', color: '#fff' }
+                : { color: '#C39408', borderColor: '#C39408' }
+            }
+          >
+            Clients Désactivés
+          </Button>
+          <Button
+            variant={selectedFilter === 'rejeté' ? 'contained' : 'outlined'}
+            onClick={() => setSelectedFilter('rejeté')}
+            style={
+              selectedFilter === 'rejeté'
+                ? { backgroundColor: '#C39408', color: '#fff' }
+                : { color: '#C39408', borderColor: '#C39408' }
+            }
+          >
+            Inscriptions Rejetés
+          </Button>
+        </Box>
+      )}
 
       {/* Recherche */}
-      <Box mb={2} display="flex" alignItems="center" gap={2}>
-        <Typography>Rechercher :</Typography>
-        <TextField
-          id="searchInput"
-          variant="outlined"
-          placeholder="Tapez un mot-clé ou un chiffre..."
-          size="small"
-          value={searchTerm}
-          onChange={handleSearch}
-          style={{ maxWidth: 300 }}
-        />
-      </Box>
+      {isOpUser && (
+
+        <Box mb={2} display="flex" alignItems="center" gap={2}>
+          <Typography>Rechercher :</Typography>
+          <TextField
+            id="searchInput"
+            variant="outlined"
+            placeholder="Tapez un mot-clé ou un chiffre..."
+            size="small"
+            value={searchTerm}
+            onChange={handleSearch}
+            style={{ maxWidth: 300 }}
+          />
+        </Box>
+      )}
 
       {isSmallScreen ? renderCardView() : renderTableView()}
       <Dialog
@@ -987,14 +1153,42 @@ const ClientsValides = () => {
               value={safeValue(editFormData.companyName)}
               onChange={handleEditChange}
             />
-            <TextField
-              margin="normal"
-              fullWidth
-              label="Statut juridique"
-              name="legalForm"
-              value={safeValue(editFormData.legalForm)}
-              onChange={handleEditChange}
-            />
+            <FormControl fullWidth required sx={{ mt: 2 }}>
+              <InputLabel id="legal-form-label">Statut juridique</InputLabel>
+              <Select
+                labelId="legal-form-label"
+                name="legalForm"
+                value={safeValue(editFormData.legalForm)}
+                label="Statut juridique"
+                onChange={handleEditChange}
+              >
+                <MenuItem value="" disabled hidden>Choisir</MenuItem>
+                <MenuItem value="Auto-entrepreneur">Auto-entrepreneur</MenuItem>
+                <MenuItem value="Entreprise individuelle">Entreprise individuelle</MenuItem>
+                <MenuItem value="EIRL">EIRL</MenuItem>
+                <MenuItem value="EURL">EURL</MenuItem>
+                <MenuItem value="SARL">SARL</MenuItem>
+                <MenuItem value="SAS">SAS</MenuItem>
+                <MenuItem value="SASU">SASU</MenuItem>
+                <MenuItem value="SA">SA</MenuItem>
+                <MenuItem value="SNC">SNC</MenuItem>
+                <MenuItem value="SCS">SCS</MenuItem>
+                <MenuItem value="Autre">Autre</MenuItem>
+              </Select>
+            </FormControl>
+
+            {editFormData.legalForm === 'Autre' && (
+              <TextField
+                margin="normal"
+                fullWidth
+                label="Précisez votre statut juridique"
+                name="otherLegalForm"
+                value={safeValue(editFormData.otherLegalForm)}
+                onChange={handleEditChange}
+              />
+            )}
+
+
             <TextField
               margin="normal"
               fullWidth
@@ -1075,6 +1269,17 @@ const ClientsValides = () => {
                 ))}
               </Select>
             </FormControl>
+            {editFormData.sector?.toLowerCase() === 'autres' && (
+              <TextField
+                margin="normal"
+                fullWidth
+                label="Précisez votre secteur d'activité"
+                name="otherSector"
+                value={safeValue(editFormData.otherSector)}
+                onChange={handleEditChange}
+              />
+            )}
+
 
           </Box>
         </DialogContent>
@@ -1157,14 +1362,19 @@ const ClientsValides = () => {
           <Button
             onClick={async () => {
               try {
+                {
+                  isOpUser && (
+                    await sendEmailAndMemo({
+                      to: selectedContactEmail,
+                      subject: 'Message de la CCD',
+                      body: mailMessage,
+                      isHtml: false,
+                      id_cust_account: selectedAccount?.id_cust_account,
+                      idlogin: idLogin
+                    })
+                  )
+                }
 
-                const emailPayload = {
-                  to: selectedContactEmail,
-                  subject: 'Message de la CCD', // Sujet mis en dur
-                  body: mailMessage,
-                  isHtml: false
-                };
-                await sendEmail(emailPayload);
 
                 alert('Message envoyé avec succès et mémo enregistré.');
                 handleCloseContactModal();
@@ -1200,7 +1410,7 @@ const ClientsValides = () => {
                     <TableCell>Email</TableCell>
                     <TableCell>Tél</TableCell>
                     <TableCell>Portable</TableCell>
-                    <TableCell>Actions</TableCell>
+                    {isOpUser && <TableCell>Actions</TableCell>}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1211,16 +1421,18 @@ const ClientsValides = () => {
                       <TableCell>{contact.email || 'N/A'}</TableCell>
                       <TableCell>{contact.phone_number || 'N/A'}</TableCell>
                       <TableCell>{contact.mobile_number || 'N/A'}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          style={{ color: '#C39408', borderColor: '#C39408' }}
-                          onClick={() => handleOpenContactModal(contact.email)}
-                        >
-                          Contacter
-                        </Button>
-                      </TableCell>
+                      {isOpUser && (
+                        <TableCell>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            style={{ color: '#C39408', borderColor: '#C39408' }}
+                            onClick={() => handleOpenContactModal(contact.email)}
+                          >
+                            Contacter
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

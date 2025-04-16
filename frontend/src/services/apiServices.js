@@ -1290,7 +1290,7 @@ export const rejectOrder = async (p_id_order, p_id_cust_account, p_idlogin_modif
 
 export const setMemo = async (memoData) => {
   try {
-    const response = await fetch(`${API_URL}/mailer/set_memo`, {
+    const response = await fetch(`${API_URL}/mailers/set_memo`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1478,5 +1478,41 @@ export const deleteCustAccountFile = async (id, mode = 0) => {
   } catch (error) {
     console.error('API call error (deleteCustAccountFile):', error);
     throw error;
+  }
+};
+
+export const sendEmailAndMemo = async ({
+  to,
+  subject,
+  body,
+  isHtml = false,
+  id_cust_account,
+  idlogin
+}) => {
+  try {
+    // 1. Envoi de l’email
+    await sendEmail({ to, subject, body, isHtml });
+
+    // 2. Enregistrement du mémo
+    const memoPayload = {
+      p_id_order: null,
+      p_id_cust_account: id_cust_account,
+      p_typeof: 1, // à adapter si besoin
+      p_idlogin_insert: idlogin,
+      p_memo_date: new Date().toISOString(),
+      p_memo_subject: subject,
+      p_memo_body: body,
+      p_mail_to: to,
+      p_mail_bcc: null,
+      p_mail_acc: null,
+      p_mail_notifications: null,
+    };
+
+    await setMemo(memoPayload);
+
+    return true;
+  } catch (err) {
+    console.error('Erreur sendEmailAndMemo:', err);
+    throw err;
   }
 };

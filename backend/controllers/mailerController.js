@@ -66,11 +66,11 @@ const setMemo = async (req, res) => {
   
       // Extract the new memo ID from the result
       const newMemoId = result[0]?.newMemoId;
-      if (!newMemoId) {
+  /*    if (!newMemoId) {
         return res.status(500).json({
           message: 'Erreur lors de la création du memo. Aucune ID de memo retournée.',
         });
-      }
+      }*/
   
       res.status(201).json({
         message: 'Memo créé avec succès.',
