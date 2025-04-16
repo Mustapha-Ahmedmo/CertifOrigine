@@ -1207,7 +1207,7 @@ BEGIN
                 cu."deactivation_date" > CURRENT_DATE 
                 AND lu."deactivation_date" > CURRENT_DATE
             ))
-        ) ORDER BY lu."insert_date" DESC;
+        ) ORDER BY lu."insert_date";
 END;
 $$ LANGUAGE plpgsql;
 
@@ -1479,7 +1479,7 @@ BEGIN
 	     p_isactive IS NULL
         OR (p_isactive IS NOT TRUE AND ca."deactivation_date" <= CURRENT_DATE)
         OR (p_isactive IS TRUE AND ca."deactivation_date" > CURRENT_DATE)
-    );
+    ) ORDER BY ca."insertdate" DESC;
 END;
 $$ LANGUAGE plpgsql;
 

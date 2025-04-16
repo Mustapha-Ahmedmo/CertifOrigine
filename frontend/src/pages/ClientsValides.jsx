@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
+  addCustAccountFile,
   deleteCustAccountFile,
   disableCustAccount,
   fetchSectors,
   getCustAccountInfo,
+  getFilesRepoTypeofInfo,
   reactivateCustAccount,
+  sendEmail,
   updateCustAccount
 } from '../services/apiServices';
 import './Inscriptions.css';
@@ -42,6 +45,7 @@ import {
   useTheme,
   useMediaQuery
 } from '@mui/material';
+import { useSelector } from 'react-redux';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -72,18 +76,20 @@ const safeValue = (val) => {
   return val === undefined || val === null || val === 'undefined' ? '' : val;
 };
 
-// Retourne le texte pour la colonne "Implantation"
 function getImplantationLabel(registration) {
-  if (registration.in_free_zone) {
+  if (registration.in_free_zone === true) {
     return 'Zone franche';
-  } else if (registration.other_business_type) {
+  } else if (registration.in_free_zone === false) {
     return 'Autre';
   } else {
     return 'Entreprise';
   }
 }
-
 const ClientsValides = () => {
+
+  const user = useSelector((state) => state.auth.user);
+  const idLogin = user?.id_login_user;
+
   const [custAccounts, setCustAccounts] = useState([]);
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
@@ -108,6 +114,46 @@ const ClientsValides = () => {
   const [openDisableModal, setOpenDisableModal] = useState(false);
   const [selectedDisableAccount, setSelectedDisableAccount] = useState(null);
   const [disableReason, setDisableReason] = useState('');
+
+  const [openContactModal, setOpenContactModal] = useState(false);
+  const [selectedContactEmail, setSelectedContactEmail] = useState('');
+  const [mailMessage, setMailMessage] = useState('');
+
+  const [fileTypes, setFileTypes] = useState([]);
+  const [selectedFileType, setSelectedFileType] = useState('');
+
+  useEffect(() => {
+    const fetchFileTypes = async () => {
+      try {
+        const fileTypesResp = await getFilesRepoTypeofInfo({
+          p_id_files_repo_typeof_first: 0,
+          p_id_files_repo_typeof_last: 99,
+          p_ismandatory: null,
+        });
+
+        // Certains backends renvoient { data: [...] }
+        const types = fileTypesResp?.data ?? fileTypesResp;
+        setFileTypes(Array.isArray(types) ? types : []);
+      } catch (err) {
+        console.error('Erreur lors du chargement des types de fichiers :', err);
+        setFileTypes([]); // fallback pour éviter l'erreur
+      }
+    };
+
+    fetchFileTypes();
+  }, []);
+
+  const handleOpenContactModal = (email) => {
+    setSelectedContactEmail(email);
+    setMailMessage('');
+    setOpenContactModal(true);
+  };
+
+  const handleCloseContactModal = () => {
+    setOpenContactModal(false);
+    setSelectedContactEmail('');
+    setMailMessage('');
+  };
 
   // Récupère les comptes selon le filtre
   useEffect(() => {
@@ -200,22 +246,73 @@ const ClientsValides = () => {
       setFileData((prev) => ({ ...prev, justificatifFile: file }));
     }
   };
-
   const handleSaveFileModal = async () => {
-    console.log('Saving file changes for account', selectedFileAccount.id_cust_account, fileData);
-    let status;
-    if (selectedFilter === 'validé') {
-      status = 2;
-    } else if (selectedFilter === 'non validé') {
-      status = 1;
-    } else if (selectedFilter === 'rejeté') {
-      status = 4;
+    if (!fileData.justificatifFile || !selectedFileType || !selectedFileAccount) {
+      alert('Merci de sélectionner un fichier et un type.');
+      return;
     }
-    const response = await getCustAccountInfo(null, status, true);
-    const data = response.data || [];
-    setCustAccounts(data);
-    handleCloseFileModal();
+
+    const isZoneFranche = selectedFileAccount.in_free_zone === true;
+    const isEntreprise = !selectedFileAccount.in_free_zone && !selectedFileAccount.other_business_type;
+    const expectedFileType = isZoneFranche ? 1 : isEntreprise ? 50 : null;
+
+    if (expectedFileType && Number(selectedFileType) !== expectedFileType) {
+      const confirm = window.confirm(
+        "⚠️ Le fichier sélectionné ne correspond pas au type de votre entreprise.\n\n" +
+        `Vous êtes une entreprise ${isZoneFranche ? 'en zone franche' : 'standard'}, ` +
+        `\n\nVoulez-vous continuer ?`
+      );
+      if (!confirm) return;
+    }
+
+
+
+    try {
+      const filePayload = {
+        uploadType: 'inscriptions',
+        id_cust_account: selectedFileAccount.id_cust_account,
+        idfiles_repo_typeof: selectedFileType,
+        idlogin: idLogin,
+        file: fileData.justificatifFile,
+      };
+
+      await addCustAccountFile(filePayload);
+
+      // Rafraîchir la liste
+      let status;
+      if (selectedFilter === 'validé') {
+        status = 2;
+      } else if (selectedFilter === 'non validé') {
+        status = 1;
+      } else if (selectedFilter === 'rejeté') {
+        status = 4;
+      }
+
+      const response = await getCustAccountInfo(null, status, true);
+      const data = response.data || [];
+      const sortedData = data.sort(
+        (a, b) => new Date(b.insertdate) - new Date(a.insertdate)
+      );
+      setCustAccounts(sortedData);
+
+      // Mettre à jour les fichiers du compte affiché
+      if (selectedFileAccount) {
+        const updatedAccount = sortedData.find(
+          (acc) => acc.id_cust_account === selectedFileAccount.id_cust_account
+        );
+        setSelectedFileAccount(updatedAccount);
+      }
+
+      // Reset
+      setFileData({ justificatifFile: null, justificatifFileName: '' });
+      setSelectedFileType('');
+      handleCloseFileModal();
+    } catch (error) {
+      console.error('Erreur lors de l’ajout du fichier :', error);
+      alert('Erreur lors de l’ajout du fichier.');
+    }
   };
+
 
   useEffect(() => {
     if (selectedEditAccount && selectedEditAccount.files && selectedEditAccount.files.length > 0) {
@@ -275,14 +372,16 @@ const ClientsValides = () => {
 
   const handleOpenEditModal = (account) => {
     setSelectedEditAccount(account);
+
     let companyType = '';
-    if (account.in_free_zone) {
+    if (account.in_free_zone === true) {
       companyType = 'zoneFranche';
-    } else if (!account.in_free_zone && account.other_business_type) {
+    } else if (account.in_free_zone === false) {
       companyType = 'autres';
-    } else {
+    } else if (account.in_free_zone === null) {
       companyType = 'autre';
     }
+
     const justificatifFileName =
       account.files && account.files.length > 0
         ? safeValue(account.files[0].file_origin_name)
@@ -339,19 +438,24 @@ const ClientsValides = () => {
         editFormData.companyType !== 'autre' &&
         editFormData.companyType !== 'autres')
     ) {
-      if (!editFormData.justificatifFile) {
-        alert(
-          "Le type d'entreprise a changé. Veuillez réuploader le fichier justificatif."
-        );
-        return;
-      }
+      /* if (!editFormData.justificatifFile) {
+         alert(
+           "Le type d'entreprise a changé. Veuillez réuploader le fichier justificatif."
+         );
+         return;
+       }*/
     }
     const updateData = {
       id_cust_account: selectedEditAccount.id_cust_account,
       legal_form: editFormData.legalForm,
       cust_name: editFormData.companyName,
       trade_registration_num: editFormData.nif || '',
-      in_free_zone: selectedEditAccount.in_free_zone,
+      in_free_zone:
+        editFormData.companyType === 'zoneFranche'
+          ? true
+          : editFormData.companyType === 'autres'
+            ? false
+            : null,
       identification_number: editFormData.licenseNumber,
       register_number: editFormData.rchNumber,
       full_address: editFormData.fullAddress,
@@ -380,19 +484,19 @@ const ClientsValides = () => {
       updateData.register_number = '';
       updateData.identification_number = safeValue(editFormData.licenseNumber);
       updateData.other_business_type = '';
-      updateData.in_free_zone = true;
     } else if (editFormData.companyType === 'autres') {
       updateData.trade_registration_num = '';
       updateData.register_number = '';
       updateData.identification_number = '';
       updateData.other_business_type = safeValue(editFormData.otherCompanyType);
-      updateData.in_free_zone = false;
     } else {
       updateData.trade_registration_num = '';
       updateData.register_number = '';
       updateData.identification_number = '';
       updateData.other_business_type = '';
     }
+
+
     let status;
     if (selectedFilter === 'validé') {
       status = 2;
@@ -417,14 +521,14 @@ const ClientsValides = () => {
 
   const handleReactivateConfirm = async (account) => {
     if (!account) return;
-  
+
     try {
       // If your back-end expects (id, reason, idlogin):
       await reactivateCustAccount(
         account.id_cust_account,      // The ID to reactivate
         account.idlogin_modify || 1   // Operator ID
       );
-  
+
       // Refresh the list
       let status;
       if (selectedFilter === 'validé') {
@@ -438,7 +542,7 @@ const ClientsValides = () => {
       }
       const response = await getCustAccountInfo(null, status, true);
       setCustAccounts(response.data || []);
-  
+
       alert(`Le client « ${account.cust_name} » a été réactivé avec succès.`);
     } catch (error) {
       console.error('Erreur lors de la réactivation du client :', error);
@@ -500,7 +604,6 @@ const ClientsValides = () => {
               <TableCell>Adresse Complète</TableCell>
               <TableCell>Pays</TableCell>
               <TableCell>Type d'entreprise</TableCell>
-              <TableCell>Fichier Justificatifs</TableCell>
               <TableCell>Contact Principal</TableCell>
               <TableCell>Action</TableCell>
             </TableRow>
@@ -520,44 +623,6 @@ const ClientsValides = () => {
                 <TableCell>{registration.full_address}</TableCell>
                 <TableCell>{registration.co_symbol_fr}</TableCell>
                 <TableCell>{getImplantationLabel(registration)}</TableCell>
-                <TableCell>
-                  {registration.files && registration.files.length > 0 ? (
-                    registration.files.map((file) => {
-                      let fileDescription = file.txt_description_fr || 'Type inconnu';
-                      if (fileDescription.toLowerCase().includes('nif')) {
-                        fileDescription = 'Patente';
-                      }
-                      return (
-                        <Button
-                          key={file.id_files_repo}
-                          variant="text"
-                          size="small"
-                          onClick={() => handleFileClick(file)}
-                          style={{ color: '#C39408' }}
-                        >
-                          {fileDescription}
-                        </Button>
-                      );
-                    })
-                  ) : (
-                    <Typography variant="body2">Aucun fichier</Typography>
-                  )}
-                  {registration.in_free_zone && registration.identification_number && (
-                    <Box mt={1} fontStyle="italic">
-                      Numéro de licence : <strong>{registration.identification_number}</strong>
-                    </Box>
-                  )}
-                  {!registration.in_free_zone && registration.trade_registration_num && (
-                    <Box mt={1} fontStyle="italic">
-                      Patente : <strong>{registration.trade_registration_num}</strong>
-                    </Box>
-                  )}
-                  {!registration.in_free_zone && registration.register_number && (
-                    <Box mt={1} fontStyle="italic">
-                      RCS : <strong>{registration.register_number}</strong>
-                    </Box>
-                  )}
-                </TableCell>
                 <TableCell>
                   <Button
                     variant="outlined"
@@ -614,7 +679,7 @@ const ClientsValides = () => {
                     onClick={() => handleOpenFileModal(registration)}
                     style={{ color: '#C39408', borderColor: '#C39408' }}
                   >
-                    Voir les fichiers
+                    Gérer les fichiers
                   </Button>
                 </TableCell>
               </TableRow>
@@ -803,8 +868,6 @@ const ClientsValides = () => {
       </Box>
 
       {isSmallScreen ? renderCardView() : renderTableView()}
-
-      {/* Modale de gestion de fichiers */}
       <Dialog
         open={openFileModal}
         onClose={handleCloseFileModal}
@@ -814,47 +877,98 @@ const ClientsValides = () => {
         <DialogTitle>Gérer les fichiers justificatifs</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
-            {selectedFileAccount &&
-              selectedFileAccount.files &&
-              selectedFileAccount.files.length > 0 ? (
-              selectedFileAccount.files.map((file) => (
-                <Box
-                  key={file.id_cust_account_files}
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  sx={{
-                    mb: 1,
-                    p: 1,
-                    border: '1px solid #ddd',
-                    borderRadius: '4px'
-                  }}
-                >
-                  <Typography variant="body2">
-                    {file.txt_description_fr}: {file.file_origin_name}
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    size="small"
-                    onClick={() => handleDeleteFile(file.id_cust_account)}
+            {selectedFileAccount?.files?.length > 0 ? (
+              selectedFileAccount.files.map((file) => {
+                const fileUrl = `${API_URL}/files/inscriptions/${new Date().getFullYear()}/${file.file_guid}`;
+                return (
+                  <Box
+                    key={file.id_cust_account_files}
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{
+                      mb: 1,
+                      p: 1,
+                      border: '1px solid #ddd',
+                      borderRadius: '4px'
+                    }}
                   >
-                    Supprimer
-                  </Button>
-                </Box>
-              ))
+                    <Typography variant="body2">
+                      <a href={fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#C39408', textDecoration: 'none' }}>
+                        {file.txt_description_fr || 'Type inconnu'} : {file.file_origin_name}
+                      </a>
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      onClick={() => handleDeleteFile(file.id_cust_account_files)}
+                    >
+                      Supprimer
+                    </Button>
+                  </Box>
+                );
+              })
             ) : (
               <Typography variant="body2">Aucun fichier associé</Typography>
             )}
+
+
+
+            {/* Ajout d'un nouveau fichier */}
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Ajouter un nouveau fichier :
+              </Typography>
+
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="file-type-label">Type de fichier</InputLabel>
+                <Select
+                  labelId="file-type-label"
+                  value={selectedFileType}
+                  onChange={(e) => setSelectedFileType(e.target.value)}
+                  label="Type de fichier"
+                >
+                  {Array.isArray(fileTypes) && fileTypes.map((type) => (
+                    <MenuItem key={type.id_files_repo_typeof} value={type.id_files_repo_typeof}>
+                      {type.txt_description_fr}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <Button component="label" variant="outlined" sx={{ mt: 1 }}>
+                Choisir un fichier
+                <input type="file" hidden onChange={handleFileModalChange} />
+              </Button>
+
+              {fileData.justificatifFile && (
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Fichier sélectionné : {fileData.justificatifFile.name}
+                </Typography>
+              )}
+
+              <Button
+                variant="contained"
+                sx={{ mt: 2, backgroundColor: '#C39408', color: '#fff' }}
+                onClick={handleSaveFileModal}
+                disabled={!fileData.justificatifFile || !selectedFileType}
+              >
+                + Ajouter le fichier
+              </Button>
+            </Box>
           </Box>
+
         </DialogContent>
+
+
+
         <DialogActions>
           <Button onClick={handleCloseFileModal} color="error">
             Fermer
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Modale d'édition */}
       <Dialog
         open={openEditModal}
@@ -914,34 +1028,6 @@ const ClientsValides = () => {
                 <MenuItem value="autres">Autre</MenuItem>
               </Select>
             </FormControl>
-            {safeValue(editFormData.companyType) === 'autres' && (
-              <TextField
-                margin="normal"
-                fullWidth
-                label="Autre Entreprise Type"
-                name="otherCompanyType"
-                value={safeValue(editFormData.otherCompanyType)}
-                onChange={handleEditChange}
-              />
-            )}
-            <FormControl margin="normal" fullWidth>
-              <InputLabel id="edit-sector-label">Secteur</InputLabel>
-              <Select
-                labelId="edit-sector-label"
-                id="edit-sector-select"
-                name="sector"
-                value={safeValue(editFormData.sector)}
-                onChange={handleEditChange}
-                label="Secteur"
-              >
-                {sectors.map((sector) => (
-                  <MenuItem key={sector.id_sector} value={sector.symbol_fr}>
-                    {sector.symbol_fr.charAt(0).toUpperCase() +
-                      sector.symbol_fr.slice(1).toLowerCase()}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
             {safeValue(editFormData.companyType) === 'zoneFranche' ? (
               <TextField
                 margin="normal"
@@ -971,6 +1057,25 @@ const ClientsValides = () => {
                 />
               </>
             ) : null}
+            <FormControl margin="normal" fullWidth>
+              <InputLabel id="edit-sector-label">Secteur</InputLabel>
+              <Select
+                labelId="edit-sector-label"
+                id="edit-sector-select"
+                name="sector"
+                value={safeValue(editFormData.sector)}
+                onChange={handleEditChange}
+                label="Secteur"
+              >
+                {sectors.map((sector) => (
+                  <MenuItem key={sector.id_sector} value={sector.symbol_fr}>
+                    {sector.symbol_fr.charAt(0).toUpperCase() +
+                      sector.symbol_fr.slice(1).toLowerCase()}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
           </Box>
         </DialogContent>
         <DialogActions>
@@ -1026,6 +1131,56 @@ const ClientsValides = () => {
         </DialogActions>
       </Dialog>
 
+      <Dialog
+        open={openContactModal}
+        onClose={handleCloseContactModal}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Envoyer un message</DialogTitle>
+        <DialogContent>
+          <Typography>À : <strong>{selectedContactEmail}</strong></Typography>
+          <TextField
+            label="Message"
+            value={mailMessage}
+            onChange={(e) => setMailMessage(e.target.value)}
+            multiline
+            rows={6}
+            fullWidth
+            margin="normal"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseContactModal} color="error">
+            Annuler
+          </Button>
+          <Button
+            onClick={async () => {
+              try {
+
+                const emailPayload = {
+                  to: selectedContactEmail,
+                  subject: 'Message de la CCD', // Sujet mis en dur
+                  body: mailMessage,
+                  isHtml: false
+                };
+                await sendEmail(emailPayload);
+
+                alert('Message envoyé avec succès et mémo enregistré.');
+                handleCloseContactModal();
+              } catch (error) {
+                console.error('Erreur lors de l\'envoi de l\'email et de l\'enregistrement du mémo :', error);
+                alert('Erreur lors de l’envoi du message.');
+              }
+            }}
+            variant="contained"
+            style={{ backgroundColor: '#C39408', color: '#fff' }}
+          >
+            Envoyer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Modale Contact Principal */}
       <Dialog
         open={showContactModal && !!selectedAccount}
@@ -1035,7 +1190,7 @@ const ClientsValides = () => {
       >
         <DialogTitle>Contact Principal</DialogTitle>
         <DialogContent>
-          {selectedAccount?.main_contact ? (
+          {selectedAccount?.main_contact && selectedAccount.main_contact.length > 0 ? (
             <TableContainer component={Paper}>
               <Table size="medium">
                 <TableHead>
@@ -1045,16 +1200,29 @@ const ClientsValides = () => {
                     <TableCell>Email</TableCell>
                     <TableCell>Tél</TableCell>
                     <TableCell>Portable</TableCell>
+                    <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  <TableRow>
-                    <TableCell>{selectedAccount.main_contact.full_name || 'N/A'}</TableCell>
-                    <TableCell>{selectedAccount.main_contact.position || 'N/A'}</TableCell>
-                    <TableCell>{selectedAccount.main_contact.email || 'N/A'}</TableCell>
-                    <TableCell>{selectedAccount.main_contact.phone_number || 'N/A'}</TableCell>
-                    <TableCell>{selectedAccount.main_contact.mobile_number || 'N/A'}</TableCell>
-                  </TableRow>
+                  {selectedAccount.main_contact.map((contact) => (
+                    <TableRow key={contact.id_cust_user}>
+                      <TableCell>{contact.full_name || 'N/A'}</TableCell>
+                      <TableCell>{contact.position || 'N/A'}</TableCell>
+                      <TableCell>{contact.email || 'N/A'}</TableCell>
+                      <TableCell>{contact.phone_number || 'N/A'}</TableCell>
+                      <TableCell>{contact.mobile_number || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          style={{ color: '#C39408', borderColor: '#C39408' }}
+                          onClick={() => handleOpenContactModal(contact.email)}
+                        >
+                          Contacter
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -1069,6 +1237,8 @@ const ClientsValides = () => {
         </DialogActions>
       </Dialog>
     </Box>
+
+
   );
 };
 
