@@ -511,9 +511,13 @@ const executeGetCustAccountInfo = async (req, res) => {
     console.log('get_cust_account_files result:', files);
 
     // Create mappings for main contacts and files
+    // Create mapping of id_cust_account to an array of main contacts
     const contactMap = {};
     mainContacts.forEach(contact => {
-      contactMap[contact.id_cust_account] = contact;
+      if (!contactMap[contact.id_cust_account]) {
+        contactMap[contact.id_cust_account] = [];
+      }
+      contactMap[contact.id_cust_account].push(contact);
     });
 
     const fileMap = {};
@@ -919,7 +923,7 @@ const reactivateCustAccount = async (req, res) => {
       p_idlogin_insert: idlogin || 1,
       p_memo_date: nowISO,
       p_memo_subject: 'Réactivation du compte client',
-      p_memo_body:  'Aucune raison spécifiée.',
+      p_memo_body: 'Aucune raison spécifiée.',
       p_mail_to: mainContact?.[0]?.email || null,
       p_mail_bcc: null,
       p_mail_acc: null,
@@ -1352,6 +1356,43 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
     });
   }
 };
+
+const addCustAccountFile = async (req, res) => {
+  try {
+    // 1. Validation des champs requis
+    if (!req.file || !req.body.id_cust_account || 
+        !req.body.idfiles_repo_typeof || !req.body.idlogin) {
+      return res.status(400).json({ error: 'Fichier ou champ requis manquant.' });
+    }
+
+    // 2. Récupération des données nécessaires
+    const idCustAccount = req.body.id_cust_account;
+    const idRepoType = req.body.idfiles_repo_typeof;
+    const idLogin = req.body.idlogin;
+    const fileOriginName = req.file.originalname;    // nom d'origine du fichier
+    const fileGuid = req.file.filename;              // nom généré par multer
+    const filePath = req.file.path;                  // chemin complet sur le serveur
+
+    // 3. Appel de la procédure stockée via Sequelize (MySQL)
+    const sql = 'CALL set_cust_account_files(?, ?, ?, ?, ?, ?, ?)';
+    const replacements = [
+      idCustAccount,
+      idRepoType,
+      fileOriginName,
+      fileGuid,
+      filePath,
+      idLogin,
+      0  // dernier paramètre fixé à 0
+    ];
+    await sequelize.query(sql, { replacements }); 
+
+    // 4. Envoi de la réponse de succès
+    res.json({ message: 'Fichier uploadé et enregistré avec succès.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Échec lors de l’upload du fichier.' });
+  }
+}
 
 
 const executeGetCustAccountFiles = async (req, res) => {
@@ -1824,6 +1865,34 @@ const executeReactivateCustUser = async (req, res) => {
   }
 };
 
+const sendCustomEmail = async (req, res) => {
+  try {
+    const { to, subject, body, isHtml = false } = req.body;
+
+    if (!to || !subject || !body) {
+      return res.status(400).json({
+        message: 'Les champs "to", "subject" et "body" sont requis.',
+      });
+    }
+
+    if (isHtml) {
+      await sendHtmlEmail(to, subject, body);
+    } else {
+      await sendEmail(to, subject, body);
+    }
+
+    res.status(200).json({
+      message: `Email envoyé à ${to} avec succès.`,
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi de l\'email personnalisé :', error);
+    res.status(500).json({
+      message: 'Erreur lors de l\'envoi de l\'email.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
+
 // Export the new function along with the existing ones
 module.exports = {
   executeSetCustAccount,
@@ -1844,5 +1913,7 @@ module.exports = {
   executeDelCustAccountFiles,
   disableCustAccount,
   reactivateCustAccount,
-  executeReactivateCustUser
+  executeReactivateCustUser,
+  sendCustomEmail,
+  addCustAccountFile
 };

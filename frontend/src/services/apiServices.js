@@ -338,6 +338,36 @@ export const addSubscriptionWithFile = async (subscriptionData) => {
     throw error;
   }
 };
+export const addCustAccountFile = async (fileData) => {
+  try {
+    const formData = new FormData();
+
+    for (const key in fileData) {
+      if (fileData.hasOwnProperty(key)) {
+        formData.append(key, fileData[key]);
+      }
+    }
+
+    const response = await fetch(`${API_URL}/customer/add-cust-account-file`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to upload customer account file');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (addCustAccountFile):', error);
+    throw error;
+  }
+};
+
 
 export const requestPasswordReset = async (data) => {
   try {
@@ -527,6 +557,31 @@ export const reactivateCustUser = async (id) => {
     return await response.json();
   } catch (error) {
     console.error('API call error (reactivateCustUser):', error);
+    throw error;
+  }
+};
+
+export const sendEmail = async (emailPayload) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/send-custom-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({
+        ...emailPayload
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to send email and memo');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (sendEmail):', error);
     throw error;
   }
 };
