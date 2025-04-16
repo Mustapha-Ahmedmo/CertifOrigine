@@ -147,6 +147,8 @@ const App = () => {
               element={<CompletedOrdersThisYear />}
             />
             <Route path="create-order" element={<CreateOrder />} />
+
+            <Route path="masociete" element={<ClientsValides />} />
             <Route path="order-details" element={<OrderDetailsPage />} />
             <Route path="notifications" element={<NotificationPage />} />
 

@@ -69,10 +69,10 @@ const logoutStyle = {
 const Menu = ({ isMenuOpen, toggleMenu }) => {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
-  
+
   // En mode desktop, le menu sera toujours affiché
   // Ainsi, pour le Drawer, on force open à true si isDesktop est vrai.
-  
+
   // Initialisation des sous-menus
   const [openSubmenus, setOpenSubmenus] = useState({
     newOrder: false,
@@ -214,6 +214,25 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           </ListItem>
 
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
+
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
+              to="/dashboard/masociete"
+              onClick={() => {
+                handleParentClick();
+                handleLinkClick();
+              }}
+              selected={location.pathname === "/dashboard/masociete"}
+              sx={selectedStyle}
+            >
+              <ListItemIcon sx={{ color: "black" }}>
+                <FontAwesomeIcon icon={faCheckCircle} />
+              </ListItemIcon>
+              <ListItemText primary="Ma société" primaryTypographyProps={{ fontSize: "14px" }} />
+            </ListItemButton>
+          </ListItem>
+
 
           {/* Lien vers Gestion des commandes -> pointe maintenant vers "/dashboard/home" */}
           <ListItem disablePadding>

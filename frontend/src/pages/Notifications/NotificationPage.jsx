@@ -207,9 +207,11 @@ const Notifications = () => {
                   <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '0.8rem' }}>
                     {order_title || 'Notification'}
                   </Typography>
-                  <Typography variant="body2" sx={{ mt: 0.5, fontSize: '0.7rem' }}>
-                    {memo_body || 'Pas de description.'}
-                  </Typography>
+                  <Box
+                    sx={{ mt: 0.5, fontSize: '0.7rem' }}
+                    dangerouslySetInnerHTML={{ __html: memo_body || 'Pas de description.' }}
+                  />
+
                   {isOperator && cust_name && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: '0.7rem' }}>
                       Client : {cust_name}
