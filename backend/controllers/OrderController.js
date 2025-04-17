@@ -1,5 +1,7 @@
 const sequelize = require('../config/db'); // Import the Sequelize instance
 const { QueryTypes } = require('sequelize'); // Ensure QueryTypes is imported
+const path = require('path');
+const fs = require('fs');
 
 const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
@@ -1172,6 +1174,30 @@ const submitOrder = async (req, res) => {
       });
     }
 
+    console.log('[submitOrder] 🔍 Vérification des documents actifs...');
+
+    const [documents] = await sequelize.query(
+      `
+      SELECT COUNT(*) AS doc_count
+      FROM order_files
+      WHERE id_order = :p_id_order
+        AND (deactivation_date IS NULL OR deactivation_date > NOW())
+      `,
+      {
+        replacements: { p_id_order },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    console.log(`[submitOrder] 📄 Documents actifs trouvés : ${documents.doc_count}`);
+
+
+
+    if (Number(documents.doc_count) === 0) {
+      return res.status(400).json({
+        message: 'Au moins un document doit être uploadé avant de soumettre la commande.',
+      });
+    }
     // Call the stored procedure submit_order
     await sequelize.query(
       `CALL submit_order(:p_id_order, :p_idlogin_modify)`,
@@ -1316,12 +1342,12 @@ const delFilesRepo = async (req, res) => {
 const approveOrder = async (req, res) => {
   try {
 
-    const { 
-      p_id_order, 
-      p_id_cust_account, 
-      p_idlogin_modify, 
-      customerEmail, 
-      orderTitle, 
+    const {
+      p_id_order,
+      p_id_cust_account,
+      p_idlogin_modify,
+      customerEmail,
+      orderTitle,
       orderDate,   // Expecting a string like "12/03/2025"
       totalFD      // Total amount (as a number or string)
     } = req.body;
@@ -1462,7 +1488,7 @@ const sendbackOrder = async (req, res) => {
 const rejectOrder = async (req, res) => {
   try {
     // Extract required parameters
-    const { p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail,orderTitle } = req.body;
+    const { p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail, orderTitle } = req.body;
 
     if (!p_id_order || !p_id_cust_account || !p_idlogin_modify || !customerEmail) {
       return res.status(400).json({
@@ -1576,7 +1602,7 @@ const billOrder = async (req, res) => {
         message: 'Les champs p_id_order et p_idlogin_modify sont requis.'
       });
     }
-    
+
     // Call the stored procedure "bill_order"
     await sequelize.query(
       `CALL bill_order(:p_id_order, :p_idlogin_modify)`,
@@ -1585,7 +1611,7 @@ const billOrder = async (req, res) => {
         type: QueryTypes.RAW,
       }
     );
-    
+
     res.status(200).json({ message: 'Commande facturée avec succès.' });
   } catch (error) {
     console.error('Erreur lors de la facturation de la commande:', error);
@@ -1672,6 +1698,148 @@ const setInvoiceHeader = async (req, res) => {
   }
 };
 
+const sendOrderDocument = async (req, res) => {
+  try {
+    const { id_order, id_cust_account } = req.body;
+
+
+    if (!id_order || !id_cust_account) {
+      return res.status(400).json({
+        message: "Les champs id_order et id_cust_account sont requis.",
+      });
+    }
+
+
+    const mainContacts = await sequelize.query(
+      `SELECT * FROM get_custuser_info(
+        :p_id_listCA,
+        :p_statutflag,
+        :p_isactiveCA,
+        :p_isactiveCU,
+        :p_id_listCU,
+        :p_ismain_user
+      )`,
+      {
+        replacements: {
+          p_id_listCA: String(id_cust_account),
+          p_statutflag: null,
+          p_isactiveCA: true,
+          p_isactiveCU: true,
+          p_id_listCU: null,
+          p_ismain_user: true,
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    console.log("[sendOrderDocument] Utilisateurs principaux récupérés :", mainContacts);
+    const recipient = Array.isArray(mainContacts) && mainContacts.length > 0 ? mainContacts[0] : null;
+
+    if (!recipient || !recipient.email) {
+      return res.status(404).json({
+        message: "Aucun utilisateur principal avec une adresse email valide trouvé pour ce compte client.",
+      });
+    }
+
+
+    const justificativeFiles = await sequelize.query(
+      `SELECT * FROM get_order_files_info(
+          :p_id_order_files_list,
+          :p_id_order_list,
+          :p_id_files_repo_list,
+          :p_id_files_repo_typeof_list,
+          :p_isactive,
+          :p_id_custaccount,
+          :p_id_list_orderstatus
+      )`,
+      {
+        replacements: {
+          p_id_order_files_list: null,
+          p_id_order_list: String(id_order),
+          p_id_files_repo_list: null,
+          p_id_files_repo_typeof_list: Array.from({ length: 450 }, (_, i) => i + 500).join(','), // "500,501,...,949"
+          p_isactive: true,
+          p_id_custaccount: String(id_cust_account),
+          p_id_list_orderstatus: null, // Or pass a value like '5' if needed
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+        // 3. Retrieve the certificate file (typeof = 1000)
+    const certificateFiles = await sequelize.query(
+      `SELECT * FROM get_order_files_info(
+        NULL,
+        :p_id_order_list,
+        NULL,
+        :p_typeof_certif,
+        TRUE,
+        :p_id_custaccount,
+        NULL
+      )`,
+      {
+        replacements: {
+          p_id_order_list: String(id_order),
+          p_typeof_certif: '1000',
+          p_id_custaccount: String(id_cust_account),
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    const attachments = [];
+
+    // Add certificate file
+    if (certificateFiles.length > 0) {
+      certificateFiles.forEach(file => {
+        if (fs.existsSync(file.file_path)) {
+          attachments.push({
+            filename: file.file_origin_name,
+            path: file.file_path,
+          });
+        }
+      });
+    }
+
+    // Add justificative files
+    if (justificativeFiles.length > 0) {
+      justificativeFiles.forEach(file => {
+        if (fs.existsSync(file.file_path)) {
+          attachments.push({
+            filename: file.file_origin_name,
+            path: file.file_path,
+          });
+        }
+      });
+    }
+
+    if (attachments.length === 0) {
+      return res.status(404).json({
+        message: "Aucun fichier trouvé pour cette commande.",
+      });
+    }
+
+
+      await transporter.sendMail({
+        from: '"Chambre de commerce de Djibouti" <myfolioreport@maesys.fr>',
+        to: recipient.email,
+        subject: `Documents de la commande n°${id_order}`,
+        text: `Bonjour,\n\nVeuillez trouver en pièce jointe le certificat et les pièces justificatives relatives à votre commande n°${id_order}.\n\nCordialement,\nChambre de commerce de Djibouti`,
+        attachments,
+      });
+
+    res.status(200).json({
+      message: "Email avec les documents envoyé avec succès.",
+    });
+  } catch (error) {
+    console.error("Erreur dans sendOrderDocument:", error);
+    res.status(500).json({
+      message: "Erreur lors de l'envoi de l'email avec les documents.",
+      error: error.message || "Erreur inconnue.",
+    });
+  }
+};
+
 module.exports = {
   executeAddOrder,
   getTransmodeInfo,
@@ -1705,5 +1873,6 @@ module.exports = {
   rejectOrder,
   getOrderStaticsByServices,
   billOrder,
-  setInvoiceHeader
+  setInvoiceHeader,
+  sendOrderDocument
 };

@@ -185,23 +185,6 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
             ))}
           </Box>
 
-          {/* Remarques générales */}
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
-              Remarques générales
-            </Typography>
-            <TextField
-              multiline
-              minRows={4}
-              fullWidth
-              placeholder="Ajouter des remarques générales pour les pièces justificatives"
-              value={generalRemark}
-              onChange={(e) => setGeneralRemark(e.target.value)}
-              variant="outlined"
-              sx={customFieldStyle}
-            />
-          </Box>
-
           {/* Boutons d'action */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
             <Button variant="outlined" onClick={prevStep}>

@@ -69,8 +69,10 @@ const SearchOrders = () => {
   const currentYear = new Date().getFullYear();
 
   // États des filtres
-  const [dateStart, setDateStart] = useState('');
-  const [dateEnd, setDateEnd] = useState('');
+  const defaultStartDate = `${currentYear}-01-01`;
+  const defaultEndDate = `${currentYear}-12-31`;
+  const [dateStart, setDateStart] = useState(defaultStartDate);
+  const [dateEnd, setDateEnd] = useState(defaultEndDate);
   const [orderNumber, setOrderNumber] = useState('');
   const [searchText, setSearchText] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState([5]);
@@ -434,7 +436,7 @@ const SearchOrders = () => {
   return (
     <Box sx={{ ml: { xs: 0, md: '240px' }, p: 2 }}>
       <Typography variant="h4" sx={{ mb: 2, mt: 2 }}>
-        Recherche de Commandes - {currentYear}
+        Historique de commandes terminées - {currentYear}
       </Typography>
       {/* Section des filtres */}
       <Paper sx={{ p: 2, mb: 2 }}>
