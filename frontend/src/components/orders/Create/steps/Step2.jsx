@@ -886,7 +886,6 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                   label="Combien de copies certifiées ?"
                   type="number"
                   fullWidth
-                  // On affiche une chaîne vide par défaut tant que ce n'est pas 0
                   value={safeValues.copies === 0 ? 0 : (safeValues.copies || '')}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -900,12 +899,31 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                     }
                   }}
                   InputProps={{ inputProps: { min: 0 } }}
+                  sx={{ ...customFieldStyle, mb: 4 }}
+                />
+
+                {/* Nouveau header visuel pour remarques */}
+                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                  Remarques générales
+                </Typography>
+
+                <TextField
+                  label="Ajouter une remarque"
+                  fullWidth
+                  multiline
+                  minRows={6}
+                  value={safeValues.remarks || ''}
+                  onChange={(e) => handleChange('remarks', e.target.value)}
                   sx={{ ...customFieldStyle }}
                 />
+                <Box sx={{ mt: 1 }}>
+                  Caractère(s) restant(s) : {300 - (safeValues.remarks?.length ?? 0)}
+                </Box>
               </Box>
             </div>
           </div>
         );
+
 
       case 6:
         return (

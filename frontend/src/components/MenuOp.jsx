@@ -193,10 +193,10 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemIcon sx={{ color: "black" }}>
                     <FontAwesomeIcon icon={faClipboardList} />
                   </ListItemIcon>
-                  <ListItemText primary="Recherches de commande" primaryTypographyProps={{ fontSize: "12px" }} />
+                  <ListItemText primary="Historique de commandes terminées" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
-              {/* Historiques de commandes */}
+              {/* Historiques de commandes 
               <ListItem disablePadding>
                 <ListItemButton onClick={() => toggleSubmenu('orderHistory')} sx={{ pl: 4, cursor: 'pointer' }}>
                   <ListItemIcon sx={{ color: "black" }}>
@@ -204,7 +204,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                   </ListItemIcon>
                   <ListItemText primary="Historiques de commandes" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
-              </ListItem>
+              </ListItem>*/}
               <Collapse in={openMenu.orderHistory} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
                   <ListItem disablePadding>

@@ -1041,6 +1041,33 @@ export const getOrderFilesInfo = async (params) => {
   }
 };
 
+export const handleSendDocuments = async (order) => {
+  try {
+    const res = await fetch(`${API_URL}/orders/sendOrderDocuments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({
+        id_order: order.id_order,
+        id_cust_account: order.id_cust_account,
+        order_title: order.order_title, // facultatif mais utile dans l'objet du mail
+      }),
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      alert(result.message || "Email envoyé avec succès.");
+    } else {
+      alert(result.message || "Erreur lors de l'envoi de l'email.");
+    }
+  } catch (error) {
+    console.error("Erreur lors de l'envoi du mail :", error);
+    alert("Une erreur est survenue.");
+  }
+};
 
 export const getOrderOpInfo = async (params) => {
   try {

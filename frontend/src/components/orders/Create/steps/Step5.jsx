@@ -124,6 +124,8 @@ const Step5 = ({
 
   // Pour gérer d'éventuels messages d'erreur
   const [errorMessage, setErrorMessage] = useState('');
+  const [submitError, setSubmitError] = useState('');
+
 
   // --- CHARGEMENT INITIAL ---
   useEffect(() => {
@@ -717,6 +719,13 @@ const Step5 = ({
   // ------------------------------------------------
   const handleSubmitOrder = async () => {
     if (!values.orderId || !idLogin) return;
+
+
+    if (!documentsInfo || documentsInfo.length === 0) {
+      setSubmitError('Au moins un document doit être uploadé.');
+      return;
+    }
+
     try {
       await submitOrder(values.orderId, idLogin);
       alert('Commande soumise avec succès.');
@@ -763,13 +772,13 @@ const Step5 = ({
               onClick={
                 isModal
                   ? () => openSecondModal?.({
-                      name: companyName,
-                      address: '123 Rue Principale, Ville, Pays',
-                      address2: 'Suite 456',
-                      contact: 'M. Vladimir Outof\nManager',
-                      activity: 'Construction',
-                      statut: 'Actif',
-                    })
+                    name: companyName,
+                    address: '123 Rue Principale, Ville, Pays',
+                    address2: 'Suite 456',
+                    contact: 'M. Vladimir Outof\nManager',
+                    activity: 'Construction',
+                    statut: 'Actif',
+                  })
                   : undefined
               }
             >
@@ -1171,13 +1180,29 @@ const Step5 = ({
       </Card>
 
       {/* BOUTON FINAL "SOUMETTRE" */}
+
+
       {!isModal && isModifiable && (
         <Box sx={{ textAlign: 'center', mt: 3 }}>
-          <Button variant="contained" color="success" onClick={handleSubmitOrder}>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleSubmitOrder}
+            disabled={!isModifiable}
+          >
             Soumettre la commande
           </Button>
+          {submitError && (
+            <Typography color="error" sx={{ mt: 1 }}>
+              {submitError}
+            </Typography>
+          )}
         </Box>
+
+
+
       )}
+
 
       {/* ---------- DIALOGS ---------- */}
 

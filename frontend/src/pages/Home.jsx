@@ -281,8 +281,11 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
       await submitOrder(payload);
       refreshOrders && refreshOrders();
     } catch (error) {
-      alert("Erreur lors de la soumission de la commande.");
-      console.error(error);
+      const errorMessage =
+        error || "Erreur lors de la soumission de la commande.";
+
+      alert(errorMessage);
+      console.error('Erreur de soumission :', error);
     }
   };
 
