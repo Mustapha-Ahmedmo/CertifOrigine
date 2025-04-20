@@ -6,7 +6,7 @@ import {
 } from '../services/apiServices';
 import { formatDate } from '../utils/dateUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 
 // --- MUI ---
 import {
@@ -34,7 +34,10 @@ import {
   CardActions,
   Grid,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  IconButton,
+  Menu,
+  MenuItem
 } from '@mui/material';
 
 // --- CSS perso ---
@@ -86,6 +89,13 @@ const Inscriptions = () => {
   // État de l'onglet sélectionné
   const [tabIndex, setTabIndex] = useState(0);
 
+  // Nouveaux états pour le menu Actions
+  const [anchorElActions, setAnchorElActions] = useState(null);
+  const [selectedForActions, setSelectedForActions] = useState(null);
+
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
   };
@@ -94,8 +104,7 @@ const Inscriptions = () => {
     const fetchCustAccounts = async () => {
       try {
         const response = await getCustAccountInfo(null, 1, true);
-        const data = response.data || [];
-        setCustAccounts(data);
+        setCustAccounts(response.data || []);
       } catch (err) {
         console.error(err);
       }
@@ -117,8 +126,8 @@ const Inscriptions = () => {
       alert('Le statut du compte client a été mis à jour avec succès.');
       setRemovingAccounts((prev) => [...prev, id]);
       setTimeout(() => {
-        setCustAccounts((prevAccounts) =>
-          prevAccounts.filter((account) => account.id_cust_account !== id)
+        setCustAccounts((prev) =>
+          prev.filter((account) => account.id_cust_account !== id)
         );
         setRemovingAccounts((prev) =>
           prev.filter((accountId) => accountId !== id)
@@ -149,8 +158,8 @@ const Inscriptions = () => {
       alert('Le compte client a été rejeté avec succès.');
       setRemovingAccounts((prev) => [...prev, rejectingAccountId]);
       setTimeout(() => {
-        setCustAccounts((prevAccounts) =>
-          prevAccounts.filter((account) => account.id_cust_account !== rejectingAccountId)
+        setCustAccounts((prev) =>
+          prev.filter((account) => account.id_cust_account !== rejectingAccountId)
         );
         setRemovingAccounts((prev) =>
           prev.filter((accountId) => accountId !== rejectingAccountId)
@@ -167,6 +176,16 @@ const Inscriptions = () => {
     }
   };
 
+  // Gestion du menu Actions
+  const handleActionsMenuOpen = (event, registration) => {
+    setAnchorElActions(event.currentTarget);
+    setSelectedForActions(registration);
+  };
+  const handleActionsMenuClose = () => {
+    setAnchorElActions(null);
+    setSelectedForActions(null);
+  };
+
   // Gestion de la recherche
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -178,7 +197,6 @@ const Inscriptions = () => {
     if (!search) return true;
 
     const dateString = formatDate(registration.insertdate);
-
     const fields = [
       registration.cust_name,
       registration.legal_form,
@@ -201,15 +219,10 @@ const Inscriptions = () => {
     setSelectedAccount(account);
     setShowContactModal(true);
   };
-
   const handleCloseContactsModal = () => {
     setSelectedAccount(null);
     setShowContactModal(false);
   };
-
-  // Détection de l'affichage mobile
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Rendu en mode Table (desktop)
   const renderTableView = () => (
@@ -239,9 +252,7 @@ const Inscriptions = () => {
                 >
                   <TableCell>{formatDate(registration.insertdate)}</TableCell>
                   <TableCell>
-                    {registration.other_legal_form
-                      ? registration.other_legal_form
-                      : registration.legal_form}{' '}
+                    {registration.other_legal_form || registration.legal_form}{' '}
                     {registration.cust_name}
                   </TableCell>
                   <TableCell>
@@ -255,7 +266,7 @@ const Inscriptions = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    {registration.files && registration.files.length > 0 ? (
+                    {registration.files?.length > 0 ? (
                       registration.files.map((file) => {
                         let fileDescription = file.txt_description_fr || 'Type inconnu';
                         if (fileDescription.toLowerCase().includes('nif')) {
@@ -319,24 +330,11 @@ const Inscriptions = () => {
                     </Button>
                   </TableCell>
                   <TableCell>
-                    <Box display="flex" flexDirection="column" gap={1}>
-                      <Button
-                        variant="contained"
-                        color="success"
-                        size="small"
-                        onClick={() => handleValidate(registration.id_cust_account)}
-                      >
-                        Valider
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="error"
-                        size="small"
-                        onClick={() => handleReject(registration.id_cust_account)}
-                      >
-                        Rejeter
-                      </Button>
-                    </Box>
+                    <IconButton
+                      onClick={(e) => handleActionsMenuOpen(e, registration)}
+                    >
+                      <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );
@@ -360,9 +358,7 @@ const Inscriptions = () => {
                   <strong>Date :</strong> {formatDate(registration.insertdate)}
                 </Typography>
                 <Typography variant="subtitle2">
-                  <strong>Client :</strong> {registration.other_legal_form
-                    ? registration.other_legal_form
-                    : registration.legal_form}{' '}
+                  <strong>Client :</strong> {registration.other_legal_form || registration.legal_form}{' '}
                   {registration.cust_name}
                 </Typography>
                 <Typography variant="subtitle2">
@@ -375,12 +371,13 @@ const Inscriptions = () => {
                   <strong>Pays :</strong> {registration.co_symbol_fr}
                 </Typography>
                 <Typography variant="subtitle2">
-                  <strong>Implantation :</strong> {registration.in_free_zone ? 'Zone franche' : 'Entreprise'}
+                  <strong>Implantation :</strong>{' '}
+                  {registration.in_free_zone ? 'Zone franche' : 'Entreprise'}
                 </Typography>
                 <Typography variant="subtitle2">
                   <strong>Fichiers :</strong>
                 </Typography>
-                {registration.files && registration.files.length > 0 ? (
+                {registration.files?.length > 0 ? (
                   registration.files.map((file) => {
                     let fileDescription = file.txt_description_fr || 'Type inconnu';
                     if (fileDescription.toLowerCase().includes('nif')) {
@@ -441,24 +438,11 @@ const Inscriptions = () => {
                 >
                   Ouvrir
                 </Button>
-                <Box display="flex" flexDirection="column" gap={1} ml={1}>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    size="small"
-                    onClick={() => handleValidate(registration.id_cust_account)}
-                  >
-                    Valider
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    size="small"
-                    onClick={() => handleReject(registration.id_cust_account)}
-                  >
-                    Rejeter
-                  </Button>
-                </Box>
+                <IconButton
+                  onClick={(e) => handleActionsMenuOpen(e, registration)}
+                >
+                  <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
+                </IconButton>
               </CardActions>
             </Card>
           </Grid>
@@ -589,6 +573,30 @@ const Inscriptions = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Menu déroulant Actions */}
+      <Menu
+        anchorEl={anchorElActions}
+        open={Boolean(anchorElActions)}
+        onClose={handleActionsMenuClose}
+      >
+        <MenuItem
+          onClick={() => {
+            handleValidate(selectedForActions.id_cust_account);
+            handleActionsMenuClose();
+          }}
+        >
+          Valider
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleReject(selectedForActions.id_cust_account);
+            handleActionsMenuClose();
+          }}
+        >
+          Rejeter
+        </MenuItem>
+      </Menu>
     </Box>
   );
 };
