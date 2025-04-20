@@ -34,10 +34,13 @@ import {
   MenuItem,
   useTheme,
   useMediaQuery,
+  Menu,
 } from '@mui/material';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faPlus, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsisV } from '@fortawesome/free-solid-svg-icons';
+import { IconButton } from '@mui/material';
 
 // Fonction de validation pour un numéro de téléphone international
 // Le numéro doit commencer par '+' ou '00', suivi uniquement de chiffres, avec une longueur comprise entre 8 et 16 caractères.
@@ -73,6 +76,20 @@ const DestinataireList = () => {
   // Responsive
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // --- menu Actions (⋮) ---
+  const [anchorEl, setAnchorEl] = useState(null);           // ancre du Menu
+  const [selectedRow, setSelectedRow] = useState(null);     // destinataire cliqué
+
+  const handleMenuOpen = (e, recipient) => {
+    setAnchorEl(e.currentTarget);
+    setSelectedRow(recipient);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedRow(null);
+  };
+
 
   // Chargement initial
   useEffect(() => {
@@ -198,6 +215,8 @@ const DestinataireList = () => {
     }
   };
 
+  
+
   // ----- RENDU Desktop : Table -----
   const renderDesktopTable = () => (
     <Paper>
@@ -221,28 +240,16 @@ const DestinataireList = () => {
                 <TableCell>{recipient.address_1}</TableCell>
                 <TableCell>{recipient.country_symbol_fr_recipient || 'N/A'}</TableCell>
                 <TableCell>{recipient.phone_number}</TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />}
-                      onClick={() => handleOpenEditModal(recipient)}
-                      sx={{ border: 'none', '&:hover': { border: 'none' } }}
-                    >
-                      Modifier
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      color="error"
-                      startIcon={<FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />}
-                      onClick={() => handleDelete(recipient.id_recipient_account)}
-                      sx={{ border: 'none', '&:hover': { border: 'none' } }}
-                    >
-                      Supprimer
-                    </Button>
-                  </Box>
+                <TableCell
+                  align="center"
+                  sx={{            // ← styles supplémentaires
+                    p: 0,          // plus de padding dans la cellule
+                    textAlign: 'center'
+                  }}
+                >
+                  <IconButton onClick={(e) => handleMenuOpen(e, recipient)}>  
+                    <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}
@@ -287,27 +294,13 @@ const DestinataireList = () => {
           <Typography variant="body2">
             <strong>Téléphone : </strong> {recipient.phone_number}
           </Typography>
-          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />}
-              onClick={() => handleOpenEditModal(recipient)}
-              sx={{ border: 'none', '&:hover': { border: 'none' } }}
-            >
-              Modifier
-            </Button>
-            <Button
-              variant="outlined"
-              size="small"
-              color="error"
-              startIcon={<FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />}
-              onClick={() => handleDelete(recipient.id_recipient_account)}
-              sx={{ border: 'none', '&:hover': { border: 'none' } }}
-            >
-              Supprimer
-            </Button>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+          <IconButton onClick={(e) => handleMenuOpen(e, recipient)}>
+            <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
+          </IconButton>
+
           </Box>
+
         </Paper>
       ))}
       {recipients.length === 0 && (
@@ -459,7 +452,32 @@ const DestinataireList = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+
+      {/* --- menu Actions : Modifier / Supprimer --- */}
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <MenuItem
+          onClick={() => {
+            handleOpenEditModal(selectedRow);
+            handleMenuClose();
+          }}
+        >
+          Modifier
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (selectedRow) handleDelete(selectedRow.id_recipient_account);
+            handleMenuClose();
+          }}
+        >
+          Supprimer
+        </MenuItem>
+      </Menu>
+
     </Box>
+
+    
   );
 };
 

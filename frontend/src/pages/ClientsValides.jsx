@@ -13,7 +13,7 @@ import {
 } from '../services/apiServices';
 import './Inscriptions.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEdit, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 import { formatDate } from '../utils/dateUtils';
 import {
   Box,
@@ -44,7 +44,9 @@ import {
   CardActions,
   Grid,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  IconButton, 
+  Menu 
 } from '@mui/material';
 import { useSelector } from 'react-redux';
 
@@ -98,6 +100,10 @@ const ClientsValides = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [tabIndex, setTabIndex] = useState(0);
   const [selectedFilter, setSelectedFilter] = useState('validé');
+  const [anchorEl, setAnchorEl] = useState(null);      // ancre du Menu
+  const [selectedMenuAccount, setSelectedMenuAccount] = useState(null); // ligne cliquée
+  const filterColor = '#C39408';
+
 
   // Modale édition
   const [openEditModal, setOpenEditModal] = useState(false);
@@ -144,6 +150,17 @@ const ClientsValides = () => {
 
     fetchFileTypes();
   }, []);
+
+  const handleMenuOpen = (event, acc) => {
+    setAnchorEl(event.currentTarget);  // ouvre le Menu
+    setSelectedMenuAccount(acc);       // mémorise la ligne
+  };
+  
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedMenuAccount(null);
+  };
+  
 
   const handleOpenContactModal = (email) => {
     setSelectedContactEmail(email);
@@ -726,13 +743,9 @@ const ClientsValides = () => {
               <TableCell>Type d'entreprise</TableCell>
               <TableCell>Informations</TableCell>
               <TableCell>Contact Principal</TableCell>
-              {selectedFilter !== 'non validé' && selectedFilter !== 'rejeté' && (
-                <TableCell>Modifier</TableCell>
-              )}
               {isOpUser && selectedFilter !== 'non validé' && selectedFilter !== 'rejeté' && (
                 <TableCell>Action</TableCell>
               )}
-
               {selectedFilter !== 'non validé' && selectedFilter !== 'rejeté' && (
                 <TableCell>Fichiers</TableCell>
               )}
@@ -795,40 +808,19 @@ const ClientsValides = () => {
 
                 {selectedFilter !== 'non validé' && selectedFilter !== 'rejeté' && (
                   <>
-                    <TableCell>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<FontAwesomeIcon icon={faEdit} />}
-                        onClick={() => handleOpenEditModal(registration)}
-                        style={{ color: '#C39408', borderColor: '#C39408' }}
-                      >
-                        Modifier
-                      </Button>
-                    </TableCell>
+                    {/* ---- colonne ACTION : icône ⋮ ---- */}
                     {isOpUser && (
                       <TableCell>
-                        {selectedFilter === 'désactivé' ? (
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            style={{ color: '#C39408', borderColor: '#C39408' }}
-                            onClick={() => handleReactivateConfirm(registration)}
-                          >
-                            Activer
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            color="error"
-                            onClick={() => handleOpenDisableModal(registration)}
-                          >
-                            Désactiver
-                          </Button>
-                        )}
+                        <IconButton
+                          onClick={(e) => handleMenuOpen(e, registration)}
+                          size="small"
+                        >
+                          <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#C39408' }} />
+                        </IconButton>
                       </TableCell>
                     )}
+
+                    {/* ---- colonne FICHIERS (inchangé) ---- */}
                     <TableCell>
                       <Button
                         variant="outlined"
@@ -841,6 +833,7 @@ const ClientsValides = () => {
                     </TableCell>
                   </>
                 )}
+
               </TableRow>
             ))}
           </TableBody>
@@ -916,6 +909,7 @@ const ClientsValides = () => {
               )}
             </CardContent>
             <CardActions>
+              {/* 1 — Ouvrir le contact principal */}
               <Button
                 variant="outlined"
                 size="small"
@@ -925,15 +919,8 @@ const ClientsValides = () => {
               >
                 Ouvrir
               </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<FontAwesomeIcon icon={faEdit} />}
-                onClick={() => handleOpenEditModal(registration)}
-                style={{ color: '#C39408', borderColor: '#C39408' }}
-              >
-                Modifier
-              </Button>
+
+              {/* 2 — Gérer les fichiers (toujours visible) */}
               <Button
                 variant="outlined"
                 size="small"
@@ -942,12 +929,109 @@ const ClientsValides = () => {
               >
                 Gérer les fichiers
               </Button>
+
+              {/* 3 — Menu d’action (⋮) : seulement Modifier / (Dés)activer */}
+              {isOpUser && (
+                <IconButton
+                  onClick={(e) => handleMenuOpen(e, registration)}
+                  size="small"
+                >
+                  <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#C39408' }} />
+                </IconButton>
+              )}
+
             </CardActions>
+
+
           </Card>
         </Grid>
       ))}
     </Grid>
   );
+  
+  /* juste au‑dessus du return principal, dans ClientsValides */
+
+const FilterSwitcher = () => {
+  if (!isOpUser) return null;         // pas d’opérateur → rien
+
+  // --- MOBILE : Select déroulant ---
+  if (isSmallScreen) {
+    return (
+      <FormControl fullWidth size="small" sx={{ my: 2 }}>
+        <InputLabel
+          id="mobile-filter-label"
+          sx={{
+            color: filterColor,
+            '&.Mui-focused': { color: filterColor }         // couleur de l’étiquette quand on clique
+          }}
+        >
+          Filtrer
+        </InputLabel>
+
+        <Select
+          labelId="mobile-filter-label"
+          value={selectedFilter}
+          label="Filtrer"
+          onChange={(e) => setSelectedFilter(e.target.value)}
+          sx={{
+            /* texte, icône et bordures : couleur CCD */
+            color:      filterColor,
+            '& .MuiSvgIcon-root': { color: filterColor },
+            '& .MuiOutlinedInput-notchedOutline':               { borderColor: filterColor },
+            '&:hover .MuiOutlinedInput-notchedOutline':         { borderColor: filterColor },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline':   { borderColor: filterColor },
+          }}
+          /* couleur de l’item sélectionné + hover dans la liste */
+          MenuProps={{
+            PaperProps: {
+              sx: {
+                '& .MuiMenuItem-root.Mui-selected': {
+                  backgroundColor: filterColor,
+                  color: '#fff',
+                },
+                '& .MuiMenuItem-root:hover': {
+                  backgroundColor: filterColor,
+                  color: '#fff',
+                },
+              },
+            },
+          }}
+        >
+          <MenuItem value="validé">Clients validés</MenuItem>
+          <MenuItem value="non validé">Clients non validés</MenuItem>
+          <MenuItem value="désactivé">Clients désactivés</MenuItem>
+          <MenuItem value="rejeté">Inscriptions rejetées</MenuItem>
+        </Select>
+      </FormControl>
+
+    );
+  }
+
+  // --- DESKTOP : 4 boutons comme avant ---
+  return (
+    <Box sx={{ mt: 2, mb: 2, display: 'flex', gap: 2 }}>
+      {['validé', 'non validé', 'désactivé', 'rejeté'].map((f) => (
+        <Button
+          key={f}
+          variant={selectedFilter === f ? 'contained' : 'outlined'}
+          onClick={() => setSelectedFilter(f)}
+          style={
+            selectedFilter === f
+              ? { backgroundColor: '#C39408', color: '#fff' }
+              : { color: '#C39408', borderColor: '#C39408' }
+          }
+        >
+          {f === 'validé'     && 'Clients validés'}
+          {f === 'non validé' && 'Clients non validés'}
+          {f === 'désactivé'  && 'Clients désactivés'}
+          {f === 'rejeté'     && 'Inscriptions rejetées'}
+        </Button>
+      ))}
+    </Box>
+  );
+};
+
+
 
   return (
 
@@ -965,56 +1049,9 @@ const ClientsValides = () => {
         </Tabs>
       </AppBar>
 
-      {/* Boutons de filtre */}
-      {isOpUser && (
-        <Box sx={{ mt: 2, mb: 2, display: 'flex', gap: 2 }}>
-          <Button
-            variant={selectedFilter === 'validé' ? 'contained' : 'outlined'}
-            onClick={() => setSelectedFilter('validé')}
-            style={
-              selectedFilter === 'validé'
-                ? { backgroundColor: '#C39408', color: '#fff' }
-                : { color: '#C39408', borderColor: '#C39408' }
-            }
-          >
-            Clients Validés
-          </Button>
-          <Button
-            variant={selectedFilter === 'non validé' ? 'contained' : 'outlined'}
-            onClick={() => setSelectedFilter('non validé')}
-            style={
-              selectedFilter === 'non validé'
-                ? { backgroundColor: '#C39408', color: '#fff' }
-                : { color: '#C39408', borderColor: '#C39408' }
-            }
-          >
-            Clients Non Validés
-          </Button>
+      {/* --- Sélecteur de filtre --- */}
+      <FilterSwitcher />
 
-          <Button
-            variant={selectedFilter === 'désactivé' ? 'contained' : 'outlined'}
-            onClick={() => setSelectedFilter('désactivé')}
-            style={
-              selectedFilter === 'désactivé'
-                ? { backgroundColor: '#C39408', color: '#fff' }
-                : { color: '#C39408', borderColor: '#C39408' }
-            }
-          >
-            Clients Désactivés
-          </Button>
-          <Button
-            variant={selectedFilter === 'rejeté' ? 'contained' : 'outlined'}
-            onClick={() => setSelectedFilter('rejeté')}
-            style={
-              selectedFilter === 'rejeté'
-                ? { backgroundColor: '#C39408', color: '#fff' }
-                : { color: '#C39408', borderColor: '#C39408' }
-            }
-          >
-            Inscriptions Rejetés
-          </Button>
-        </Box>
-      )}
 
       {/* Recherche */}
       {isOpUser && (
@@ -1034,6 +1071,37 @@ const ClientsValides = () => {
       )}
 
       {isSmallScreen ? renderCardView() : renderTableView()}
+
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        {/* Modifier */}
+        <MenuItem
+          onClick={() => {
+            handleOpenEditModal(selectedMenuAccount);
+            handleMenuClose();
+          }}
+        >
+          
+          Modifier
+        </MenuItem>
+
+        {/* Activer ou Désactiver selon le filtre */}
+        {selectedMenuAccount && (
+          <MenuItem
+            onClick={() => {
+              if (selectedFilter === 'désactivé') {
+                handleReactivateConfirm(selectedMenuAccount);
+              } else {
+                handleOpenDisableModal(selectedMenuAccount);
+              }
+              handleMenuClose();
+            }}
+          >
+            {selectedFilter === 'désactivé' ? 'Activer' : 'Désactiver'}
+          </MenuItem>
+        )}
+      </Menu>
+
+
       <Dialog
         open={openFileModal}
         onClose={handleCloseFileModal}

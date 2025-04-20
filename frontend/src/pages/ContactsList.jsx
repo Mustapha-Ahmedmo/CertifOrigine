@@ -7,7 +7,7 @@ import {
   reactivateCustUser,
 } from '../services/apiServices';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEdit, faTrashAlt, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 import {
   Box,
   Typography,
@@ -20,12 +20,17 @@ import {
   TableHead,
   TableRow,
   Button,
+  IconButton,
+  Menu,
+  MenuItem,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Snackbar,
   Alert,
+  InputLabel,
+  Select,
   useTheme,
   useMediaQuery,
   FormControlLabel,
@@ -105,6 +110,120 @@ const ContactsList = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // --- menu Actions (⋮) ---
+  const [anchorEl, setAnchorEl]   = useState(null);   // ancre du Menu
+  const [selectedRow, setSelectedRow] = useState(null); // contact cliqué
+
+  const handleMenuOpen  = (e, contact) => {
+    setAnchorEl(e.currentTarget);
+    setSelectedRow(contact);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedRow(null);
+  };
+
+  const GOLD = '#DCAF26';
+
+  const StatusFilter = () =>
+    isSmallScreen ? (
+      /* ----- version mobile : Select ----- */
+      <FormControl
+        size="small"
+        sx={{
+          minWidth: 180,
+
+          /* === BORDURE === */
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: GOLD,
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: GOLD,
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: GOLD,
+          },
+
+          /* === LABEL === */
+          '& .MuiInputLabel-root.Mui-focused': {
+            color: GOLD,
+          },
+
+          /* === ICÔNE ▾ === */
+          '& .MuiSelect-icon': {
+            color: GOLD,
+          },
+        }}
+      >
+        <InputLabel id="status-label">Filtrer</InputLabel>
+
+        <Select
+          labelId="status-label"
+          id="status-select"
+          value={radioValue}
+          label="Filtrer"
+          onChange={handleRadioChange}
+          sx={{ color: '#000' }}          /* couleur du texte sélectionné */
+          MenuProps={{
+            MenuListProps: {
+              sx: {
+                '& .Mui-selected': {
+                  backgroundColor: '#F4E6B4 !important',
+                  color: '#000',
+                },
+                '& .Mui-selected:hover': {
+                  backgroundColor: '#EBD68A !important',
+                },
+              },
+            },
+          }}
+        >
+          <MenuItem
+            value="active"
+            sx={{
+              '&.Mui-selected': {
+                backgroundColor: '#F4E6B4',
+                color: '#000',
+              },
+              '&.Mui-selected:hover': {
+                backgroundColor: '#EBD68A',
+              },
+            }}
+          >
+            Contacts Actifs
+          </MenuItem>
+
+          <MenuItem
+            value="inactive"
+            sx={{
+              '&.Mui-selected': {
+                backgroundColor: '#F4E6B4',
+                color: '#000',
+              },
+              '&.Mui-selected:hover': {
+                backgroundColor: '#EBD68A',
+              },
+            }}
+          >
+            Contacts Désactivés
+          </MenuItem>
+
+        </Select>
+      </FormControl>
+    ) : (
+      /* ----- version desktop : RadioGroup ----- */
+      <FormControl component="fieldset">
+        <RadioGroup
+          row
+          name="contactsFilter"
+          value={radioValue}
+          onChange={handleRadioChange}
+        >
+          <FormControlLabel value="active" control={<Radio />} label="Contacts Actifs" />
+          <FormControlLabel value="inactive" control={<Radio />} label="Contacts Désactivés" />
+        </RadioGroup>
+      </FormControl>
+    );
 
   // Ouvrir la modale d'ajout
   const handleOpenAddModal = () => {
@@ -366,40 +485,10 @@ const ContactsList = () => {
             <strong>Contact Principal : </strong> {contact.ismain_user ? 'Oui' : 'Non'}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />}
-              onClick={() => handleOpenEditModal(contact)}
-              sx={{ border: 'none', '&:hover': { border: 'none' } }}
-            >
-              Modifier
-            </Button>
+          <IconButton onClick={(e) => handleMenuOpen(e, contact)} sx={{ p: 0 }}>
+            <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
+          </IconButton>
 
-            {radioValue === 'active' && !contact.ismain_user && (
-              <Button
-                variant="outlined"
-                size="small"
-                color="error"
-                startIcon={<FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />}
-                onClick={() => handleDelete(contact.id_cust_user)}
-                sx={{ border: 'none', '&:hover': { border: 'none' } }}
-              >
-                Désactiver
-              </Button>
-            )}
-
-            {radioValue === 'inactive' && (
-              <Button
-                variant="outlined"
-                size="small"
-                color="success"
-                onClick={() => handleReactivate(contact.id_cust_user)}
-                sx={{ border: 'none', '&:hover': { border: 'none' } }}
-              >
-                Réactiver
-              </Button>
-            )}
           </Box>
         </Paper>
       ))}
@@ -464,18 +553,7 @@ const ContactsList = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           style={{ maxWidth: 300 }}
         />
-
-        <FormControl component="fieldset">
-          <RadioGroup
-            row
-            name="contactsFilter"
-            value={radioValue}
-            onChange={handleRadioChange}
-          >
-            <FormControlLabel value="active" control={<Radio />} label="Contacts Actifs" />
-            <FormControlLabel value="inactive" control={<Radio />} label="Contacts Désactivés" />
-          </RadioGroup>
-        </FormControl>
+  <StatusFilter />
       </Box>
 
       {/* Affichage conditionnel : tableau ou cartes mobiles */}
@@ -511,50 +589,10 @@ const ContactsList = () => {
                     <TableCell>
                       <input type="checkbox" checked={contact.ismain_user} disabled />
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<FontAwesomeIcon icon={faEdit} style={{ color: 'blue' }} />}
-                        onClick={() => handleOpenEditModal(contact)}
-                        sx={{
-                          mr: 1,
-                          border: 'none',
-                          '&:hover': { border: 'none' },
-                        }}
-                      >
-                        Modifier
-                      </Button>
-                      {radioValue === 'active' && !contact.ismain_user && (
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          color="error"
-                          startIcon={<FontAwesomeIcon icon={faTrashAlt} style={{ color: 'red' }} />}
-                          onClick={() => handleDelete(contact.id_cust_user)}
-                          sx={{
-                            border: 'none',
-                            '&:hover': { border: 'none' },
-                          }}
-                        >
-                          Désactiver
-                        </Button>
-                      )}
-
-                      {radioValue === 'inactive' && (
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          color="success"
-                          onClick={() => handleReactivate(contact.id_cust_user)}
-                          sx={{
-                            border: 'none',
-                            '&:hover': { border: 'none' },
-                          }}
-                        >
-                          Réactiver
-                        </Button>
-                      )}
+                    <TableCell align="center" sx={{ p: 0 }}>
+                      <IconButton onClick={(e) => handleMenuOpen(e, contact)} sx={{ p: 0 }}>
+                        <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -682,6 +720,43 @@ const ContactsList = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        {/* --- Modifier --- */}
+        <MenuItem
+          onClick={() => {
+            handleOpenEditModal(selectedRow);
+            handleMenuClose();
+          }}
+        >
+          Modifier
+        </MenuItem>
+
+        {/* --- Désactiver --- */}
+        {radioValue === 'active' && !selectedRow?.ismain_user && (
+          <MenuItem
+            onClick={() => {
+              handleDelete(selectedRow.id_cust_user);
+              handleMenuClose();
+            }}
+          >
+            Désactiver
+          </MenuItem>
+        )}
+
+        {/* --- Réactiver --- */}
+        {radioValue === 'inactive' && (
+          <MenuItem
+            onClick={() => {
+              handleReactivate(selectedRow.id_cust_user);
+              handleMenuClose();
+            }}
+          >
+            Réactiver
+          </MenuItem>
+        )}
+      </Menu>
+
     </Box>
   );
 };
