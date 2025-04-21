@@ -42,6 +42,22 @@ import { faEdit, faPlus, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 import { IconButton } from '@mui/material';
 
+// juste après vos imports utilitaires
+const getFullAddress = (r) => {
+  // on part sur l’adresse 1
+  const parts = [r.address_1];
+
+  // s’il existe un complément (adresse_2) on l’ajoute
+  if (r.address_2 && r.address_2.trim() !== '') {
+    parts.push(r.address_2);
+  }
+
+  // vous pouvez aussi ajouter address_3 ici si vous le souhaitez
+  // parts.push(r.address_3);
+
+  return parts.join(', ');
+};
+
 
 
 const DestinataireList = () => {
@@ -153,8 +169,8 @@ const DestinataireList = () => {
 
   // Lors de la sauvegarde, vérification des champs obligatoires et du téléphone
   const handleSaveNewRecipient = async () => {
-    if (!newRecipient.recipientName || !newRecipient.address1 || !newRecipient.country) {
-      setErrorMessage("Veuillez remplir au minimum le nom, l'adresse et le pays.");
+    if (!newRecipient.recipientName || !newRecipient.address1 || !newRecipient.address3 || !newRecipient.country) {
+      setErrorMessage("Veuillez renseigner le nom, l'adresse, le code postal - ville et le pays.");
       return;
     }
     try {
@@ -228,6 +244,7 @@ const DestinataireList = () => {
               <TableCell>Date Création</TableCell>
               <TableCell>Nom du destinataire</TableCell>
               <TableCell>Adresse</TableCell>
+              <TableCell>Code postal / Ville</TableCell>
               <TableCell>Pays</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
@@ -237,7 +254,8 @@ const DestinataireList = () => {
               <TableRow key={recipient.id_recipient_account}>
                 <TableCell>{formatDate(recipient.insertdate)}</TableCell>
                 <TableCell>{recipient.recipient_name}</TableCell>
-                <TableCell>{recipient.address_1}</TableCell>
+                <TableCell>{getFullAddress(recipient)}</TableCell>
+                <TableCell>{recipient.address_3 || 'N/A'}</TableCell>
                 <TableCell>{recipient.country_symbol_fr_recipient || 'N/A'}</TableCell>
                 <TableCell
                   align="center"
@@ -254,7 +272,7 @@ const DestinataireList = () => {
             ))}
             {recipients.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} align="center">
+                <TableCell colSpan={6} align="center">
                   Aucun destinataire trouvé.
                 </TableCell>
               </TableRow>
@@ -285,7 +303,10 @@ const DestinataireList = () => {
             <strong>Nom du destinataire : </strong> {recipient.recipient_name}
           </Typography>
           <Typography variant="body2">
-            <strong>Adresse : </strong> {recipient.address_1}
+            <strong>Adresse : </strong> {getFullAddress(recipient)}
+          </Typography>
+          <Typography variant="body2">
+            <strong>Code postal / Ville : </strong> {recipient.address_3 || 'N/A'}
           </Typography>
           <Typography variant="body2">
             <strong>Pays : </strong> {recipient.country_symbol_fr_recipient || 'N/A'}
@@ -377,7 +398,7 @@ const DestinataireList = () => {
           />
 
           <TextField
-            label="Adresse 1 *"
+            label="Adresse *"
             fullWidth
             variant="outlined"
             value={newRecipient.address1}
@@ -386,7 +407,7 @@ const DestinataireList = () => {
           />
 
           <TextField
-            label="Adresse 2"
+            label="Complément d'adresse"
             fullWidth
             variant="outlined"
             value={newRecipient.address2}
@@ -395,7 +416,7 @@ const DestinataireList = () => {
           />
 
           <TextField
-            label="Code postal"
+            label="Code postal - Ville *"
             fullWidth
             variant="outlined"
             value={newRecipient.address3}

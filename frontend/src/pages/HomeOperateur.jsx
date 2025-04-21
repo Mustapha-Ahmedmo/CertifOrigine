@@ -423,11 +423,6 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                     <TableCell>{order.cust_name}</TableCell>
                     <TableCell>{order.order_title}</TableCell>
                     <TableCell>
-                      {order.date_last_submission
-                        ? formatDate(order.date_last_submission)
-                        : '-'}
-                    </TableCell>
-                    <TableCell>
                       {order.date_validation_order
                         ? formatDate(order.date_validation_order)
                         : '-'}
