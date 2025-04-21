@@ -274,6 +274,7 @@ const setRecipientAccount = async (req, res) => {
     });
   }
 };
+
 const addOrUpdateCertifGood = async (req, res) => {
   try {
     console.log("Request body for addOrUpdateCertifGood:", req.body);
@@ -759,10 +760,9 @@ const renameOrder = async (req, res) => {
       details: error.original || error,
     });
   }
-}; const updateCertif = async (req, res) => {
+};
+const updateCertif = async (req, res) => {
   try {
-    console.log("Received request body:", req.body); // Debug: Log the entire body
-
     const {
       p_id_ord_certif_ori,
       p_id_recipient_account,
@@ -776,73 +776,157 @@ const renameOrder = async (req, res) => {
       p_transport_remains,
     } = req.body;
 
-    // Validate required fields (adjust the validation as needed)
-    if (
-      !p_id_ord_certif_ori ||
-      !p_id_recipient_account ||
-      !p_id_country_origin ||
-      !p_id_country_destination ||
-      !p_id_country_port_loading ||
-      !p_id_country_port_discharge ||
-      !p_idlogin_modify
-    ) {
+    if (!p_id_ord_certif_ori || !p_idlogin_modify) {
       return res.status(400).json({
-        message: 'Certains champs requis sont manquants pour la mise à jour du certificat.',
+        message: 'p_id_ord_certif_ori et p_idlogin_modify sont requis.',
       });
     }
 
-    // Optionally, convert values to integers if needed:
-    const certifIdInt = parseInt(p_id_ord_certif_ori, 10);
-    const recipientIdInt = parseInt(p_id_recipient_account, 10);
-    const originIdInt = parseInt(p_id_country_origin, 10);
-    const destinationIdInt = parseInt(p_id_country_destination, 10);
-    const portLoadingInt = parseInt(p_id_country_port_loading, 10);
-    const portDischargeInt = parseInt(p_id_country_port_discharge, 10);
-    const copyCountInt = parseInt(p_copy_count, 10);
+    const isFullUpdate =
+      p_id_recipient_account      !== undefined &&
+      p_id_country_origin         !== undefined &&
+      p_id_country_destination    !== undefined &&
+      p_id_country_port_loading   !== undefined &&
+      p_id_country_port_discharge !== undefined &&
+      p_notes                     !== undefined &&
+      p_copy_count                !== undefined &&
+      p_transport_remains         !== undefined;
 
-    // Call the stored procedure
+    const onlyRemarks =
+      p_transport_remains         !== undefined &&
+      p_notes                     === undefined &&
+      p_copy_count                === undefined &&
+      p_id_recipient_account      === undefined &&
+      p_id_country_origin         === undefined &&
+      p_id_country_destination    === undefined &&
+      p_id_country_port_loading   === undefined &&
+      p_id_country_port_discharge === undefined;
+
+    const onlyCopies =
+      p_copy_count                !== undefined &&
+      p_notes                     === undefined &&
+      p_transport_remains         === undefined &&
+      p_id_recipient_account      === undefined &&
+      p_id_country_origin         === undefined &&
+      p_id_country_destination    === undefined &&
+      p_id_country_port_loading   === undefined &&
+      p_id_country_port_discharge === undefined;
+
+    const onlyNotes =
+      p_notes                     !== undefined &&
+      p_transport_remains         === undefined &&
+      p_copy_count                === undefined &&
+      p_id_recipient_account      === undefined &&
+      p_id_country_origin         === undefined &&
+      p_id_country_destination    === undefined &&
+      p_id_country_port_loading   === undefined &&
+      p_id_country_port_discharge === undefined;
+
+    let recipientIdInt,
+        originIdInt,
+        destinationIdInt,
+        portLoadingInt,
+        portDischargeInt,
+        notesStr,
+        copyCountInt;
+
+    if (onlyRemarks || onlyCopies || onlyNotes) {
+      // fetch existing record
+      const [row] = await sequelize.query(
+        `
+          SELECT
+            ID_RECIPIENT_ACCOUNT      AS recipient,
+            ID_COUNTRY_ORIGIN         AS origin,
+            ID_COUNTRY_DESTINATION    AS destination,
+            ID_COUNTRY_PORT_LOADING   AS loading,
+            ID_COUNTRY_PORT_DISCHARGE AS discharge,
+            NOTES                     AS notes,
+            COPY_COUNT                AS copies
+          FROM ORD_CERTIF_ORI
+          WHERE ID_ORD_CERTIF_ORI = :certifId
+          LIMIT 1
+        `,
+        {
+          replacements: { certifId: parseInt(p_id_ord_certif_ori, 10) },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if (!row) {
+        return res.status(404).json({ message: 'Certificat introuvable.' });
+      }
+
+      recipientIdInt   = row.recipient;
+      originIdInt      = row.origin;
+      destinationIdInt = row.destination;
+      portLoadingInt   = row.loading;
+      portDischargeInt = row.discharge;
+      notesStr         = row.notes;
+      copyCountInt     = row.copies;
+
+      if (onlyRemarks)    notesStr     = p_transport_remains;
+      if (onlyCopies)     copyCountInt = parseInt(p_copy_count, 10) || 0;
+      if (onlyNotes)      notesStr     = p_notes;
+    }
+    else if (isFullUpdate) {
+      // full update
+      recipientIdInt   = parseInt(p_id_recipient_account,   10);
+      originIdInt      = parseInt(p_id_country_origin,      10);
+      destinationIdInt = parseInt(p_id_country_destination, 10);
+      portLoadingInt   = parseInt(p_id_country_port_loading,   10);
+      portDischargeInt = parseInt(p_id_country_port_discharge, 10);
+      notesStr         = p_notes      || '';
+      copyCountInt     = parseInt(p_copy_count, 10) || 0;
+    }
+    else {
+      return res.status(400).json({
+        message: 'Paramètres invalides pour la mise à jour.',
+      });
+    }
+
     await sequelize.query(
-      `CALL upd_certif(
-            :p_id_ord_certif_ori,
-            :p_id_recipient_account,
-            :p_id_country_origin,
-            :p_id_country_destination,
-            :p_id_country_port_loading,
-            :p_id_country_port_discharge,
-            :p_notes,
-            :p_copy_count,
-            :p_idlogin_modify,
-            :p_transport_remains
-        )`,
+      `
+        CALL upd_certif(
+          :p_id_ord_certif_ori,
+          :p_id_recipient_account,
+          :p_id_country_origin,
+          :p_id_country_destination,
+          :p_id_country_port_loading,
+          :p_id_country_port_discharge,
+          :p_notes,
+          :p_copy_count,
+          :p_idlogin_modify,
+          :p_transport_remains
+        )
+      `,
       {
         replacements: {
-          p_id_ord_certif_ori: certifIdInt,
-          p_id_recipient_account: recipientIdInt,
-          p_id_country_origin: originIdInt,
-          p_id_country_destination: destinationIdInt,
-          p_id_country_port_loading: portLoadingInt,
+          p_id_ord_certif_ori:         parseInt(p_id_ord_certif_ori, 10),
+          p_id_recipient_account:      recipientIdInt,
+          p_id_country_origin:         originIdInt,
+          p_id_country_destination:    destinationIdInt,
+          p_id_country_port_loading:   portLoadingInt,
           p_id_country_port_discharge: portDischargeInt,
-          p_notes: p_notes || '',
-          p_copy_count: copyCountInt,
-          p_idlogin_modify,
-          p_transport_remains: p_transport_remains || '',
+          p_notes:                     notesStr,
+          p_copy_count:                copyCountInt,
+          p_idlogin_modify:            p_idlogin_modify,
+          p_transport_remains:         p_transport_remains || notesStr,
         },
         type: QueryTypes.RAW,
       }
     );
 
-    res.status(200).json({
-      message: 'Certificat mis à jour avec succès.',
-    });
+    res.status(200).json({ message: 'Certificat mis à jour avec succès.' });
   } catch (error) {
     console.error('Erreur lors de la mise à jour du certificat:', error);
     res.status(500).json({
       message: 'Erreur lors de la mise à jour du certificat.',
-      error: error.message || 'Erreur inconnue.',
+      error: error.message,
       details: error.original || error,
     });
   }
 };
+
 
 const getFilesRepoTypeofInfo = async (req, res) => {
   try {

@@ -142,6 +142,21 @@ const Step5 = ({
           handleChange?.('recipients', resp.data || []);
         }
 
+        if (orderId && customerAccountId) {
+          const ordersResp = await getOrdersForCustomer({
+            idCustAccountList: customerAccountId,
+            idLogin,
+          });
+          const orders = ordersResp.data || [];
+          const currentOrder = orders.find(
+            (o) => Number(o.id_order) === Number(orderId)
+          );
+          if (currentOrder?.id_recipient_account) {
+            setSelectedRecipientId(String(currentOrder.id_recipient_account));
+            handleChange?.('selectedRecipientId', currentOrder.id_recipient_account);
+          }
+        }
+
         // Modes de transport
         const tModes = await getTransmodeInfo(null, true);
         setTranspModeList(tModes.data || []);
@@ -259,8 +274,10 @@ const Step5 = ({
         p_transport_remains: values.transportRemarks || '',
       };
       await updateCertificate(certUpdateData);
+
       alert('Le destinataire a bien été mis à jour.');
       handleChange?.('selectedRecipientId', selectedRecipientId);
+      
     } catch (error) {
       console.error('Error updating recipient:', error);
       alert("Erreur lors de la mise à jour du destinataire.");
@@ -283,6 +300,7 @@ const Step5 = ({
         idCity: 1,
         statutFlag: 1,
         activationDate: new Date().toISOString(),
+        idCountry: newRecipientLocal.receiverCountry,
         deactivationDate: new Date('9999-12-31').toISOString(),
         idLoginInsert: idLogin || 1,
         idLoginModify: null,
@@ -545,18 +563,90 @@ const Step5 = ({
     alert('Modes de transport enregistrés.');
   };
 
+  // only persists the transport remarks
+  const handleSaveTransportRemarks = async () => {
+    try {
+      // fetch the current certificate so we can get its id
+      const ordersResp = await getOrdersForCustomer({
+        idCustAccountList: customerAccountId,
+        idLogin,
+      });
+      const currentOrder = (ordersResp.data || [])
+        .find((o) => Number(o.id_order) === Number(orderId));
+      if (!currentOrder) throw new Error('Commande introuvable');
+
+      await updateCertificate({
+        p_id_ord_certif_ori: currentOrder.id_ord_certif_ori,
+        // leave everything else on the back‑end unchanged:
+        p_transport_remains: values.transportRemarks || '',
+        p_idlogin_modify: idLogin,
+      });
+
+      alert('Remarques de transport enregistrées.');
+      // if you need to push the new remark back up into parent form state:
+      handleChange?.('transportRemarks', values.transportRemarks);
+    } catch (err) {
+      console.error('Erreur en sauvegardant les remarques de transport:', err);
+      alert('Impossible d’enregistrer les remarques de transport.');
+    }
+  };
+
   // ------------------------------------------------
   // 6) COPIES / REMARQUES
   // ------------------------------------------------
-  const saveCopies = () => {
-    handleChange?.('copies', copies);
-    setIsEditingCopies(false);
+  const SaveCopies = async () => {
+    try {
+      // 1) retrieve the current certificate to get its id
+      const ordersResp = await getOrdersForCustomer({
+        idCustAccountList: customerAccountId,
+        idLogin,
+      });
+      const currentOrder = (ordersResp.data || [])
+        .find(o => Number(o.id_order) === Number(orderId));
+      if (!currentOrder) throw new Error('Commande introuvable');
+  
+      // 2) send only the new copy count
+      await updateCertificate({
+        p_id_ord_certif_ori: currentOrder.id_ord_certif_ori,
+        p_copy_count: copies,
+        p_idlogin_modify: idLogin,
+      });
+  
+      alert('Nombre de copies certifiées mis à jour.');
+      setIsEditingCopies(false);
+      handleChange?.('copies', copies);
+    } catch (err) {
+      console.error('Erreur en sauvegardant les copies certifiées :', err);
+      alert('Impossible d’enregistrer le nombre de copies.');
+    }
   };
+  
+// inside Step5:
+const handleSaveGeneralRemarks = async () => {
+  try {
+    // fetch current certificate to get its id
+    const ordersResp = await getOrdersForCustomer({
+      idCustAccountList: customerAccountId,
+      idLogin,
+    });
+    const currentOrder = (ordersResp.data || [])
+      .find(o => Number(o.id_order) === Number(orderId));
+    if (!currentOrder) throw new Error('Commande introuvable');
 
-  const saveRemarks = () => {
+    await updateCertificate({
+      p_id_ord_certif_ori: currentOrder.id_ord_certif_ori,
+      p_notes: remarks || '',
+      p_idlogin_modify: idLogin,
+    });
+
+    alert('Remarques générales enregistrées.');
     handleChange?.('remarks', remarks);
     setIsEditingRemarks(false);
-  };
+  } catch (err) {
+    console.error('Erreur en sauvegardant remarques générales:', err);
+    alert('Impossible d’enregistrer les remarques générales.');
+  }
+};
 
   // ------------------------------------------------
   // 7) DOCUMENTS
@@ -1045,7 +1135,7 @@ const Step5 = ({
           </Box>
 
           {isModifiable && (
-            <Button variant="contained" color="success" onClick={handleTransportModesSave}>
+            <Button variant="contained" color="success" onClick={handleSaveTransportRemarks}>
               Enregistrer modes de transport
             </Button>
           )}
@@ -1073,7 +1163,7 @@ const Step5 = ({
                       onChange={(e) => setCopies(e.target.value)}
                     />
                     <Box sx={{ textAlign: 'right', mt: 1 }}>
-                      <Button variant="contained" color="success" onClick={saveCopies}>
+                      <Button variant="contained" color="success" onClick={SaveCopies}>
                         Enregistrer
                       </Button>
                     </Box>
@@ -1109,7 +1199,7 @@ const Step5 = ({
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-            <Typography sx={{ width: 180, fontWeight: 600, mt: 1 }}>Remarques :</Typography>
+            <Typography sx={{ width: 180, fontWeight: 600, mt: 1 }}>Remarques générales :</Typography>
             <Box sx={{ flex: 1 }}>
               {isModifiable ? (
                 isEditingRemarks ? (
@@ -1122,7 +1212,7 @@ const Step5 = ({
                       onChange={(e) => setRemarks(e.target.value)}
                     />
                     <Box sx={{ textAlign: 'right', mt: 1 }}>
-                      <Button variant="contained" color="success" onClick={saveRemarks}>
+                      <Button variant="contained" color="success" onClick={handleSaveGeneralRemarks}>
                         Enregistrer
                       </Button>
                     </Box>
@@ -1250,7 +1340,7 @@ const Step5 = ({
               >
                 <MenuItem value="">-- Sélectionnez un pays --</MenuItem>
                 {countries.map((c) => (
-                  <MenuItem key={c.id_country} value={c.symbol_fr}>
+                  <MenuItem key={c.id_country} value={c.id_country}>
                     {c.symbol_fr}
                   </MenuItem>
                 ))}
