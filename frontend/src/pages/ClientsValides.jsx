@@ -45,8 +45,8 @@ import {
   Grid,
   useTheme,
   useMediaQuery,
-  IconButton, 
-  Menu 
+  IconButton,
+  Menu
 } from '@mui/material';
 import { useSelector } from 'react-redux';
 
@@ -155,12 +155,12 @@ const ClientsValides = () => {
     setAnchorEl(event.currentTarget);  // ouvre le Menu
     setSelectedMenuAccount(acc);       // mémorise la ligne
   };
-  
+
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedMenuAccount(null);
   };
-  
+
 
   const handleOpenContactModal = (email) => {
     setSelectedContactEmail(email);
@@ -933,88 +933,88 @@ const ClientsValides = () => {
       ))}
     </Grid>
   );
-  
+
   /* juste au‑dessus du return principal, dans ClientsValides */
 
-const FilterSwitcher = () => {
-  if (!isOpUser) return null;         // pas d’opérateur → rien
+  const FilterSwitcher = () => {
+    if (!isOpUser) return null;         // pas d’opérateur → rien
 
-  // --- MOBILE : Select déroulant ---
-  if (isSmallScreen) {
-    return (
-      <FormControl fullWidth size="small" sx={{ my: 2 }}>
-        <InputLabel
-          id="mobile-filter-label"
-          sx={{
-            color: filterColor,
-            '&.Mui-focused': { color: filterColor }         // couleur de l’étiquette quand on clique
-          }}
-        >
-          Filtrer
-        </InputLabel>
+    // --- MOBILE : Select déroulant ---
+    if (isSmallScreen) {
+      return (
+        <FormControl fullWidth size="small" sx={{ my: 2 }}>
+          <InputLabel
+            id="mobile-filter-label"
+            sx={{
+              color: filterColor,
+              '&.Mui-focused': { color: filterColor }         // couleur de l’étiquette quand on clique
+            }}
+          >
+            Filtrer
+          </InputLabel>
 
-        <Select
-          labelId="mobile-filter-label"
-          value={selectedFilter}
-          label="Filtrer"
-          onChange={(e) => setSelectedFilter(e.target.value)}
-          sx={{
-            /* texte, icône et bordures : couleur CCD */
-            color:      filterColor,
-            '& .MuiSvgIcon-root': { color: filterColor },
-            '& .MuiOutlinedInput-notchedOutline':               { borderColor: filterColor },
-            '&:hover .MuiOutlinedInput-notchedOutline':         { borderColor: filterColor },
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline':   { borderColor: filterColor },
-          }}
-          /* couleur de l’item sélectionné + hover dans la liste */
-          MenuProps={{
-            PaperProps: {
-              sx: {
-                '& .MuiMenuItem-root.Mui-selected': {
-                  backgroundColor: filterColor,
-                  color: '#fff',
-                },
-                '& .MuiMenuItem-root:hover': {
-                  backgroundColor: filterColor,
-                  color: '#fff',
+          <Select
+            labelId="mobile-filter-label"
+            value={selectedFilter}
+            label="Filtrer"
+            onChange={(e) => setSelectedFilter(e.target.value)}
+            sx={{
+              /* texte, icône et bordures : couleur CCD */
+              color: filterColor,
+              '& .MuiSvgIcon-root': { color: filterColor },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: filterColor },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: filterColor },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: filterColor },
+            }}
+            /* couleur de l’item sélectionné + hover dans la liste */
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  '& .MuiMenuItem-root.Mui-selected': {
+                    backgroundColor: filterColor,
+                    color: '#fff',
+                  },
+                  '& .MuiMenuItem-root:hover': {
+                    backgroundColor: filterColor,
+                    color: '#fff',
+                  },
                 },
               },
-            },
-          }}
-        >
-          <MenuItem value="validé">Clients validés</MenuItem>
-          <MenuItem value="non validé">Clients non validés</MenuItem>
-          <MenuItem value="désactivé">Clients désactivés</MenuItem>
-          <MenuItem value="rejeté">Inscriptions rejetées</MenuItem>
-        </Select>
-      </FormControl>
+            }}
+          >
+            <MenuItem value="validé">Clients validés</MenuItem>
+            <MenuItem value="non validé">Clients non validés</MenuItem>
+            <MenuItem value="désactivé">Clients désactivés</MenuItem>
+            <MenuItem value="rejeté">Inscriptions rejetées</MenuItem>
+          </Select>
+        </FormControl>
 
+      );
+    }
+
+    // --- DESKTOP : 4 boutons comme avant ---
+    return (
+      <Box sx={{ mt: 2, mb: 2, display: 'flex', gap: 2 }}>
+        {['validé', 'non validé', 'désactivé', 'rejeté'].map((f) => (
+          <Button
+            key={f}
+            variant={selectedFilter === f ? 'contained' : 'outlined'}
+            onClick={() => setSelectedFilter(f)}
+            style={
+              selectedFilter === f
+                ? { backgroundColor: '#C39408', color: '#fff' }
+                : { color: '#C39408', borderColor: '#C39408' }
+            }
+          >
+            {f === 'validé' && 'Clients validés'}
+            {f === 'non validé' && 'Clients non validés'}
+            {f === 'désactivé' && 'Clients désactivés'}
+            {f === 'rejeté' && 'Inscriptions rejetées'}
+          </Button>
+        ))}
+      </Box>
     );
-  }
-
-  // --- DESKTOP : 4 boutons comme avant ---
-  return (
-    <Box sx={{ mt: 2, mb: 2, display: 'flex', gap: 2 }}>
-      {['validé', 'non validé', 'désactivé', 'rejeté'].map((f) => (
-        <Button
-          key={f}
-          variant={selectedFilter === f ? 'contained' : 'outlined'}
-          onClick={() => setSelectedFilter(f)}
-          style={
-            selectedFilter === f
-              ? { backgroundColor: '#C39408', color: '#fff' }
-              : { color: '#C39408', borderColor: '#C39408' }
-          }
-        >
-          {f === 'validé'     && 'Clients validés'}
-          {f === 'non validé' && 'Clients non validés'}
-          {f === 'désactivé'  && 'Clients désactivés'}
-          {f === 'rejeté'     && 'Inscriptions rejetées'}
-        </Button>
-      ))}
-    </Box>
-  );
-};
+  };
 
 
 
@@ -1065,7 +1065,7 @@ const FilterSwitcher = () => {
             handleMenuClose();
           }}
         >
-          
+
           Modifier
         </MenuItem>
 
@@ -1426,31 +1426,36 @@ const FilterSwitcher = () => {
             Annuler
           </Button>
           <Button
+            variant="contained"
+            style={{ backgroundColor: '#C39408', color: '#fff' }}
             onClick={async () => {
-              try {
-                {
-                  isOpUser && (
-                    await sendEmailAndMemo({
-                      to: selectedContactEmail,
-                      subject: 'Message de la CCD',
-                      body: mailMessage,
-                      isHtml: false,
-                      id_cust_account: selectedAccount?.id_cust_account,
-                      idlogin: idLogin
-                    })
-                  )
-                }
+              const htmlBody = `
+<p>Bonjour,</p>
+<p>La Chambre de Commerce de Djibouti vous a envoyé ce message.</p>
+<p><strong>${mailMessage}</strong></p>
+<p>Si votre compte est actif, vous pouvez retrouver cette correspondance depuis la rubrique « Mes Mémos » à l’adresse <a href="https://www.ccd.dj">www.ccd.dj</a>.</p>
+<p>Chambre de Commerce de Djibouti</p>
+      `.trim();
 
+              try {
+                if (isOpUser) {
+                  await sendEmailAndMemo({
+                    to: selectedContactEmail,
+                    subject: 'Titre du message : La Chambre de Commerce de Djibouti vous a envoyé un message',
+                    body: htmlBody,
+                    isHtml: true,
+                    id_cust_account: selectedAccount?.id_cust_account,
+                    idlogin: idLogin,
+                  });
+                }
 
                 alert('Message envoyé avec succès et mémo enregistré.');
                 handleCloseContactModal();
               } catch (error) {
-                console.error('Erreur lors de l\'envoi de l\'email et de l\'enregistrement du mémo :', error);
+                console.error("Erreur lors de l'envoi de l'email et de l'enregistrement du mémo :", error);
                 alert('Erreur lors de l’envoi du message.');
               }
             }}
-            variant="contained"
-            style={{ backgroundColor: '#C39408', color: '#fff' }}
           >
             Envoyer
           </Button>
