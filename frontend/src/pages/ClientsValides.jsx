@@ -1479,7 +1479,7 @@ if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
 <p>Bonjour,</p>
 <p>La Chambre de Commerce de Djibouti vous a envoyé ce message.</p>
 <p><strong>${mailMessage}</strong></p>
-<p>Si votre compte est actif, vous pouvez retrouver cette correspondance depuis la rubrique « Mes Mémos » à l’adresse <a href="https://www.ccd.dj">www.ccd.dj</a>.</p>
+<p>Si votre compte est actif, vous pouvez retrouver cette correspondance depuis la rubrique « Notifications » à l’adresse <a href="https://www.ccd.dj">www.ccd.dj</a>.</p>
 <p>Chambre de Commerce de Djibouti</p>
       `.trim();
 
