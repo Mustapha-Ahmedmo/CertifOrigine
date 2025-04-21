@@ -1526,7 +1526,7 @@ const sendbackOrder = async (req, res) => {
       p_typeof: 1,
       p_idlogin_insert: p_idlogin_modify,
       p_memo_date: new Date(),
-      p_memo_subject: `Votre commande ${orderTitle} est renvoyé`,
+      p_memo_subject: `Votre commande ${orderTitle} est retournée par la CCD`,
       p_memo_body: returnReason,
       p_mail_to: customerEmail,
       p_mail_bcc: null,
@@ -1556,7 +1556,7 @@ const sendbackOrder = async (req, res) => {
     );
 
     // 3. Send an email notification for the sendback
-    await sendEmailNotification(p_id_order, 'renvoyé', returnReason, customerEmail);
+    await sendEmailNotification(p_id_order, 'retournée par la CCD', returnReason, customerEmail);
 
     res.status(200).json({ message: 'Commande retournée avec succès.' });
   } catch (error) {

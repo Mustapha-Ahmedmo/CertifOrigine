@@ -502,42 +502,47 @@ const Inscriptions = () => {
         open={showContactModal && !!selectedAccount}
         onClose={handleCloseContactsModal}
         fullWidth
+        maxWidth="lg"  
       >
         <DialogTitle>
           LISTING DES CONTACTS DE LA SOCIÉTÉ "{selectedAccount?.cust_name}"
         </DialogTitle>
         <DialogContent>
-          {selectedAccount?.main_contact && (
-            <TableContainer component={Paper}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Nom</TableCell>
-                    <TableCell>Fonction</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Tél</TableCell>
-                    <TableCell>Portable</TableCell>
-                    <TableCell>Statut</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>{selectedAccount.main_contact.full_name}</TableCell>
-                    <TableCell>{selectedAccount.main_contact.position || 'N/A'}</TableCell>
-                    <TableCell>{selectedAccount.main_contact.email || 'N/A'}</TableCell>
-                    <TableCell>{selectedAccount.main_contact.phone_number || 'N/A'}</TableCell>
-                    <TableCell>{selectedAccount.main_contact.mobile_number || 'N/A'}</TableCell>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Checkbox checked readOnly size="small" />
-                        <Typography variant="body2">Contact principal</Typography>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+           {selectedAccount?.main_contact && selectedAccount.main_contact.length > 0 ? (
+     <TableContainer component={Paper}>
+       <Table size="small">
+         <TableHead>
+           <TableRow>
+             <TableCell>Nom</TableCell>
+             <TableCell>Fonction</TableCell>
+             <TableCell>Email</TableCell>
+             <TableCell>Tél</TableCell>
+             <TableCell>Portable</TableCell>
+             <TableCell>Statut</TableCell>
+           </TableRow>
+         </TableHead>
+         <TableBody>
+           {selectedAccount.main_contact.map((c) => (
+             <TableRow key={c.id_cust_user}>
+               <TableCell>{c.full_name || 'N/A'}</TableCell>
+               <TableCell>{c.position   || 'N/A'}</TableCell>
+               <TableCell>{c.email      || 'N/A'}</TableCell>
+               <TableCell>{c.phone_number  || 'N/A'}</TableCell>
+               <TableCell>{c.mobile_number || 'N/A'}</TableCell>
+               <TableCell>
+                 <Box display="flex" alignItems="center" gap={1}>
+                   <Checkbox checked={c.ismain_user} readOnly size="small" />
+                   <Typography variant="body2">Contact principal</Typography>
+                 </Box>
+               </TableCell>
+             </TableRow>
+           ))}
+         </TableBody>
+       </Table>
+     </TableContainer>
+   ) : (
+     <Typography>Aucun contact principal trouvé</Typography>
+   )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseContactsModal} variant="outlined">
