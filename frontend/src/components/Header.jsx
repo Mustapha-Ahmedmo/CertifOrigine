@@ -116,8 +116,8 @@ const Header = ({ toggleMenu, isMenuOpen }) => {
         <FontAwesomeIcon icon={isMenuOpen ? faTimes : faBars} style={{ fontSize: '1rem' }} />
       </div>
 
-      <div className="logo-container">
-        <img src={logo} alt="Chambre de Commerce de Djibouti" className="logo" />
+      <div className="header-v2__logo-container">
+        <img src={logo} alt="Chambre de Commerce de Djibouti" className="header-v2__logo" />
       </div>
 
       <div className="header-right">

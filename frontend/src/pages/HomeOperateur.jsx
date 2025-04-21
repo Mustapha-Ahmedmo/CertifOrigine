@@ -479,11 +479,6 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                     <TableCell>{order.cust_name}</TableCell>
                     <TableCell>{order.order_title || '-'}</TableCell>
                     <TableCell>
-                      {order.date_last_submission
-                        ? formatDate(order.date_last_submission)
-                        : '-'}
-                    </TableCell>
-                    <TableCell>
                       {order.id_ord_certif_ori ? (
                         <button
                           className="icon-button minimal-button"

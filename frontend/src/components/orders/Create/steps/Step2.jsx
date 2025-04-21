@@ -82,8 +82,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   const fieldsForNewRecipient = [
     'receiverName',
     'receiverAddress',
-    'receiverAddress2', // Complément d'adresse
-    'receiverCity',
+    'receiverPostalCity',
     'receiverCountry',
   ];
 
@@ -176,16 +175,27 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     loadData();
   }, [certifId, customerAccountId]);
 
-  // Pour éviter les valeurs undefined
-  const safeValues = values || {
-    goodsOrigin: '',
-    goodsDestination: '',
-    merchandises: [],
-    remarks: '',
-    copies: values.copies ?? '',
-    isCommitted: false,
-    transportModes: {},
+
+  const safeValues = {
+    /* ---------- DESTINATAIRE ---------- */
+    receiverName:       '',
+    receiverAddress:    '',
+    receiverAddress2:   '',
+    receiverPostalCity: '',
+    receiverCountry:    '',
+
+    /* ---------- AUTRES CHAMPS ---------- */
+    goodsOrigin:        '',
+    goodsDestination:   '',
+    merchandises:       [],
+    remarks:            '',
+    copies:             '',
+    isCommitted:        false,
+    transportModes:     {},
+
+    ...values,                       // ← on applique ensuite les données existantes
   };
+
 
   // Calcul du nombre de champs manquants pour la section courante
   const getMissingFieldsCount = () => {
@@ -366,7 +376,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           recipientName: safeValues.receiverName,
           address1: safeValues.receiverAddress,
           address2: safeValues.receiverAddress2,
-          address3: safeValues.receiverPostalCode,
+          address3: safeValues.receiverPostalCity,
           idCountry: getCountryId(safeValues.receiverCountry),
           statutFlag: 1,
           activationDate: new Date().toISOString(),
@@ -541,14 +551,12 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                         (rec) => rec.id_recipient_account.toString() === selectedId
                       );
                       if (r) {
-                        handleChange('receiverName', r.recipient_name);
-                        handleChange('receiverAddress', r.address_1);
-                        handleChange('receiverAddress2', r.address_2);
-                        handleChange('receiverPostalCode', r.address_3);
-                        handleChange('receiverCity', r.city_symbol_fr_recipient);
-                        handleChange('receiverCountry', r.country_symbol_fr_recipient);
-                        handleChange('receiverPhone', r.trade_registration_num);
-                      }
+                        handleChange('receiverName',       r.recipient_name);         // Nom
+                        handleChange('receiverAddress',    r.address_1);              // Adresse
+                        handleChange('receiverAddress2',   r.address_2);              // Complément
+                        handleChange('receiverPostalCity', r.address_3);              // Code postal / Ville
+                        handleChange('receiverCountry',    r.country_symbol_fr_recipient); // Pays
+                      }                      
                     }}
                     label="Choisir une entreprise *"
                   >
@@ -567,55 +575,63 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                 </FormControl>
               ) : (
                 <>
-                  <TextField
-                    label={`${t('step1.companyName')} *`}
-                    fullWidth
-                    value={safeValues.receiverName || ''}
-                    onChange={(e) => handleChange('receiverName', e.target.value)}
-                    sx={{ mb: 2, ...customFieldStyle }}
-                  />
-                  <TextField
-                    label={`${t('step1.address')} *`}
-                    fullWidth
-                    value={safeValues.receiverAddress || ''}
-                    onChange={(e) => handleChange('receiverAddress', e.target.value)}
-                    sx={{ mb: 2, ...customFieldStyle }}
-                  />
-                  <TextField
-                    label={`${t('step1.addressNext')}`}
-                    fullWidth
-                    value={safeValues.receiverAddress2 || ''}
-                    onChange={(e) => handleChange('receiverAddress2', e.target.value)}
-                    sx={{ mb: 2, ...customFieldStyle }}
-                  />
-                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                    <FormControl fullWidth variant="outlined" sx={{ ...customFieldStyle }}>
-                      <InputLabel id="receiver-country-label">{t('step1.country')} *</InputLabel>
-                      <Select
-                        labelId="receiver-country-label"
-                        value={safeValues.receiverCountry || ''}
-                        onChange={(e) => handleChange('receiverCountry', e.target.value)}
-                        label={`${t('step1.country')} *`}
-                      >
-                        <MenuItem value="">
-                          <em>-- Sélectionnez un pays --</em>
-                        </MenuItem>
-                        {countries.map((c) => (
-                          <MenuItem key={c.id_country} value={c.symbol_fr}>
-                            {c.symbol_fr}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <TextField
-                      label={`${t('step1.city')} *`}
-                      fullWidth
-                      value={safeValues.receiverCity || ''}
-                      onChange={(e) => handleChange('receiverCity', e.target.value)}
-                      sx={{ ...customFieldStyle }}
-                    />
-                  </Box>
-                </>
+                {/* 1. Nom */}
+                <TextField
+                  label="Nom du destinataire *"
+                  fullWidth
+                  value={safeValues.receiverName}
+                  onChange={(e) => handleChange('receiverName', e.target.value)}
+                  sx={{ mb: 2, ...customFieldStyle }}
+                />
+              
+                {/* 2. Adresse */}
+                <TextField
+                  label="Adresse *"
+                  fullWidth
+                  value={safeValues.receiverAddress}
+                  onChange={(e) => handleChange('receiverAddress', e.target.value)}
+                  sx={{ mb: 2, ...customFieldStyle }}
+                />
+              
+                {/* 3. Complément d’adresse */}
+                <TextField
+                  label="Complément d'adresse"
+                  fullWidth
+                  value={safeValues.receiverAddress2}
+                  onChange={(e) => handleChange('receiverAddress2', e.target.value)}
+                  sx={{ mb: 2, ...customFieldStyle }}
+                />
+              
+                {/* 4. Code postal / Ville */}
+                <TextField
+                  label="Code postal - Ville *"
+                  fullWidth
+                  value={safeValues.receiverPostalCity}
+                  onChange={(e) => handleChange('receiverPostalCity', e.target.value)}
+                  sx={{ mb: 2, ...customFieldStyle }}
+                />
+              
+                {/* 5. Pays */}
+                <FormControl fullWidth variant="outlined" sx={{ mb: 2, ...customFieldStyle }}>
+                  <InputLabel id="receiver-country-label">Pays *</InputLabel>
+                  <Select
+                    labelId="receiver-country-label"
+                    value={safeValues.receiverCountry}
+                    onChange={(e) => handleChange('receiverCountry', e.target.value)}
+                    label="Pays *"
+                  >
+                    <MenuItem value="">
+                      <em>-- Sélectionnez un pays --</em>
+                    </MenuItem>
+                    {countries.map((c) => (
+                      <MenuItem key={c.id_country} value={c.symbol_fr}>
+                        {c.symbol_fr}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </>
+              
               )}
             </div>
           </div>

@@ -26,13 +26,13 @@
 }
 
 /* Logo container */
-.logo-container {
+.header-v2__logo-container {
   display: flex;
   align-items: center;
 }
 
 /* Logo image */
-.logo {
+.header-v2__logo {
   height: 40px;
 }
 

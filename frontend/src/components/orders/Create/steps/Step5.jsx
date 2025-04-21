@@ -100,10 +100,8 @@ const Step5 = ({
     receiverName: '',
     receiverAddress: '',
     receiverAddress2: '',
-    receiverPostalCode: '',
-    receiverCity: '',
+    receiverPostalCity: '',    // 
     receiverCountry: '',
-    receiverPhone: '',
   });
 
   const [showNewMerchDialog, setShowNewMerchDialog] = useState(false);
@@ -296,7 +294,7 @@ const Step5 = ({
         recipientName: newRecipientLocal.receiverName,
         address1: newRecipientLocal.receiverAddress,
         address2: newRecipientLocal.receiverAddress2,
-        address3: newRecipientLocal.receiverPostalCode,
+        address3: newRecipientLocal.receiverPostalCity,
         idCity: 1,
         statutFlag: 1,
         activationDate: new Date().toISOString(),
@@ -304,7 +302,6 @@ const Step5 = ({
         deactivationDate: new Date('9999-12-31').toISOString(),
         idLoginInsert: idLogin || 1,
         idLoginModify: null,
-        trade_registration_num: newRecipientLocal.receiverPhone,
         city_symbol_fr_recipient: newRecipientLocal.receiverCity,
         country_symbol_fr_recipient: newRecipientLocal.receiverCountry,
       };
@@ -326,7 +323,6 @@ const Step5 = ({
         receiverPostalCode: '',
         receiverCity: '',
         receiverCountry: '',
-        receiverPhone: '',
       });
     } catch (error) {
       console.error('Error creating new recipient:', error);
@@ -1300,60 +1296,55 @@ const handleSaveGeneralRemarks = async () => {
       <Dialog open={showNewRecipientDialog} onClose={() => setShowNewRecipientDialog(false)}>
         <DialogTitle>Créer un nouveau destinataire</DialogTitle>
         <DialogContent dividers>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              label="Nom de l'entreprise *"
-              value={newRecipientLocal.receiverName}
-              onChange={(e) => handleNewRecipientChange('receiverName', e.target.value)}
-              fullWidth
-            />
-            <TextField
-              label="Adresse *"
-              value={newRecipientLocal.receiverAddress}
-              onChange={(e) => handleNewRecipientChange('receiverAddress', e.target.value)}
-              fullWidth
-            />
-            <TextField
-              label="Complément d'adresse"
-              value={newRecipientLocal.receiverAddress2}
-              onChange={(e) => handleNewRecipientChange('receiverAddress2', e.target.value)}
-              fullWidth
-            />
-            <TextField
-              label="Code postal *"
-              value={newRecipientLocal.receiverPostalCode}
-              onChange={(e) => handleNewRecipientChange('receiverPostalCode', e.target.value)}
-              fullWidth
-            />
-            <TextField
-              label="Ville *"
-              value={newRecipientLocal.receiverCity}
-              onChange={(e) => handleNewRecipientChange('receiverCity', e.target.value)}
-              fullWidth
-            />
-            <FormControl fullWidth>
-              <InputLabel>Pays *</InputLabel>
-              <Select
-                label="Pays *"
-                value={newRecipientLocal.receiverCountry || ''}
-                onChange={(e) => handleNewRecipientChange('receiverCountry', e.target.value)}
-              >
-                <MenuItem value="">-- Sélectionnez un pays --</MenuItem>
-                {countries.map((c) => (
-                  <MenuItem key={c.id_country} value={c.id_country}>
-                    {c.symbol_fr}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              label="Numéro de téléphone *"
-              value={newRecipientLocal.receiverPhone}
-              onChange={(e) => handleNewRecipientChange('receiverPhone', e.target.value)}
-              fullWidth
-            />
-          </Box>
-        </DialogContent>
+  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <TextField
+      label="Nom de l'entreprise *"
+      value={newRecipientLocal.receiverName}
+      onChange={e => handleNewRecipientChange('receiverName', e.target.value)}
+      fullWidth
+    />
+
+    <TextField
+      label="Adresse *"
+      value={newRecipientLocal.receiverAddress}
+      onChange={e => handleNewRecipientChange('receiverAddress', e.target.value)}
+      fullWidth
+    />
+
+    <TextField
+      label="Complément d'adresse"
+      value={newRecipientLocal.receiverAddress2}
+      onChange={e => handleNewRecipientChange('receiverAddress2', e.target.value)}
+      fullWidth
+    />
+
+    {/* Fusion code postal + ville */}
+    <TextField
+      label="Code postal - Ville *"
+      value={newRecipientLocal.receiverPostalCity}
+      onChange={e => handleNewRecipientChange('receiverPostalCity', e.target.value)}
+      placeholder="75001 Paris"
+      fullWidth
+    />
+
+    <FormControl fullWidth>
+      <InputLabel>Pays *</InputLabel>
+      <Select
+        label="Pays *"
+        value={newRecipientLocal.receiverCountry}
+        onChange={e => handleNewRecipientChange('receiverCountry', e.target.value)}
+      >
+        <MenuItem value="">-- Sélectionnez un pays --</MenuItem>
+        {countries.map(c => (
+          <MenuItem key={c.id_country} value={c.id_country}>
+            {c.symbol_fr}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  </Box>
+</DialogContent>
+
         <DialogActions>
           <Button onClick={() => setShowNewRecipientDialog(false)}>Annuler</Button>
           <Button variant="contained" onClick={handleSaveNewRecipient}>
