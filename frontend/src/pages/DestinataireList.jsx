@@ -487,14 +487,15 @@ const DestinataireList = () => {
           Modifier
         </MenuItem>
 
-        <MenuItem
+      {/* --- menu Actions : Modifier / Supprimer ---
+      <MenuItem
           onClick={() => {
             if (selectedRow) handleDelete(selectedRow);
             handleMenuClose();
           }}
         >
           Désactiver
-        </MenuItem>
+        </MenuItem> */}
       </Menu>
 
     </Box>

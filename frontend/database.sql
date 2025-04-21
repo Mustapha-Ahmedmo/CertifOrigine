@@ -4933,6 +4933,51 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- disable_op_user: set deactivation_date back one day
+DROP PROCEDURE IF EXISTS disable_op_user(INT);
+CREATE OR REPLACE PROCEDURE disable_op_user(p_id_op_user INT)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF p_id_op_user IS NULL OR p_id_op_user = 0 THEN
+    RAISE EXCEPTION 'ERROR: undefined p_id_op_user';
+  END IF;
+
+  UPDATE login_user
+  SET deactivation_date = CURRENT_TIMESTAMP - INTERVAL '1 day'
+  FROM op_user
+  WHERE login_user.id_login_user = op_user.id_login_user
+    AND op_user.id_op_user = p_id_op_user;
+
+  UPDATE op_user
+  SET deactivation_date = CURRENT_TIMESTAMP - INTERVAL '1 day'
+  WHERE id_op_user = p_id_op_user;
+END;
+$$;
+
+
+-- enable_op_user: push deactivation_date way into the future
+DROP PROCEDURE IF EXISTS enable_op_user(INT);
+CREATE OR REPLACE PROCEDURE enable_op_user(p_id_op_user INT)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF p_id_op_user IS NULL OR p_id_op_user = 0 THEN
+    RAISE EXCEPTION 'ERROR: undefined p_id_op_user';
+  END IF;
+
+  UPDATE login_user
+  SET deactivation_date = CURRENT_TIMESTAMP + INTERVAL '100 years'
+  FROM op_user
+  WHERE login_user.id_login_user = op_user.id_login_user
+    AND op_user.id_op_user = p_id_op_user;
+
+  UPDATE op_user
+  SET deactivation_date = CURRENT_TIMESTAMP + INTERVAL '100 years'
+  WHERE id_op_user = p_id_op_user;
+END;
+$$;
+
 call set_op_user(0, 0, 'M. Admin', 1, TRUE,
 'admin@cdd.dj','4889ba9b',
 '253355445', '25377340000',

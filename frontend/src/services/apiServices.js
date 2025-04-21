@@ -488,6 +488,29 @@ export const disableOperator = async (operatorId) => {
     throw error;
   }
 };
+
+export const enableOperator = async (operatorId) => {
+  try {
+    const response = await fetch(`${API_URL}/operators/enable/${operatorId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, 
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to enable operator');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (enableOperator):', error);
+    throw error;
+  }
+};
+
 export const getCustUsersByAccount = async (custAccountId, statutflag = null, isactiveCA = 'true', isactiveCU = 'true', ismain_user = 'true') => {
   try {
     const params = new URLSearchParams();
