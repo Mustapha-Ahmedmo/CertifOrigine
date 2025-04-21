@@ -36,6 +36,17 @@ const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
+
+// Générer un mot de passe aléatoire si nécessaire
+const generateRandomPassword = (length = 12) => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+};
+
 const RegisterOP = ({ onClose }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -151,6 +162,9 @@ const RegisterOP = ({ onClose }) => {
       return;
     }
     try {
+
+      const tempPassword = generateRandomPassword(12);
+
       const operatorData = {
         id_op_user: id || 0,
         gender: formData.gender === 'Mr' ? 1 : 2,
@@ -158,7 +172,7 @@ const RegisterOP = ({ onClose }) => {
         roles: formData.role.trim() === 'Opérateur' ? 0 : 1,
         isAdmin: formData.adminStatus === 'Administrateur',
         email: formData.email,
-        password: id ? null : homemadeHash(formData.password, 'md5'),
+        password: id ? null : homemadeHash(tempPassword, 'md5'),
         phoneNumber: formData.phoneFixedNumber,
         mobileNumber: formData.phoneMobileNumber,
         idLoginInsert: 1,
@@ -286,29 +300,6 @@ const RegisterOP = ({ onClose }) => {
             disabled={!!id}
           />
         </Box>
-
-        {!id && (
-          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-            <TextField
-              label="Mot de passe *"
-              variant="outlined"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              fullWidth
-            />
-            <TextField
-              label="Confirmer mot de passe *"
-              variant="outlined"
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Box>
-        )}
 
         <Box sx={{ mb: 2 }}>
           <FormControl component="fieldset">

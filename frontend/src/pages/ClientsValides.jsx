@@ -80,14 +80,15 @@ const API_URL = import.meta.env.VITE_API_URL;
 const safeValue = (val) => {
   return val === undefined || val === null || val === 'undefined' ? '' : val;
 };
-
 function getImplantationLabel(registration) {
   if (registration.in_free_zone === true) {
     return 'Zone franche';
   } else if (registration.in_free_zone === false) {
-    return 'Autre';
-  } else {
+    // not in free zone → "Entreprise"
     return 'Entreprise';
+  } else {
+    // in_free_zone is null/undefined → "Autre"
+    return 'Autre';
   }
 }
 const ClientsValides = () => {
@@ -95,7 +96,9 @@ const ClientsValides = () => {
   const user = useSelector((state) => state.auth.user);
   const idLogin = user?.id_login_user;
   const isOpUser = user?.isopuser;
+  const isMainUser = user?.role_user;
 
+  console.log(user);
   const [custAccounts, setCustAccounts] = useState([]);
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
@@ -735,22 +738,33 @@ if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
       alert('Impossible de désactiver ce client.');
     }
   };
-  function getInformationsLabel(registration) {
-    if (registration.in_free_zone === true) {
-      return registration.identification_number
-        ? <span><strong>Licence :</strong> {registration.identification_number}</span>
-        : '';
-    } else if (registration.in_free_zone === false) {
-      return <strong></strong>;
-    } else {
-      return (
-        <span>
-          <strong>NIF :</strong> {registration.trade_registration_num || 'N/A'} <br />
-          <strong>RCS :</strong> {registration.register_number || 'N/A'}
-        </span>
-      );
+
+  const canAct = (isMainUser || isOpUser)
+    && selectedFilter !== 'non validé'
+    && selectedFilter !== 'rejeté';
+    
+    function getInformationsLabel(registration) {
+      if (registration.in_free_zone === true) {
+        // 1) Zone franche → Licence
+        return registration.identification_number ? (
+          <span>
+            <strong>Licence :</strong> {registration.identification_number}
+          </span>
+        ) : null;
+      } else if (registration.in_free_zone === false) {
+        // 2) Standard (not in free zone) → NIF & RCS
+        return (
+          <span>
+            <strong>NIF :</strong> {registration.trade_registration_num || 'N/A'} <br />
+            <strong>RCS :</strong> {registration.register_number || 'N/A'}
+          </span>
+        );
+      } else {
+        // 3) in_free_zone is null/undefined → Autre type
+        return <strong>Autre type</strong>;
+      }
     }
-  }
+
   const renderTableView = () => (
     <Paper>
       <TableContainer>
@@ -765,9 +779,10 @@ if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
               <TableCell>Type d'entreprise</TableCell>
               <TableCell>Informations</TableCell>
               <TableCell>Contact Principal</TableCell>
-              {isOpUser && selectedFilter !== 'non validé' && selectedFilter !== 'rejeté' && (
-                <TableCell>Action</TableCell>
-              )}
+              {((isMainUser || isOpUser)
+                && selectedFilter !== 'non validé'
+                && selectedFilter !== 'rejeté'
+              ) && <TableCell>Action</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -828,7 +843,7 @@ if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
                 {selectedFilter !== 'non validé' && selectedFilter !== 'rejeté' && (
                   <>
                     {/* ---- colonne ACTION : icône ⋮ ---- */}
-                    {isOpUser && (
+                    {canAct && (
                       <TableCell>
                         <IconButton
                           onClick={(e) => handleMenuOpen(e, registration)}
@@ -938,13 +953,12 @@ if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
               </Button>
 
               {/* 3 — Menu d’action (⋮) : seulement Modifier / (Dés)activer */}
-              {isOpUser && (
-                <IconButton
-                  onClick={(e) => handleMenuOpen(e, registration)}
-                  size="small"
-                >
-                  <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#C39408' }} />
-                </IconButton>
+              {canAct && (
+                <TableCell>
+                  <IconButton onClick={e => handleMenuOpen(e, registration)}>
+                    <FontAwesomeIcon icon={faEllipsisV} style={{ color: filterColor }} />
+                  </IconButton>
+                </TableCell>
               )}
 
             </CardActions>
@@ -1105,7 +1119,7 @@ if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
 
 
         {/* Activer ou Désactiver selon le filtre */}
-        {selectedMenuAccount && (
+        {isOpUser && selectedMenuAccount && (
           <MenuItem
             onClick={() => {
               if (selectedFilter === 'désactivé') {

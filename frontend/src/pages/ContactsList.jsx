@@ -739,7 +739,7 @@ const ContactsList = () => {
         </MenuItem>
 
         {/* --- Désactiver --- */}
-        {radioValue === 'active' && !selectedRow?.ismain_user && (
+        {radioValue === 'active' && !selectedRow?.ismain_user && selectedRow?.email !== user.email && (
           <MenuItem
             onClick={() => {
               handleDelete(selectedRow.id_cust_user);

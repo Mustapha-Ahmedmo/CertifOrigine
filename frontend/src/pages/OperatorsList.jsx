@@ -69,29 +69,39 @@ const OperatorsList = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleTabChange = (event, newValue) => setTabIndex(newValue);
-  const handleModalClose = () => setOpenRegisterModal(false);
+
 
   // Deux états : 'active' ou 'inactive'
   const [statusFilter, setStatusFilter] = useState('active');
 
   const [filter, setFilter] = useState('active');      // 'active' | 'inactive'
+
+  const fetchOperators = async () => {
+    setLoading(true);
+    try {
+      const activeFlag = statusFilter === 'active';
+      const response = await getOperatorList(null, null, activeFlag);
+      setOperators(response.data);
+      setError(null);
+    } catch {
+      setError('Erreur lors de la récupération des opérateurs.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchOperators = async () => {
-      setLoading(true);
-      try {
-        const activeFlag = statusFilter === 'active';
-        const response = await getOperatorList(null, null, activeFlag);
-        setOperators(response.data);
-        setError(null);
-      } catch (err) {
-        setError('Erreur lors de la récupération des opérateurs.');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchOperators();
   }, [statusFilter]);
-
+  
+  const handleModalClose = async () => {
+    setOpenRegisterModal(false);
+    try {
+      await fetchOperators();
+    } catch (err) {
+      console.error('Reload failed', err);
+    }
+  };
 
   const getGroupLabel = (roles, opIsAdmin) => {
     const labels = [];
