@@ -746,9 +746,6 @@ const ClientsValides = () => {
               {isOpUser && selectedFilter !== 'non validé' && selectedFilter !== 'rejeté' && (
                 <TableCell>Action</TableCell>
               )}
-              {selectedFilter !== 'non validé' && selectedFilter !== 'rejeté' && (
-                <TableCell>Fichiers</TableCell>
-              )}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -819,18 +816,6 @@ const ClientsValides = () => {
                         </IconButton>
                       </TableCell>
                     )}
-
-                    {/* ---- colonne FICHIERS (inchangé) ---- */}
-                    <TableCell>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => handleOpenFileModal(registration)}
-                        style={{ color: '#C39408', borderColor: '#C39408' }}
-                      >
-                        Gérer les fichiers
-                      </Button>
-                    </TableCell>
                   </>
                 )}
 
@@ -1083,6 +1068,19 @@ const FilterSwitcher = () => {
           
           Modifier
         </MenuItem>
+
+        {/* ---------- Gérer les fichiers ---------- */}
+        {selectedMenuAccount && (
+          <MenuItem
+            onClick={() => {
+              handleOpenFileModal(selectedMenuAccount);  // ← même fonction que l’ancien bouton
+              handleMenuClose();
+            }}
+          >
+            Gérer les fichiers
+          </MenuItem>
+        )}
+
 
         {/* Activer ou Désactiver selon le filtre */}
         {selectedMenuAccount && (

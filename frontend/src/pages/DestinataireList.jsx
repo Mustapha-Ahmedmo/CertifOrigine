@@ -42,11 +42,7 @@ import { faEdit, faPlus, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 import { IconButton } from '@mui/material';
 
-// Fonction de validation pour un numéro de téléphone international
-// Le numéro doit commencer par '+' ou '00', suivi uniquement de chiffres, avec une longueur comprise entre 8 et 16 caractères.
-const isValidInternationalPhone = (number) => {
-  return /^(?:\+|00)[1-9][0-9]*$/.test(number) && number.length >= 8 && number.length <= 16;
-};
+
 
 const DestinataireList = () => {
   // Récupération de l’utilisateur depuis Redux
@@ -69,7 +65,6 @@ const DestinataireList = () => {
     address2: '',
     address3: '',
     country: '',
-    phone: '',
   });
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -144,7 +139,6 @@ const DestinataireList = () => {
       address2: '',
       address3: '',
       country: '',
-      phone: '',
     });
     setShowAddModal(true);
   };
@@ -154,14 +148,6 @@ const DestinataireList = () => {
   };
 
   const handleNewRecipientChange = (field, value) => {
-    // Si le champ modifié est le téléphone, on peut effectuer une vérification instantanée
-    if (field === 'phone' && value !== '') {
-      if (!isValidInternationalPhone(value)) {
-        setErrorMessage("Format incorrect pour le numéro de téléphone. Doit commencer par '+' ou '00', suivi uniquement de chiffres, entre 8 et 16 caractères.");
-      } else {
-        setErrorMessage('');
-      }
-    }
     setNewRecipient((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -169,10 +155,6 @@ const DestinataireList = () => {
   const handleSaveNewRecipient = async () => {
     if (!newRecipient.recipientName || !newRecipient.address1 || !newRecipient.country) {
       setErrorMessage("Veuillez remplir au minimum le nom, l'adresse et le pays.");
-      return;
-    }
-    if (newRecipient.phone && !isValidInternationalPhone(newRecipient.phone)) {
-      setErrorMessage("Le numéro de téléphone est invalide. Format international requis (doit commencer par '+' ou '00', suivi uniquement de chiffres, et contenir entre 8 et 16 caractères).");
       return;
     }
     try {
@@ -190,7 +172,6 @@ const DestinataireList = () => {
         deactivationDate: new Date('9999-12-31').toISOString(),
         idLoginInsert: editingRecipientId ? null : (user?.id_login_user || 1),
         idLoginModify: editingRecipientId ? (user?.id_login_user || 1) : null,
-        phone_number: newRecipient.phone,
       };
 
       await addRecipient(payload);
@@ -248,7 +229,6 @@ const DestinataireList = () => {
               <TableCell>Nom du destinataire</TableCell>
               <TableCell>Adresse</TableCell>
               <TableCell>Pays</TableCell>
-              <TableCell>Téléphone</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -259,7 +239,6 @@ const DestinataireList = () => {
                 <TableCell>{recipient.recipient_name}</TableCell>
                 <TableCell>{recipient.address_1}</TableCell>
                 <TableCell>{recipient.country_symbol_fr_recipient || 'N/A'}</TableCell>
-                <TableCell>{recipient.phone_number}</TableCell>
                 <TableCell
                   align="center"
                   sx={{            // ← styles supplémentaires
@@ -275,7 +254,7 @@ const DestinataireList = () => {
             ))}
             {recipients.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} align="center">
+                <TableCell colSpan={5} align="center">
                   Aucun destinataire trouvé.
                 </TableCell>
               </TableRow>
@@ -310,9 +289,6 @@ const DestinataireList = () => {
           </Typography>
           <Typography variant="body2">
             <strong>Pays : </strong> {recipient.country_symbol_fr_recipient || 'N/A'}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Téléphone : </strong> {recipient.phone_number}
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
             <IconButton onClick={(e) => handleMenuOpen(e, recipient)}>
@@ -447,21 +423,6 @@ const DestinataireList = () => {
             </Select>
           </FormControl>
 
-          <TextField
-            label="Téléphone (format international)"
-            fullWidth
-            variant="outlined"
-            value={newRecipient.phone}
-            onChange={(e) => handleNewRecipientChange('phone', e.target.value)}
-            sx={{ mb: 2 }}
-            inputProps={{ maxLength: 16 }}
-            error={newRecipient.phone !== '' && !isValidInternationalPhone(newRecipient.phone)}
-            helperText={
-              newRecipient.phone !== '' && !isValidInternationalPhone(newRecipient.phone)
-                ? "Format incorrect. Doit commencer par '+' ou '00' suivi uniquement de chiffres."
-                : "Doit commencer par '+' ou '00' suivi uniquement de chiffres, entre 8 et 16 caractères."
-            }
-          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseAddModal}>Annuler</Button>
