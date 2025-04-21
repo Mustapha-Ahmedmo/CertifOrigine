@@ -80,17 +80,25 @@ const API_URL = import.meta.env.VITE_API_URL;
 const safeValue = (val) => {
   return val === undefined || val === null || val === 'undefined' ? '' : val;
 };
+
 function getImplantationLabel(registration) {
   if (registration.in_free_zone === true) {
     return 'Zone franche';
-  } else if (registration.in_free_zone === false) {
-    // not in free zone → "Entreprise"
-    return 'Entreprise';
-  } else {
-    // in_free_zone is null/undefined → "Autre"
-    return 'Autre';
   }
+
+  /* si la société a un NIF ou un RCS, on la considère
+     comme “Entreprise”, quel que soit le contenu de in_free_zone */
+  if (
+    registration.trade_registration_num ||   // NIF
+    registration.register_number             // RCS
+  ) {
+    return 'Entreprise';
+  }
+
+  /* sinon only -> “Autre” */
+  return 'Autre';
 }
+
 const ClientsValides = () => {
 
   const user = useSelector((state) => state.auth.user);
@@ -647,16 +655,16 @@ const ClientsValides = () => {
     );
     setCustAccounts(sortedData);
     // si le type final est « Entreprise » ou « Entreprise en zone franche »
-if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
-  setFileAlertOpen(true);                            // 1.  Snackbar
+    if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
+      setFileAlertOpen(true);                            // 1.  Snackbar
 
-  // 2. trouver la version fraîche du compte pour afficher ses fichiers
-  const updatedAccount = sortedData.find(
-    acc => acc.id_cust_account === selectedEditAccount.id_cust_account
-  );
+      // 2. trouver la version fraîche du compte pour afficher ses fichiers
+      const updatedAccount = sortedData.find(
+        acc => acc.id_cust_account === selectedEditAccount.id_cust_account
+      );
 
-  handleOpenFileModal(updatedAccount);               // 3. ouvrir la modale fichiers
-}
+      handleOpenFileModal(updatedAccount);               // 3. ouvrir la modale fichiers
+    }
 
     handleCloseEditModal();
   };
@@ -742,28 +750,31 @@ if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
   const canAct = (isMainUser || isOpUser)
     && selectedFilter !== 'non validé'
     && selectedFilter !== 'rejeté';
-    
-    function getInformationsLabel(registration) {
-      if (registration.in_free_zone === true) {
-        // 1) Zone franche → Licence
-        return registration.identification_number ? (
-          <span>
-            <strong>Licence :</strong> {registration.identification_number}
-          </span>
-        ) : null;
-      } else if (registration.in_free_zone === false) {
-        // 2) Standard (not in free zone) → NIF & RCS
-        return (
-          <span>
-            <strong>NIF :</strong> {registration.trade_registration_num || 'N/A'} <br />
-            <strong>RCS :</strong> {registration.register_number || 'N/A'}
-          </span>
-        );
-      } else {
-        // 3) in_free_zone is null/undefined → Autre type
-        return <strong>Autre type</strong>;
-      }
+
+  function getInformationsLabel(registration) {
+    // 1) Zone franche  ⇒ Licence
+    if (registration.in_free_zone === true) {
+      return registration.identification_number ? (
+        <span>
+          <strong>Licence :</strong> {registration.identification_number}
+        </span>
+      ) : null;
     }
+
+    // 2) Si l’on dispose d’un NIF ou d’un RCS ⇒ toujours les afficher
+    if (registration.trade_registration_num || registration.register_number) {
+      return (
+        <span>
+          <strong>NIF :</strong> {registration.trade_registration_num || 'N/A'}
+          <br />
+          <strong>RCS :</strong> {registration.register_number || 'N/A'}
+        </span>
+      );
+    }
+
+    // 3) Cas résiduel ⇒ “Autre type”
+    return <strong></strong>;
+  }
 
   const renderTableView = () => (
     <Paper>
@@ -1183,57 +1194,57 @@ if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
 
 
 
-<Box sx={{ mt: 3 }}>
-  <Typography variant="subtitle2" gutterBottom>
-    Ajouter un nouveau fichier :
-  </Typography>
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Ajouter un nouveau fichier :
+              </Typography>
 
-  <FormControl fullWidth margin="normal">
-    <InputLabel id="file-type-label">Type de fichier</InputLabel>
-    <Select
-      labelId="file-type-label"
-      value={selectedFileType}
-      onChange={(e) => setSelectedFileType(e.target.value)}
-      label="Type de fichier"
-    >
-      {fileTypes.map((type) => (
-        <MenuItem key={type.id_files_repo_typeof} value={type.id_files_repo_typeof}>
-          {type.txt_description_fr}
-        </MenuItem>
-      ))}
-    </Select>
-  </FormControl>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="file-type-label">Type de fichier</InputLabel>
+                <Select
+                  labelId="file-type-label"
+                  value={selectedFileType}
+                  onChange={(e) => setSelectedFileType(e.target.value)}
+                  label="Type de fichier"
+                >
+                  {fileTypes.map((type) => (
+                    <MenuItem key={type.id_files_repo_typeof} value={type.id_files_repo_typeof}>
+                      {type.txt_description_fr}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-  <Box
-    sx={{
-      mt: 1,
-      display: 'flex',
-      flexDirection: { xs: 'column', sm: 'row' },
-      alignItems: 'center',
-      gap: 2,
-    }}
-  >
-    <Button component="label" variant="outlined">
-      Choisir un fichier
-      <input type="file" hidden onChange={handleFileModalChange} />
-    </Button>
+              <Box
+                sx={{
+                  mt: 1,
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: 'center',
+                  gap: 2,
+                }}
+              >
+                <Button component="label" variant="outlined">
+                  Choisir un fichier
+                  <input type="file" hidden onChange={handleFileModalChange} />
+                </Button>
 
-    <Button
-      variant="contained"
-      sx={{ backgroundColor: '#C39408', color: '#fff' }}
-      onClick={handleSaveFileModal}
-      disabled={!fileData.justificatifFile || !selectedFileType}
-    >
-      + Ajouter le fichier
-    </Button>
-  </Box>
+                <Button
+                  variant="contained"
+                  sx={{ backgroundColor: '#C39408', color: '#fff' }}
+                  onClick={handleSaveFileModal}
+                  disabled={!fileData.justificatifFile || !selectedFileType}
+                >
+                  + Ajouter le fichier
+                </Button>
+              </Box>
 
-  {fileData.justificatifFile && (
-    <Typography variant="body2" sx={{ mt: 1 }}>
-      Fichier sélectionné : {fileData.justificatifFile.name}
-    </Typography>
-  )}
-</Box>
+              {fileData.justificatifFile && (
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Fichier sélectionné : {fileData.justificatifFile.name}
+                </Typography>
+              )}
+            </Box>
 
           </Box>
 
@@ -1566,19 +1577,19 @@ if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
         </DialogActions>
       </Dialog>
       <Snackbar
-  open={fileAlertOpen}
-  autoHideDuration={6000}
-  onClose={() => setFileAlertOpen(false)}
-  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
->
-  <Alert
-    onClose={() => setFileAlertOpen(false)}
-    severity="info"
-    sx={{ width: '100%' }}
-  >
-    Veuillez ajouter les fichiers correspondant à votre type d'entreprise.
-  </Alert>
-</Snackbar>
+        open={fileAlertOpen}
+        autoHideDuration={6000}
+        onClose={() => setFileAlertOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setFileAlertOpen(false)}
+          severity="info"
+          sx={{ width: '100%' }}
+        >
+          Veuillez ajouter les fichiers correspondant à votre type d'entreprise.
+        </Alert>
+      </Snackbar>
 
     </Box>
 
