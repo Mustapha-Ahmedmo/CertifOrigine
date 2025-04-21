@@ -46,7 +46,9 @@ import {
   useTheme,
   useMediaQuery,
   IconButton,
-  Menu
+  Menu,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { useSelector } from 'react-redux';
 
@@ -129,6 +131,9 @@ const ClientsValides = () => {
 
   const [fileTypes, setFileTypes] = useState([]);
   const [selectedFileType, setSelectedFileType] = useState('');
+
+  const [fileAlertOpen, setFileAlertOpen] = useState(false);
+
 
   useEffect(() => {
     const fetchFileTypes = async () => {
@@ -604,6 +609,11 @@ const ClientsValides = () => {
     }
 
     await updateCustAccount(updateData);
+    // Si le nouveau type est "Entreprise" ou "Entreprise en zone franche" ⇒ invite à déposer les fichiers
+    if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
+      setFileAlertOpen(true);
+    }
+
     // Envoi d'un email après la mise à jour
     const mainContact = selectedEditAccount?.main_contact?.find(c => c.ismain_user === true);
     if (isOpUser && mainContact?.email) {
@@ -633,6 +643,18 @@ const ClientsValides = () => {
       (a, b) => new Date(b.insertdate) - new Date(a.insertdate)
     );
     setCustAccounts(sortedData);
+    // si le type final est « Entreprise » ou « Entreprise en zone franche »
+if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
+  setFileAlertOpen(true);                            // 1.  Snackbar
+
+  // 2. trouver la version fraîche du compte pour afficher ses fichiers
+  const updatedAccount = sortedData.find(
+    acc => acc.id_cust_account === selectedEditAccount.id_cust_account
+  );
+
+  handleOpenFileModal(updatedAccount);               // 3. ouvrir la modale fichiers
+}
+
     handleCloseEditModal();
   };
 
@@ -719,7 +741,7 @@ const ClientsValides = () => {
         ? <span><strong>Licence :</strong> {registration.identification_number}</span>
         : '';
     } else if (registration.in_free_zone === false) {
-      return <strong>Autre type</strong>;
+      return <strong></strong>;
     } else {
       return (
         <span>
@@ -1147,48 +1169,58 @@ const ClientsValides = () => {
 
 
 
-            {/* Ajout d'un nouveau fichier */}
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Ajouter un nouveau fichier :
-              </Typography>
+<Box sx={{ mt: 3 }}>
+  <Typography variant="subtitle2" gutterBottom>
+    Ajouter un nouveau fichier :
+  </Typography>
 
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="file-type-label">Type de fichier</InputLabel>
-                <Select
-                  labelId="file-type-label"
-                  value={selectedFileType}
-                  onChange={(e) => setSelectedFileType(e.target.value)}
-                  label="Type de fichier"
-                >
-                  {Array.isArray(fileTypes) && fileTypes.map((type) => (
-                    <MenuItem key={type.id_files_repo_typeof} value={type.id_files_repo_typeof}>
-                      {type.txt_description_fr}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+  <FormControl fullWidth margin="normal">
+    <InputLabel id="file-type-label">Type de fichier</InputLabel>
+    <Select
+      labelId="file-type-label"
+      value={selectedFileType}
+      onChange={(e) => setSelectedFileType(e.target.value)}
+      label="Type de fichier"
+    >
+      {fileTypes.map((type) => (
+        <MenuItem key={type.id_files_repo_typeof} value={type.id_files_repo_typeof}>
+          {type.txt_description_fr}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
 
-              <Button component="label" variant="outlined" sx={{ mt: 1 }}>
-                Choisir un fichier
-                <input type="file" hidden onChange={handleFileModalChange} />
-              </Button>
+  <Box
+    sx={{
+      mt: 1,
+      display: 'flex',
+      flexDirection: { xs: 'column', sm: 'row' },
+      alignItems: 'center',
+      gap: 2,
+    }}
+  >
+    <Button component="label" variant="outlined">
+      Choisir un fichier
+      <input type="file" hidden onChange={handleFileModalChange} />
+    </Button>
 
-              {fileData.justificatifFile && (
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  Fichier sélectionné : {fileData.justificatifFile.name}
-                </Typography>
-              )}
+    <Button
+      variant="contained"
+      sx={{ backgroundColor: '#C39408', color: '#fff' }}
+      onClick={handleSaveFileModal}
+      disabled={!fileData.justificatifFile || !selectedFileType}
+    >
+      + Ajouter le fichier
+    </Button>
+  </Box>
 
-              <Button
-                variant="contained"
-                sx={{ mt: 2, backgroundColor: '#C39408', color: '#fff' }}
-                onClick={handleSaveFileModal}
-                disabled={!fileData.justificatifFile || !selectedFileType}
-              >
-                + Ajouter le fichier
-              </Button>
-            </Box>
+  {fileData.justificatifFile && (
+    <Typography variant="body2" sx={{ mt: 1 }}>
+      Fichier sélectionné : {fileData.justificatifFile.name}
+    </Typography>
+  )}
+</Box>
+
           </Box>
 
         </DialogContent>
@@ -1519,6 +1551,21 @@ const ClientsValides = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+  open={fileAlertOpen}
+  autoHideDuration={6000}
+  onClose={() => setFileAlertOpen(false)}
+  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+>
+  <Alert
+    onClose={() => setFileAlertOpen(false)}
+    severity="info"
+    sx={{ width: '100%' }}
+  >
+    Veuillez ajouter les fichiers correspondant à votre type d'entreprise.
+  </Alert>
+</Snackbar>
+
     </Box>
 
 
