@@ -381,7 +381,7 @@ L'équipe`
         `Bonjour ${full_name},
 
 Votre compte a été modifié avec succès.  
-Si vous n'avez pas initié cette demande, veuillez contacter notre support immédiatement.
+Si vous n'avez pas initié cette demande, veuillez contacter le contact principal de votre société.
 
 Cordialement,  
 Chambre de commerce de Djibouti`

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux'; 
+import { useSelector } from 'react-redux';
 import {
   fetchRecipients,
   addRecipient,
@@ -119,6 +119,8 @@ const DestinataireList = () => {
 
   // Ouvrir la modale d'édition
   const handleOpenEditModal = (recipient) => {
+    console.log('[DEBUG] open edit modal for:', recipient,
+      'id_country =>', recipient.id_country, typeof recipient.id_country);
     setErrorMessage('');
     setEditingRecipientId(recipient.id_recipient_account);
     setNewRecipient({
@@ -126,7 +128,7 @@ const DestinataireList = () => {
       address1: recipient.address_1,
       address2: recipient.address_2 || '',
       address3: recipient.address_3 || '',
-      country: recipient.id_country,
+      country: recipient.id_country_recipient ?? '',
       phone: recipient.phone_number || '',
     });
     setShowAddModal(true);
@@ -193,7 +195,7 @@ const DestinataireList = () => {
 
       await addRecipient(payload);
       await loadRecipients();
-      
+
       setEditingRecipientId(null);
       setShowAddModal(false);
     } catch (err) {
@@ -215,7 +217,7 @@ const DestinataireList = () => {
     }
   };
 
-  
+
 
   // ----- RENDU Desktop : Table -----
   const renderDesktopTable = () => (
@@ -247,7 +249,7 @@ const DestinataireList = () => {
                     textAlign: 'center'
                   }}
                 >
-                  <IconButton onClick={(e) => handleMenuOpen(e, recipient)}>  
+                  <IconButton onClick={(e) => handleMenuOpen(e, recipient)}>
                     <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
                   </IconButton>
                 </TableCell>
@@ -295,9 +297,9 @@ const DestinataireList = () => {
             <strong>Téléphone : </strong> {recipient.phone_number}
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-          <IconButton onClick={(e) => handleMenuOpen(e, recipient)}>
-            <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
-          </IconButton>
+            <IconButton onClick={(e) => handleMenuOpen(e, recipient)}>
+              <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
+            </IconButton>
 
           </Box>
 
@@ -408,8 +410,10 @@ const DestinataireList = () => {
           />
 
           <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-            <InputLabel>Pays *</InputLabel>
+            <InputLabel id="country-label">Pays *</InputLabel>
             <Select
+              labelId="country-label"
+              id="country-select"
               value={newRecipient.country}
               onChange={(e) => handleNewRecipientChange('country', e.target.value)}
               label="Pays *"
@@ -417,7 +421,7 @@ const DestinataireList = () => {
               <MenuItem value="">
                 <em>-- Sélectionnez un pays --</em>
               </MenuItem>
-              {countries.map((c) => (
+              {countries.map(c => (
                 <MenuItem key={c.id_country} value={c.id_country}>
                   {c.symbol_fr}
                 </MenuItem>
@@ -477,7 +481,7 @@ const DestinataireList = () => {
 
     </Box>
 
-    
+
   );
 };
 

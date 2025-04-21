@@ -65,6 +65,7 @@ const isValidEmail = (email) => {
 const ContactsList = () => {
   const { user } = useSelector((state) => state.auth);
   const custAccountId = user?.id_cust_account;
+  const isMainUser = Boolean(user?.role_user);
 
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -111,10 +112,10 @@ const ContactsList = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   // --- menu Actions (⋮) ---
-  const [anchorEl, setAnchorEl]   = useState(null);   // ancre du Menu
+  const [anchorEl, setAnchorEl] = useState(null);   // ancre du Menu
   const [selectedRow, setSelectedRow] = useState(null); // contact cliqué
 
-  const handleMenuOpen  = (e, contact) => {
+  const handleMenuOpen = (e, contact) => {
     setAnchorEl(e.currentTarget);
     setSelectedRow(contact);
   };
@@ -405,10 +406,10 @@ const ContactsList = () => {
     }
     try {
       await reactivateCustUser(contactId);
-  
+
       // Retirer le contact réactivé de la liste locale
       setContacts((prev) => prev.filter((c) => c.id_cust_user !== contactId));
-  
+
       setSnackbarMessage('Contact réactivé avec succès.');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
@@ -485,9 +486,9 @@ const ContactsList = () => {
             <strong>Contact Principal : </strong> {contact.ismain_user ? 'Oui' : 'Non'}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
-          <IconButton onClick={(e) => handleMenuOpen(e, contact)} sx={{ p: 0 }}>
-            <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
-          </IconButton>
+            <IconButton onClick={(e) => handleMenuOpen(e, contact)} sx={{ p: 0 }}>
+              <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
+            </IconButton>
 
           </Box>
         </Paper>
@@ -527,6 +528,7 @@ const ContactsList = () => {
           <Button
             variant="contained"
             onClick={handleOpenAddModal}
+            disabled={!isMainUser}
             size="small"
             sx={{
               backgroundColor: '#DCAF26',
@@ -553,7 +555,7 @@ const ContactsList = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           style={{ maxWidth: 300 }}
         />
-  <StatusFilter />
+        <StatusFilter />
       </Box>
 
       {/* Affichage conditionnel : tableau ou cartes mobiles */}
@@ -590,9 +592,11 @@ const ContactsList = () => {
                       <input type="checkbox" checked={contact.ismain_user} disabled />
                     </TableCell>
                     <TableCell align="center" sx={{ p: 0 }}>
-                      <IconButton onClick={(e) => handleMenuOpen(e, contact)} sx={{ p: 0 }}>
-                        <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
-                      </IconButton>
+                      {(isMainUser || contact.email === user.email) && (
+                        <IconButton onClick={(e) => handleMenuOpen(e, contact)} sx={{ p: 0 }}>
+                          <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
+                        </IconButton>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -684,17 +688,19 @@ const ContactsList = () => {
 
         </DialogContent>
 
-        <FormControlLabel
-          sx={{ ml: 2 }}
-          control={
-            <Checkbox
-              checked={currentContact.ismain_user}
-              onChange={(e) => handleChange('ismain_user', e.target.checked)}
-              color="primary"
-            />
-          }
-          label="Contact principal"
-        />
+        {isMainUser && (
+          <FormControlLabel
+            sx={{ ml: 2 }}
+            control={
+              <Checkbox
+                checked={currentContact.ismain_user}
+                onChange={(e) => handleChange('ismain_user', e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Contact principal"
+          />
+        )}
         <DialogActions>
           <Button onClick={handleCloseModal}>Annuler</Button>
           <Button variant="contained" onClick={handleSaveContact} sx={{ backgroundColor: '#DCAF26' }}>

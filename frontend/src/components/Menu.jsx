@@ -215,23 +215,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
 
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-          <ListItem disablePadding>
-            <ListItemButton
-              component={Link}
-              to="/dashboard/masociete"
-              onClick={() => {
-                handleParentClick();
-                handleLinkClick();
-              }}
-              selected={location.pathname === "/dashboard/masociete"}
-              sx={selectedStyle}
-            >
-              <ListItemIcon sx={{ color: "black" }}>
-                <FontAwesomeIcon icon={faCheckCircle} />
-              </ListItemIcon>
-              <ListItemText primary="Ma société" primaryTypographyProps={{ fontSize: "14px" }} />
-            </ListItemButton>
-          </ListItem>
+
 
 
           {/* Lien vers Gestion des commandes -> pointe maintenant vers "/dashboard/home" */}
@@ -372,6 +356,24 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
             </List>
           </Collapse>
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
+
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
+              to="/dashboard/masociete"
+              onClick={() => {
+                handleParentClick();
+                handleLinkClick();
+              }}
+              selected={location.pathname === "/dashboard/masociete"}
+              sx={selectedStyle}
+            >
+              <ListItemIcon sx={{ color: "black" }}>
+                <FontAwesomeIcon icon={faCheckCircle} />
+              </ListItemIcon>
+              <ListItemText primary="Ma société" primaryTypographyProps={{ fontSize: "14px" }} />
+            </ListItemButton>
+          </ListItem>
 
           {/* Mes destinataires (sous-menu) */}
           <ListItem disablePadding>

@@ -2392,101 +2392,97 @@ BEGIN
     );
 END;
 $$ LANGUAGE plpgsql;
-
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Returns recipients with BOTH their own country and the customer country  */
+/* ────────────────────────────────────────────────────────────────────────── */
 
 DROP FUNCTION IF EXISTS get_recipient_info;
 CREATE OR REPLACE FUNCTION get_recipient_info(
-    p_id_list_r TEXT,
-    p_id_list_ca TEXT,
-    p_isactive_r BOOLEAN,
-    p_isactive_ca BOOLEAN,
-    p_statut_flag_r INT,
-    p_statut_flag_ca INT
+    p_id_list_r       TEXT,
+    p_id_list_ca      TEXT,
+    p_isactive_r      BOOLEAN,
+    p_isactive_ca     BOOLEAN,
+    p_statut_flag_r   INT,
+    p_statut_flag_ca  INT
 )
 RETURNS TABLE (
-    id_recipient_account INT,
-    id_cust_account INT,
-    recipient_name VARCHAR(96),
-    address_1 VARCHAR(160),
-    address_2 VARCHAR(160),
-    address_3 VARCHAR(160),
-    --id_city_recipient INT,
-    --id_country_recipient INT,
-    id_country_cust INT,
-    --city_symbol_fr_recipient VARCHAR(64),
-    --city_symbol_eng_recipient VARCHAR(64),
+    id_recipient_account       INT,
+    id_cust_account            INT,
+    recipient_name             VARCHAR(96),
+    address_1                  VARCHAR(160),
+    address_2                  VARCHAR(160),
+    address_3                  VARCHAR(160),
+    id_country_recipient       INT,          --  NEW
+    id_country_cust            INT,
     country_symbol_fr_recipient VARCHAR(64),
     country_symbol_eng_recipient VARCHAR(64),
-    country_symbol_fr_cust VARCHAR(64),
-    country_symbol_eng_cust VARCHAR(64),
-    statut_flag_recipient INT,
-    insertdate TIMESTAMP,
-    activation_date TIMESTAMP,
-    deactivation_date TIMESTAMP,
-    idlogin_insert INT,
-    lastmodified TIMESTAMP,
-    idlogin_modify INT,
-    legal_form VARCHAR(32),
-    cust_name VARCHAR(96),
-    trade_registration_num VARCHAR(32),
-    in_free_zone BOOLEAN,
-    identification_number VARCHAR(32),
-    full_address VARCHAR(160)
-) AS
-$$
+    country_symbol_fr_cust     VARCHAR(64),
+    country_symbol_eng_cust    VARCHAR(64),
+    statut_flag_recipient      INT,
+    insertdate                 TIMESTAMP,
+    activation_date            TIMESTAMP,
+    deactivation_date          TIMESTAMP,
+    idlogin_insert             INT,
+    lastmodified               TIMESTAMP,
+    idlogin_modify             INT,
+    legal_form                 VARCHAR(32),
+    cust_name                  VARCHAR(96),
+    trade_registration_num     VARCHAR(32),
+    in_free_zone               BOOLEAN,
+    identification_number      VARCHAR(32),
+    full_address               VARCHAR(160)
+)
+LANGUAGE plpgsql
+AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
-        ra."id_recipient_account",
-        ra."id_cust_account",
-        ra."recipient_name",
-        ra."address_1",
-        ra."address_2",
-        ra."address_3",
-        --ra."id_city" AS id_city_recipient,
-        --city_recipient."id_country" AS id_country_recipient,
-        ca."id_country" AS id_country_cust,
-        --city_recipient."symbol_fr" AS city_symbol_fr_recipient,
-        --city_recipient."symbol_eng" AS city_symbol_eng_recipient,
-        country_recipient."symbol_fr" AS country_symbol_fr_recipient,
-        country_recipient."symbol_eng" AS country_symbol_eng_recipient,
-        country_cust."symbol_fr" AS country_symbol_fr_cust,
-        country_cust."symbol_eng" AS country_symbol_eng_cust,
-        ra."statut_flag" AS statut_flag_recipient,
-        ra."insertdate",
-        ra."activation_date",
-        ra."deactivation_date",
-        ra."idlogin_insert",
-        ra."lastmodified",
-        ra."idlogin_modify",
-        ca."legal_form",
-        ca."cust_name",
-        ca."trade_registration_num",
-        ca."in_free_zone",
-        ca."identification_number",
-        ca."full_address"
-    FROM recipient_account ra
-    --JOIN city city_recipient ON ra."id_city" = city_recipient."id_city"
-         JOIN country country_recipient ON ra."id_country" = country_recipient."id_country"
-    JOIN cust_account ca ON ra."id_cust_account" = ca."id_cust_account"
-         JOIN country country_cust ON ca."id_country" = country_cust."id_country"
-    WHERE 
-        (p_id_list_r IS NULL OR ra."id_recipient_account"::TEXT = ANY(STRING_TO_ARRAY(p_id_list_r, ',')))
-        AND (p_id_list_ca IS NULL OR ca."id_cust_account"::TEXT = ANY(STRING_TO_ARRAY(p_id_list_ca, ',')))
-        AND (p_statut_flag_r IS NULL OR ra."statut_flag" = p_statut_flag_r)
-        AND (p_statut_flag_ca IS NULL OR ca."statut_flag" = p_statut_flag_ca)
-        AND (
-            p_isactive_r IS NULL
-            OR (p_isactive_r IS NOT TRUE AND ra."deactivation_date" <= CURRENT_DATE)
-            OR (p_isactive_r IS TRUE AND ra."deactivation_date" > CURRENT_DATE)
-        )
-        AND (
-            p_isactive_ca IS NULL
-            OR (p_isactive_ca IS NOT TRUE AND ca."deactivation_date" <= CURRENT_DATE)
-            OR (p_isactive_ca IS TRUE AND ca."deactivation_date" > CURRENT_DATE)
-        );
+    SELECT
+        ra.id_recipient_account,
+        ra.id_cust_account,
+        ra.recipient_name,
+        ra.address_1,
+        ra.address_2,
+        ra.address_3,
+        ra.id_country                      AS id_country_recipient,   -- NEW
+        ca.id_country                      AS id_country_cust,
+        country_recipient.symbol_fr        AS country_symbol_fr_recipient,
+        country_recipient.symbol_eng       AS country_symbol_eng_recipient,
+        country_cust.symbol_fr             AS country_symbol_fr_cust,
+        country_cust.symbol_eng            AS country_symbol_eng_cust,
+        ra.statut_flag                     AS statut_flag_recipient,
+        ra.insertdate,
+        ra.activation_date,
+        ra.deactivation_date,
+        ra.idlogin_insert,
+        ra.lastmodified,
+        ra.idlogin_modify,
+        ca.legal_form,
+        ca.cust_name,
+        ca.trade_registration_num,
+        ca.in_free_zone,
+        ca.identification_number,
+        ca.full_address
+    FROM recipient_account  ra
+    JOIN country            country_recipient ON ra.id_country   = country_recipient.id_country
+    JOIN cust_account       ca               ON ra.id_cust_account = ca.id_cust_account
+    JOIN country            country_cust     ON ca.id_country      = country_cust.id_country
+    WHERE
+          (p_id_list_r  IS NULL OR ra.id_recipient_account::TEXT = ANY (string_to_array(p_id_list_r,  ',')))
+      AND (p_id_list_ca IS NULL OR ca.id_cust_account::TEXT      = ANY (string_to_array(p_id_list_ca, ',')))
+      AND (p_statut_flag_r  IS NULL OR ra.statut_flag = p_statut_flag_r)
+      AND (p_statut_flag_ca IS NULL OR ca.statut_flag = p_statut_flag_ca)
+      AND (
+              p_isactive_r IS NULL
+           OR (p_isactive_r IS TRUE  AND ra.deactivation_date  >  CURRENT_DATE)
+           OR (p_isactive_r IS NOT TRUE AND ra.deactivation_date <= CURRENT_DATE)
+          )
+      AND (
+              p_isactive_ca IS NULL
+           OR (p_isactive_ca IS TRUE  AND ca.deactivation_date  >  CURRENT_DATE)
+           OR (p_isactive_ca IS NOT TRUE AND ca.deactivation_date <= CURRENT_DATE)
+          );
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 
 DROP PROCEDURE IF EXISTS set_recipient_account;
