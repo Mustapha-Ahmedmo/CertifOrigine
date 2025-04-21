@@ -99,7 +99,7 @@ const DestinataireList = () => {
 
   const loadRecipients = async () => {
     try {
-      const response = await fetchRecipients({ idListCA: customerAccountId });
+      const response = await fetchRecipients({ idListCA: customerAccountId, statutFlagR : 1  });
       const data = response.data || [];
       console.log('Destinataires reçus:', data); // Ajoutez cette ligne pour voir la structure
       setRecipients(data);
@@ -205,12 +205,30 @@ const DestinataireList = () => {
   };
 
   // Suppression
-  const handleDelete = async (recipientId) => {
-    if (!window.confirm('Voulez-vous vraiment supprimer ce destinataire ?')) return;
+  const handleDelete = async (recipient) => {
+    if (!window.confirm('Voulez-vous vraiment désactiver ce destinataire ?')) return;
     try {
-      await deleteCustUser(recipientId);
-      setRecipients((prev) => prev.filter((r) => r.id_recipient_account !== recipientId));
-      alert('Destinataire supprimé avec succès.');
+
+      const payload = {
+        idRecipientAccount : recipient.id_recipient_account,
+        idCustAccount      : recipient.id_cust_account,
+        recipientName      : recipient.recipient_name,
+        address1           : recipient.address_1,
+        address2           : recipient.address_2,
+        address3           : recipient.address_3,
+        idCountry          : recipient.id_country_recipient,   // champ dispo depuis la fonction SQL
+        statutFlag         : 2,                                // ← désactivé
+        activationDate     : recipient.activation_date,        // on conserve la date d’activation d’origine
+        deactivationDate   : new Date().toISOString(),         // on le rend inactif maintenant
+        idLoginInsert      : recipient.idlogin_insert,
+        idLoginModify      : user?.id_login_user || 1,
+        phone_number       : recipient.phone_number,
+      };
+
+      await addRecipient(payload);      // “update” avec statut_flag = 2
+      await loadRecipients();           // on recharge la liste (filtrée sur actifs)
+      
+      alert('Destinataire désactivé avec succès.');
     } catch (err) {
       console.error('Erreur lors de la suppression du destinataire:', err);
       alert('Impossible de supprimer ce destinataire.');
@@ -471,11 +489,11 @@ const DestinataireList = () => {
 
         <MenuItem
           onClick={() => {
-            if (selectedRow) handleDelete(selectedRow.id_recipient_account);
+            if (selectedRow) handleDelete(selectedRow);
             handleMenuClose();
           }}
         >
-          Supprimer
+          Désactiver
         </MenuItem>
       </Menu>
 

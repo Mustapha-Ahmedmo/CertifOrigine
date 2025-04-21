@@ -137,7 +137,7 @@ const Step5 = ({
 
         // Destinataires
         if ((!localRecipients || localRecipients.length === 0) && customerAccountId) {
-          const resp = await fetchRecipients({ idListCA: customerAccountId });
+          const resp = await fetchRecipients({ idListCA: customerAccountId, statutFlagR : 1  });
           setLocalRecipients(resp.data || []);
           handleChange?.('recipients', resp.data || []);
         }

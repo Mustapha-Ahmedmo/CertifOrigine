@@ -1790,29 +1790,6 @@ END;
 $$;
 
 
-DROP PROCEDURE IF EXISTS upd_cust_account_statut;
-CREATE OR REPLACE PROCEDURE upd_cust_account_statut(
-    p_id_cust_account INT,
-    p_statut_flag INT,
-    p_idlogin INT
-)
-AS
-$$
-BEGIN
-    IF p_id_cust_account IS NULL OR p_id_cust_account = 0 THEN
-        RAISE EXCEPTION 'identifiant incorrect / incorrect identifier ';
-    ELSE
-        UPDATE cust_account
-        SET
-            "statut_flag" = p_statut_flag,
-            "idlogin_modify" = p_idlogin,
-            "lastmodified" = NOW()
-        WHERE "id_cust_account" = p_id_cust_account;
-    END IF;
-END;
-$$ LANGUAGE plpgsql;
-
-
 DROP PROCEDURE IF EXISTS add_TokenResetPwd_Settings;
 CREATE OR REPLACE PROCEDURE add_TokenResetPwd_Settings(
     p_token VARCHAR(128),

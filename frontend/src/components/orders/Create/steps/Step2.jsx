@@ -160,7 +160,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         // Si on n'a pas déjà un certifId et qu'on a un id_cust_account pour l'utilisateur,
         // on peut charger la liste des destinataires déjà connus
         if (!certifId && customerAccountId) {
-          const recipientFetched = await fetchRecipients({ idListCA: customerAccountId });
+          const recipientFetched = await fetchRecipients({ idListCA: customerAccountId , statutFlagR : 1 });
           setRecipients(recipientFetched.data);
           handleChange('recipients', recipientFetched.data);
         }
