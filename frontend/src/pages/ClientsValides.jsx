@@ -466,14 +466,19 @@ const ClientsValides = () => {
     setSelectedEditAccount(account);
 
     let companyType = '';
+
     if (account.in_free_zone === true) {
       companyType = 'zoneFranche';
+    } else if (
+      account.trade_registration_num ||    // NIF
+      account.register_number              // RCS
+    ) {
+      companyType = 'autre'; // <-- entreprise standard
     } else if (account.in_free_zone === false) {
       companyType = 'autres';
-    } else if (account.in_free_zone === null) {
-      companyType = 'autre';
+    } else {
+      companyType = 'autres'; // fallback
     }
-
     const justificatifFileName =
       account.files && account.files.length > 0
         ? safeValue(account.files[0].file_origin_name)
