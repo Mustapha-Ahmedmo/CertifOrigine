@@ -60,7 +60,7 @@ const Step5 = ({
 
   // Query params
   const params = new URLSearchParams(location.search);
-  const certifId = params.get('certifId');
+  const certifId = String(values.certifId) ?? new URLSearchParams(location.search).get('certifId');
   const orderId = params.get('orderId') || values.orderId;
 
   console.log("VALUES : ", values);
@@ -1020,7 +1020,7 @@ const Step5 = ({
                   onChange={e => setOrderLabel(e.target.value)}
                   sx={{ flex: 1 }}
                 />
-              
+
               </>
 
             ) : (

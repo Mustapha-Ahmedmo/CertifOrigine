@@ -425,6 +425,8 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         throw new Error("La réponse du serveur ne contient pas 'newCertifId'.");
       }
 
+      handleChange('certifId', certResponse.newCertifId);
+
       // Ajout des marchandises
       for (const merchandise of safeValues.merchandises) {
         if (!merchandise.boxReference || !merchandise.designation) {
