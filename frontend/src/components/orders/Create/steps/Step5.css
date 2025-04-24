@@ -492,3 +492,12 @@
   width: 400px;
   max-width: 90%;
 }
+
+.step5-modifier-button {
+  text-transform: none;
+  color: #C39408;
+  border-color: #C39408;
+}
+.step5-modifier-button:hover {
+  background-color: rgba(195,148,8, 0.1);
+}

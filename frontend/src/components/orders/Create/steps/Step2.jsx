@@ -410,11 +410,11 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       const certData = {
         idOrder: safeValues.orderId,
         idRecipientAccount: recipientId,
-        idCountryOrigin: getCountryId(safeValues.goodsOrigin),
-        idCountryDestination: getCountryId(safeValues.goodsDestination),
+        idCountryOrigin: Number(safeValues.goodsOrigin),
+        idCountryDestination: Number(safeValues.goodsDestination),
         notes: safeValues.remarks,
-        idCountryPortLoading: getCountryId(safeValues.loadingPort),
-        idCountryPortDischarge: getCountryId(safeValues.dischargingPort),
+        idCountryPortLoading: Number(safeValues.loadingPort),
+        idCountryPortDischarge: Number(safeValues.dischargingPort),
         copyCount: safeValues.copies,
         idLoginInsert: user?.id_login_user || 1,
         transportRemarks: safeValues.transportRemarks,
@@ -624,7 +624,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       <em>-- Sélectionnez un pays --</em>
                     </MenuItem>
                     {countries.map((c) => (
-                      <MenuItem key={c.id_country} value={c.symbol_fr}>
+                      <MenuItem key={c.id_country} value={c.id_country}>
                         {c.symbol_fr}
                       </MenuItem>
                     ))}
@@ -657,7 +657,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       <em>-- Sélectionnez un pays --</em>
                     </MenuItem>
                     {countries.map((c) => (
-                      <MenuItem key={c.id_country} value={c.symbol_fr}>
+                      <MenuItem key={c.id_country} value={c.id_country}>
                         {c.symbol_fr}
                       </MenuItem>
                     ))}
@@ -677,7 +677,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       <em>-- Sélectionnez un pays --</em>
                     </MenuItem>
                     {countries.map((c) => (
-                      <MenuItem key={c.id_country} value={c.symbol_fr}>
+                      <MenuItem key={c.id_country} value={c.id_country}>
                         {c.symbol_fr}
                       </MenuItem>
                     ))}
@@ -708,7 +708,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       <em>-- Sélectionnez un pays --</em>
                     </MenuItem>
                     {countries.map((c) => (
-                      <MenuItem key={c.id_country} value={c.symbol_fr}>
+                      <MenuItem key={c.id_country} value={c.id_country}>
                         {c.symbol_fr}
                       </MenuItem>
                     ))}
@@ -726,7 +726,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       <em>-- Sélectionnez un pays --</em>
                     </MenuItem>
                     {countries.map((c) => (
-                      <MenuItem key={c.id_country} value={c.symbol_fr}>
+                      <MenuItem key={c.id_country} value={c.id_country}>
                         {c.symbol_fr}
                       </MenuItem>
                     ))}
