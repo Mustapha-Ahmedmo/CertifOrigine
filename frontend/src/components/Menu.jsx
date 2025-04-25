@@ -219,7 +219,23 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
 
 
           {/* Lien vers Gestion des commandes -> pointe maintenant vers "/dashboard/home" */}
-
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
+              to="/dashboard/home"
+              onClick={() => {
+                handleParentClick();
+                handleLinkClick();
+              }}
+              selected={location.pathname === "/dashboard/home"}
+              sx={selectedStyle}
+            >
+              <ListItemIcon sx={{ color: "black" }}>
+                <FontAwesomeIcon icon={faClipboardList} />
+              </ListItemIcon>
+              <ListItemText primary="Gestion des commandes" primaryTypographyProps={{ fontSize: "14px" }} />
+            </ListItemButton>
+          </ListItem>
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
           {/* Nouvelle Commande (sous-menu) */}
@@ -282,25 +298,18 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           </Collapse>
 
           {/* Mes commandes passées (sous-menu) */}
-
           <ListItem disablePadding>
             <ListItemButton
-              component={Link}
-              to="/dashboard/orders-list"
-              onClick={() => {
-                handleParentClick();
-                handleLinkClick();
-              }}
-              selected={location.pathname === "/dashboard/search-orders"}
-              sx={selectedStyle}>
-
+              onClick={() => handleToggleSubmenu("pastOrders")}
+              selected={location.pathname === "/"}
+            >
               <ListItemIcon sx={{ color: "black" }}>
-                <FontAwesomeIcon icon={faClipboardList} />
+                <FontAwesomeIcon icon={faHistory} />
               </ListItemIcon>
-              <ListItemText primary="Historique de commandes terminées" primaryTypographyProps={{ fontSize: "14px" }} />
+              <ListItemText primary="Recherche de documents" primaryTypographyProps={{ fontSize: "14px" }} />
             </ListItemButton>
           </ListItem>
-
+          
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
           <ListItem disablePadding>
@@ -391,7 +400,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           </Box>
         </List>
       </Box>
-    </Drawer >
+    </Drawer>
   );
 };
 
