@@ -262,7 +262,12 @@ const Inscriptions = () => {
                   <TableCell>{registration.co_symbol_fr}</TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {registration.in_free_zone ? 'Zone franche' : 'Entreprise'}
+                      {registration.in_free_zone
+                        ? 'Zone franche'
+                        : (registration.trade_registration_num && registration.trade_registration_num !== 'null') ||
+                          (registration.register_number && registration.register_number !== 'null')
+                          ? 'Entreprise'
+                          : 'Autres'}
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -299,22 +304,29 @@ const Inscriptions = () => {
                     ) : (
                       <Typography variant="body2">Aucun fichier</Typography>
                     )}
-                    {registration.in_free_zone && registration.identification_number && (
-                      <Box mt={1} fontStyle="italic">
-                        Numéro de licence :{' '}
-                        <strong>{registration.identification_number}</strong>
-                      </Box>
-                    )}
-                    {!registration.in_free_zone && registration.trade_registration_num && (
-                      <Box mt={1} fontStyle="italic">
-                        NIF : <strong>{registration.trade_registration_num}</strong>
-                      </Box>
-                    )}
-                    {!registration.in_free_zone && registration.register_number && (
-                      <Box mt={1} fontStyle="italic">
-                        RCS : <strong>{registration.register_number}</strong>
-                      </Box>
-                    )}
+                    {registration.in_free_zone &&
+                      registration.identification_number &&
+                      registration.identification_number !== 'null' && (
+                        <Box mt={1} fontStyle="italic">
+                          Numéro de licence : <strong>{registration.identification_number}</strong>
+                        </Box>
+                      )}
+
+                    {!registration.in_free_zone &&
+                      registration.trade_registration_num &&
+                      registration.trade_registration_num !== 'null' && (
+                        <Box mt={1} fontStyle="italic">
+                          NIF : <strong>{registration.trade_registration_num}</strong>
+                        </Box>
+                      )}
+
+                    {!registration.in_free_zone &&
+                      registration.register_number &&
+                      registration.register_number !== 'null' && (
+                        <Box mt={1} fontStyle="italic">
+                          RCS : <strong>{registration.register_number}</strong>
+                        </Box>
+                      )}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -372,7 +384,12 @@ const Inscriptions = () => {
                 </Typography>
                 <Typography variant="subtitle2">
                   <strong>Implantation :</strong>{' '}
-                  {registration.in_free_zone ? 'Zone franche' : 'Entreprise'}
+                  {registration.in_free_zone
+                    ? 'Zone franche'
+                    : (registration.trade_registration_num && registration.trade_registration_num !== 'null') ||
+                      (registration.register_number && registration.register_number !== 'null')
+                      ? 'Entreprise'
+                      : 'Autres'}
                 </Typography>
                 <Typography variant="subtitle2">
                   <strong>Fichiers :</strong>
@@ -410,21 +427,29 @@ const Inscriptions = () => {
                 ) : (
                   <Typography variant="body2">Aucun fichier</Typography>
                 )}
-                {registration.in_free_zone && registration.identification_number && (
-                  <Box mt={1} fontStyle="italic">
-                    Numéro de licence : <strong>{registration.identification_number}</strong>
-                  </Box>
-                )}
-                {!registration.in_free_zone && registration.trade_registration_num && (
-                  <Box mt={1} fontStyle="italic">
-                    NIF : <strong>{registration.trade_registration_num}</strong>
-                  </Box>
-                )}
-                {!registration.in_free_zone && registration.register_number && (
-                  <Box mt={1} fontStyle="italic">
-                    RCS : <strong>{registration.register_number}</strong>
-                  </Box>
-                )}
+                {registration.in_free_zone &&
+                  registration.identification_number &&
+                  registration.identification_number !== 'null' && (
+                    <Box mt={1} fontStyle="italic">
+                      Numéro de licence : <strong>{registration.identification_number}</strong>
+                    </Box>
+                  )}
+
+                {!registration.in_free_zone &&
+                  registration.trade_registration_num &&
+                  registration.trade_registration_num !== 'null' && (
+                    <Box mt={1} fontStyle="italic">
+                      NIF : <strong>{registration.trade_registration_num}</strong>
+                    </Box>
+                  )}
+
+                {!registration.in_free_zone &&
+                  registration.register_number &&
+                  registration.register_number !== 'null' && (
+                    <Box mt={1} fontStyle="italic">
+                      RCS : <strong>{registration.register_number}</strong>
+                    </Box>
+                  )}
               </CardContent>
               <CardActions>
                 <Button
@@ -502,47 +527,47 @@ const Inscriptions = () => {
         open={showContactModal && !!selectedAccount}
         onClose={handleCloseContactsModal}
         fullWidth
-        maxWidth="lg"  
+        maxWidth="lg"
       >
         <DialogTitle>
           LISTING DES CONTACTS DE LA SOCIÉTÉ "{selectedAccount?.cust_name}"
         </DialogTitle>
         <DialogContent>
-           {selectedAccount?.main_contact && selectedAccount.main_contact.length > 0 ? (
-     <TableContainer component={Paper}>
-       <Table size="small">
-         <TableHead>
-           <TableRow>
-             <TableCell>Nom</TableCell>
-             <TableCell>Fonction</TableCell>
-             <TableCell>Email</TableCell>
-             <TableCell>Tél</TableCell>
-             <TableCell>Portable</TableCell>
-             <TableCell>Statut</TableCell>
-           </TableRow>
-         </TableHead>
-         <TableBody>
-           {selectedAccount.main_contact.map((c) => (
-             <TableRow key={c.id_cust_user}>
-               <TableCell>{c.full_name || 'N/A'}</TableCell>
-               <TableCell>{c.position   || 'N/A'}</TableCell>
-               <TableCell>{c.email      || 'N/A'}</TableCell>
-               <TableCell>{c.phone_number  || 'N/A'}</TableCell>
-               <TableCell>{c.mobile_number || 'N/A'}</TableCell>
-               <TableCell>
-                 <Box display="flex" alignItems="center" gap={1}>
-                   <Checkbox checked={c.ismain_user} readOnly size="small" />
-                   <Typography variant="body2">Contact principal</Typography>
-                 </Box>
-               </TableCell>
-             </TableRow>
-           ))}
-         </TableBody>
-       </Table>
-     </TableContainer>
-   ) : (
-     <Typography>Aucun contact principal trouvé</Typography>
-   )}
+          {selectedAccount?.main_contact && selectedAccount.main_contact.length > 0 ? (
+            <TableContainer component={Paper}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Nom</TableCell>
+                    <TableCell>Fonction</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Tél</TableCell>
+                    <TableCell>Portable</TableCell>
+                    <TableCell>Statut</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {selectedAccount.main_contact.map((c) => (
+                    <TableRow key={c.id_cust_user}>
+                      <TableCell>{c.full_name || 'N/A'}</TableCell>
+                      <TableCell>{c.position || 'N/A'}</TableCell>
+                      <TableCell>{c.email || 'N/A'}</TableCell>
+                      <TableCell>{c.phone_number || 'N/A'}</TableCell>
+                      <TableCell>{c.mobile_number || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Checkbox checked={c.ismain_user} readOnly size="small" />
+                          <Typography variant="body2">Contact principal</Typography>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography>Aucun contact principal trouvé</Typography>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseContactsModal} variant="outlined">

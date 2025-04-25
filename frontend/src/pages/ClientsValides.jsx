@@ -82,6 +82,8 @@ const safeValue = (val) => {
 };
 
 function getImplantationLabel(registration) {
+
+  console.log("REGISTRATION : ", registration)
   if (registration.in_free_zone === true) {
     return 'Zone franche';
   }
@@ -89,8 +91,8 @@ function getImplantationLabel(registration) {
   /* si la société a un NIF ou un RCS, on la considère
      comme “Entreprise”, quel que soit le contenu de in_free_zone */
   if (
-    registration.trade_registration_num ||   // NIF
-    registration.register_number             // RCS
+    (registration.trade_registration_num && registration.trade_registration_num !== 'null') ||  // NIF
+    (registration.register_number && registration.register_number !== 'null')                   // RCS
   ) {
     return 'Entreprise';
   }
@@ -757,9 +759,9 @@ const ClientsValides = () => {
     && selectedFilter !== 'rejeté';
 
   function getInformationsLabel(registration) {
-    // 1) Zone franche  ⇒ Licence
+    // 1) Zone franche ⇒ Licence
     if (registration.in_free_zone === true) {
-      return registration.identification_number ? (
+      return registration.identification_number && registration.identification_number !== 'null' ? (
         <span>
           <strong>Licence :</strong> {registration.identification_number}
         </span>
@@ -767,12 +769,15 @@ const ClientsValides = () => {
     }
 
     // 2) Si l’on dispose d’un NIF ou d’un RCS ⇒ toujours les afficher
-    if (registration.trade_registration_num || registration.register_number) {
+    const hasNIF = registration.trade_registration_num && registration.trade_registration_num !== 'null';
+    const hasRCS = registration.register_number && registration.register_number !== 'null';
+
+    if (hasNIF || hasRCS) {
       return (
         <span>
-          <strong>NIF :</strong> {registration.trade_registration_num || 'N/A'}
+          <strong>NIF :</strong> {hasNIF ? registration.trade_registration_num : 'N/A'}
           <br />
-          <strong>RCS :</strong> {registration.register_number || 'N/A'}
+          <strong>RCS :</strong> {hasRCS ? registration.register_number : 'N/A'}
         </span>
       );
     }
