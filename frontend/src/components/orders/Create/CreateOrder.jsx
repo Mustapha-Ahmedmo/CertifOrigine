@@ -18,7 +18,8 @@ import Typography from '@mui/material/Typography';
 // Import MUI / FontAwesome pour l'icône
 import { useTheme, useMediaQuery } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faListCheck } from '@fortawesome/free-solid-svg-icons'; 
+import { faListCheck } from '@fortawesome/free-solid-svg-icons';
+import { useNavigate } from 'react-router-dom';
 // (Vous pouvez changer l'icône)
 
 const CreateOrder = () => {
@@ -85,6 +86,8 @@ const CreateOrder = () => {
     setCurrentStep((prev) => (prev > 1 ? prev - 1 : prev));
   };
 
+
+
   // Handlers
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -119,6 +122,16 @@ const CreateOrder = () => {
     }
   };
 
+  const navigate = useNavigate();
+
+  // when we're done with Step4, go to the details page instead of Step5
+  const goToOrderDetails = () => {
+    const { orderId, certifId } = formData;
+    navigate(
+      `/dashboard/order-details?orderId=${orderId}&certifId=${certifId}`
+    );
+  };
+
   // Rendu conditionnel de chaque étape
   const renderStep = () => {
     switch (currentStep) {
@@ -143,7 +156,7 @@ const CreateOrder = () => {
       case 3:
         return (
           <Step4
-            nextStep={nextStep}
+            nextStep={goToOrderDetails}
             prevStep={prevStep}
             handleChange={handleChange}
             values={formData}
@@ -174,7 +187,7 @@ const CreateOrder = () => {
     <div className="create-order-container">
       {/* Sur mobile, petite barre + icône, sinon Stepper complet */}
       {isSmallScreen ? (
-        <Box 
+        <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
