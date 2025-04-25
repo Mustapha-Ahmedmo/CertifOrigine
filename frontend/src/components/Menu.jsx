@@ -297,19 +297,28 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
             </List>
           </Collapse>
 
-          {/* Mes commandes passées (sous-menu) */}
+          {/* Historique des commandes terminées */}
           <ListItem disablePadding>
             <ListItemButton
-              onClick={() => handleToggleSubmenu("pastOrders")}
-              selected={location.pathname === "/"}
+              component={Link}
+              to="/dashboard/search-orders"
+              onClick={() => {
+                handleParentClick();
+                handleLinkClick();
+              }}
+              selected={location.pathname === "/dashboard/search-orders"}
+              sx={selectedStyle}
             >
               <ListItemIcon sx={{ color: "black" }}>
                 <FontAwesomeIcon icon={faHistory} />
               </ListItemIcon>
-              <ListItemText primary="Recherche de documents" primaryTypographyProps={{ fontSize: "14px" }} />
+              <ListItemText
+                primary="Historique des commandes terminées"
+                primaryTypographyProps={{ fontSize: "14px" }}
+              />
             </ListItemButton>
           </ListItem>
-          
+
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
           <ListItem disablePadding>
@@ -400,7 +409,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           </Box>
         </List>
       </Box>
-    </Drawer>
+    </Drawer >
   );
 };
 

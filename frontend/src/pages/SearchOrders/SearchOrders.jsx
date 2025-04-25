@@ -32,7 +32,7 @@ import {
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faFilePdf } from '@fortawesome/free-solid-svg-icons';
-import { fetchCountries, fetchRecipients, getCertifGoodsInfo, getCertifTranspMode, getCustAccountInfo, getOrderFilesInfo, getOrderOpInfo, getTransmodeInfo, setOrderFiles } from '../../services/apiServices';
+import { fetchCountries, fetchRecipients, getCertifGoodsInfo, getCertifTranspMode, getCustAccountInfo, getOrderFilesInfo, getOrderOpInfo, getOrdersForCustomer, getTransmodeInfo, setOrderFiles } from '../../services/apiServices';
 import { formatDate } from '../../utils/dateUtils';
 import './SearchOrders.css';
 import { generatePDF } from '../../components/orders/GeneratePDF';
@@ -66,6 +66,8 @@ const SearchOrders = () => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const operatorId = user?.id_login_user;
+  const isOpUser = user?.isopuser;
+
   const currentYear = new Date().getFullYear();
 
   // États des filtres
@@ -115,43 +117,87 @@ const SearchOrders = () => {
     getCountries();
   }, []);
 
-  // Récupération des commandes selon les filtres
+
+  // Récupération des commandes selon les filtres, avec tri et filtrage client-side
   const fetchOrders = async () => {
-    if (!operatorId) return;
+    if (!operatorId && !user?.id_cust_account) return;
+
     try {
       setLoading(true);
+
+      // On n'envoie plus dateStart / dateEnd au back
       const params = {
-        p_id_order_list: orderNumber || null,
-        p_id_custaccount_list: null,
-        p_id_orderstatus_list: selectedStatuses.length > 0 ? selectedStatuses.join(',') : null,
+        p_id_order_list: null,  // on gère orderNumber en local
+        p_id_custaccount_list: isOpUser ? null : user.id_cust_account,
+        p_id_orderstatus_list: selectedStatuses.length
+          ? selectedStatuses.join(',')
+          : null,
         p_idlogin: operatorId,
-        p_date_start: dateStart || null,
-        p_date_end: dateEnd || null,
       };
-      const result = await getOrderOpInfo(params);
-      let loadedOrders = result.data || result;
-      loadedOrders = loadedOrders.filter(order => {
-        if (!order.insertdate_order) return false;
-        const orderYear = new Date(order.insertdate_order).getFullYear();
-        return orderYear === currentYear;
-      });
-      if (filterCertificate) {
-        loadedOrders = loadedOrders.filter(order => order.id_ord_certif_ori);
+
+      // 1) Récupérer tout
+      let allOrders;
+      if (isOpUser) {
+        const resp = await getOrderOpInfo(params);
+        allOrders = resp.data || resp;
+      } else {
+        const resp = await getOrdersForCustomer({
+          idCustAccountList: user.id_cust_account,
+          idLogin: operatorId,
+        });
+        allOrders = resp.data || resp;
       }
-      if (filterLegalisation) {
-        loadedOrders = loadedOrders.filter(order => order.id_ord_legalization);
-      }
-      if (filterInvoice) {
-        loadedOrders = loadedOrders.filter(order => order.id_ord_com_invoice);
-      }
-      if (searchText) {
-        const lowerSearch = searchText.toLowerCase();
-        loadedOrders = loadedOrders.filter(order =>
-          (order.order_title && order.order_title.toLowerCase().includes(lowerSearch)) ||
-          (order.cust_name && order.cust_name.toLowerCase().includes(lowerSearch))
+
+      // 2) On enrichit chaque objet d'une Date pour trier / filtrer
+      const withDates = allOrders
+        .map(o => ({
+          ...o,
+          __created: o.insertdate_order
+            ? new Date(o.insertdate_order)
+            : null
+        }))
+        .filter(o => o.__created); // on jette ceux sans date
+
+      // 3) Filtrer par année et plage dateStart/dateEnd
+      const start = new Date(dateStart);
+      const end = new Date(dateEnd);
+      let loaded = withDates
+        .filter(o => o.__created.getFullYear() === currentYear)
+        .filter(o => o.__created >= start && o.__created <= end);
+
+      // 4) Filtrer par numéro de commande (partial match)
+      if (orderNumber.trim()) {
+        const numStr = orderNumber.trim();
+        loaded = loaded.filter(o =>
+          o.id_order.toString().includes(numStr)
         );
       }
-      setOrders(loadedOrders);
+
+      // 5) Filtrer certificats / légalisations / factures
+      if (filterCertificate) loaded = loaded.filter(o => o.id_ord_certif_ori);
+      if (filterLegalisation) loaded = loaded.filter(o => o.id_ord_legalization);
+      if (filterInvoice) loaded = loaded.filter(o => o.id_ord_com_invoice);
+
+      // 6) Filtrer texte libre (désignation OU client)
+      if (searchText.trim()) {
+        const lc = searchText.toLowerCase();
+        loaded = loaded.filter(o =>
+          (o.order_title || '').toLowerCase().includes(lc)
+          || (o.cust_name || '').toLowerCase().includes(lc)
+        );
+      }
+
+      // 7) Tri : date desc, puis numéro de commande desc
+      loaded.sort((a, b) => {
+        const d = b.__created - a.__created;
+        if (d !== 0) return d;
+        return b.id_order - a.id_order;
+      });
+
+      // 8) On retire __created avant setState
+      const result = loaded.map(({ __created, ...rest }) => rest);
+      setOrders(result);
+
     } catch (err) {
       console.error('Error loading orders for search:', err);
       setError(err.message || "Erreur lors du chargement des commandes.");
@@ -160,11 +206,10 @@ const SearchOrders = () => {
     }
   };
 
+
   useEffect(() => {
-    if (operatorId) {
-      fetchOrders();
-    }
-  }, [operatorId]);
+    fetchOrders();
+  }, [operatorId, user?.id_cust_account]);
 
   const handleApplyFilters = () => {
     fetchOrders();
