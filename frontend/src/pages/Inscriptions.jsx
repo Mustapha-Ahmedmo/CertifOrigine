@@ -256,7 +256,9 @@ const Inscriptions = () => {
                     {registration.cust_name}
                   </TableCell>
                   <TableCell>
-                    {registration.sectorName?.symbol_fr || 'N/A'}
+                    {registration.sectorName?.symbol_fr?.toLowerCase() === 'autres'
+                    ? `AUTRES : ${registration.other_sector || ''}`
+                    : registration.sectorName?.symbol_fr || 'N/A'}
                   </TableCell>
                   <TableCell>{registration.full_address}</TableCell>
                   <TableCell>{registration.co_symbol_fr}</TableCell>
