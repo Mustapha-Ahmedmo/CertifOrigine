@@ -1315,6 +1315,7 @@ export const sendbackOrder = async (p_id_order, p_id_cust_account, p_idlogin_mod
     throw error;
   }
 };
+
 export const rejectOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail, orderTitle) => {
   try {
     const response = await fetch(`${API_URL}/orders/reject_order`, {

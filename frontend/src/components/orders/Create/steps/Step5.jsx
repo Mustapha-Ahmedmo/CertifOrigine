@@ -261,8 +261,7 @@ const Step5 = ({
         if (orderId) {
           const files = await getOrderFilesInfo({
             p_id_order_list: orderId,
-            p_isactive: true,
-            p_id_custaccount: customerAccountId,
+            p_isactive: true
           });
           setDocumentsInfo(files);
         }
@@ -1472,7 +1471,7 @@ const Step5 = ({
               />
             ) : (
               <Box sx={{ flex: 1, backgroundColor: '#e0e0e0', p: 1, borderRadius: 1 }}>
-                <Typography>{values.copies || 'Non spécifié'}</Typography>
+                <Typography>{values.copies}</Typography>
               </Box>
             )}
           </Box>

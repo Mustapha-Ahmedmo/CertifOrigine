@@ -405,7 +405,11 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
                       <span className="home-button-text">Détails</span>
                     </button>
                   ) : (
-                    <button className="home-icon-button home-minimal-button" title="Ajouter">
+                    <button
+                      className="home-icon-button home-minimal-button"
+                      title="Ajouter"
+                      onClick={() => navigate(`/dashboard/create-order?orderId=${order.id_order}`)}
+                    >
                       <FontAwesomeIcon icon={faPlus} />
                     </button>
                   )}
@@ -534,7 +538,11 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
                       <span className="home-button-text">Détails</span>
                     </button>
                   ) : (
-                    <button className="home-icon-button home-minimal-button" title="Ajouter">
+                    <button
+                      className="home-icon-button home-minimal-button"
+                      title="Ajouter"
+                      onClick={() => navigate(`/dashboard/create-order?orderId=${order.id_order}`)}
+                    >
                       <FontAwesomeIcon icon={faPlus} />
                     </button>
                   )}

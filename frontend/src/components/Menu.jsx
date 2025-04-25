@@ -219,23 +219,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
 
 
           {/* Lien vers Gestion des commandes -> pointe maintenant vers "/dashboard/home" */}
-          <ListItem disablePadding>
-            <ListItemButton
-              component={Link}
-              to="/dashboard/home"
-              onClick={() => {
-                handleParentClick();
-                handleLinkClick();
-              }}
-              selected={location.pathname === "/dashboard/home"}
-              sx={selectedStyle}
-            >
-              <ListItemIcon sx={{ color: "black" }}>
-                <FontAwesomeIcon icon={faClipboardList} />
-              </ListItemIcon>
-              <ListItemText primary="Gestion des commandes" primaryTypographyProps={{ fontSize: "14px" }} />
-            </ListItemButton>
-          </ListItem>
+
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
           {/* Nouvelle Commande (sous-menu) */}
@@ -298,63 +282,25 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           </Collapse>
 
           {/* Mes commandes passées (sous-menu) */}
+
           <ListItem disablePadding>
             <ListItemButton
-              onClick={() => handleToggleSubmenu("pastOrders")}
-              selected={location.pathname === "/"}
-            >
+              component={Link}
+              to="/dashboard/orders-list"
+              onClick={() => {
+                handleParentClick();
+                handleLinkClick();
+              }}
+              selected={location.pathname === "/dashboard/search-orders"}
+              sx={selectedStyle}>
+
               <ListItemIcon sx={{ color: "black" }}>
-                <FontAwesomeIcon icon={faHistory} />
+                <FontAwesomeIcon icon={faClipboardList} />
               </ListItemIcon>
-              <ListItemText primary="Recherche de documents" primaryTypographyProps={{ fontSize: "14px" }} />
+              <ListItemText primary="Historique de commandes terminées" primaryTypographyProps={{ fontSize: "14px" }} />
             </ListItemButton>
           </ListItem>
-          <Collapse in={openSubmenus.pastOrders} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              <ListItem disablePadding>
-                <ListItemButton
-                  sx={{ pl: 4, ...selectedStyle }}
-                  component={Link}
-                  to="/"
-                  onClick={handleLinkClick}
-                  selected={location.pathname === "/"}
-                >
-                  <ListItemIcon sx={{ color: "black" }}>
-                    <FontAwesomeIcon icon={faHistory} />
-                  </ListItemIcon>
-                  <ListItemText primary={currentYear} primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-              </ListItem>
-              <ListItem disablePadding>
-                <ListItemButton
-                  sx={{ pl: 4, ...selectedStyle }}
-                  component={Link}
-                  to="/"
-                  onClick={handleLinkClick}
-                  selected={location.pathname === "/"}
-                >
-                  <ListItemIcon sx={{ color: "black" }}>
-                    <FontAwesomeIcon icon={faHistory} />
-                  </ListItemIcon>
-                  <ListItemText primary={previousYear} primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-              </ListItem>
-              <ListItem disablePadding>
-                <ListItemButton
-                  sx={{ pl: 4, ...selectedStyle }}
-                  component={Link}
-                  to="/"
-                  onClick={handleLinkClick}
-                  selected={location.pathname === "/"}
-                >
-                  <ListItemIcon sx={{ color: "black" }}>
-                    <FontAwesomeIcon icon={faHistory} />
-                  </ListItemIcon>
-                  <ListItemText primary={`Avant ${previousYear}`} primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-              </ListItem>
-            </List>
-          </Collapse>
+
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
           <ListItem disablePadding>
@@ -445,7 +391,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           </Box>
         </List>
       </Box>
-    </Drawer>
+    </Drawer >
   );
 };
 

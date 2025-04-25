@@ -69,7 +69,7 @@ const Step3 = ({ nextStep, prevStep, handleChange, values }) => {
           type="number"
           value={copies}
           onChange={(e) => setCopies(e.target.value)}
-          min="1"
+          min="0"
           required
         />
       </div>

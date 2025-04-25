@@ -136,7 +136,7 @@ const OrderDetailsPage = () => {
               receiverPostalCode: order.postal_code || 'N/A',
               receiverCountry: order.country || 'N/A',
               receiverPhone: order.receiver_phone || 'N/A',
-              copies: order.copy_count_ori || 1,
+              copies: order.copy_count_ori || 0,
               remarks: order.notes_ori || 'Aucune remarque',
               loadingPort: order.id_country_port_loading || '',
               dischargingPort: order.id_country_port_discharge || '',

@@ -1,138 +1,134 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import {
+  Box,
+  Stepper,
+  Step,
+  StepLabel,
+  Slide,
+  Typography,
+  useTheme,
+  useMediaQuery
+} from '@mui/material';
+import { faListCheck } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 import Step1 from './steps/Step1';
 import Step2 from './steps/Step2';
-import Step4 from './steps/Step4'; // Étape 3
-import Step5 from './steps/Step5'; // Étape 4
+import Step4 from './steps/Step4';
+import Step5 from './steps/Step5';
 
-import './CreateOrder.css';
 import { createOrder } from '../../../services/apiServices';
-import { useSelector } from 'react-redux';
+import './CreateOrder.css';
 
-import Box from '@mui/material/Box';
-import Stepper from '@mui/material/Stepper';
-import Step from '@mui/material/Step';
-import StepLabel from '@mui/material/StepLabel';
-import Slide from '@mui/material/Slide';
-import Typography from '@mui/material/Typography';
-
-// Import MUI / FontAwesome pour l'icône
-import { useTheme, useMediaQuery } from '@mui/material';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faListCheck } from '@fortawesome/free-solid-svg-icons';
-import { useNavigate } from 'react-router-dom';
-// (Vous pouvez changer l'icône)
+const steps = [
+  'Étape 1 : Création de la commande',
+  "Étape 2 : Certificat d'origine",
+  'Étape 3 : Pièces justificatives',
+  'Étape 4 : Récapitulatif',
+];
 
 const CreateOrder = () => {
-  // Récupération de l'utilisateur depuis Redux
-  const auth = useSelector((state) => state.auth);
-  const customerAccountId = auth?.user?.id_cust_account;
-  const customerLoginId = auth?.user?.id_login_user;
+  const auth = useSelector((s) => s.auth);
+  const customerAccountId = auth.user?.id_cust_account;
+  const customerLoginId  = auth.user?.id_login_user;
 
-  // Query params
-  const params = new URLSearchParams(location.search);
-  const existingOrderId = params.get('orderId');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params   = new URLSearchParams(location.search);
+  const existingOrderId  = params.get('orderId');
   const existingCertifId = params.get('certifId');
 
-  // Steps
-  const [currentStep, setCurrentStep] = useState(1);
+  // decide initial step:
+  // if there's already a certif, go straight to recap (step 4)
+  // else if there's already an order, start at step 2
+  // otherwise start at step 1
+  const computeInitialStep = () => {
+    if (existingCertifId) return 4;
+    if (existingOrderId) return 2;
+    return 1;
+  };
+
+  const [currentStep, setCurrentStep] = useState(computeInitialStep());
   const [transitionDirection, setTransitionDirection] = useState('left');
 
-  // FormData global
   const [formData, setFormData] = useState({
-    orderId: existingOrderId || null,
-    orderStatus: 1,
-    certifId: existingCertifId || null,
-    orderName: '',
-    merchandises: [],
-    remarks: '',
-    transportModes: {
-      air: false,
-      mer: false,
-      terre: false,
-    },
-    isPaperCopy: false,
-    isTemplate: false,
-    exporterName: '',
+    orderId:        existingOrderId,
+    certifId:       existingCertifId,
+    orderStatus:    1,
+    orderName:      '',
+    merchandises:   [],
+    remarks:        '',
+    transportModes: { air: false, mer: false, terre: false },
+    isPaperCopy:    false,
+    isTemplate:     false,
+    exporterName:   '',
     exporterCompany2: '',
     exporterAddress: '',
     exporterAddress2: '',
     exporterPostalCode: '',
-    exporterCity: '',
+    exporterCity:    '',
     exporterCountry: '',
-    receiverName: '',
-    receiverCompany2: '',
+    receiverName:    '',
+    receiverCompany2:'',
     receiverAddress: '',
-    receiverAddress2: '',
-    receiverPostalCode: '',
-    receiverCity: '',
-    receiverCountry: '',
+    receiverAddress2:'',
+    receiverPostalCode:'',
+    receiverCity:     '',
+    receiverCountry:  '',
   });
 
+  // keep formData in sync with URL params if user manually changes them
   useEffect(() => {
-    console.log('formData updated:', formData);
-  }, [formData]);
+    setFormData((f) => ({
+      ...f,
+      orderId:  existingOrderId,
+      certifId: existingCertifId,
+    }));
+  }, [existingOrderId, existingCertifId]);
 
-  // Détection mobile
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Navigation
   const nextStep = () => {
     setTransitionDirection('left');
-    setCurrentStep((prev) => (prev < 4 ? prev + 1 : prev));
+    setCurrentStep((s) => Math.min(s + 1, 4));
   };
   const prevStep = () => {
     setTransitionDirection('right');
-    setCurrentStep((prev) => (prev > 1 ? prev - 1 : prev));
+    setCurrentStep((s) => Math.max(s - 1, 1));
   };
 
-
-
-  // Handlers
   const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((f) => ({ ...f, [field]: value }));
   };
-  const handleMerchandiseChange = (newMerchandise) => {
-    setFormData((prev) => ({
-      ...prev,
-      merchandises: [...prev.merchandises, newMerchandise],
-    }));
+  const handleMerchandiseChange = (m) => {
+    setFormData((f) => ({ ...f, merchandises: [...f.merchandises, m] }));
   };
 
-  // Soumission finale
-  const handleSubmit = () => {
-    console.log('Order Submitted:', formData);
-    // ...
-  };
-
-  // Création commande (étape 1)
+  // create a brand-new order, then advance
   const createEmptyOrder = async () => {
     try {
       const { orderName } = formData;
-      const response = await createOrder(orderName, customerAccountId, customerLoginId);
-      const { newOrderId } = response;
+      const { newOrderId } = await createOrder(orderName, customerAccountId, customerLoginId);
       if (newOrderId) {
-        setFormData((prev) => ({ ...prev, orderId: newOrderId }));
+        setFormData((f) => ({ ...f, orderId: newOrderId }));
         nextStep();
       } else {
-        console.error('Order creation failed: No orderId returned');
+        console.error('No orderId returned');
       }
-    } catch (error) {
-      console.error('Error creating order:', error);
+    } catch (err) {
+      console.error('Error creating order:', err);
     }
   };
 
-  const navigate = useNavigate();
-
-  // when we're done with Step4, go to the details page instead of Step5
+  // when docs step finishes, jump to details instead of step5
   const goToOrderDetails = () => {
     const { orderId, certifId } = formData;
-    navigate(
-      `/dashboard/order-details?orderId=${orderId}&certifId=${certifId}`
-    );
+    navigate(`/dashboard/order-details?orderId=${orderId}&certifId=${certifId}`);
   };
 
-  // Rendu conditionnel de chaque étape
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -167,7 +163,7 @@ const CreateOrder = () => {
           <Step5
             prevStep={prevStep}
             values={formData}
-            handleSubmit={handleSubmit}
+            handleSubmit={() => console.log('final submit', formData)}
           />
         );
       default:
@@ -175,17 +171,8 @@ const CreateOrder = () => {
     }
   };
 
-  // Liste des étapes
-  const steps = [
-    "Étape 1 : Création de la commande",
-    "Étape 2 : Certificat d'origine ",
-    "Étape 3 : Pièces justificatives",
-    "Étape 4 : Récapitulatif",
-  ];
-
   return (
     <div className="create-order-container">
-      {/* Sur mobile, petite barre + icône, sinon Stepper complet */}
       {isSmallScreen ? (
         <Box
           sx={{
@@ -198,11 +185,11 @@ const CreateOrder = () => {
         >
           <FontAwesomeIcon icon={faListCheck} size="lg" style={{ color: '#DCAF26' }} />
           <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-            {`${steps[currentStep - 1]}`}
+            {steps[currentStep - 1]}
           </Typography>
         </Box>
       ) : (
-        <Box sx={{ width: '100%', marginBottom: '20px' }}>
+        <Box sx={{ width: '100%', mb: 2 }}>
           <Stepper activeStep={currentStep - 1} alternativeLabel>
             {steps.map((label) => (
               <Step key={label}>
@@ -216,13 +203,11 @@ const CreateOrder = () => {
       <Slide
         key={currentStep}
         direction={transitionDirection}
-        in={true}
+        in
         mountOnEnter
         unmountOnExit
       >
-        <div className="step-content">
-          {renderStep()}
-        </div>
+        <div className="step-content">{renderStep()}</div>
       </Slide>
     </div>
   );

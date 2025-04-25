@@ -142,6 +142,7 @@ const App = () => {
             <Route path="returned-orders" element={<ReturnedOrders />} />
             <Route path="contactslist" element={<ContactsList />} />
             <Route path="destinatairelist" element={<DestinataireList />} />
+            <Route path="search-orders" element={<SearchOrders />} />
             <Route
               path="completed-orders-this-year"
               element={<CompletedOrdersThisYear />}

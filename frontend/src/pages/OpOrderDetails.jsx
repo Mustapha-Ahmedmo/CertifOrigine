@@ -19,53 +19,54 @@ import './OpOrderDetails.css';
 import Step5 from '../components/orders/Create/steps/Step5';
 
 const OpOrderDetails = () => {
-  const location  = useLocation();
-  const navigate  = useNavigate();
-  const params    = new URLSearchParams(location.search);
-  const orderId   = params.get('orderId');
-  const certifId  = params.get('certifId');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = new URLSearchParams(location.search);
+  const orderId = params.get('orderId');
+  const certifId = params.get('certifId');
 
-  const user     = useSelector(s => s.auth.user);
-  const idLogin  = user?.id_login_user;
+  const user = useSelector(s => s.auth.user);
+  const idLogin = user?.id_login_user;
   const isOpUser = user?.isopuser;
 
-  const [loading, setLoading]           = useState(true);
+  const [loading, setLoading] = useState(true);
   const [documentsInfo, setDocumentsInfo] = useState([]);
-  const [formData, setFormData]         = useState({
-    exporterName:     '',
-    orderLabel:       '',
-    merchandises:     [],
-    goodsOrigin:      '',
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnReason, setReturnReason] = useState('');
+  const [formData, setFormData] = useState({
+    exporterName: '',
+    orderLabel: '',
+    merchandises: [],
+    goodsOrigin: '',
     goodsDestination: '',
-    loadingPort:      '',
-    dischargingPort:  '',
-    transportModes:   {},
+    loadingPort: '',
+    dischargingPort: '',
+    transportModes: {},
     transportRemarks: '',
-    recipients:       [],
+    recipients: [],
     selectedRecipientId: '',
-    receiverName:     '',
-    receiverAddress:  '',
+    receiverName: '',
+    receiverAddress: '',
     receiverAddress2: '',
     receiverPostalCode: '',
-    receiverCity:     '',
-    receiverCountry:  '',
-    receiverPhone:    '',
-    copies:           1,
-    remarks:          '',
-    orderStatus:      null,
-    custAccountId:    null,
-    title:            '',
+    receiverCity: '',
+    receiverCountry: '',
+    receiverPhone: '',
+    copies: 1,
+    remarks: '',
+    orderStatus: null,
+    custAccountId: null,
+    title: '',
     date_last_submission: null,
-    copy_count_ori:   1,
+    copy_count_ori: 0,
   });
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        // --- 1) Pays ---
         const ctrs = await fetchCountries();
-
-        // --- 2) Modes transport ---
         const transp = await getCertifTranspMode({
           idListCT: null,
           idListCO: certifId?.toString(),
@@ -79,17 +80,12 @@ const OpOrderDetails = () => {
           transportModesObj[m.symbol_fr.toLowerCase()] = true;
         });
 
-        // --- 3) Commande ---
-        let ordResp;
-        if (isOpUser) {
-          ordResp = await getOrderOpInfo({ p_id_order_list: orderId, p_idlogin: idLogin });
-        } else {
-          ordResp = await getOrdersForCustomer({ idLogin });
-        }
+        let ordResp = isOpUser
+          ? await getOrderOpInfo({ p_id_order_list: orderId, p_idlogin: idLogin })
+          : await getOrdersForCustomer({ idLogin });
         const orders = ordResp.data || ordResp;
-        const order  = orders.find(o => String(o.id_order) === String(orderId));
+        const order = orders.find(o => String(o.id_order) === String(orderId));
 
-        // --- 4) Destinataire unique ---
         let recList = [];
         if (order?.id_recipient_account) {
           const recResp = await fetchRecipients({ idListR: order.id_recipient_account });
@@ -97,7 +93,6 @@ const OpOrderDetails = () => {
         }
         const recipient = recList[0] || {};
 
-        // --- 5) Marchandises ---
         let goods = [];
         if (certifId) {
           const g = await getCertifGoodsInfo(certifId);
@@ -110,40 +105,38 @@ const OpOrderDetails = () => {
           }));
         }
 
-        // --- 6) Pièces jointes ---
         const files = await getOrderFilesInfo({
           p_id_order_list: orderId,
           p_isactive: true,
         });
         setDocumentsInfo(files);
 
-        // --- 7) Remplissage du state ---
         setFormData({
-          exporterName:     order?.cust_name || order?.exporter_company || 'Non spécifié',
-          orderLabel:       order?.order_title || '',
-          merchandises:     goods,
-          goodsOrigin:      order?.id_country_origin || 'Non spécifié',
+          exporterName: order?.cust_name || order?.exporter_company || 'Non spécifié',
+          orderLabel: order?.order_title || '',
+          merchandises: goods,
+          goodsOrigin: order?.id_country_origin || 'Non spécifié',
           goodsDestination: order?.id_country_destination || 'Non spécifié',
-          loadingPort:      order?.id_country_port_loading || 'Non spécifié',
-          dischargingPort:  order?.id_country_port_discharge || 'Non spécifié',
-          transportModes:   transportModesObj,
+          loadingPort: order?.id_country_port_loading || 'Non spécifié',
+          dischargingPort: order?.id_country_port_discharge || 'Non spécifié',
+          transportModes: transportModesObj,
           transportRemarks: order?.transport_remarks || '',
-          recipients:       recList,
+          recipients: recList,
           selectedRecipientId: order?.id_recipient_account || '',
-          receiverName:     recipient.recipient_name || 'N/A',
-          receiverAddress:  recipient.address_1 || 'N/A',
+          receiverName: recipient.recipient_name || 'N/A',
+          receiverAddress: recipient.address_1 || 'N/A',
           receiverAddress2: recipient.address_2 || '',
           receiverPostalCode: recipient.address_3 || 'N/A',
-          receiverCity:     recipient.city_symbol_fr_recipient || 'N/A',
-          receiverCountry:  recipient.country_symbol_fr_recipient || 'N/A',
-          receiverPhone:    order?.receiver_phone || 'N/A',
-          copies:           order?.copy_count_ori || 1,
-          remarks:          order?.notes_ori || 'Aucune remarque',
-          orderStatus:      order?.id_order_status || null,
-          custAccountId:    order?.id_cust_account || null,
-          title:            order?.order_title || '',
+          receiverCity: recipient.city_symbol_fr_recipient || 'N/A',
+          receiverCountry: recipient.country_symbol_fr_recipient || 'N/A',
+          receiverPhone: order?.receiver_phone || 'N/A',
+          copies: order?.copy_count_ori || 1,
+          remarks: order?.notes_ori || 'Aucune remarque',
+          orderStatus: order?.id_order_status || null,
+          custAccountId: order?.id_cust_account || null,
+          title: order?.order_title || '',
           date_last_submission: order?.date_last_submission || null,
-          copy_count_ori:   order?.copy_count_ori || 1,
+          copy_count_ori: order?.copy_count_ori || 1,
         });
       } catch (err) {
         console.error('Erreur chargement OpOrderDetails:', err);
@@ -162,28 +155,41 @@ const OpOrderDetails = () => {
   const handleChange = (field, value) =>
     setFormData(prev => ({ ...prev, [field]: value }));
 
-  const performAction = async (apiFn) => {
+  const performAction = async (apiFn, reason) => {
     const cu = await getCustUsersByAccount(
-      formData.selectedRecipientId, null, 'true', 'true', true
+      formData.selectedRecipientId,
+      null, 'true', 'true', true
     );
     const customerEmail = cu.data[0].email;
-
-    // pour validate, on calcule le total ; sinon ignore
     const args = [
       orderId,
       formData.selectedRecipientId,
       idLogin,
+      reason,
       customerEmail,
       formData.title,
-      formData.date_last_submission
     ];
     if (apiFn === approveOrder) {
       const totalPrice = 8500 + 2500 * formData.copy_count_ori;
+      args.splice(3, 1, customerEmail); // shift reason out
       args.push(totalPrice);
     }
-
     await apiFn(...args);
     navigate('/operator-dashboard');
+  };
+
+  const handleRejectClick = () => setShowRejectModal(true);
+  const handleReturnClick = () => setShowReturnModal(true);
+  const handleRejectCancel = () => setShowRejectModal(false);
+  const handleReturnCancel = () => setShowReturnModal(false);
+
+  const handleRejectConfirm = () => {
+    performAction(rejectOrder, rejectReason);
+    setShowRejectModal(false);
+  };
+  const handleReturnConfirm = () => {
+    performAction(sendbackOrder, returnReason);
+    setShowReturnModal(false);
   };
 
   const handleFileClick = (file) => {
@@ -193,76 +199,75 @@ const OpOrderDetails = () => {
 
   return (
     <div className="op-container">
-      {/* résumé principal */}
       <Step5
         prevStep={() => navigate(-1)}
         values={formData}
         handleChange={handleChange}
-        handleSubmit={() => {}}
+        handleSubmit={() => { }}
         isModal={false}
       />
 
-      {/* piéces justificatives & annexes (7/7) */}
-      <div className="step5-section">
-        <h4 className="step5-main-title">7/7 Pièces justificatives & annexes</h4>
-        {documentsInfo.length > 0 ? (
-          <div className="step5-table-responsive">
-            <table className="step5-document-table">
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Fichier</th>
-                </tr>
-              </thead>
-              <tbody>
-                {documentsInfo.map((doc, idx) => (
-                  <tr key={idx}>
-                    <td>{doc.txt_description_fr}</td>
-                    <td>
-                      {doc.file_guid ? (
-                        <span
-                          onClick={() => handleFileClick(doc)}
-                          style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
-                        >
-                          {doc.file_origin_name || 'Télécharger'}
-                        </span>
-                      ) : (
-                        'Aucun fichier'
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>Aucune pièce justificative ajoutée.</p>
-        )}
-      </div>
-
-      {isOpUser && (
+      {isOpUser && ![3, 4, 5, 8, 9].includes(formData.orderStatus) && (
         <div className="step5-submit-section">
           <button
             type="button"
             className="step5-next-button"
-            onClick={() => performAction(approveOrder)}
+            onClick={() => performAction(approveOrder, '')}
           >
             Valider
           </button>
           <button
             type="button"
             className="step5-reject-button"
-            onClick={() => performAction(rejectOrder)}
+            onClick={handleRejectClick}
           >
             Rejeter
           </button>
           <button
             type="button"
             className="step5-return-button"
-            onClick={() => performAction(sendbackOrder)}
+            onClick={handleReturnClick}
           >
             Retourner
           </button>
+        </div>
+      )}
+
+      {showRejectModal && (
+        <div className="modal-overlay" onClick={handleRejectCancel}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3>Rejeter la commande</h3>
+            <textarea
+              placeholder="Raison du rejet..."
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+              rows={4}
+              style={{ width: '100%' }}
+            />
+            <div className="modal-actions">
+              <button onClick={handleRejectCancel}>Annuler</button>
+              <button onClick={handleRejectConfirm}>Confirmer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReturnModal && (
+        <div className="modal-overlay" onClick={handleReturnCancel}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3>Retourner la commande</h3>
+            <textarea
+              placeholder="Raison du retour..."
+              value={returnReason}
+              onChange={e => setReturnReason(e.target.value)}
+              rows={4}
+              style={{ width: '100%' }}
+            />
+            <div className="modal-actions">
+              <button onClick={handleReturnCancel}>Annuler</button>
+              <button onClick={handleReturnConfirm}>Confirmer</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -166,21 +166,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
           </ListItem>
           <Collapse in={openMenu.orders} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {/* Commandes en cours */}
-              <ListItem disablePadding>
-                <ListItemButton
-                  component={Link}
-                  to="/dashboard/operator/current-orders"
-                  onClick={() => handleLinkClick('orders', 'currentOrders')}
-                  selected={activeLink === 'currentOrders'}
-                  sx={{ pl: 4, ...selectedStyle }}
-                >
-                  <ListItemIcon sx={{ color: "black" }}>
-                    <FontAwesomeIcon icon={faShoppingCart} />
-                  </ListItemIcon>
-                  <ListItemText primary="Commandes en cours" primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-              </ListItem>
+            
               {/* Recherches de commande */}
               <ListItem disablePadding>
                 <ListItemButton
