@@ -377,7 +377,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
           address1: safeValues.receiverAddress,
           address2: safeValues.receiverAddress2,
           address3: safeValues.receiverPostalCity,
-          idCountry: getCountryId(safeValues.receiverCountry),
+          idCountry: Number(safeValues.receiverCountry),
           statutFlag: 1,
           activationDate: new Date().toISOString(),
           deactivationDate: new Date('9999-12-31').toISOString(),
