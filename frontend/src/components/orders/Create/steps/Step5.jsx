@@ -205,7 +205,6 @@ const Step5 = ({
         p_id_country_port_discharge: parseInt(values.dischargingPort, 10),
         p_notes: values.remarks || '',
         p_copy_count: values.copies || 0,
-        p_transport_remains: values.transportRemarks || '',
         p_transport_remains: tempTransportRemarks,
         p_idlogin_modify: idLogin,
       });
