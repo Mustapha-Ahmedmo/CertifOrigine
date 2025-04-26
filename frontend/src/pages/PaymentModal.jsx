@@ -16,8 +16,9 @@ import {
   Box,
   FormControlLabel as MuiFormControlLabel,
 } from '@mui/material';
-import { billOrder, setInvoiceHeader } from '../services/apiServices'; // API service functions
+import { billOrder, fetchCountries, fetchRecipients, getCertifGoodsInfo, getCertifTranspMode, getCustAccountInfo, handleSendDocuments, setInvoiceHeader, setOrderFiles } from '../services/apiServices'; // API service functions
 import { useSelector } from 'react-redux';
+import { generatePDF } from '../components/orders/GeneratePDF';
 
 function PaymentModal({ open, onClose, onSubmit, order }) {
   // Default invoice date: today's date (YYYY-MM-DD)
@@ -42,7 +43,6 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
   // Other payment-related state
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [customPaymentMethod, setCustomPaymentMethod] = useState('');
-  const [generateCertif, setGenerateCertif] = useState(false);
 
   // NEW: Payment Information field
   const [paymentInfo, setPaymentInfo] = useState('');
@@ -75,6 +75,23 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
     setConfirmationOpen(true);
   };
 
+
+  const [transpMode, settransportModes] = useState({});
+
+
+  const [countries, setCountries] = useState([]);
+  useEffect(() => {
+    const getCountries = async () => {
+      try {
+        const fetchedCountries = await fetchCountries();
+        setCountries(fetchedCountries);
+      } catch (error) {
+        console.error("Error fetching countries:", error);
+      }
+    };
+    getCountries();
+  }, []);
+
   // When the user confirms ("Oui"), call billOrder and setInvoiceHeader.
   const handleConfirmPayment = async () => {
     try {
@@ -96,7 +113,84 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
 
       const response = await setInvoiceHeader(invoiceData);
       console.log('Invoice header set successfully:', response);
+
+
+
+
+      console.log('Génération de PDF pour la commande:', order);
+      console.log("Transmode : ", transpMode);
+      const originCountry = countries.find(c => c.id_country === order.id_country_origin)?.symbol_fr || '';
+      const destinationCountry = countries.find(c => c.id_country === order.id_country_destination)?.symbol_fr || '';
+      const portLoading = countries.find(c => c.id_country === order.id_country_port_loading)?.symbol_fr || '';
+      const portDischarge = countries.find(c => c.id_country === order.id_country_port_discharge)?.symbol_fr || '';
+      const transpResponse = await getCertifTranspMode({
+        idListCT: null,
+        idListCO: order.id_ord_certif_ori ? order.id_ord_certif_ori.toString() : null,
+        isActiveOT: 'true',
+        isActiveTM: 'true',
+        idListOrder: null,
+        idListOrderStatus: null,
+      });
+      let transportModesObj = {};
+      if (transpResponse && transpResponse.data) {
+        transpResponse.data.forEach((mode) => {
+          transportModesObj[mode.symbol_fr.toLowerCase()] = true;
+        });
+      }
+      console.log("transpResponse ", transportModesObj);
+      const custAccountInfo = await getCustAccountInfo(order.id_cust_account);
+      console.log("custAccountInfo ", custAccountInfo);
+      const exporterCountry = countries.find(c => c.id_country === custAccountInfo.data[0].id_country)?.symbol_fr || '';
+      console.log("exporterCountry ", exporterCountry);
+      const certifGoods = await getCertifGoodsInfo(order.id_ord_certif_ori);
+      console.log("certifGoods =>", certifGoods);
+      const recipientInfoResponse = await fetchRecipients({
+        idListR: order.id_recipient_account ? order.id_recipient_account.toString() : null,
+      });
+      const recipient = (recipientInfoResponse.data && recipientInfoResponse.data.length > 0)
+        ? recipientInfoResponse.data[0]
+        : {};
+      console.log("Recipient info:", recipient);
+      const formData = {
+        transportModes: transportModesObj,
+        merchandises: certifGoods.data || [],
+        exporterName: order.cust_name || '',
+        exporterAddress: custAccountInfo.data[0].full_address,
+        exporterCountry: exporterCountry || '',
+        originCountry,
+        destinationCountry,
+        portLoading,
+        portDischarge,
+        recipientName: recipient.recipient_name || '',
+        recipientAddress: [recipient.address_1, recipient.address_2, recipient.address_3].filter(Boolean).join(', '),
+        recipientCountry: recipient.country_symbol_fr_recipient,
+        DateValidation: order.date_validation_ori,
+        Certifid: order.id_ord_certif_ori
+      };
+      const pdfBlob = await generatePDF(formData);
+      const pdfFile = new File(
+        [pdfBlob],
+        `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}.pdf`,
+        { type: 'application/pdf' }
+      );
+      const orderFileData = {
+        uploadType: 'commandes',
+        p_id_order: order.id_order,
+        p_idfiles_repo_typeof: 1000,
+        p_file_origin_name: `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}.pdf`,
+        p_typeof_order: 1,
+        p_idlogin_insert: operatorId,
+        file: pdfFile,
+      };
+      await setOrderFiles(orderFileData);
+
+      await handleSendDocuments(order);
+      console.log("PDF generated and order file saved successfully.");
+
+
+
       setConfirmationOpen(false);
+
       // Optionally, invoke parent's onSubmit callback if provided.
       if (onSubmit) onSubmit(response);
     } catch (error) {
@@ -210,17 +304,7 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
             sx={{ mb: 2 }}
           />
 
-          {/* Checkbox for generating certificate */}
-          <MuiFormControlLabel
-            control={
-              <Checkbox
-                checked={generateCertif}
-                onChange={(e) => setGenerateCertif(e.target.checked)}
-              />
-            }
-            label="Générer le certificat d'origine et les copies conformes"
-            sx={{ mt: 2 }}
-          />
+        
         </DialogContent>
 
         {/* Action Buttons */}
