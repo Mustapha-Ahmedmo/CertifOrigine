@@ -56,7 +56,8 @@ const Step5 = ({
   const user = useSelector((state) => state.auth.user);
   const idLogin = user?.id_login_user;
   const customerAccountId = user?.id_cust_account;
-  const companyName = user?.companyname;
+
+  const companyName = values.exporterName;
 
   // Query params
   const params = new URLSearchParams(location.search);
