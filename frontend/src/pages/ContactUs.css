@@ -6,7 +6,6 @@
   align-items: flex-start;
   gap: 2rem;               /* Espace entre les éléments à l'intérieur */
   padding: 2rem;
-  background-color: #f9f9f9;
   min-height: 100vh;
   font-family: 'Montserrat', sans-serif;
   position: relative;

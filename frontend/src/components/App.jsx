@@ -27,6 +27,9 @@ import OperatorsList from '../pages/OperatorsList';
 import Maintenance from '../pages/Maintenance';
 import HeaderLayout from '../components/HeaderLayout';
 import DestinataireList from '../pages/DestinataireList';
+import CgvPage from '../pages/CgvPage';
+import PrestationServicePage from '../pages/PrestationServicePage';
+import MentionsLegalesPage from '../pages/MentionsLegalesPage';
 
 // Pages du dashboard
 import Home from '../pages/Home';
@@ -152,6 +155,9 @@ const App = () => {
             <Route path="masociete" element={<ClientsValides />} />
             <Route path="order-details" element={<OrderDetailsPage />} />
             <Route path="notifications" element={<NotificationPage />} />
+            <Route path="cgv" element={<CgvPage />} />
+            <Route path="prestation-service" element={<PrestationServicePage />} />
+            <Route path="mentions-legales" element={<MentionsLegalesPage />} />
 
             <Route path="operator" element={<OperateurLayout />}>
               <Route index element={<HomeOperateur />} />
@@ -164,7 +170,16 @@ const App = () => {
               <Route path="dashboardoperateur" element={<DashboardOperateur />} />
               <Route path="current-orders" element={<CurrentOrders />} />
               <Route path="search-orders" element={<SearchOrders />} />
+              <Route path="cgv" element={<CgvPage />} />
+              <Route path="prestation-service" element={<PrestationServicePage />} />
+              <Route path="mentions-legales" element={<MentionsLegalesPage />} />
             </Route>
+
+            {/* Contact intégré au Dashboard (même layout) */}
+            <Route
+              path="contact-us"
+              element={<ContactUs />}
+            />
           </Route>
 
           {/* Autres routes publiques */}
