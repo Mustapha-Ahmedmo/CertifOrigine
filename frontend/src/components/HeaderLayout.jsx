@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import './HeaderLayout.css';
-
 import logo from '../assets/logo_vect2.png';
 
 const HeaderLayout = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
   return (
     <div style={{ margin: 0, padding: 0 }}>
       <header
-        className="page-header"
+        className="hl-page-header"
         style={{
           width: '100%',
           backgroundColor: 'transparent',
@@ -24,18 +22,18 @@ const HeaderLayout = () => {
           zIndex: 999,
         }}
       >
-        <nav className="header-nav">
+        <nav className="hl-header-nav">
           {/* Section gauche : Logo */}
-          <div className="header-left">
-            <button className="hamburger-button" onClick={toggleMenu}>
+          <div className="hl-header-left">
+            <button className="hl-hamburger-button" onClick={toggleMenu}>
               ☰
             </button>
-            <img src={logo} alt="Logo" className="logo" />
+            <img src={logo} alt="Logo" className="hl-logo" />
           </div>
 
           {/* Section centrale : Liens de navigation */}
-          <div className="header-center">
-            <ul className={`nav-links ${menuOpen ? 'open' : ''}`}>
+          <div className="hl-header-center">
+            <ul className={`hl-nav-links ${menuOpen ? 'open' : ''}`}>
               <li>
                 <Link to="/guide">Guide d'utilisation</Link>
               </li>
@@ -49,23 +47,15 @@ const HeaderLayout = () => {
           </div>
 
           {/* Section droite : Contactez-nous */}
-          <div className="header-right">
-            <Link to="/contact-us" className="contact-button">
+          <div className="hl-header-right">
+            <Link to="/contact-us" className="hl-contact-button">
               Contactez-nous
             </Link>
           </div>
         </nav>
       </header>
 
-      {/* Le contenu principal :
-          on décale vers le bas pour pas être masqué par le header */}
-      <main
-        style={{
-          margin: 0,
-          padding: 0,
-        
-        }}
-      >
+      <main style={{ margin: 0, padding: 0 }}>
         <Outlet />
       </main>
     </div>

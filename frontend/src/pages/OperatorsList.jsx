@@ -31,9 +31,14 @@ import {
   Grid,
   useTheme,
   useMediaQuery,
-  ButtonGroup,
   TextField,
-  Select
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Select,
+  MenuItem as MuiMenuItem,
 } from '@mui/material';
 import RegisterOP from './RegisterOP';
 
@@ -68,13 +73,8 @@ const OperatorsList = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const handleTabChange = (event, newValue) => setTabIndex(newValue);
-
-
-  // Deux états : 'active' ou 'inactive'
+  // --- status filter state ---
   const [statusFilter, setStatusFilter] = useState('active');
-
-  const [filter, setFilter] = useState('active');      // 'active' | 'inactive'
 
   const fetchOperators = async () => {
     setLoading(true);
@@ -93,14 +93,10 @@ const OperatorsList = () => {
   useEffect(() => {
     fetchOperators();
   }, [statusFilter]);
-  
+
   const handleModalClose = async () => {
     setOpenRegisterModal(false);
-    try {
-      await fetchOperators();
-    } catch (err) {
-      console.error('Reload failed', err);
-    }
+    await fetchOperators();
   };
 
   const getGroupLabel = (roles, opIsAdmin) => {
@@ -114,27 +110,21 @@ const OperatorsList = () => {
   const handleEdit = (operatorId) => navigate(`/registerop/${operatorId}`);
 
   const handleEnable = async (id) => {
-    if (!window.confirm('Réactiver cet opérateur ?')) return;
-    try {
-      await enableOperator(id);
-      setOperators((prev) => prev.filter((op) => op.id_op_user !== id));
-    } catch {
-      alert('Erreur lors de la réactivation.');
-    }
+    if (!window.confirm('Réactiver cet opérateur ?')) return;
+    await enableOperator(id);
+    setOperators((prev) => prev.filter((op) => op.id_op_user !== id));
   };
 
   const handleDisable = async (operatorId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir désactiver cet opérateur ?')) {
-      try {
-        await disableOperator(operatorId);
-        setOperators((prev) => prev.filter((op) => op.id_op_user !== operatorId));
-      } catch (err) {
-        alert('Erreur lors de la désactivation.');
-      }
-    }
+    if (!window.confirm('Désactiver cet opérateur ?')) return;
+    await disableOperator(operatorId);
+    setOperators((prev) => prev.filter((op) => op.id_op_user !== operatorId));
   };
 
-  const handleAddNew = () => (isAdmin ? setOpenRegisterModal(true) : alert("Seul un administrateur peut créer un opérateur."));
+  const handleAddNew = () => {
+    if (isAdmin) setOpenRegisterModal(true);
+    else alert("Seul un administrateur peut créer un opérateur.");
+  };
 
   const handleMenuOpen = (event, op) => {
     setAnchorEl(event.currentTarget);
@@ -145,7 +135,6 @@ const OperatorsList = () => {
     setSelectedOp(null);
   };
 
-  // Rendu du tableau (desktop)
   const renderTableView = () => (
     <Paper>
       <TableContainer>
@@ -175,7 +164,7 @@ const OperatorsList = () => {
                 <TableCell>{op.mobile_number}</TableCell>
                 <TableCell>{getGroupLabel(op.roles, op.isadmin)}</TableCell>
                 <TableCell>
-                  <IconButton onClick={(event) => handleMenuOpen(event, op)}>
+                  <IconButton onClick={(e) => handleMenuOpen(e, op)}>
                     <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
                   </IconButton>
                 </TableCell>
@@ -187,41 +176,30 @@ const OperatorsList = () => {
     </Paper>
   );
 
-  // Rendu en mode Card (mobile)
   const renderCardView = () => (
     <Grid container spacing={2}>
       {operators.map((op) => (
         <Grid item xs={12} key={op.id_op_user}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle2">
-                <strong>Nom :</strong> {op.full_name}
-              </Typography>
-              <Typography variant="subtitle2">
-                <strong>Login :</strong> {op.username}
-              </Typography>
-              <Typography variant="subtitle2">
+              <Typography><strong>Nom :</strong> {op.full_name}</Typography>
+              <Typography><strong>Login :</strong> {op.username}</Typography>
+              <Typography>
                 <strong>Email :</strong>{' '}
                 <a href={`mailto:${op.email}`} style={{ color: '#DCAF26' }}>
                   {op.email}
                 </a>
               </Typography>
-              <Typography variant="subtitle2">
-                <strong>Tél :</strong> {op.phone_number}
-              </Typography>
-              <Typography variant="subtitle2">
-                <strong>Portable :</strong> {op.mobile_number}
-              </Typography>
-              <Typography variant="subtitle2">
-                <strong>Groupe :</strong> {getGroupLabel(op.roles, op.isadmin)}
-              </Typography>
+              <Typography><strong>Tél :</strong> {op.phone_number}</Typography>
+              <Typography><strong>Portable :</strong> {op.mobile_number}</Typography>
+              <Typography><strong>Groupe :</strong> {getGroupLabel(op.roles, op.isadmin)}</Typography>
             </CardContent>
             <CardActions>
               <Button
                 variant="outlined"
                 size="small"
                 onClick={() => handleEdit(op.id_op_user)}
-                style={{ color: '#DCAF26', borderColor: '#DCAF26' }}
+                sx={{ color: '#DCAF26', borderColor: '#DCAF26' }}
               >
                 Modifier
               </Button>
@@ -229,7 +207,7 @@ const OperatorsList = () => {
                 variant="outlined"
                 size="small"
                 onClick={() => handleDisable(op.id_op_user)}
-                style={{ color: '#DCAF26', borderColor: '#DCAF26' }}
+                sx={{ color: '#DCAF26', borderColor: '#DCAF26' }}
               >
                 Désactiver
               </Button>
@@ -241,98 +219,87 @@ const OperatorsList = () => {
   );
 
   if (loading)
-    return (
-      <Box sx={{ ml: { xs: '2px', md: '240px' }, p: 3 }}>
-        <Typography>Chargement...</Typography>
-      </Box>
-    );
+    return <Box sx={{ ml: { xs: '2px', md: '240px' }, p: 3 }}><Typography>Chargement…</Typography></Box>;
   if (error)
-    return (
-      <Box sx={{ ml: { xs: '2px', md: '240px' }, p: 3 }}>
-        <Typography color="error">{error}</Typography>
-      </Box>
-    );
+    return <Box sx={{ ml: { xs: '2px', md: '240px' }, p: 3 }}><Typography color="error">{error}</Typography></Box>;
 
   return (
     <Box sx={{ ml: { xs: '2px', md: '240px' }, p: 3 }} className="operators-page-container">
       <AppBar position="static" color="default">
         <Tabs
           value={tabIndex}
-          onChange={handleTabChange}
+          onChange={(e, v) => setTabIndex(v)}
           indicatorColor="secondary"
           textColor="inherit"
           variant="fullWidth"
-          sx={{
-            '& .MuiTabs-indicator': { backgroundColor: '#DCAF26' },
-            '& .MuiTab-root.Mui-selected': { color: '#DCAF26' },
-          }}
+          sx={{ '& .MuiTabs-indicator': { backgroundColor: '#DCAF26' }, '& .MuiTab-root.Mui-selected': { color: '#DCAF26' } }}
         >
           <Tab label={`LISTING DES OPÉRATEURS (${operators.length})`} {...a11yProps(0)} />
         </Tabs>
       </AppBar>
-      <TabPanel value={tabIndex} index={0}>
-        {statusFilter === 'active' && (
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Button
-              variant="contained"
-              onClick={handleAddNew}
-              startIcon={<FontAwesomeIcon icon={faPlus} style={{ color: '#DCAF26' }} />}
-              style={{ backgroundColor: '#DCAF26', borderColor: '#DCAF26' }}
-            >
-              Ajouter un nouvel opérateur
-            </Button>
-          </Box>
-        )}
 
-        <Box mb={2}>
-          <ButtonGroup>
-            <Button
-              onClick={() => setStatusFilter('active')}
-              sx={{
-                backgroundColor: statusFilter === 'active' ? '#DCAF26' : 'inherit',
-                color: statusFilter === 'active' ? '#000' : 'inherit',
-                '&:hover': { backgroundColor: '#DCAF26', color: '#000' }
-              }}
-            >
-              Opérateurs Actifs
-            </Button>
-            <Button
-              onClick={() => setStatusFilter('inactive')}
-              sx={{
-                backgroundColor: statusFilter === 'inactive' ? '#DCAF26' : 'inherit',
-                color: statusFilter === 'inactive' ? '#000' : 'inherit',
-                '&:hover': { backgroundColor: '#DCAF26', color: '#000' }
-              }}
-            >
-              Opérateurs Désactivés
-            </Button>
-          </ButtonGroup>
+      <TabPanel value={tabIndex} index={0}>
+        {/* Ajouter */}
+        <Box mb={2} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleAddNew}
+            disabled={!isAdmin}
+            startIcon={<FontAwesomeIcon icon={faPlus} />}
+            sx={{ backgroundColor: '#DCAF26', border: 'none', fontSize: { xs: '0.7rem', sm: '0.85rem' }, px: 2 }}
+          >
+            Ajouter un opérateur
+          </Button>
         </Box>
 
+        {/* Filtre Active / Inactive */}
+        {isSmallScreen ? (
+          <FormControl size="small" sx={{ mb: 2, minWidth: 140 }}>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <MuiMenuItem value="active">Actifs</MuiMenuItem>
+              <MuiMenuItem value="inactive">Désactivés</MuiMenuItem>
+            </Select>
+          </FormControl>
+        ) : (
+          <FormControl component="fieldset" sx={{ mb: 2 }}>
+            
+            <RadioGroup
+              row
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <FormControlLabel value="active" control={<Radio />} label="Opérateurs Actifs" />
+              <FormControlLabel value="inactive" control={<Radio />} label="Opérateurs Désactivés" />
+            </RadioGroup>
+          </FormControl>
+        )}
+
+        {/* Liste ou Cartes */}
         {isSmallScreen ? renderCardView() : renderTableView()}
       </TabPanel>
+
+      {/* Menu actions */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem
-          onClick={() => {
-            handleEdit(selectedOp?.id_op_user);
-            handleMenuClose();
-          }}
-        >
-          <FontAwesomeIcon icon={faEdit} style={{ color: '#DCAF26', marginRight: 8 }} /> Modifier
+        <MenuItem onClick={() => { handleEdit(selectedOp?.id_op_user); handleMenuClose(); }}>
+          <FontAwesomeIcon icon={faEdit} style={{ color: '#DCAF26', marginRight: 8 }} />Modifier
         </MenuItem>
         {isAdmin && statusFilter === 'active' && (
           <MenuItem onClick={() => { handleDisable(selectedOp?.id_op_user); handleMenuClose(); }}>
-            <FontAwesomeIcon icon={faTrashAlt} style={{ color: '#DCAF26', marginRight: 8 }} />
-            Désactiver
+            <FontAwesomeIcon icon={faTrashAlt} style={{ color: '#DCAF26', marginRight: 8 }} />Désactiver
           </MenuItem>
         )}
         {isAdmin && statusFilter === 'inactive' && (
           <MenuItem onClick={() => { handleEnable(selectedOp?.id_op_user); handleMenuClose(); }}>
-            <FontAwesomeIcon icon={faTrashAlt} style={{ color: '#DCAF26', marginRight: 8 }} />
-            Activer
+            <FontAwesomeIcon icon={faTrashAlt} style={{ color: '#DCAF26', marginRight: 8 }} />Activer
           </MenuItem>
         )}
       </Menu>
+
+      {/* Modale création */}
       <Dialog open={openRegisterModal} onClose={handleModalClose} fullWidth maxWidth="md">
         <DialogTitle>Créer un Compte Opérateur</DialogTitle>
         <DialogContent>

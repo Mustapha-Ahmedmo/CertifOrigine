@@ -1,4 +1,4 @@
-.header {
+.headerop {
   background-color: #ffffff;
   padding: 0 20px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -10,88 +10,35 @@
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 10001;
+  z-index: 100001;
   overflow: visible;
 }
 
-.header-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 0 20px;
-}
 
-.header-left {
+.headerop__right {
   display: flex;
   align-items: center;
+  gap: 25px;
 }
 
-.header-center {
-  flex-grow: 1;
-  display: flex;
-  justify-content: center;
-}
-
-.header-right {
+.headerop__logo-container {
   display: flex;
   align-items: center;
 }
 
-.nav-links {
-  display: flex;
-  gap: 2rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.nav-links a {
-  color: white;
-  text-decoration: none;
-  font-size: 20px;
-  padding: 5px 10px;
-  border-radius: 4px;
-}
-
-.nav-links a:hover {
-  text-decoration: underline;
-}
-
-.contact-button {
-  color: white;
-  text-decoration: none;
-  background-color: #007bff;
-  padding: 10px 15px;
-  border-radius: 5px;
-  transition: background-color 0.3s ease;
-}
-
-.contact-button:hover {
-  background-color: #0056b3;
-}
-
-.logo-container {
-  display: flex;
-  align-items: center;
-}
-
-.logo {
+.headerop__logo {
   height: 40px;
 }
 
 
-.header-icon-container {
+.headerop__icon-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
 }
 
-.header-icon {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
+
 
 .icon-label {
   font-size: 12px;
@@ -124,16 +71,17 @@
   padding: 5px;
 }
 
-.icon-link {
+.headerop__icon-link {
   text-decoration: none;
   color: inherit;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
+
 }
 
-..dropdown {
+.headerop__dropdown {
   position: absolute;
   top: 40px; /* Ajuste la hauteur selon tes besoins */
   right: 0;
@@ -147,8 +95,8 @@
 }
 
 /* Liens ou boutons dans la liste */
-.dropdown a,
-.dropdown button {
+.headerop__dropdown a,
+.headerop__dropdown button {
   display: block;
   text-decoration: none;
   color: #333; /* Couleur du texte */
@@ -163,16 +111,16 @@
 }
 
 /* Couleur de fond au survol */
-.dropdown a:hover,
-.dropdown button:hover {
+.headerop__dropdown a:hover,
+.headerop__dropdown button:hover {
   background-color: #f5f5f5; /* Couleur de survol subtile */
   color: #111; /* Couleur du texte au survol */
   border-radius: 4px; /* Coins arrondis */
 }
 
 /* Séparation entre les éléments */
-.dropdown a:not(:last-child),
-.dropdown button:not(:last-child) {
+.headerop__dropdown a:not(:last-child),
+.headerop__dropdown button:not(:last-child) {
   border-bottom: 1px solid #eee; /* Ligne fine pour séparer les éléments */
 }
 
@@ -205,17 +153,17 @@
   background-color: #f0f0f0;
 }
 
-.mobile-menu-button {
+.headerop__mobile-menu-button {
   display: none;
 }
 
 @media (max-width: 768px) {
-  .mobile-menu-button {
+  .headerop__mobile-menu-button {
     display: block;
     cursor: pointer;
   }
 
-  .header-right {
+  .headerop__right {
     gap: 10px;
     margin-right: 10px;
   }

@@ -46,10 +46,10 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
   }, []);
 
   return (
-    <header className="header">
+    <header className="headerop">
       {/* Bouton de menu mobile */}
       <div
-        className="mobile-menu-button"
+        className="headerop__mobile-menu-button"
         onClick={toggleMenu}
         aria-label="Toggle menu"
         role="button"
@@ -61,17 +61,17 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
         <FontAwesomeIcon icon={isMenuOpen ? faTimes : faBars} style={{ fontSize: '1rem' }} />
       </div>
 
-      <Box className="logo-container">
-        <img src={logo} alt="Chambre de Commerce de Djibouti" className="logo" />
+      <Box className="headerop__logo-container">
+        <img src={logo} alt="Chambre de Commerce de Djibouti" className="headerop__logo" />
       </Box>
 
-      <Box className="header-right">
+      <Box className="headerop__right">
         {/* Inscriptions */}
         <Box
-          className="header-icon-container"
+          className="headerop__icon-container"
           sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
         >
-          <Link to="/dashboard/operator/inscriptions" className="icon-link">
+          <Link to="/dashboard/operator/inscriptions" className="headerop__icon-link">
             <Badge badgeContent={inscriptionNotificationCount} color="error" anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
               <FontAwesomeIcon icon={faUserPlus} style={{ fontSize: '1rem' }} />
             </Badge>
@@ -82,7 +82,7 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
         </Box>
 
         {/* Profil */}
-        <Box className="header-icon-container" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+        <Box className="headerop__icon-container" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
           <Avatar 
             sx={{ width: 32, height: 32, backgroundColor: '#DDAF26' }}
             onClick={toggleDropdown}
@@ -91,7 +91,7 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
           </Avatar>
           {dropdownOpen && (
             <Box
-              className="dropdown"
+              className="headerop__dropdown"
               sx={{
                 position: 'absolute',
                 top: '100%',
