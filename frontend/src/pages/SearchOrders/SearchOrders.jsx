@@ -116,8 +116,6 @@ const SearchOrders = () => {
     };
     getCountries();
   }, []);
-
-
   // Récupération des commandes selon les filtres, avec tri et filtrage client-side
   const fetchOrders = async () => {
     if (!operatorId && !user?.id_cust_account) return;
@@ -141,20 +139,21 @@ const SearchOrders = () => {
         const resp = await getOrderOpInfo(params);
         allOrders = resp.data || resp;
       } else {
+        // inside fetchOrders, non-op user case:
         const resp = await getOrdersForCustomer({
+          idOrderList: null,                            // or your orderNumber
           idCustAccountList: user.id_cust_account,
+          idOrderStatusList: selectedStatuses.join(','),
           idLogin: operatorId,
         });
         allOrders = resp.data || resp;
       }
 
-      // 2) On enrichit chaque objet d'une Date pour trier / filtrer
+      // 2) Enrichir chaque objet d'une Date pour trier / filtrer
       const withDates = allOrders
         .map(o => ({
           ...o,
-          __created: o.insertdate_order
-            ? new Date(o.insertdate_order)
-            : null
+          __created: o.insertdate_order ? new Date(o.insertdate_order) : null,
         }))
         .filter(o => o.__created); // on jette ceux sans date
 
@@ -168,9 +167,7 @@ const SearchOrders = () => {
       // 4) Filtrer par numéro de commande (partial match)
       if (orderNumber.trim()) {
         const numStr = orderNumber.trim();
-        loaded = loaded.filter(o =>
-          o.id_order.toString().includes(numStr)
-        );
+        loaded = loaded.filter(o => o.id_order.toString().includes(numStr));
       }
 
       // 5) Filtrer certificats / légalisations / factures
@@ -182,19 +179,25 @@ const SearchOrders = () => {
       if (searchText.trim()) {
         const lc = searchText.toLowerCase();
         loaded = loaded.filter(o =>
-          (o.order_title || '').toLowerCase().includes(lc)
-          || (o.cust_name || '').toLowerCase().includes(lc)
+          (o.order_title || '').toLowerCase().includes(lc) ||
+          (o.cust_name || '').toLowerCase().includes(lc)
         );
       }
 
-      // 7) Tri : date desc, puis numéro de commande desc
+      // 7) Tri combiné :
+      //    1) statut_flag asc,
+      //    2) date création desc,
+      //    3) numéro de commande desc
       loaded.sort((a, b) => {
-        const d = b.__created - a.__created;
-        if (d !== 0) return d;
+        if (a.statut_flag !== b.statut_flag) {
+          return a.statut_flag - b.statut_flag;
+        }
+        const dateDiff = b.__created - a.__created;
+        if (dateDiff !== 0) return dateDiff;
         return b.id_order - a.id_order;
       });
 
-      // 8) On retire __created avant setState
+      // 8) Retirer __created avant le setState
       const result = loaded.map(({ __created, ...rest }) => rest);
       setOrders(result);
 
@@ -205,7 +208,6 @@ const SearchOrders = () => {
       setLoading(false);
     }
   };
-
 
   useEffect(() => {
     fetchOrders();
@@ -510,6 +512,42 @@ const SearchOrders = () => {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
+
+          {/* ─── Status Filter ─────────────────────────────────────────── */}
+          <FormControl sx={{ minWidth: 200 }}>
+            <InputLabel id="status-select-label">Status</InputLabel>
+            <Select
+              labelId="status-select-label"
+              id="status-select"
+              multiple
+              value={selectedStatuses}
+              onChange={handleStatusChange}
+              input={<OutlinedInput label="Status" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => {
+                    let label = '';
+                    switch (value) {
+                      case 5: label = 'Terminé'; break;
+                      case 8: label = 'Annulé'; break;
+                      case 9: label = 'Rejeté'; break;
+                      default: label = statusMap[value] || value;
+                    }
+                    return <Chip key={value} label={label} size="small" />;
+                  })}
+                </Box>
+              )}
+              MenuProps={MenuProps}
+            >
+              {/* always allow Terminé */}
+              <MenuItem value={5}>Terminé</MenuItem>
+              {/* only non-operators can pick Annulé */}
+              {!isOpUser && <MenuItem value={8}>Annulé</MenuItem>}
+              {/* everyone can pick Rejeté */}
+              <MenuItem value={9}>Rejeté</MenuItem>
+            </Select>
+          </FormControl>
+          {/* ────────────────────────────────────────────────────────────── */}
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             <FormControlLabel
