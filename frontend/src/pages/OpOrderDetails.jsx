@@ -17,6 +17,8 @@ import {
 } from '../services/apiServices';
 import './OpOrderDetails.css';
 import Step5 from '../components/orders/Create/steps/Step5';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
+import { Check, Close, Undo } from '@mui/icons-material';
 
 const OpOrderDetails = () => {
   const location = useLocation();
@@ -35,6 +37,22 @@ const OpOrderDetails = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [returnReason, setReturnReason] = useState('');
+
+  // ---- REJECT & RETURN modal handlers ----
+  const openReject = () => { setRejectReason(''); setShowRejectModal(true); };
+  const openReturn = () => { setReturnReason(''); setShowReturnModal(true); };
+  const closeReject = () => setShowRejectModal(false);
+  const closeReturn = () => setShowReturnModal(false);
+
+  const confirmReject = () => {
+    performAction(rejectOrder, rejectReason.trim());
+    setShowRejectModal(false);
+  };
+  const confirmReturn = () => {
+    performAction(sendbackOrder, returnReason.trim());
+    setShowReturnModal(false);
+  };
+
   const [formData, setFormData] = useState({
     exporterName: '',
     orderLabel: '',
@@ -62,6 +80,8 @@ const OpOrderDetails = () => {
     date_last_submission: null,
     copy_count_ori: 0,
   });
+
+
 
   useEffect(() => {
     const loadData = async () => {
@@ -154,27 +174,44 @@ const OpOrderDetails = () => {
 
   const handleChange = (field, value) =>
     setFormData(prev => ({ ...prev, [field]: value }));
-
   const performAction = async (apiFn, reason) => {
+    // 1) fetch customer email
     const cu = await getCustUsersByAccount(
-      formData.selectedRecipientId,
+      formData.custAccountId,
       null, 'true', 'true', true
     );
     const customerEmail = cu.data[0].email;
+
+    // 2) build args for your API
     const args = [
       orderId,
-      formData.selectedRecipientId,
+      formData.custAccountId,
       idLogin,
       reason,
       customerEmail,
       formData.title,
     ];
+
+    // 3) decide statusLabel & totalPrice if approving
+    let statusLabel = '';
+    let totalPrice = null;
+
     if (apiFn === approveOrder) {
-      const totalPrice = 8500 + 2500 * formData.copy_count_ori;
-      args.splice(3, 1, customerEmail); // shift reason out
+      statusLabel = 'validé';
+      totalPrice = 8500 + 2500 * formData.copy_count_ori;
+      // swap out "reason" slot for email, then append totalPrice
+      args.splice(3, 1, customerEmail);
       args.push(totalPrice);
+    } else if (apiFn === rejectOrder) {
+      statusLabel = 'rejeté';
+    } else if (apiFn === sendbackOrder) {
+      statusLabel = 'renvoyé';
     }
+
+    // 4) call your backend
     await apiFn(...args);
+
+    // 6) go back to the dashboard
     navigate('/operator-dashboard');
   };
 
@@ -208,68 +245,92 @@ const OpOrderDetails = () => {
       />
 
       {isOpUser && ![3, 4, 5, 8, 9].includes(formData.orderStatus) && (
-        <div className="step5-submit-section">
-          <button
-            type="button"
-            className="step5-next-button"
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3 }}>
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<Check />}
             onClick={() => performAction(approveOrder, '')}
           >
             Valider
-          </button>
-          <button
-            type="button"
-            className="step5-reject-button"
+          </Button>
+          <Button
+            variant="contained"
+            color="error"         // ← was "outlined"
+            startIcon={<Close />}
             onClick={handleRejectClick}
           >
             Rejeter
-          </button>
-          <button
-            type="button"
-            className="step5-return-button"
+          </Button>
+          <Button
+            variant="contained"
+            color="warning"       // ← was "outlined"
+            startIcon={<Undo />}
             onClick={handleReturnClick}
           >
             Retourner
-          </button>
-        </div>
+          </Button>
+        </Box>
       )}
 
-      {showRejectModal && (
-        <div className="modal-overlay" onClick={handleRejectCancel}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>Rejeter la commande</h3>
-            <textarea
-              placeholder="Raison du rejet..."
-              value={rejectReason}
-              onChange={e => setRejectReason(e.target.value)}
-              rows={4}
-              style={{ width: '100%' }}
-            />
-            <div className="modal-actions">
-              <button onClick={handleRejectCancel}>Annuler</button>
-              <button onClick={handleRejectConfirm}>Confirmer</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Reject Dialog */}
+      <Dialog open={showRejectModal} onClose={closeReject} fullWidth maxWidth="sm">
+        <DialogTitle>Rejeter la commande</DialogTitle>
+        <DialogContent>
+          <TextField
+            required
+            autoFocus
+            label="Raison du rejet"
+            placeholder="Entrez la raison du rejet..."
+            fullWidth
+            multiline
+            minRows={4}
+            value={rejectReason}
+            onChange={e => setRejectReason(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeReject}>Annuler</Button>
+          <Button
+            onClick={confirmReject}
+            color="error"
+            variant="contained"
+            disabled={!rejectReason.trim()}
+          >
+            Confirmer
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      {showReturnModal && (
-        <div className="modal-overlay" onClick={handleReturnCancel}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>Retourner la commande</h3>
-            <textarea
-              placeholder="Raison du retour..."
-              value={returnReason}
-              onChange={e => setReturnReason(e.target.value)}
-              rows={4}
-              style={{ width: '100%' }}
-            />
-            <div className="modal-actions">
-              <button onClick={handleReturnCancel}>Annuler</button>
-              <button onClick={handleReturnConfirm}>Confirmer</button>
-            </div>
-          </div>
-        </div>
-      )}
+
+      {/* Return Dialog */}
+      <Dialog open={showReturnModal} onClose={closeReturn} fullWidth maxWidth="sm">
+        <DialogTitle>Retourner la commande</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            required
+            label="Raison du retour"
+            placeholder="Entrez la raison du retour..."
+            fullWidth
+            multiline
+            minRows={4}
+            value={returnReason}
+            onChange={e => setReturnReason(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeReturn}>Annuler</Button>
+          <Button
+            onClick={confirmReturn}
+            color="warning"
+            variant="contained"
+            disabled={!returnReason.trim()}
+          >
+            Confirmer
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
