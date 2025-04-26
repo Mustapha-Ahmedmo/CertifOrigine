@@ -19,11 +19,19 @@ import {
 import { billOrder, fetchCountries, fetchRecipients, getCertifGoodsInfo, getCertifTranspMode, getCustAccountInfo, handleSendDocuments, setInvoiceHeader, setOrderFiles } from '../services/apiServices'; // API service functions
 import { useSelector } from 'react-redux';
 import { generatePDF } from '../components/orders/GeneratePDF';
+import { Snackbar, Alert } from '@mui/material';
+
 
 function PaymentModal({ open, onClose, onSubmit, order }) {
   // Default invoice date: today's date (YYYY-MM-DD)
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
   const [invoiceNumber, setInvoiceNumber] = useState('');
+
+  // Après vos useState existants
+  const [openInvoiceSnackbar, setOpenInvoiceSnackbar] = useState(false);
+  const [openPdfSnackbar, setOpenPdfSnackbar] = useState(false);
+  const [openSendSnackbar, setOpenSendSnackbar] = useState(false);
+
 
   // Calculate Montant HT: unit_price_ord_certif_ori + (copies * unit_price_copies_ord_certif_ori)
   const unitPriceCertif = order?.unit_price_ord_certif_ori ? parseFloat(order.unit_price_ord_certif_ori) : 8500;
@@ -72,9 +80,12 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
 
   // Open confirmation dialog on clicking "ENREGISTRER LE PAIEMENT"
   const handleOpenConfirmation = () => {
+    if (!invoiceNumber.trim() || !paymentInfo.trim()) {
+      // ex. afficher un snackbar ou toast d’alerte
+      return;
+    }
     setConfirmationOpen(true);
   };
-
 
   const [transpMode, settransportModes] = useState({});
 
@@ -113,6 +124,7 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
 
       const response = await setInvoiceHeader(invoiceData);
       console.log('Invoice header set successfully:', response);
+      setOpenInvoiceSnackbar(true);
 
 
 
@@ -183,8 +195,10 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
         file: pdfFile,
       };
       await setOrderFiles(orderFileData);
+      setOpenPdfSnackbar(true);
 
       await handleSendDocuments(order);
+      setOpenSendSnackbar(true);
       console.log("PDF generated and order file saved successfully.");
 
 
@@ -247,9 +261,12 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
             />
             <TextField
               label="N° Facture"
+              required
               fullWidth
               value={invoiceNumber}
-              onChange={(e) => setInvoiceNumber(e.target.value)}
+              onChange={e => setInvoiceNumber(e.target.value)}
+              error={!invoiceNumber.trim()}
+              helperText={!invoiceNumber.trim() ? "Le numéro de facture est requis" : ""}
             />
           </Box>
 
@@ -298,11 +315,14 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
           {/* NEW: Payment Information Input */}
           <TextField
             label="Informations concernant le paiement"
+            required
             fullWidth
             value={paymentInfo}
-            onChange={(e) => setPaymentInfo(e.target.value)}
-            sx={{ mb: 2 }}
+            onChange={e => setPaymentInfo(e.target.value)}
+            error={!paymentInfo.trim()}
+            helperText={!paymentInfo.trim() ? "Veuillez préciser les informations de paiement" : ""}
           />
+
 
         
         </DialogContent>
@@ -312,9 +332,15 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
           <Button variant="contained" color="error" onClick={onClose}>
             FERMER
           </Button>
-          <Button variant="contained" color="success" onClick={handleOpenConfirmation}>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleOpenConfirmation}
+            disabled={!invoiceNumber.trim() || !paymentInfo.trim()}
+          >
             ENREGISTRER LE PAIEMENT
           </Button>
+
         </DialogActions>
       </Dialog>
 
@@ -348,6 +374,40 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbars de feedback utilisateur */}
+      <Snackbar
+        open={openInvoiceSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setOpenInvoiceSnackbar(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        sx={{ bottom: '8px !important' }}  // ← décale de 4 unités MUI (≈32px) vers le 
+      >
+        <Alert onClose={() => setOpenInvoiceSnackbar(false)} severity="success" variant="filled">
+          Paiement enregistré avec succès !
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={openPdfSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setOpenPdfSnackbar(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        sx={{ bottom: '64px !important' }}  // ← décale de 8 unités MUI (≈64px)
+      >
+        <Alert onClose={() => setOpenPdfSnackbar(false)} severity="info" variant="filled">
+          PDF généré et enregistré.
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={openSendSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setOpenSendSnackbar(false)}
+        message="Le client va recevoir un email et une notification"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        sx={{ bottom: '120px !important' }}
+      />
     </>
   );
 }
