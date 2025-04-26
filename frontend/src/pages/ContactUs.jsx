@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // <-- Import Link
+import { Link, useLocation } from 'react-router-dom';
 import './ContactUs.css';
 import { sendContactForm } from '../services/apiServices';
 
 const ContactUs = () => {
+
+  const location = useLocation();
+  const isInDashboard = location.pathname.startsWith('/dashboard');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -134,18 +137,23 @@ const ContactUs = () => {
         </form>
       </div>
 
-      {/* Footer info (en bas à droite) */}
-      <div className="footer-info">
-        <p>
-          Chambre de Commerce de Djibouti . Place Djibouti .
-          Tel : +253-21351070 . Email : <a href="mailto:ccd@ccd.dj">ccd@ccd.dj</a>
-        </p>
-      </div>
+    
 
-      {/* Nouveau lien pour revenir à la page de connexion, en bas à gauche */}
-      <div className="back-to-login-container">
-        <Link to="/login">Revenir à la page de connexion</Link>
-      </div>
+      {/* footer-info + back-to-login uniquement quand on n’est PAS dans /dashboard */}
+      {!isInDashboard && (
+        <>
+          <div className="footer-info">
+            <p>
+              Chambre de Commerce de Djibouti . Place Djibouti .
+              Tel : +253-21351070 . Email : <a href="mailto:ccd@ccd.dj">ccd@ccd.dj</a>
+            </p>
+          </div>
+
+          <div className="back-to-login-container">
+            <Link to="/login">Revenir à la page de connexion</Link>
+          </div>
+        </>
+      )}
     </div>
   );
 };

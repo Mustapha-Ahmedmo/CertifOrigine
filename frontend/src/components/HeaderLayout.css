@@ -30,7 +30,9 @@ body {
   width: 100%;
 }
 
-.hl-header-left {
+.hl-header-left,
+.hl-header-center,
+.hl-header-right {
   display: flex;
   align-items: center;
 }
@@ -38,13 +40,12 @@ body {
 .hl-header-center {
   flex-grow: 1;
   justify-content: center;
-  align-items: center;
 }
 
-
-.h1-header-right {
+.hl-header-right {
   display: flex;
   align-items: center;
+  margin-right: 2rem; /* ← espace entre le bouton et le bord */
 }
 
 .hl-nav-links {
@@ -53,6 +54,20 @@ body {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+/* Force les liens de navigation en blanc */
+.hl-nav-links li a {
+  color: #fff;
+  text-decoration: none;   
+}
+
+
+/* (optionnel) pour les états visited, active, focus si besoin */
+.hl-nav-links li a:visited,
+.hl-nav-links li a:active,
+.hl-nav-links li a:focus {
+  color: #fff;
 }
 
 .hl-contact-button {
@@ -71,7 +86,7 @@ body {
 
 .hl-nav-links li a:hover,
 .hl-contact-button:hover {
-  text-decoration: underline;
+  text-decoration: none;
   background-color: #b38307;
 }
 

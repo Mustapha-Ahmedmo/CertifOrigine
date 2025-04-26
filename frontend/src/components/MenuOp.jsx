@@ -238,36 +238,39 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
             <List component="div" disablePadding>
               {/* CGV */}
               <ListItem disablePadding>
-                <ListItemButton
-                  component={Link} to="/dashboard/operator/inscriptions"
-                  onClick={() => handleLinkClick('myCCD','cgv')}
-                  selected={activeLink==='cgv'}
-                  sx={{ pl:4, ...selectedStyle }}
-                >
+              <ListItemButton
+                component={Link}
+                to="/dashboard/operator/cgv"
+                onClick={() => handleLinkClick('myCCD','cgv')}
+                selected={activeLink==='cgv'}
+                sx={{ pl:4, ...selectedStyle }}
+              >
                   <ListItemIcon><FontAwesomeIcon icon={faFileContract} /></ListItemIcon>
                   <ListItemText primary="Les C.G.V" primaryTypographyProps={{ fontSize:"12px"}}/>
                 </ListItemButton>
               </ListItem>
               {/* Prestations de services */}
               <ListItem disablePadding>
-                <ListItemButton
-                  component={Link} to="/dashboard/operator/prestations-services"
-                  onClick={() => handleLinkClick('myCCD','prestations')}
-                  selected={activeLink==='prestations'}
-                  sx={{ pl:4, ...selectedStyle }}
-                >
+              <ListItemButton
+                component={Link}
+                to="/dashboard/operator/prestation-service"
+                onClick={() => handleLinkClick('myCCD','prestation')}
+                selected={activeLink==='prestation'}
+                sx={{ pl:4, ...selectedStyle }}
+              >
                   <ListItemIcon><FontAwesomeIcon icon={faHandshake} /></ListItemIcon>
                   <ListItemText primary="Prestations de services" primaryTypographyProps={{ fontSize:"12px"}}/>
                 </ListItemButton>
               </ListItem>
               {/* Mention légale */}
               <ListItem disablePadding>
-                <ListItemButton
-                  component={Link} to="/dashboard/operator/mention-legale"
-                  onClick={() => handleLinkClick('myCCD','mentionLegale')}
-                  selected={activeLink==='mentionLegale'}
-                  sx={{ pl:4, ...selectedStyle }}
-                >
+              <ListItemButton
+                component={Link}
+                to="/dashboard/operator/mentions-legales"
+                onClick={() => handleLinkClick('myCCD','mentionLegale')}
+                selected={activeLink==='mentionLegale'}
+                sx={{ pl:4, ...selectedStyle }}
+              >
                   <ListItemIcon><FontAwesomeIcon icon={faBalanceScale} /></ListItemIcon>
                   <ListItemText primary="Mention légale" primaryTypographyProps={{ fontSize:"12px"}}/>
                 </ListItemButton>

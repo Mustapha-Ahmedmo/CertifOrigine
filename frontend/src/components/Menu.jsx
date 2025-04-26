@@ -31,6 +31,7 @@ import {
   faUsers,
   faSignOutAlt,
   faLandmark,
+  faEnvelope,
 } from '@fortawesome/free-solid-svg-icons';
 
 const drawerWidth = 240;
@@ -67,6 +68,15 @@ const logoutStyle = {
   },
 };
 
+// en haut du fichier Menu.jsx
+const newOrderStyle = {
+  color: "#DCAF26",               // texte
+  "& .MuiListItemIcon-root": {
+    color: "#DCAF26",             // icône
+  },
+};
+
+
 const Menu = ({ isMenuOpen, toggleMenu }) => {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
@@ -90,7 +100,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
      // --- 0) Ma CCD ---
     if (
       location.pathname === "/dashboard/cgv" ||
-      location.pathname === "/dashboard/prestation-services" ||
+      location.pathname === "/dashboard/prestation-service" ||
       location.pathname === "/dashboard/mentions-legales"
     ) {
       setOpenSubmenus({ newOrder: false, orders: false, ccd: true });
@@ -167,6 +177,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
     }));
   };
   
+
 
   // Fermer tous les sous-menus
   const closeAllSubmenus = () => {
@@ -315,7 +326,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                     <FontAwesomeIcon icon={faHistory} />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Historique des commandes"
+                    primary="Historique des commandes terminées"
                     primaryTypographyProps={{ fontSize: "12px" }}
                   />
                 </ListItemButton>
@@ -327,9 +338,10 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
 
           {/* Nouvelle Commande (sous-menu) */}
           <ListItem disablePadding>
-            <ListItemButton
+          <ListItemButton
               onClick={() => handleToggleSubmenu("newOrder")}
               selected={false}
+              sx={newOrderStyle}
             >
               <ListItemIcon sx={{ color: "black" }}>
                 <FontAwesomeIcon icon={faShoppingCart} />
@@ -488,13 +500,17 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               </ListItem>
               {/* Prestation de services */}
               <ListItem disablePadding>
-                <ListItemButton
-                  sx={{ pl: 4, ...selectedStyle }}
-                  component={Link}
-                  to="/dashboard/prestation-services"
-                  onClick={() => { closeAllSubmenus(); handleLinkClick(); }}
-                  selected={location.pathname === "/dashboard/prestation-services"}
-                >
+              <ListItemButton
+                component={Link}
+                to="/dashboard/prestation-service"
+                sx={{ pl: 4, ...selectedStyle }}
+                onClick={() => {
+                  // toggleMenu() ferme le drawer *seulement* sur mobile
+                  handleLinkClick();
+                  // on n'appelle PLUS closeAllSubmenus ici, pour garder Ma CCD ouverte
+                }}
+                selected={location.pathname === "/dashboard/prestation-service"}
+              >
                   <ListItemIcon sx={{ color: "black" }}>
                     <FontAwesomeIcon icon={faDollarSign} />
                   </ListItemIcon>
@@ -524,6 +540,30 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               </ListItem>
             </List>
           </Collapse>
+
+          <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
+
+          {/* Lien vers la page Contactez-nous */}
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
+              to="/dashboard/contact-us"
+              onClick={() => {
+                closeAllSubmenus();
+                handleLinkClick();
+              }}
+              selected={location.pathname === "/dashboard/contact-us"}
+              sx={selectedStyle}
+            >
+              <ListItemIcon sx={{ color: "black" }}>
+                <FontAwesomeIcon icon={faEnvelope} />
+              </ListItemIcon>
+              <ListItemText
+                primary="Contactez-nous"
+                primaryTypographyProps={{ fontSize: "14px" }}
+              />
+            </ListItemButton>
+          </ListItem>
 
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
