@@ -59,7 +59,9 @@ const Step5 = ({
   const idLogin = user?.id_login_user;
   const customerAccountId = user?.id_cust_account;
 
-  const companyName = values.exporterName;
+  console.log('user raw:', user)
+
+  const companyName = user.companyname || user.custAccountName || '';
   const isOpUser = user?.isopuser;
 
   // Query params
