@@ -1075,22 +1075,26 @@ export const handleSendDocuments = async (order) => {
       body: JSON.stringify({
         id_order: order.id_order,
         id_cust_account: order.id_cust_account,
-        order_title: order.order_title, // facultatif mais utile dans l'objet du mail
+        order_title: order.order_title,
       }),
     });
 
     const result = await res.json();
 
     if (res.ok) {
-      alert(result.message || "Email envoyé avec succès.");
+      // On renvoie le message au composant pour afficher la snackbar
+      return result;
     } else {
-      alert(result.message || "Erreur lors de l'envoi de l'email.");
+      // On lève une erreur pour que le catch du composant attrape et ferme la confirmation
+      throw new Error(result.message || "Erreur lors de l'envoi des documents");
     }
   } catch (error) {
     console.error("Erreur lors de l'envoi du mail :", error);
-    alert("Une erreur est survenue.");
+    // On re-lance pour que le composant sache qu'il y a eu une erreur
+    throw error;
   }
 };
+
 
 export const getOrderOpInfo = async (params) => {
   try {
