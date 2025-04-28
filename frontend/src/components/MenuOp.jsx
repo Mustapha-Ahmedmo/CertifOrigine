@@ -141,17 +141,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemText primary="Commandes à traiter" primaryTypographyProps={{ fontSize:"12px"}}/>
                 </ListItemButton>
               </ListItem>
-              <ListItem disablePadding>
-                <ListItemButton
-                  component={Link} to="/dashboard/operator/generation-certificats"
-                  onClick={() => handleLinkClick('gestion','generationCertificats')}
-                  selected={activeLink==='generationCertificats'}
-                  sx={{ pl:4, ...selectedStyle }}
-                >
-                  <ListItemIcon><FontAwesomeIcon icon={faDownload} /></ListItemIcon>
-                  <ListItemText primary="Génération des certificats" primaryTypographyProps={{ fontSize:"12px"}}/>
-                </ListItemButton>
-              </ListItem>
+             
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link} to="/dashboard/operator/search-orders"

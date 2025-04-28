@@ -575,7 +575,6 @@ const ClientsValides = () => {
       register_number: editFormData.rchNumber,
       full_address: editFormData.fullAddress,
       id_sector: idSectorToUse,
-      other_sector: selectedEditAccount.other_sector || '',
       id_country: selectedEditAccount.id_country,
       statut_flag: selectedEditAccount.statut_flag,
       idlogin: selectedEditAccount.idlogin_modify || 1,

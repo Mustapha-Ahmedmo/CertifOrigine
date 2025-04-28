@@ -42,6 +42,8 @@ import {
   getFilesRepoTypeofInfo,
   setOrderFiles,
   delOrderFiles,
+  sendEmailAndMemo,
+  getCustUsersByAccount,
 } from '../../../../services/apiServices';
 
 const Step5 = ({
@@ -58,6 +60,7 @@ const Step5 = ({
   const customerAccountId = user?.id_cust_account;
 
   const companyName = values.exporterName;
+  const isOpUser = user?.isopuser;
 
   // Query params
   const params = new URLSearchParams(location.search);
@@ -193,6 +196,54 @@ const Step5 = ({
     }
   };
 
+
+  const handleOpenContact = () => {
+    // find the “main” user email of this company — adjust to your data shape:
+    const main = values.companyMainUserEmail;
+    setContactEmail(main || '');
+    setContactMessage('');
+    setShowContactModal(true);
+  };
+
+
+  // contact modal state
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactMessage, setContactMessage] = useState('');
+
+  const handleCloseContact = () => setShowContactModal(false);
+  const handleSendContact = async () => {
+    try {
+      // Fetch all active, main customer-users for this account
+      const users = await getCustUsersByAccount(
+        values.custAccountId,
+        null,    // no statutflag filter
+        'true',  // only active accounts
+        'true',  // only active customer-users
+        'true'   // only main users
+      );
+
+      // Take the very first user (if any)
+      const mainUser = Array.isArray(users.data) && users.data.length > 0 ? users.data[0] : null;
+      const toEmail = mainUser?.email || contactEmail;
+
+      // Send the message
+      await sendEmailAndMemo({
+        to: toEmail,
+        subject: 'Message de la Chambre de Commerce',
+        body: `<p>${contactMessage}</p>`,
+        isHtml: true,
+        id_cust_account: values.custAccountId,
+        idlogin: user.id_login_user,
+      });
+
+      alert('Message envoyé !');
+      setShowContactModal(false);
+    } catch (err) {
+      console.error('Erreur dans handleSendContact:', err);
+      alert('Échec de l’envoi du message.');
+    }
+  };
   const saveOriginDestination = async () => {
     try {
       await updateCertificate({
@@ -205,7 +256,6 @@ const Step5 = ({
         p_id_country_port_discharge: parseInt(values.dischargingPort, 10),
         p_notes: values.remarks || '',
         p_copy_count: values.copies || 0,
-        p_transport_remains: values.transportRemarks || '',
         p_transport_remains: tempTransportRemarks,
         p_idlogin_modify: idLogin,
       });
@@ -1003,6 +1053,16 @@ const Step5 = ({
             >
               {companyName || 'Société non renseignée'}
             </Box>
+            {isOpUser && (
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={handleOpenContact}
+                sx={{ textTransform: 'none', ml: 2 }}
+              >
+                CONTACTER
+              </Button>
+            )}
           </Box>
 
           {/* Libellé commande */}
@@ -1727,6 +1787,27 @@ const Step5 = ({
           <Button onClick={() => setShowNewMerchDialog(false)}>Annuler</Button>
           <Button variant="contained" onClick={handleSaveNewMerch}>
             Enregistrer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={showContactModal} onClose={handleCloseContact} fullWidth maxWidth="sm">
+        <DialogTitle>Envoyer un message</DialogTitle>
+        <DialogContent dividers>
+          <TextField
+            label="Votre message"
+            multiline
+            rows={6}
+            fullWidth
+            margin="normal"
+            value={contactMessage}
+            onChange={(e) => setContactMessage(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseContact}>Annuler</Button>
+          <Button variant="contained" onClick={handleSendContact}>
+            Envoyer
           </Button>
         </DialogActions>
       </Dialog>

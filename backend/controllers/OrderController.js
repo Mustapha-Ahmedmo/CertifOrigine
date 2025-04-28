@@ -1637,40 +1637,66 @@ const rejectOrder = async (req, res) => {
     });
   }
 };
-
 const getOrderStaticsByServices = async (req, res) => {
   try {
-    // Retrieve query parameters (if not provided, they default to null)
-    const { p_date_start, p_date_end, p_id_list_order, p_id_custaccount, p_id_list_orderstatus } = req.query;
+    // On récupère tous les query params, ou null par défaut
+    const {
+      p_date_start,
+      p_date_end,
+      p_id_list_order,
+      p_id_custaccount,
+      p_borderstatus_insert_exclusif,
+      p_borderstatus_new_exclusif,
+      p_borderstatus_new,
+      p_borderstatus_approved,
+      p_borderstatus_paid,
+    } = req.query;
 
-    // Call the function using a SELECT statement with proper replacements
+    // Convertir les chaînes "true"/"false" en booléens, ou null si absent
+    const boolOrNull = val => {
+      if (val === 'true') return true;
+      if (val === 'false') return false;
+      return null;
+    };
+
     const result = await sequelize.query(
       `SELECT * FROM get_order_statics_byservices(
           :p_date_start,
           :p_date_end,
           :p_id_list_order,
           :p_id_custaccount,
-          :p_id_list_orderstatus
+          :p_borderstatus_insert_exclusif,
+          :p_borderstatus_new_exclusif,
+          :p_borderstatus_new,
+          :p_borderstatus_approved,
+          :p_borderstatus_paid
       )`,
       {
         replacements: {
-          p_date_start: p_date_start || null,
-          p_date_end: p_date_end || null,
-          p_id_list_order: p_id_list_order || null,
-          p_id_custaccount: p_id_custaccount ? parseInt(p_id_custaccount, 10) : null,
-          p_id_list_orderstatus: p_id_list_orderstatus || null,
+          p_date_start:    p_date_start     ? new Date(p_date_start) : null,
+          p_date_end:      p_date_end       ? new Date(p_date_end)   : null,
+          p_id_list_order: p_id_list_order  || null,
+          p_id_custaccount: p_id_custaccount
+            ? parseInt(p_id_custaccount, 10)
+            : null,
+
+          p_borderstatus_insert_exclusif: boolOrNull(p_borderstatus_insert_exclusif),
+          p_borderstatus_new_exclusif:    boolOrNull(p_borderstatus_new_exclusif),
+          p_borderstatus_new:             boolOrNull(p_borderstatus_new),
+          p_borderstatus_approved:        boolOrNull(p_borderstatus_approved),
+          p_borderstatus_paid:            boolOrNull(p_borderstatus_paid),
         },
         type: QueryTypes.SELECT,
       }
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Order statistics retrieved successfully.',
       data: result,
     });
   } catch (error) {
     console.error('Error retrieving order statistics:', error);
-    res.status(500).json({
+    return res.status(500).json({
       message: 'Error retrieving order statistics.',
       error: error.message || 'Unknown error.',
       details: error.original || error,
