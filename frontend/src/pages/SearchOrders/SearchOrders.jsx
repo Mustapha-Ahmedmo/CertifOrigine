@@ -228,7 +228,15 @@ const SearchOrders = () => {
 
   const handleDetailsClick = (order) => {
     const certifId = order.id_ord_certif_ori || '';
-    navigate(`/dashboard/operator/oporderdetails?orderId=${order.id_order}&certifId=${certifId}`);
+    if (isOpUser) {
+      navigate(
+        `/dashboard/operator/oporderdetails?orderId=${order.id_order}&certifId=${certifId}`
+      );
+    } else {
+      navigate(
+        `/dashboard/order-details?orderId=${order.id_order}&certifId=${certifId}`
+      );
+    }
   };
 
   useEffect(() => {
@@ -396,14 +404,42 @@ const SearchOrders = () => {
                 <Button variant="contained" color="primary" size="small" onClick={() => handleDetailsClick(order)}>
                   <FontAwesomeIcon icon={faEye} /> Détails
                 </Button>
+
                 {order.id_order_status === 5 && (
-                  orderFiles[order.id_order] ? (
-                    <Button variant="contained" color="success" size="small" onClick={() => handleFileClick(orderFiles[order.id_order])}>
-                      <FontAwesomeIcon icon={faFilePdf} /> Ouvrir
-                    </Button>
+                  isOpUser ? (
+                    <>
+                      {orderFiles[order.id_order] && (
+                        <Button
+                          variant="contained"
+                          color="success"
+                          size="small"
+                          sx={{ mr: 1 }}
+                          onClick={() => handleFileClick(orderFiles[order.id_order])}
+                        >
+                          <FontAwesomeIcon icon={faFilePdf} /> Ouvrir
+                        </Button>
+                      )}
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        size="small"
+                        onClick={() => handleGeneratePDF(order)}
+                      >
+                        <FontAwesomeIcon icon={faFilePdf} /> Générer PDF
+                      </Button>
+                    </>
                   ) : (
-                    <Button variant="contained" color="secondary" size="small" onClick={() => handleGeneratePDF(order)}>
-                      <FontAwesomeIcon icon={faFilePdf} /> Générer PDF
+                    <Button
+                      variant="contained"
+                      color="success"
+                      size="small"
+                      onClick={() =>
+                        navigate(
+                          `/dashboard/order-details?orderId=${order.id_order}&certifId=${order.id_ord_certif_ori}`
+                        )
+                      }
+                    >
+                      <FontAwesomeIcon icon={faFilePdf} /> Ouvrir
                     </Button>
                   )
                 )}
@@ -456,14 +492,44 @@ const SearchOrders = () => {
                   <Button variant="contained" color="primary" size="small" onClick={() => handleDetailsClick(order)}>
                     <FontAwesomeIcon icon={faEye} /> Détails
                   </Button>
+
                   {order.id_order_status === 5 && (
-                    orderFiles[order.id_order] ? (
-                      <Button variant="contained" color="success" size="small" onClick={() => handleFileClick(orderFiles[order.id_order])} sx={{ ml: 1 }}>
-                        <FontAwesomeIcon icon={faFilePdf} /> Ouvrir
-                      </Button>
+                    isOpUser ? (
+                      <>
+                        {orderFiles[order.id_order] && (
+                          <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            sx={{ ml: 1 }}
+                            onClick={() => handleFileClick(orderFiles[order.id_order])}
+                          >
+                            <FontAwesomeIcon icon={faFilePdf} /> Ouvrir
+                          </Button>
+                        )}
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          size="small"
+                          sx={{ ml: 1 }}
+                          onClick={() => handleGeneratePDF(order)}
+                        >
+                          <FontAwesomeIcon icon={faFilePdf} /> Générer PDF
+                        </Button>
+                      </>
                     ) : (
-                      <Button variant="contained" color="secondary" size="small" onClick={() => handleGeneratePDF(order)} sx={{ ml: 1 }}>
-                        <FontAwesomeIcon icon={faFilePdf} /> Générer PDF
+                      <Button
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        sx={{ ml: 1 }}
+                        onClick={() =>
+                          navigate(
+                            `/dashboard/order-details?orderId=${order.id_order}&certifId=${order.id_ord_certif_ori}`
+                          )
+                        }
+                      >
+                        <FontAwesomeIcon icon={faFilePdf} /> Ouvrir
                       </Button>
                     )
                   )}

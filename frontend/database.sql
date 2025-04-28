@@ -3923,7 +3923,7 @@ BEGIN
         p_isactive IS NULL
         OR (p_isactive IS NOT TRUE AND of."deactivation_date" <= CURRENT_DATE)
         OR (p_isactive IS TRUE AND of."deactivation_date" > CURRENT_DATE)
-    );
+    ) ORDER BY fr."insertdate" DESC;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -4536,14 +4536,21 @@ BEGIN
     RETURN new_memo_id;
 END;
 $$;
-
 DROP FUNCTION IF EXISTS get_order_statics_byservices;
 CREATE OR REPLACE FUNCTION get_order_statics_byservices(
     p_date_start TIMESTAMP,
     p_date_end TIMESTAMP,
     p_id_list_order TEXT,
     p_id_custaccount INT,
-    p_id_list_orderstatus TEXT
+    p_borderstatus_insert_exclusif BOOLEAN DEFAULT FALSE,    
+    p_borderstatus_new_exclusif BOOLEAN DEFAULT FALSE,    
+    p_borderstatus_new BOOLEAN DEFAULT FALSE,
+    p_borderstatus_approved BOOLEAN DEFAULT FALSE,
+    p_borderstatus_paid BOOLEAN DEFAULT FALSE
+
+
+
+
 )
 RETURNS TABLE(
     count_ord_certif_ori BIGINT,
@@ -4564,11 +4571,47 @@ BEGIN
     WHERE 
         (p_id_list_order IS NULL OR o."id_order" = ANY (string_to_array(p_id_list_order, ',')::INT[]))
         AND (p_id_custaccount IS NULL OR o."id_cust_account" = p_id_custaccount)
-        AND (p_id_list_orderstatus IS NULL OR o."id_order_status" = ANY (string_to_array(p_id_list_orderstatus, ',')::INT[]))
-        AND (p_date_start IS NULL OR o."insertdate" >= p_date_start)
-        AND (p_date_end IS NULL OR o."insertdate" <= p_date_end);
+        
+		AND (
+            p_borderstatus_insert_exclusif IS NULL OR  p_borderstatus_insert_exclusif IS NOT TRUE OR
+            ( 
+                p_borderstatus_insert_exclusif  IS TRUE AND o."id_order_status"  IN (1/*insert*/,6/*pending replace*/) 
+                and ( p_date_start  IS NULL OR o."date_last_submission" >= p_date_start ) and (p_date_end IS NULL or o."date_last_submission"  <= p_date_end)
+            )
+        )		
+		AND (
+            p_borderstatus_new_exclusif IS NULL OR  p_borderstatus_new_exclusif IS NOT TRUE OR
+            ( 
+                p_borderstatus_new_exclusif  IS TRUE AND o."id_order_status"  IN (2/*new*/,7/*replaced*/) 
+                and ( p_date_start  IS NULL OR o."date_last_submission" >= p_date_start)  and (p_date_end IS NULL or o."date_last_submission"  <= p_date_end)
+            )
+        )
+        AND (
+            p_borderstatus_new IS NULL OR  p_borderstatus_new IS NOT TRUE OR
+            ( 
+                p_borderstatus_new  IS TRUE AND o."id_order_status"  IN (2/*new*/,7/*replaced*/,3/*approved*/, 4/*billed*/, 5/*paid*/) 
+                and ( p_date_start  IS NULL OR o."date_last_submission" >= p_date_start)  and (p_date_end IS NULL or o."date_last_submission"  <= p_date_end)
+            )
+        ) 
+        AND (
+            p_borderstatus_approved IS NULL OR  p_borderstatus_approved IS NOT TRUE OR
+            ( 
+                p_borderstatus_approved  IS TRUE AND o."id_order_status"  IN (3/*approved*/, 4/*billed*/, 5/*paid*/) 
+                and ( p_date_start  IS NULL OR o."date_validation" >= p_date_start)  and (p_date_end IS NULL or o."date_validation"  <= p_date_end)
+            )
+        )
+
+        AND (
+            p_borderstatus_paid IS NULL OR  p_borderstatus_paid IS NOT TRUE OR
+            ( 
+                p_borderstatus_paid  IS TRUE AND o."id_order_status"  IN (5/*paid*/) 
+                and ( p_date_start  IS NULL OR o."date_last_return" >= p_date_start)  and (p_date_end IS NULL or o."date_last_return"  <= p_date_end)
+            )
+        )
+        ;
 END;
 $$ LANGUAGE plpgsql;
+
 
 
 DROP PROCEDURE IF EXISTS bill_order;

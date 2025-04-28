@@ -55,7 +55,7 @@ const CertificatPayeCard = ({ percentage }) => {
           color: 'text.secondary',
           align: 'left'
         }}
-        action={<Button variant="text" color="inherit">This Week</Button>}
+        action={<Button variant="text" color="inherit">7 derniers jours</Button>}
       />
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
@@ -97,28 +97,45 @@ const DashboardOperateur = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const theme = useTheme();
-
   useEffect(() => {
     const fetchStats = async () => {
       if (!operatorId) return;
       try {
         setLoading(true);
+
+        // ─── Compute "today" and "7 days ago" ─────────────────────────
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - 7);
+
+        // Format as ISO (Postgres accepts e.g. "2025-04-21T14:30:00.000Z")
+        const p_date_start = startDate.toISOString();
+        const p_date_end = endDate.toISOString();
+        // ────────────────────────────────────────────────────────────────
+
         const params = {
-          p_date_start: null,
-          p_date_end: null,
+          p_date_start,
+          p_date_end,
           p_id_list_order: null,
-          p_id_custaccount: null,
-          p_id_list_orderstatus: null
+          p_id_custaccount: null,   // operator-wide
+          p_borderstatus_insert_exclusif: null,
+          p_borderstatus_new_exclusif: null,
+          p_borderstatus_new: null,
+          p_borderstatus_approved: null,
+          p_borderstatus_paid: true,   // only “paid” window
         };
+
         const result = await getOrderStaticsByServices(params);
-        // On suppose que result est un tableau avec un seul objet
-        setStats(result[0]);
+        // your helper returns { data: [ { count_ord_certif_ori, ... } ] }
+        const statsRow = result.data?.[0] ?? result[0] ?? null;
+        setStats(statsRow);
       } catch (err) {
         console.error('Error fetching order statistics:', err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchStats();
   }, [operatorId]);
 
@@ -165,7 +182,7 @@ const DashboardOperateur = () => {
               value={total}
               diff={newOrdersDiff}
               trend="up"
-              periodLabel="this week"
+              periodLabel="7 derniers jours"
             />
           </Grid>
           <Grid item xs={12} md={4}>
@@ -174,7 +191,7 @@ const DashboardOperateur = () => {
               value={stats ? stats.count_ord_com_invoice : 0}
               diff={paymentOrdersDiff}
               trend="down"
-              periodLabel="this week"
+              periodLabel="7 derniers jours"
             />
           </Grid>
         </Grid>

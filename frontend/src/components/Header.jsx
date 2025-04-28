@@ -44,10 +44,15 @@ const Header = ({ toggleMenu, isMenuOpen }) => {
         // - p_id_list_orderstatus as a comma-separated string (example: "1,2,3,4,6,7")
         const params = {
           p_date_start: null,
-          p_date_end: null,
-          p_id_list_order: null,
-          p_id_custaccount: custAccountId,
-          p_id_list_orderstatus: '1,2,3,4,6,7'
+          p_date_end:   null,
+          p_id_list_order:    null,          // on ne filtre pas sur des numéros précis
+          p_id_custaccount:   custAccountId, // votre ID client
+          // === les nouveaux flags ===
+          p_borderstatus_insert_exclusif: true, // ne compte pas les "insert" seulement
+          p_borderstatus_new_exclusif:    false, // ne compte pas les "new/replaced" seulement
+          p_borderstatus_new:             false,  // compte tout ce qui est "new/replaced/.../paid"
+          p_borderstatus_approved:        false, // ne compte pas les approuvés seulement
+          p_borderstatus_paid:            false, // ne compte pas les payés seulement
         };
 
         try {
