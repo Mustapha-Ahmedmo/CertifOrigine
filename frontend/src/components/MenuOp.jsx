@@ -134,7 +134,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
           <Collapse in={openMenu.gestion} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
 
-              <ListItem disablePadding>
+              {/*}    <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
                   to="/dashboard/operator/current-orders"
@@ -145,7 +145,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemIcon><FontAwesomeIcon icon={faShoppingCart} /></ListItemIcon>
                   <ListItemText primary="Liste des commandes validées" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
-              </ListItem>
+    </ListItem>*/}
 
               <ListItem disablePadding>
                 <ListItemButton
@@ -190,7 +190,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
               </ListItem>
 
 
-              <ListItem disablePadding>
+              {/*}   <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
                   to="/dashboard/operator/create-order"
@@ -201,7 +201,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemIcon><FontAwesomeIcon icon={faFileContract} /></ListItemIcon>
                   <ListItemText primary="Génération des certificats" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
-              </ListItem>
+  </ListItem>*/}
 
               <ListItem disablePadding>
                 <ListItemButton

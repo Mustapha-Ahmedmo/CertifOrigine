@@ -19,7 +19,12 @@ import {
   Card,
   CardContent,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Grid,
+  CircularProgress,
+  Divider,
+  Stack,
+  Avatar
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPencilAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -44,6 +49,7 @@ import {
   delOrderFiles,
   sendEmailAndMemo,
   getCustUsersByAccount,
+  getCustAccountInfo,
 } from '../../../../services/apiServices';
 
 const Step5 = ({
@@ -209,11 +215,50 @@ const Step5 = ({
     setShowContactModal(true);
   };
 
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [companyLoading, setCompanyLoading] = useState(false);
+
+  const [companyContacts, setCompanyContacts] = useState([]);
+
 
   // contact modal state
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactEmail, setContactEmail] = useState('');
   const [contactMessage, setContactMessage] = useState('');
+
+
+  const handleOpenCompany = async () => {
+    setCompanyLoading(true);
+    try {
+      // fetch this exact account (status & active filter optional)
+      const resp = await getCustAccountInfo(
+        values.custAccountId,  // if operator: null, else your custAccountId
+        null,               // all statuses
+        true                // only active
+      );
+      // take the one record for this account
+      const acct = Array.isArray(resp.data) ? resp.data[0] : resp.data;
+      setSelectedCompany(acct);
+      const usersResp = await getCustUsersByAccount(
+        values.custAccountId,
+        null,      // no statutFlag filter
+        'true',    // only active accounts
+        'true',    // only active customer-users
+        'true'     // only main users
+      );
+      setCompanyContacts(usersResp.data || []);
+
+      setShowCompanyModal(true);
+    } catch (err) {
+      console.error('Erreur fetch company info', err);
+      alert('Impossible de charger les infos de la société.');
+    } finally {
+      setCompanyLoading(false);
+    }
+  };
+
+  const handleCloseCompany = () => setShowCompanyModal(false);
 
   const handleCloseContact = () => setShowContactModal(false);
   const handleSendContact = async () => {
@@ -1061,10 +1106,10 @@ const Step5 = ({
               <Button
                 size="small"
                 variant="outlined"
-                onClick={handleOpenContact}
+                onClick={handleOpenCompany}
                 sx={{ textTransform: 'none', ml: 2 }}
               >
-                CONTACTER
+                Afficher Société
               </Button>
             )}
           </Box>
@@ -1672,6 +1717,144 @@ const Step5 = ({
 
       {/* ---------- DIALOGS ---------- */}
 
+      {/* ——— Société Modal ——— */}
+      <Dialog
+        open={showCompanyModal}
+        onClose={handleCloseCompany}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle
+          sx={{
+            bgcolor: '#C39408',
+            color: '#fff',
+            fontWeight: 'bold'
+          }}
+        >
+          Informations Société
+        </DialogTitle>
+
+        <DialogContent dividers sx={{ py: 3 }}>
+          {selectedCompany ? (
+            <Box>
+              {/* — Company Core Info — */}
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h6" gutterBottom>
+                  {selectedCompany.cust_name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  {selectedCompany.legal_form} — {selectedCompany.co_symbol_fr}
+                </Typography>
+
+                {/* Address block */}
+                <Typography variant="body2" gutterBottom>
+                  <strong>Adresse :</strong> {selectedCompany.full_address}
+                </Typography>
+        
+
+                <Typography variant="body2" gutterBottom>
+                  <strong>Secteur :</strong> {selectedCompany.sectorName?.symbol_fr || '—'}
+                </Typography>
+
+                {selectedCompany.trade_registration_num && (
+                  <Typography variant="body2" gutterBottom>
+                    <strong>NIF :</strong> {selectedCompany.trade_registration_num}
+                  </Typography>
+                )}
+                {selectedCompany.register_number && (
+                  <Typography variant="body2">
+                    <strong>RCS :</strong> {selectedCompany.register_number}
+                  </Typography>
+                )}
+              </Box>
+
+              <Divider />
+
+              {/* — Main Contacts Grid — */}
+              <Box mt={4}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Contacts Principaux
+                </Typography>
+
+                {companyContacts.length > 0 ? (
+                  <Grid container spacing={2}>
+                    {companyContacts.map(contact => (
+                      <Grid item xs={12} sm={6} key={contact.id_cust_user}>
+                        <Card
+                          elevation={1}
+                          sx={{ borderRadius: 2, p: 2, height: '100%' }}
+                        >
+                          <Stack direction="row" spacing={2} alignItems="center">
+                            <Avatar sx={{ bgcolor: '#C39408' }}>
+                              {contact.full_name.charAt(0)}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="subtitle2">
+                                {contact.full_name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {contact.position}
+                              </Typography>
+                            </Box>
+                          </Stack>
+
+                          <Box sx={{ mt: 1 }}>
+                            <Typography variant="body2" noWrap>
+                              📧 {contact.email}
+                            </Typography>
+                            <Typography variant="body2">
+                              📞 {contact.phone_number}
+                            </Typography>
+                          </Box>
+
+                          <Box sx={{ textAlign: 'right', mt: 2 }}>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              sx={{
+                                bgcolor: '#C39408',
+                                color: '#fff',
+                                textTransform: 'none',
+                                borderRadius: 2,
+                                '&:hover': { bgcolor: '#B58306' }
+                              }}
+                              onClick={() => {
+                                setContactEmail(contact.email);
+                                setContactMessage('');
+                                setShowContactModal(true);
+                              }}
+                            >
+                              Contacter
+                            </Button>
+                          </Box>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                ) : (
+                  <Typography color="text.secondary">
+                    Aucun contact principal trouvé.
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          ) : (
+            <Box textAlign="center" py={4}>
+              <CircularProgress />
+            </Box>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button
+            onClick={handleCloseCompany}
+            variant="outlined"
+            sx={{ color: '#C39408', borderColor: '#C39408' }}
+          >
+            Fermer
+          </Button>
+        </DialogActions>
+      </Dialog>
       {/* Dialog : Nouveau destinataire */}
       <Dialog open={showNewRecipientDialog} onClose={() => setShowNewRecipientDialog(false)}>
         <DialogTitle>Créer un nouveau destinataire</DialogTitle>
