@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Box,
     Paper,
@@ -64,6 +64,7 @@ const statusMap = {
 
 const CurrentOrders = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const user = useSelector((state) => state.auth.user);
     const operatorId = user?.id_login_user;
     const currentYear = new Date().getFullYear();

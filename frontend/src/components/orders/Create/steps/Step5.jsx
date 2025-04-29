@@ -63,7 +63,7 @@ const Step5 = ({
 
 
   const companyName = values.exporterName || user.companyname || user.custAccountName || '';
-  
+
   const isOpUser = user?.isopuser;
 
   // Query params
@@ -74,7 +74,7 @@ const Step5 = ({
   console.log("VALUES : ", values);
 
   // Commande modifiable ?
-  const isModifiable = values.orderStatus === 1 || values.orderStatus === 6;
+  const isModifiable = !isOpUser && (values.orderStatus === 1 || values.orderStatus === 6);
 
   // --- Responsivité : “cartes” sur mobile, “table” sur desktop ---
   const theme = useTheme();
@@ -1651,28 +1651,23 @@ const Step5 = ({
       {/* BOUTON FINAL "SOUMETTRE" */}
 
 
-      {
-        !isModal && isModifiable && (
-          <Box sx={{ textAlign: 'center', mt: 3 }}>
-            <Button
-              variant="contained"
-              color="success"
-              onClick={handleSubmitOrder}
-              disabled={!isModifiable}
-            >
-              Soumettre la commande
-            </Button>
-            {submitError && (
-              <Typography color="error" sx={{ mt: 1 }}>
-                {submitError}
-              </Typography>
-            )}
-          </Box>
-
-
-
-        )
-      }
+      {!isModal && isModifiable && !isOpUser && (
+        <Box sx={{ textAlign: 'center', mt: 3 }}>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleSubmitOrder}
+            disabled={!isModifiable}
+          >
+            Soumettre la commande
+          </Button>
+          {submitError && (
+            <Typography color="error" sx={{ mt: 1 }}>
+              {submitError}
+            </Typography>
+          )}
+        </Box>
+      )}
 
 
       {/* ---------- DIALOGS ---------- */}

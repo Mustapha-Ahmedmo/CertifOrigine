@@ -164,9 +164,11 @@ const OperatorsList = () => {
                 <TableCell>{op.mobile_number}</TableCell>
                 <TableCell>{getGroupLabel(op.roles, op.isadmin)}</TableCell>
                 <TableCell>
-                  <IconButton onClick={(e) => handleMenuOpen(e, op)}>
-                    <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
-                  </IconButton>
+                  {(!op.isadmin || isAdmin) && (
+                    <IconButton onClick={(e) => handleMenuOpen(e, op)}>
+                      <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
+                    </IconButton>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -195,14 +197,16 @@ const OperatorsList = () => {
               <Typography><strong>Groupe :</strong> {getGroupLabel(op.roles, op.isadmin)}</Typography>
             </CardContent>
             <CardActions>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => handleEdit(op.id_op_user)}
-                sx={{ color: '#DCAF26', borderColor: '#DCAF26' }}
-              >
-                Modifier
-              </Button>
+              {(!op.isadmin || isAdmin) && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => handleEdit(op.id_op_user)}
+                  sx={{ color: '#DCAF26', borderColor: '#DCAF26' }}
+                >
+                  Modifier
+                </Button>
+              )}
               <Button
                 variant="outlined"
                 size="small"
@@ -266,7 +270,7 @@ const OperatorsList = () => {
           </FormControl>
         ) : (
           <FormControl component="fieldset" sx={{ mb: 2 }}>
-            
+
             <RadioGroup
               row
               value={statusFilter}
@@ -284,9 +288,12 @@ const OperatorsList = () => {
 
       {/* Menu actions */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={() => { handleEdit(selectedOp?.id_op_user); handleMenuClose(); }}>
-          <FontAwesomeIcon icon={faEdit} style={{ color: '#DCAF26', marginRight: 8 }} />Modifier
-        </MenuItem>
+        {(!selectedOp?.isadmin || isAdmin) && (
+          <MenuItem onClick={() => { handleEdit(selectedOp?.id_op_user); handleMenuClose(); }}>
+            <FontAwesomeIcon icon={faEdit} style={{ color: '#DCAF26', marginRight: 8 }} />Modifier
+          </MenuItem>
+        )}
+
         {isAdmin && statusFilter === 'active' && (
           <MenuItem onClick={() => { handleDisable(selectedOp?.id_op_user); handleMenuClose(); }}>
             <FontAwesomeIcon icon={faTrashAlt} style={{ color: '#DCAF26', marginRight: 8 }} />Désactiver

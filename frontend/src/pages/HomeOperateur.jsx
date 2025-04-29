@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
@@ -84,6 +84,25 @@ const HomeOperateur = () => {
   // État pour l'onglet actif
   const [tabIndex, setTabIndex] = useState(0);
 
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const initialTab =
+    params.get('mode') === 'payment' ? 1 :
+      params.get('mode') === 'returned' ? 2 :
+        0;
+
+  useEffect(() => {
+
+
+    const m = new URLSearchParams(location.search).get('mode');
+    setTabIndex(
+      m === 'payment' ? 1 :
+        m === 'returned' ? 2 :
+          0
+    );
+  }, [location.search]);
+
+
   const user = useSelector((state) => state.auth.user);
   const operatorId = user?.id_login_user;
   const navigate = useNavigate();
@@ -120,12 +139,14 @@ const HomeOperateur = () => {
   // Pour l'opérateur :
   // - Nouvelles commandes : id_order_status === 2 ou 7
   // - Commandes en attente de paiement : id_order_status === 3
-  const ordersNew = orders.filter(order => order.id_order_status === 2 || order.id_order_status === 7);
+  const ordersNew = orders.filter(order => order.id_order_status === 2);
+  const ordersReturned = orders.filter(o => o.id_order_status === 7);
   const ordersPayment = orders.filter(order => order.id_order_status === 3);
 
   const options = [
     { value: 'new', label: `Nouvelles commandes (${ordersNew.length})` },
     { value: 'payment', label: `Commandes en attente de paiement (${ordersPayment.length})` },
+    { value: 'returned', label: `Commandes revenu (${ordersReturned.length})` }
   ];
 
   const handleTabChange = (event, newValue) => {
@@ -185,6 +206,9 @@ const HomeOperateur = () => {
               goToOrderDetails={goToOrderDetails}
               mode="payment"  // Mode pour les commandes en attente de paiement
             />
+          </TabPanel>
+          <TabPanel value={tabIndex} index={2}>
+            <OrderTable orders={ordersReturned} refreshOrders={fetchOrders} goToOrderDetails={goToOrderDetails} />
           </TabPanel>
         </Box>
       </div>
@@ -275,7 +299,7 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                           {order.order_title || '-'}
                         </Typography>
                       </Box>
-                    
+
                       <Divider sx={{ my: 1 }} />
                       <Box sx={{ mb: 1, display: 'flex', justifyContent: 'space-between' }}>
                         <Box>
