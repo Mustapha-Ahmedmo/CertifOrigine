@@ -61,7 +61,9 @@ const Step5 = ({
 
   console.log('user raw:', user)
 
-  const companyName = user.companyname || user.custAccountName || '';
+
+  const companyName = values.exporterName || user.companyname || user.custAccountName || '';
+  
   const isOpUser = user?.isopuser;
 
   // Query params
