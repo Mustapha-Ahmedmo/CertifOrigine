@@ -1413,6 +1413,32 @@ export const ackMemoCust = async (p_id_memo, p_id_cust_account, p_idlogin) => {
   }
 };
 
+export const getOrderAmountByDay = async (params = {}) => {
+  try {
+    // strip null/undefined
+    const cleaned = {};
+    Object.entries(params).forEach(([k, v]) => {
+      if (v != null && v !== 'null') cleaned[k] = v;
+    });
+    const qs = new URLSearchParams(cleaned).toString();
+    const res = await fetch(`${API_URL}/orders/order-amount-by-day?${qs}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Failed to fetch daily amounts');
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('API call error (getOrderAmountByDay):', err);
+    throw err;
+  }
+};
+
 export const getOrderStaticsByServices = async (params = {}) => {
   try {
     // Remove any keys with null, undefined, or the string "null"

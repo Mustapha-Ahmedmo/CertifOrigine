@@ -1637,6 +1637,65 @@ const rejectOrder = async (req, res) => {
     });
   }
 };
+const getOrdCertifAmountByDay = async (req, res) => {
+  try {
+    let {
+      p_date_start,
+      p_date_end,
+      p_id_list_order,
+      p_id_custaccount,
+      p_unit_ori_certif,
+      p_unit_ori_certif_copy,
+    } = req.query;
+
+    // Validate required date bounds
+    if (!p_date_start || !p_date_end) {
+      return res.status(400).json({
+        message: 'Les paramètres p_date_start et p_date_end sont requis.',
+      });
+    }
+
+    // Parse numeric parameters
+    p_id_custaccount     = p_id_custaccount ? parseInt(p_id_custaccount, 10) : null;
+    p_unit_ori_certif    = parseFloat(p_unit_ori_certif)    || 0;
+    p_unit_ori_certif_copy = parseFloat(p_unit_ori_certif_copy) || 0;
+
+    const result = await sequelize.query(
+      `SELECT * FROM get_ord_certif_amount_byDay(
+           :p_date_start,
+           :p_date_end,
+           :p_id_list_order,
+           :p_id_custaccount,
+           :p_unit_ori_certif,
+           :p_unit_ori_certif_copy
+         )`,
+      {
+        replacements: {
+          p_date_start,
+          p_date_end,
+          p_id_list_order: p_id_list_order || null,
+          p_id_custaccount,
+          p_unit_ori_certif,
+          p_unit_ori_certif_copy,
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    res.status(200).json({
+      message: 'Montants par jour récupérés avec succès.',
+      data: result,
+    });
+  } catch (error) {
+    console.error('Erreur getOrdCertifAmountByDay:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la récupération des montants par jour.',
+      error: error.message || 'Erreur inconnue.',
+      details: error.original || error,
+    });
+  }
+};
+
 const getOrderStaticsByServices = async (req, res) => {
   try {
     // On récupère tous les query params, ou null par défaut
@@ -1984,5 +2043,6 @@ module.exports = {
   getOrderStaticsByServices,
   billOrder,
   setInvoiceHeader,
-  sendOrderDocument
+  sendOrderDocument,
+  getOrdCertifAmountByDay
 };

@@ -45,7 +45,7 @@ const OrderDetailsPage = () => {
     goodsDestination: '',
     transportModes: { air: false, mer: false, terre: false, mixte: false },
     transportRemarks: '',
-    exporterName: 'INDIGO TRADING FZCO',
+    exporterName: '',
     exporterCompany2: '',
     exporterAddress: '',
     exporterAddress2: '',

@@ -4342,6 +4342,75 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+DROP FUNCTION IF EXISTS get_ord_certif_amount_byDay;
+CREATE OR REPLACE FUNCTION get_ord_certif_amount_byDay(
+    p_date_start TIMESTAMP,
+    p_date_end TIMESTAMP,
+    p_id_list_order TEXT,
+    p_id_custaccount INT,
+    p_unit_ori_certif FLOAT,
+    p_unit_ori_certif_copy FLOAT
+)
+RETURNS TABLE(
+    amount_ord_certif_ori_approved FLOAT,
+    amount_ord_certif_ori_paid FLOAT,
+    theDayOfWeek  VARCHAR(32)
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT
+        SUM(
+            CASE WHEN
+                (o."id_order_status"= 3/*approved*/ AND o."date_validation" >= p_date_start  and o."date_validation"  <= p_date_end)
+                OR
+                (o."id_order_status"  = 4/*billed*/ AND o."date_last_return" >= p_date_start  and o."date_last_return"  <= p_date_end)
+            THEN
+                p_unit_ori_certif + p_unit_ori_certif_copy * COPY_COUNT
+            ELSE 0 END
+        ) AS amount_ord_certif_ori_approved,
+       
+       
+       
+        SUM(
+            CASE WHEN
+                o."id_order_status" = 5/*paid*/  AND o."date_last_return" >= p_date_start  and o."date_last_return"  <= p_date_end
+            THEN
+                AMOUNT_ExVAT + AMOUNT_VAT
+            ELSE 0 END
+        ) AS amount_ord_certif_ori_paid,
+
+
+        TO_CHAR(
+            CASE WHEN o."id_order_status" = 3/*approved*/
+            THEN
+                o."date_validation"
+            ELSE  
+                o."date_last_return"
+            END
+        , 'day')::varchar AS theDayOfWeek
+
+
+    FROM "ORDER" o
+            INNER JOIN ORD_CERTIF_ORI oco ON o."id_order" = oco."id_order"
+            LEFT JOIN INVOICE_HEADER inv ON o."id_order" = inv."id_order"
+    WHERE
+        (p_id_list_order IS NULL OR o."id_order" = ANY (string_to_array(p_id_list_order, ',')::INT[]))
+        AND (p_id_custaccount IS NULL OR o."id_cust_account" = p_id_custaccount)
+        AND o."id_order_status"  IN (3/*approved*/,4/*billed*/, 5/*paid*/)
+    GROUP BY  
+        TO_CHAR(
+            CASE WHEN o."id_order_status" = 3/*approved*/
+            THEN
+                o."date_validation"
+            ELSE  
+                o."date_last_return"
+            END
+        , 'day')
+       
+        ;
+END;
+$$ LANGUAGE plpgsql;
 
 DROP PROCEDURE IF EXISTS set_memo;
 CREATE OR REPLACE PROCEDURE set_memo(
