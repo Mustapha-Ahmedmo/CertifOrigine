@@ -5013,6 +5013,227 @@ BEGIN
 END;
 $$;
 
+DROP FUNCTION IF EXISTS get_histo_order;
+CREATE OR REPLACE FUNCTION get_histo_order(
+    p_idlogin INT,
+    p_date_start TIMESTAMP,
+    p_date_end TIMESTAMP,
+    p_id_list_order TEXT,
+    p_id_custaccount INT,
+    p_id_list_orderstatus TEXT,
+    p_order_histo_action_list TEXT,
+    p_desc BOOLEAN DEFAULT FALSE
+)
+RETURNS TABLE(
+    id_histo_order INT,
+    order_histo_action TEXT,
+    idlogin_insert_histo INT,
+    insertdate_histo TIMESTAMP,
+    id_order INT,
+    id_cust_account INT,
+    order_title VARCHAR(32),
+    id_order_status INT,
+    idlogin_owner INT,
+    idlogin_spare INT,
+    date_owner TIMESTAMP,
+    date_spare TIMESTAMP,
+    date_last_submission TIMESTAMP,
+    date_last_return TIMESTAMP,
+    date_validation TIMESTAMP,
+    insertdate TIMESTAMP,
+    idlogin_insert INT,
+    lastmodified TIMESTAMP,
+    idlogin_modify INT,
+    typeof INT,
+
+	txt_order_status_fr VARCHAR(32), 
+	txt_order_status_eng VARCHAR(32), 
+	note VARCHAR(32),
+	
+	insert_full_name VARCHAR(96),
+	insert_role_user INT,
+	insert_isopuser BOOLEAN,
+	insert_isadmin_login BOOLEAN,
+	insert_idforeign INT,
+	insert_email VARCHAR(32)
+
+) AS
+$$
+BEGIN
+    IF p_desc THEN
+        RETURN QUERY
+        SELECT 
+            ho."id_histo_order",
+            CASE ho."order_histo_action"
+                WHEN 1 THEN 'Création'
+                WHEN 2 THEN 'Modification'
+                WHEN 3 THEN 'Ajout Ord_Certif'
+                WHEN 4 THEN 'Suppression Ord_Certif'
+                WHEN 5 THEN 'Ajout Ord_Legaliza'
+                WHEN 6 THEN 'Suppression Ord_Legaliza'
+                WHEN 7 THEN 'Ajout Ord_Com_Invo'
+                WHEN 8 THEN 'Suppression Ord_Com_Invo'
+                WHEN 9 THEN 'Soumission'
+                WHEN 10 THEN 'Prise en charge' --'Ajout Owner'
+                WHEN 11 THEN 'Ajout Spare'
+                WHEN 12 THEN 'Renvoi'
+                WHEN 13 THEN 'Validation/Approbation'
+                WHEN 14 THEN 'Paiement'
+                WHEN 15 THEN 'Ordre Annulé'
+                WHEN 16 THEN 'Ordre Rejeté'
+		        WHEN 17 THEN 'Ordre Remplacé'
+		        WHEN 18 THEN 'Ordre Facturé'
+                ELSE 'Autre Action'
+            END AS order_histo_action,
+            ho."idlogin_insert_histo",
+            ho."insertdate_histo",
+            ho."id_order",
+            ho."id_cust_account",
+            ho."order_title",
+            ho."id_order_status",
+            ho."idlogin_owner",
+            ho."idlogin_spare",
+            ho."date_owner",
+            ho."date_spare",
+            ho."date_last_submission",
+            ho."date_last_return",
+            ho."date_validation",
+            ho."insertdate",
+            ho."idlogin_insert",
+            ho."lastmodified",
+            ho."idlogin_modify",
+            ho."typeof",
+
+		    os."txt_order_status_fr", 
+			os."txt_order_status_eng", 
+			os."note",
+
+			vl."full_name", 
+			vl."role_user", 
+			vl."isopuser", 
+			vl."isadmin_login", 
+			vl."idforeign",
+			vl."email"
+
+
+
+        FROM 
+            histo_order ho
+        JOIN 
+            "ORDER" o ON ho."id_order" = o."id_order"
+        JOIN
+            CUST_ACCOUNT ca ON ho."id_cust_account" = ca."id_cust_account"
+        JOIN
+            ORDER_STATUS os ON ho."id_order_status" = os."id_order_status"
+
+        JOIN
+            view_login vl ON ho."idlogin_insert_histo" = vl."id_login_user"
+
+
+
+        WHERE 
+            (p_id_list_order IS NULL OR ho."id_order" = ANY (string_to_array(p_id_list_order, ',')::INT[]))
+        AND
+            (p_id_custaccount IS NULL OR ho."id_cust_account" = p_id_custaccount)
+        AND
+            (p_idlogin IS NULL OR ho."idlogin_insert_histo" = p_idlogin)
+        AND
+            (p_id_list_orderstatus IS NULL OR ho."id_order_status" = ANY (string_to_array(p_id_list_orderstatus, ',')::INT[]))
+        AND
+            (p_order_histo_action_list IS NULL OR ho."order_histo_action" = ANY (string_to_array(p_order_histo_action_list, ',')::INT[]))
+        AND
+            (p_date_start IS NULL OR ho."insertdate_histo" >= p_date_start)
+        AND
+            (p_date_end IS NULL OR ho."insertdate_histo" <= p_date_end)
+        ORDER BY ho."insertdate_histo" DESC;
+    ELSE
+        RETURN QUERY
+        SELECT 
+            ho."id_histo_order",
+            CASE ho."order_histo_action"
+                WHEN 1 THEN 'Création'
+                WHEN 2 THEN 'Modification'
+                WHEN 3 THEN 'Ajout Ord_Certif'
+                WHEN 4 THEN 'Suppression Ord_Certif'
+                WHEN 5 THEN 'Ajout Ord_Legaliza'
+                WHEN 6 THEN 'Suppression Ord_Legaliza'
+                WHEN 7 THEN 'Ajout Ord_Com_Invo'
+                WHEN 8 THEN 'Suppression Ord_Com_Invo'
+                WHEN 9 THEN 'Soumission'
+                WHEN 10 THEN 'Prise en charge' --'Ajout Owner'
+                WHEN 11 THEN 'Ajout Spare'
+                WHEN 12 THEN 'Renvoi'
+                WHEN 13 THEN 'Validation/Approbation'
+                WHEN 14 THEN 'Paiement'
+                WHEN 15 THEN 'Ordre Annulé'
+                WHEN 16 THEN 'Ordre Rejeté'
+		        WHEN 17 THEN 'Ordre Remplacé'
+		        WHEN 18 THEN 'Ordre Facturé'
+                ELSE 'Autre Action'
+            END AS order_histo_action,
+            ho."idlogin_insert_histo",
+            ho."insertdate_histo",
+            ho."id_order",
+            ho."id_cust_account",
+            ho."order_title",
+            ho."id_order_status",
+            ho."idlogin_owner",
+            ho."idlogin_spare",
+            ho."date_owner",
+            ho."date_spare",
+            ho."date_last_submission",
+            ho."date_last_return",
+            ho."date_validation",
+            ho."insertdate",
+            ho."idlogin_insert",
+            ho."lastmodified",
+            ho."idlogin_modify",
+            ho."typeof",
+
+		    os."txt_order_status_fr", 
+			os."txt_order_status_eng", 
+			os."note",
+
+			vl."full_name", 
+			vl."role_user", 
+			vl."isopuser", 
+			vl."isadmin_login", 
+			vl."idforeign",
+			vl."email"
+
+
+
+        FROM 
+            histo_order ho
+        JOIN 
+            "ORDER" o ON ho."id_order" = o."id_order"
+        JOIN
+            CUST_ACCOUNT ca ON ho."id_cust_account" = ca."id_cust_account"
+        JOIN
+            ORDER_STATUS os ON ho."id_order_status" = os."id_order_status"
+        JOIN
+            view_login vl ON ho."idlogin_insert_histo" = vl."id_login_user"
+
+
+        WHERE 
+            (p_id_list_order IS NULL OR ho."id_order" = ANY (string_to_array(p_id_list_order, ',')::INT[]))
+        AND
+            (p_id_custaccount IS NULL OR ho."id_cust_account" = p_id_custaccount)
+        AND
+            (p_idlogin IS NULL OR ho."idlogin_insert_histo" = p_idlogin)
+        AND
+            (p_id_list_orderstatus IS NULL OR ho."id_order_status" = ANY (string_to_array(p_id_list_orderstatus, ',')::INT[]))
+        AND
+            (p_order_histo_action_list IS NULL OR ho."order_histo_action" = ANY (string_to_array(p_order_histo_action_list, ',')::INT[]))
+        AND
+            (p_date_start IS NULL OR ho."insertdate_histo" >= p_date_start)
+        AND
+            (p_date_end IS NULL OR ho."insertdate_histo" <= p_date_end)
+        ORDER BY ho."insertdate_histo" ASC;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 call set_op_user(0, 0, 'M. Admin', 1, TRUE,
 'admin@cdd.dj','4889ba9b',
 '253355445', '25377340000',
