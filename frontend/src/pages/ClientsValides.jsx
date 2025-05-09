@@ -660,7 +660,7 @@ const ClientsValides = () => {
       (a, b) => new Date(b.insertdate) - new Date(a.insertdate)
     );
     setCustAccounts(sortedData);
-    // si le type final est « Entreprise » ou « Entreprise en zone franche »
+    // si le type final est « Entreprise » ou « Entreprise en zone franche »
     if (['autre', 'zoneFranche'].includes(editFormData.companyType)) {
       setFileAlertOpen(true);                            // 1.  Snackbar
 
@@ -713,7 +713,13 @@ const ClientsValides = () => {
   };
 
   const handleDisableConfirm = async () => {
-    if (!selectedDisableAccount) return;
+     if (!selectedDisableAccount) return;
+      // Vérification du motif
+      if (!disableReason.trim()) {
+        // affiche une notification (Snackbar ou alert)
+        alert('Veuillez saisir un motif de désactivation.');
+        return;
+      }
 
     try {
       await disableCustAccount(
@@ -762,7 +768,7 @@ const ClientsValides = () => {
     if (registration.in_free_zone === true) {
       return registration.identification_number && registration.identification_number !== 'null' ? (
         <span>
-          <strong>Licence :</strong> {registration.identification_number}
+          <strong>Licence :</strong> {registration.identification_number}
         </span>
       ) : null;
     }
@@ -774,9 +780,9 @@ const ClientsValides = () => {
     if (hasNIF || hasRCS) {
       return (
         <span>
-          <strong>NIF :</strong> {hasNIF ? registration.trade_registration_num : 'N/A'}
+          <strong>NIF :</strong> {hasNIF ? registration.trade_registration_num : 'N/A'}
           <br />
-          <strong>RCS :</strong> {hasRCS ? registration.register_number : 'N/A'}
+          <strong>RCS :</strong> {hasRCS ? registration.register_number : 'N/A'}
         </span>
       );
     }
@@ -972,7 +978,7 @@ const ClientsValides = () => {
                 Gérer les fichiers
               </Button>
 
-              {/* 3 — Menu d’action (⋮) : seulement Modifier / (Dés)activer */}
+              {/* 3 — Menu d’action (⋮) : seulement Modifier / (Dés)activer */}
               {canAct && (
                 <TableCell>
                   <IconButton onClick={e => handleMenuOpen(e, registration)}>
@@ -1048,7 +1054,7 @@ const ClientsValides = () => {
       );
     }
 
-    // --- DESKTOP : 4 boutons comme avant ---
+    // --- DESKTOP : 4 boutons comme avant ---
     return (
       <Box sx={{ mt: 2, mb: 2, display: 'flex', gap: 2 }}>
         {['validé', 'non validé', 'désactivé', 'rejeté'].map((f) => (
@@ -1449,6 +1455,8 @@ const ClientsValides = () => {
             fullWidth
             value={disableReason}
             onChange={(e) => setDisableReason(e.target.value)}
+            error={!disableReason.trim()}
+           helperText={!disableReason.trim() ? 'Veuillez saisir un motif' : ''}
           />
         </DialogContent>
         <DialogActions>
@@ -1458,10 +1466,11 @@ const ClientsValides = () => {
           >
             Annuler
           </Button>
-          <Button
+           <Button
             onClick={handleDisableConfirm}
             variant="contained"
             style={{ backgroundColor: '#C39408', color: '#fff' }}
+            disabled={!disableReason.trim()}
           >
             Désactiver
           </Button>
@@ -1499,7 +1508,7 @@ const ClientsValides = () => {
 <p>Bonjour,</p>
 <p>La Chambre de Commerce de Djibouti vous a envoyé ce message.</p>
 <p><strong>${mailMessage}</strong></p>
-<p>Si votre compte est actif, vous pouvez retrouver cette correspondance depuis la rubrique « Notifications » à l’adresse <a href="https://www.ccd.dj">www.ccd.dj</a>.</p>
+<p>Si votre compte est actif, vous pouvez retrouver cette correspondance depuis la rubrique « Notifications » à l’adresse <a href="https://www.ccd.dj">www.ccd.dj</a>.</p>
 <p>Chambre de Commerce de Djibouti</p>
       `.trim();
 
@@ -1507,7 +1516,7 @@ const ClientsValides = () => {
                 if (isOpUser) {
                   await sendEmailAndMemo({
                     to: selectedContactEmail,
-                    subject: 'Titre du message : La Chambre de Commerce de Djibouti vous a envoyé un message',
+                    subject: 'Titre du message : La Chambre de Commerce de Djibouti vous a envoyé un message',
                     body: htmlBody,
                     isHtml: true,
                     id_cust_account: selectedAccount?.id_cust_account,
@@ -1518,7 +1527,7 @@ const ClientsValides = () => {
                 alert('Message envoyé avec succès et mémo enregistré.');
                 handleCloseContactModal();
               } catch (error) {
-                console.error("Erreur lors de l'envoi de l'email et de l'enregistrement du mémo :", error);
+                console.error("Erreur lors de l'envoi de l'email et de l'enregistrement du mémo :", error);
                 alert('Erreur lors de l’envoi du message.');
               }
             }}

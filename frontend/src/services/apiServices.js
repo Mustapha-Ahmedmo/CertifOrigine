@@ -1597,3 +1597,45 @@ export const sendEmailAndMemo = async ({
     throw err;
   }
 };
+
+export const getOrderHisto = async ({ p_idlogin, p_id_list_order }) => {
+  // 1) Construire la query string
+  const params = new URLSearchParams();
+  if (p_id_list_order)      params.append('p_id_list_order', p_id_list_order);
+
+  // 2) L’URL doit matcher ton router Express monté sur '/orders'
+  const url = `${API_URL}/orders/order-histo?${params.toString()}`;
+
+  // 3) Appel fetch
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`, // si tu l’utilises
+    },
+  });
+
+  // 4) Gestion d’erreur
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.message || 'Impossible de récupérer la piste d’audit');
+  }
+
+  // 5) Retour du JSON
+  return await response.json();
+};
+
+export const getOrderMemo = async (params) => {
+  // params : { p_id_order_list, p_idlogin, ... }
+  const query = new URLSearchParams(params).toString();
+  const resp = await fetch(`${API_URL}/orders/order-memo?${query}`, {
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    }
+  });
+  if (!resp.ok) {
+    const err = await resp.json();
+    throw new Error(err.message || 'Failed to fetch memos');
+  }
+  return await resp.json();
+};

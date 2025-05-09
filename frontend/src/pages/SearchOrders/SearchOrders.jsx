@@ -32,10 +32,14 @@ import {
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faFilePdf } from '@fortawesome/free-solid-svg-icons';
-import { fetchCountries, fetchRecipients, getCertifGoodsInfo, getCertifTranspMode, getCustAccountInfo, getOrderFilesInfo, getOrderOpInfo, getOrdersForCustomer, getTransmodeInfo, setOrderFiles } from '../../services/apiServices';
+import { fetchCountries, fetchRecipients, getCertifGoodsInfo, getCertifTranspMode, getCustAccountInfo, getOrderFilesInfo, getOrderOpInfo, getOrdersForCustomer, getTransmodeInfo, setOrderFiles, sendEmailAndMemo, sendEmail } from '../../services/apiServices';
 import { formatDate } from '../../utils/dateUtils';
 import './SearchOrders.css';
 import { generatePDF } from '../../components/orders/GeneratePDF';
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import { faEllipsisV } from '@fortawesome/free-solid-svg-icons';
+
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -69,6 +73,17 @@ const SearchOrders = () => {
   const isOpUser = user?.isopuser;
 
   const currentYear = new Date().getFullYear();
+  const [anchorElActions, setAnchorElActions] = useState(null);
+  const [selectedOrder,   setSelectedOrder  ] = useState(null);
+
+  const handleActionsOpen = (e, order) => {
+    setAnchorElActions(e.currentTarget);
+    setSelectedOrder(order);
+  };
+  const handleActionsClose = () => {
+    setAnchorElActions(null);
+    setSelectedOrder(null);
+  };
 
   // États des filtres
   const defaultStartDate = `${currentYear}-01-01`;
@@ -341,6 +356,37 @@ const SearchOrders = () => {
 
     console.log('PDF generated and order file saved successfully. Now refreshing orders...');
     await fetchOrders();
+    // ─── ENVOI D'EMAIL AU CLIENT ───────────────────────────────
+    try {
+      // Récupération du contact principal
+      const mainContact = custAccountInfo.data[0].main_contact
+        ?.find(c => c.ismain_user === true);
+      const toEmail = mainContact?.email;
+
+      if (toEmail) {
+        const subject = `Votre PDF de commande #${order.id_order} est disponible`;
+        const body = `
+          <p>Bonjour ${custAccountInfo.data[0].cust_name || ''},</p>
+          <p>Le PDF de votre commande <strong>#${order.id_order}</strong> a été généré${orderFiles[order.id_order] ? ' à nouveau' : ''}.</p>
+          <p>Vous pouvez le télécharger directement via votre espace client.</p>
+          <p>Bien cordialement,<br/>La Chambre de Commerce de Djibouti</p>
+        `;
+
+        await sendEmailAndMemo({
+          to: toEmail,
+          subject,
+          body,
+          isHtml: true,
+          id_cust_account: order.id_cust_account,
+          idlogin: operatorId
+        });
+        console.log('E-mail envoyé à', toEmail);
+          } else {
+            console.warn('Aucun contact principal ou e-mail introuvable pour la commande', order.id_order);
+          }
+    } catch (mailErr) {
+      console.error("Erreur lors de l'envoi de l'e-mail au client :", mailErr);
+    }
   };
 
   const handleFileClick = (file) => {
@@ -401,49 +447,77 @@ const SearchOrders = () => {
                 </Typography>
               </CardContent>
               <CardActions>
-                <Button variant="contained" color="primary" size="small" onClick={() => handleDetailsClick(order)}>
-                  <FontAwesomeIcon icon={faEye} /> Détails
-                </Button>
+                <IconButton size="small" onClick={e => handleActionsOpen(e, order)}>
+                <FontAwesomeIcon
+                  icon={faEllipsisV}
+                  style={{ color: '#DCAF26' }}
+                />
+                </IconButton>
 
-                {order.id_order_status === 5 && (
-                  isOpUser ? (
-                    <>
-                      {orderFiles[order.id_order] && (
-                        <Button
-                          variant="contained"
-                          color="success"
-                          size="small"
-                          sx={{ mr: 1 }}
-                          onClick={() => handleFileClick(orderFiles[order.id_order])}
-                        >
-                          <FontAwesomeIcon icon={faFilePdf} /> Ouvrir
-                        </Button>
-                      )}
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        size="small"
-                        onClick={() => handleGeneratePDF(order)}
+                <Menu
+                  anchorEl={anchorElActions}
+                  open={Boolean(anchorElActions) && selectedOrder?.id_order === order.id_order}
+                  onClose={handleActionsClose}
+                >
+                  {/* 1) Détails */}
+                  <MenuItem
+                  onClick={() => { handleDetailsClick(order); handleActionsClose(); }}
+                >
+                  <FontAwesomeIcon
+                    icon={faEye}
+                    style={{ color: '#DCAF26', marginRight: 8 }}
+                  />
+                  Détails
+                </MenuItem>
+
+                  {/* 2) Si statut = 5, actions PDF */}
+                  {order.id_order_status === 5 && (
+                    isOpUser
+                      ? (
+                        <>
+                          {/* Ouvrir si déjà généré */}
+                          {orderFiles[order.id_order] && (
+                      <MenuItem
+                        onClick={() => { handleFileClick(orderFiles[order.id_order]); handleActionsClose(); }}
+                        sx={{ color: '#DCAF26' }}
                       >
-                        <FontAwesomeIcon icon={faFilePdf} /> Générer PDF
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      color="success"
-                      size="small"
-                      onClick={() =>
-                        navigate(
-                          `/dashboard/order-details?orderId=${order.id_order}&certifId=${order.id_ord_certif_ori}`
-                        )
-                      }
+                        <FontAwesomeIcon
+                          icon={faFilePdf}
+                          style={{ color: '#DCAF26', marginRight: 8 }}
+                        />
+                        Ouvrir
+                      </MenuItem>
+                    )}
+                          {/* Toujours proposer Générer */}
+                          <MenuItem
+                      onClick={() => { handleGeneratePDF(order); handleActionsClose(); }}
+                      sx={{ color: '#DCAF26' }}
                     >
-                      <FontAwesomeIcon icon={faFilePdf} /> Ouvrir
-                    </Button>
-                  )
-                )}
+                      <FontAwesomeIcon
+                        icon={faFilePdf}
+                        style={{ color: '#DCAF26', marginRight: 8 }}
+                      />
+                      Générer PDF
+                    </MenuItem>
+                        </>
+                      )
+                      : (
+                        <MenuItem onClick={() => {
+                          navigate(`/dashboard/order-details?orderId=${order.id_order}&certifId=${order.id_ord_certif_ori}`);
+                          handleActionsClose();
+                        }}sx={{ color: '#DCAF26' }}
+                            >
+                              <FontAwesomeIcon
+                                icon={faFilePdf}
+                              style={{ color: '#DCAF26', marginRight: 8 }}
+                              />
+                              Ouvrir
+                            </MenuItem>
+                      )
+                  )}
+                </Menu>
               </CardActions>
+
             </Card>
           </Grid>
         ))
@@ -489,51 +563,77 @@ const SearchOrders = () => {
                   {order.date_validation_order ? formatDate(order.date_validation_order) : '-'}
                 </TableCell>
                 <TableCell>
-                  <Button variant="contained" color="primary" size="small" onClick={() => handleDetailsClick(order)}>
-                    <FontAwesomeIcon icon={faEye} /> Détails
-                  </Button>
+                  <IconButton size="small" onClick={e => handleActionsOpen(e, order)}>
+                    <FontAwesomeIcon
+                      icon={faEllipsisV}
+                      style={{ color: '#DCAF26' }}
+                    />
+                  </IconButton>
+                  <Menu
+                    anchorEl={anchorElActions}
+                    open={Boolean(anchorElActions) && selectedOrder?.id_order === order.id_order}
+                    onClose={handleActionsClose}
+                  >
+                    {/* Détails */}
+                    <MenuItem
+                      onClick={() => { handleDetailsClick(order); handleActionsClose(); }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faEye}
+                        style={{ color: '#DCAF26', marginRight: 8 }}
+                      />
+                      Détails
+                    </MenuItem>
 
-                  {order.id_order_status === 5 && (
-                    isOpUser ? (
-                      <>
-                        {orderFiles[order.id_order] && (
-                          <Button
-                            variant="contained"
-                            color="success"
-                            size="small"
-                            sx={{ ml: 1 }}
-                            onClick={() => handleFileClick(orderFiles[order.id_order])}
-                          >
-                            <FontAwesomeIcon icon={faFilePdf} /> Ouvrir
-                          </Button>
-                        )}
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          size="small"
-                          sx={{ ml: 1 }}
-                          onClick={() => handleGeneratePDF(order)}
-                        >
-                          <FontAwesomeIcon icon={faFilePdf} /> Générer PDF
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        variant="contained"
-                        color="success"
-                        size="small"
-                        sx={{ ml: 1 }}
-                        onClick={() =>
-                          navigate(
-                            `/dashboard/order-details?orderId=${order.id_order}&certifId=${order.id_ord_certif_ori}`
-                          )
-                        }
-                      >
-                        <FontAwesomeIcon icon={faFilePdf} /> Ouvrir
-                      </Button>
-                    )
-                  )}
+                    {/* Seulement si status = 5 */}
+                    {order.id_order_status === 5 && (
+                      isOpUser
+                        ? (
+                          <>
+                            {/* Ouvrir si déjà généré */}
+                            {orderFiles[order.id_order] && (
+                            <MenuItem
+                              onClick={() => { handleFileClick(orderFiles[order.id_order]); handleActionsClose(); }}
+                              
+                            >
+                              <FontAwesomeIcon
+                                icon={faFilePdf}
+                                style={{ color: '#DCAF26', marginRight: 8 }}
+                              />
+                              Ouvrir
+                            </MenuItem>
+                            )}
+                            {/* Toujours possibilité de régénérer */}
+                            <MenuItem
+                              onClick={() => { handleGeneratePDF(order); handleActionsClose(); }}
+                              
+                            >
+                              <FontAwesomeIcon
+                                icon={faFilePdf}
+                                style={{ color: '#DCAF26', marginRight: 8 }}
+                              />
+                              Générer PDF
+                            </MenuItem>
+                          </>
+                        )
+                        : (
+                          /* Pour client non-opUser : link vers l’open côté client */
+                          <MenuItem onClick={() => {
+                            navigate(`/dashboard/order-details?orderId=${order.id_order}&certifId=${order.id_ord_certif_ori}`);
+                            handleActionsClose();
+                          }}
+                           >
+                                 <FontAwesomeIcon
+                                   icon={faFilePdf}
+                                   style={{ color: '#DCAF26', marginRight: 8 }}
+                                 />
+                                 Ouvrir
+                               </MenuItem>
+                        )
+                    )}
+                  </Menu>
                 </TableCell>
+
               </TableRow>
             ))
           ) : (

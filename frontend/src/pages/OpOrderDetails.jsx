@@ -244,7 +244,7 @@ const OpOrderDetails = () => {
         isModal={false}
       />
 
-      {isOpUser && ![3, 4, 5, 8, 9].includes(formData.orderStatus) && (
+      {isOpUser && ![3, 4, 5, 8, 9, 6].includes(formData.orderStatus) && (
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3 }}>
           <Button
             variant="contained"
@@ -254,14 +254,14 @@ const OpOrderDetails = () => {
           >
             Valider
           </Button>
-          <Button
+          {/*<Button
             variant="contained"
             color="error"         // ← was "outlined"
             startIcon={<Close />}
             onClick={handleRejectClick}
           >
             Rejeter
-          </Button>
+          </Button>*/}
           <Button
             variant="contained"
             color="warning"       // ← was "outlined"

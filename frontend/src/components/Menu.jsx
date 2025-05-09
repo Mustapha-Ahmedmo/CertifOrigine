@@ -275,8 +275,13 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           {/* Gestion des commandes en tant que menu parent */}
           <ListItem disablePadding>
             <ListItemButton
-              onClick={() => handleToggleSubmenu("orders")}
-              selected={false}  // on gère la sélection sur les enfants
+              onClick={() => {
+                handleToggleSubmenu("orders");   // ouvre/replie le sous-menu
+                navigate("/dashboard/home");     // charge "Commandes en cours"
+                handleLinkClick();               // ferme le drawer en mobile
+              }}
+              selected={false}                  // ne reste jamais “surbrillé”
+              sx={newOrderStyle}                // même style que “Nouvelle Commande”
             >
               <ListItemIcon sx={{ color: "black" }}>
                 <FontAwesomeIcon icon={faClipboardList} />
@@ -463,86 +468,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
 
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-          {/* Ma CCD (menu parent) */}
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => handleToggleSubmenu("ccd")}
-              selected={false}  // on surlignera les sous-items, pas le parent
-            >
-              <ListItemIcon sx={{ color: "black" }}>
-                <FontAwesomeIcon icon={faLandmark} />
-              </ListItemIcon>
-              <ListItemText
-                primary="Ma CCD"
-                primaryTypographyProps={{ fontSize: "14px" }}
-              />
-            </ListItemButton>
-          </ListItem>
-          <Collapse in={openSubmenus.ccd} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {/* C.G.V */}
-              <ListItem disablePadding>
-                <ListItemButton
-                  sx={{ pl: 4, ...selectedStyle }}
-                  component={Link}
-                  to="/dashboard/cgv"
-                  onClick={() => { closeAllSubmenus(); handleLinkClick(); }}
-                  selected={location.pathname === "/dashboard/cgv"}
-                >
-                  <ListItemIcon sx={{ color: "black" }}>
-                    <FontAwesomeIcon icon={faCertificate} />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="C.G.V"
-                    primaryTypographyProps={{ fontSize: "12px" }}
-                  />
-                </ListItemButton>
-              </ListItem>
-              {/* Prestation de services */}
-              <ListItem disablePadding>
-              <ListItemButton
-                component={Link}
-                to="/dashboard/prestation-service"
-                sx={{ pl: 4, ...selectedStyle }}
-                onClick={() => {
-                  // toggleMenu() ferme le drawer *seulement* sur mobile
-                  handleLinkClick();
-                  // on n'appelle PLUS closeAllSubmenus ici, pour garder Ma CCD ouverte
-                }}
-                selected={location.pathname === "/dashboard/prestation-service"}
-              >
-                  <ListItemIcon sx={{ color: "black" }}>
-                    <FontAwesomeIcon icon={faDollarSign} />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Prestation de services"
-                    primaryTypographyProps={{ fontSize: "12px" }}
-                  />
-                </ListItemButton>
-              </ListItem>
-              {/* Mentions légales */}
-              <ListItem disablePadding>
-                <ListItemButton
-                  sx={{ pl: 4, ...selectedStyle }}
-                  component={Link}
-                  to="/dashboard/mentions-legales"
-                  onClick={() => { closeAllSubmenus(); handleLinkClick(); }}
-                  selected={location.pathname === "/dashboard/mentions-legales"}
-                >
-                  <ListItemIcon sx={{ color: "black" }}>
-                    <FontAwesomeIcon icon={faGavel} />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Mentions légales"
-                    primaryTypographyProps={{ fontSize: "12px" }}
-                  />
-                </ListItemButton>
-              </ListItem>
-            </List>
-          </Collapse>
-
-          <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
-
+          
           {/* Lien vers la page Contactez-nous */}
           <ListItem disablePadding>
             <ListItemButton

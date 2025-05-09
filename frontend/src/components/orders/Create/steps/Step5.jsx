@@ -52,6 +52,13 @@ import {
   getCustAccountInfo,
 } from '../../../../services/apiServices';
 
+// Regex téléphone international : + ou 00 suivi de 8 à 16 chiffres
+const isValidInternationalPhone = (value) =>
+  /^(?:\+|00)[1-9][0-9]*$/.test(value) &&
+  value.length >= 8 &&
+  value.length <= 16;
+
+
 const Step5 = ({
   prevStep,
   values,
@@ -480,6 +487,11 @@ const Step5 = ({
   };
 
   const handleSaveNewRecipient = async () => {
+    const phone = newRecipientLocal.receiverAddress2 || '';
+  if (!isValidInternationalPhone(phone)) {
+    setErrorMessage("Le numéro de téléphone est invalide.");
+    return;
+  }
     try {
       const newRecipientData = {
         idRecipientAccount: null,
@@ -601,8 +613,9 @@ const Step5 = ({
               <Box component="th" sx={tableCellStyle}>Désignation</Box>
               <Box component="th" sx={tableCellStyle}>Référence / HSCODE</Box>
               <Box component="th" sx={tableCellStyle}>Réf. doc</Box>
-              <Box component="th" sx={tableCellStyle}>Quantité</Box>
-              <Box component="th" sx={tableCellStyle}>Unité</Box>
+              {/*<Box component="th" sx={tableCellStyle}>Quantité</Box>*/}
+              {/*<Box component="th" sx={tableCellStyle}>Unité</Box>*/}
+              <Box component="th" sx={tableCellStyle}>Quantité (unité)</Box>
               {isModifiable && <Box component="th" sx={tableCellStyle}>Action</Box>}
             </Box>
           </Box>
@@ -622,11 +635,14 @@ const Step5 = ({
                 <Box component="td" sx={tableCellStyle}>
                   {m.docReference || 'Non spécifié'}
                 </Box>
-                <Box component="td" sx={tableCellStyle}>
+               {/*} <Box component="td" sx={tableCellStyle}>
                   {m.quantity || 'Non spécifié'}
-                </Box>
-                <Box component="td" sx={tableCellStyle}>
+                </Box>*/}
+                {/*<Box component="td" sx={tableCellStyle}>
                   {m.unit || 'Non spécifié'}
+                </Box>*/}
+                <Box component="td" sx={tableCellStyle}>
+                  {m.quantity ? `${m.quantity} ${m.unit}` : 'Non spécifié'}
                 </Box>
                 {isModifiable && (
                   <Box component="td" sx={tableCellStyle}>
@@ -650,7 +666,7 @@ const Step5 = ({
   // Affichage “cartes” sur mobile
   const renderMerchMobile = () => {
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2}}>
         {merchandises.map((m, idx) => (
           <Box
             key={idx}
@@ -671,10 +687,7 @@ const Step5 = ({
               <strong>Doc Justif :</strong> {m.docReference || 'Non spécifié'}
             </Typography>
             <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>Quantité :</strong> {m.quantity || 'Non spécifié'}
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>Unité :</strong> {m.unit || 'Non spécifié'}
+            <strong>Quantité :</strong> {m.quantity ? `${m.quantity} ${m.unit}` : 'Non spécifié'}
             </Typography>
             {isModifiable && (
               <Box sx={{ textAlign: 'right' }}>
@@ -1274,8 +1287,8 @@ const Step5 = ({
           <Box
             sx={{
               // desktop: hide the last <th> + <td>
-              '& table th:last-child, & table td:last-child': {
-                display: isEditingMerch ? 'table-cell' : 'none'
+              '& table th:nth-of-type(5), & table td:nth-of-type(5)': {
+              display: isEditingMerch && isModifiable ? 'table-cell' : 'none'
               },
               // mobile (and anywhere): hide all error‐colored buttons (your Supprimer)
               '& .MuiButton-colorError': {
@@ -1875,11 +1888,29 @@ const Step5 = ({
             />
 
             <TextField
-              label="Complément d'adresse"
+              label="N° de téléphone *"
               value={newRecipientLocal.receiverAddress2}
               onChange={e => handleNewRecipientChange('receiverAddress2', e.target.value)}
               fullWidth
+              onBlur={() => {
+                const val = newRecipientLocal.receiverAddress2;
+                if (val && !isValidInternationalPhone(val)) {
+                  setErrorMessage('Numéro invalide (+ ou 00, 8–16 chiffres)');
+                }
+              }}
+              error={
+                !!errorMessage &&
+                newRecipientLocal.receiverAddress2 &&
+                !isValidInternationalPhone(newRecipientLocal.receiverAddress2)
+              }
+              helperText={
+                newRecipientLocal.receiverAddress2 && !isValidInternationalPhone(newRecipientLocal.receiverAddress2)
+                  ? 'Format incorrect.'
+                  : ''
+              }
+              sx={{ mb: 2 }}
             />
+
 
             {/* Fusion code postal + ville */}
             <TextField

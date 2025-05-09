@@ -43,22 +43,7 @@ import { faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 import { IconButton } from '@mui/material';
 
 // juste après vos imports utilitaires
-const getFullAddress = (r) => {
-  // on part sur l’adresse 1
-  const parts = [r.address_1];
-
-  // s’il existe un complément (adresse_2) on l’ajoute
-  if (r.address_2 && r.address_2.trim() !== '') {
-    parts.push(r.address_2);
-  }
-
-  // vous pouvez aussi ajouter address_3 ici si vous le souhaitez
-  // parts.push(r.address_3);
-
-  return parts.join(', ');
-};
-
-
+ const getFullAddress = (r) => r.address_1;
 
 const DestinataireList = () => {
   // Récupération de l’utilisateur depuis Redux
@@ -83,6 +68,13 @@ const DestinataireList = () => {
     country: '',
   });
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Validation regex pour numéro international (+ ou 00, 8 à 16 chiffres)
+const isValidInternationalPhone = (value) => {
+  return /^(?:\+|00)[1-9][0-9]*$/.test(value)
+    && value.length >= 8
+    && value.length <= 16;
+};
 
   // Responsive
   const theme = useTheme();
@@ -169,12 +161,16 @@ const DestinataireList = () => {
 
   // Lors de la sauvegarde, vérification des champs obligatoires et du téléphone
   const handleSaveNewRecipient = async () => {
-    if (!newRecipient.recipientName || !newRecipient.address1 || !newRecipient.address3 || !newRecipient.country) {
-      setErrorMessage("Veuillez renseigner le nom, l'adresse, le code postal - ville et le pays.");
+    if (!newRecipient.address2 || !newRecipient.recipientName || !newRecipient.address1 || !newRecipient.address3 || !newRecipient.country) {
+      setErrorMessage("Veuillez renseigner le nom, l'adresse, le code postal - ville, le payset le téléphone.");
       return;
     }
     try {
       setErrorMessage('');
+      if (!isValidInternationalPhone(newRecipient.address2)) {
+        setErrorMessage("Numéro de téléphone invalide. Format international requis (+ ou 00, 8–16 chiffres).");
+        return;
+      }
       const payload = {
         idRecipientAccount: editingRecipientId ? editingRecipientId : null,
         idCustAccount: customerAccountId,
@@ -244,6 +240,7 @@ const DestinataireList = () => {
               <TableCell>Date Création</TableCell>
               <TableCell>Nom du destinataire</TableCell>
               <TableCell>Adresse</TableCell>
+              <TableCell>N° de téléphone</TableCell>
               <TableCell>Code postal / Ville</TableCell>
               <TableCell>Pays</TableCell>
               <TableCell>Actions</TableCell>
@@ -255,6 +252,7 @@ const DestinataireList = () => {
                 <TableCell>{formatDate(recipient.insertdate)}</TableCell>
                 <TableCell>{recipient.recipient_name}</TableCell>
                 <TableCell>{getFullAddress(recipient)}</TableCell>
+                <TableCell>{recipient.address_2 || 'N/A'}</TableCell>  {/* <-- on lit address_2 */}
                 <TableCell>{recipient.address_3 || 'N/A'}</TableCell>
                 <TableCell>{recipient.country_symbol_fr_recipient || 'N/A'}</TableCell>
                 <TableCell
@@ -310,6 +308,9 @@ const DestinataireList = () => {
           </Typography>
           <Typography variant="body2">
             <strong>Pays : </strong> {recipient.country_symbol_fr_recipient || 'N/A'}
+          </Typography>
+          <Typography variant="body2">
+            <strong>N° de téléphone : </strong> {recipient.address_2 || 'N/A'}
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
             <IconButton onClick={(e) => handleMenuOpen(e, recipient)}>
@@ -407,13 +408,20 @@ const DestinataireList = () => {
           />
 
           <TextField
-            label="Complément d'adresse"
+            label="N° de téléphone *"
             fullWidth
             variant="outlined"
             value={newRecipient.address2}
             onChange={(e) => handleNewRecipientChange('address2', e.target.value)}
-            sx={{ mb: 2 }}
-          />
+            onBlur={() => {
+               if (newRecipient.address2 && !isValidInternationalPhone(newRecipient.address2)){
+                 setErrorMessage('Numéro invalide (+ ou 00, 8–16 chiffres)');              
+               }
+              }}
+              error={!!errorMessage && newRecipient.address2 && !isValidInternationalPhone(newRecipient.address2)}
+              helperText={newRecipient.address2 && !isValidInternationalPhone(newRecipient.address2) ? 'Format incorrect.' : ''}
+              sx={{ mb: 2 }}
+            />
 
           <TextField
             label="Code postal - Ville *"

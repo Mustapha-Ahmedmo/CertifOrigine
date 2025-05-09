@@ -6,6 +6,10 @@ import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 
 import AppBar from '@mui/material/AppBar';
 import Tabs from '@mui/material/Tabs';
@@ -34,7 +38,7 @@ import { faEye } from '@fortawesome/free-solid-svg-icons';
 
 import { formatDate } from '../utils/dateUtils';
 import PaymentModal from './PaymentModal';
-import { getOrderOpInfo } from '../services/apiServices';
+import { getOrderOpInfo, getOrderHisto, getOrderMemo } from '../services/apiServices';
 import './HomeOperateur.css';
 
 // ---------------------------------------------------
@@ -139,14 +143,17 @@ const HomeOperateur = () => {
   // Pour l'opérateur :
   // - Nouvelles commandes : id_order_status === 2 ou 7
   // - Commandes en attente de paiement : id_order_status === 3
-  const ordersNew = orders.filter(order => order.id_order_status === 2);
-  const ordersReturned = orders.filter(o => o.id_order_status === 7);
+  const ordersNew = orders.filter(order =>
+    order.id_order_status === 2 ||
+    order.id_order_status === 7
+  );
+  const ordersReturned = orders.filter(o => o.id_order_status === 6);
   const ordersPayment = orders.filter(order => order.id_order_status === 3);
 
   const options = [
-    { value: 'new', label: `Nouvelles commandes (${ordersNew.length})` },
+    { value: 'new', label: `Commandes à traiter (${ordersNew.length})` },
     { value: 'payment', label: `Commandes en attente de paiement (${ordersPayment.length})` },
-    { value: 'returned', label: `Commandes revenu (${ordersReturned.length})` }
+    { value: 'returned', label: `Commandes retournées au client (${ordersReturned.length})` }
   ];
 
   const handleTabChange = (event, newValue) => {
@@ -220,6 +227,19 @@ const HomeOperateur = () => {
 // Composant OrderTable : affichage en tableau (desktop) et en cartes (mobile)
 // ---------------------------------------------------
 const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
+  
+  // Récupère operatorId si besoin
+  const user = useSelector(state => state.auth.user);
+  const operatorId = user?.id_login_user;
+
+  // États pour la piste d’audit
+  const [auditOpen, setAuditOpen]             = useState(false);
+  const [auditLogs, setAuditLogs]             = useState([]);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  // nouveaux états
+  const [memoOpen, setMemoOpen]         = useState(false);
+  const [memoList, setMemoList]         = useState([]);
+
   // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -227,8 +247,7 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
   // États pour la modale de paiement (utilisée en mode "payment")
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-
-  const theme = useTheme();
+ const theme = useTheme();
   const isMobile = useMediaQuery('(max-width:768px)');
 
   const handleOpenPayment = (order) => {
@@ -260,6 +279,34 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
 
   const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
+  const handleOpenAudit = async (orderId) => {
+       setSelectedOrderId(orderId);
+       try {
+         // getOrderHisto renvoie directement un Array
+         const logs = await getOrderHisto({
+           p_id_list_order: String(orderId),
+         });
+         setAuditLogs(logs);
+         setAuditOpen(true);
+       } catch (err) {
+         console.error('Erreur piste audit :', err);
+       }
+  };
+
+  const handleOpenMemo = async (orderId) => {
+    try {
+      const memos = await getOrderMemo({
+        p_id_order_list: String(orderId),
+        p_idlogin: operatorId,   // ou null si vous ne filtrez pas sur l'operateur
+        p_isopuser: true
+      });
+      setMemoList(memos);
+      setMemoOpen(true);
+    } catch (err) {
+      console.error('Erreur memos :', err);
+    }
+  };
+  
   // -----------------------------
   // Affichage MOBILE : version cartes
   // -----------------------------
@@ -416,6 +463,8 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                 <TableCell>Certificat d'Origine</TableCell>
                 <TableCell>Facture Commerciale</TableCell>
                 <TableCell>Légalisations</TableCell>
+                <TableCell>Piste d’audit</TableCell>
+                <TableCell>Mémos</TableCell>
                 <TableCell>Payer</TableCell>
               </TableRow>
             </TableHead>
@@ -429,6 +478,8 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                 <TableCell>Certificat d'Origine</TableCell>
                 <TableCell>Facture Commerciale</TableCell>
                 <TableCell>Légalisations</TableCell>
+                <TableCell>Piste d’audit</TableCell>
+                <TableCell>Mémos</TableCell>
                 <TableCell></TableCell>
               </TableRow>
             </TableHead>
@@ -488,6 +539,16 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                       )}
                     </TableCell>
                     <TableCell>
+                      <Button size="small" onClick={() => handleOpenAudit(order.id_order)} sx={{ textTransform: 'none' }}>
+                        Piste d’audit
+                      </Button>
+                    </TableCell>
+                    <TableCell>
+                      <Button size="small" onClick={() => handleOpenMemo(order.id_order)} sx={{ textTransform: 'none', ml: 1 }}>
+                        Mémos
+                      </Button>
+                    </TableCell>
+                    <TableCell>
                       <button
                         className="submit-button minimal-button"
                         onClick={() => handleOpenPayment(order)}
@@ -539,6 +600,16 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                       )}
                     </TableCell>
                     <TableCell>
+                      <Button size="small" onClick={() => handleOpenAudit(order.id_order)} sx={{ textTransform: 'none' }}>
+                        Piste d’audit
+                      </Button>
+                    </TableCell>
+                    <TableCell>
+                      <Button size="small" onClick={() => handleOpenMemo(order.id_order)} sx={{ textTransform: 'none', ml: 1 }}>
+                        Mémos
+                      </Button>
+                    </TableCell>
+                    <TableCell>
                       <button
                         className="icon-button minimal-button"
                         onClick={() => goToOrderDetails(order)}
@@ -574,6 +645,74 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
         onSubmit={handlePaymentSubmit}
         order={selectedOrder}
       />
+      <Dialog open={auditOpen} onClose={() => setAuditOpen(false)} fullWidth maxWidth="md">
+  <DialogTitle>Piste d’audit – Commande #{selectedOrderId}</DialogTitle>
+  <DialogContent dividers>
+    <Table size="small">
+      <TableHead>
+        <TableRow>
+          <TableCell>Date Action</TableCell>
+          <TableCell>Action</TableCell>
+          <TableCell>Utilisateur</TableCell>
+          <TableCell>Statut</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {auditLogs.map(log => {
+          const infos = log.insert_isopuser
+            ? 'Opérateur'
+            : (!log.insert_isopuser && log.insert_role_user === 1)
+              ? 'Contact principal'
+              : '';
+          return (
+            <TableRow key={log.id_histo_order}>
+              <TableCell>{new Date(log.insertdate_histo).toLocaleString()}</TableCell>
+              <TableCell>{log.order_histo_action}</TableCell>
+              <TableCell>
+                {log.insert_full_name} {infos && `(${infos})`}
+              </TableCell>
+              <TableCell>{log.txt_order_status_fr}</TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setAuditOpen(false)}>Fermer</Button>
+  </DialogActions>
+</Dialog>
+<Dialog open={memoOpen} onClose={() => setMemoOpen(false)} fullWidth maxWidth="md">
+  <DialogTitle>Mémos – Commande #{selectedOrderId}</DialogTitle>
+  <DialogContent dividers>
+    <Table size="small">
+      <TableHead>
+        <TableRow>
+          <TableCell>Date</TableCell>
+          <TableCell>Sujet</TableCell>
+          <TableCell>Corps</TableCell>
+          <TableCell>De</TableCell>
+          <TableCell>Accusé</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {memoList.map(memo => (
+          <TableRow key={memo.id_memo}>
+            <TableCell>{new Date(memo.memo_date).toLocaleString()}</TableCell>
+            <TableCell>{memo.memo_subject}</TableCell>
+            <TableCell>{memo.memo_body}</TableCell>
+            <TableCell>{memo.cust_user_full_name || memo.cust_user_full_name}</TableCell>
+            <TableCell>{memo.ack_date ? new Date(memo.ack_date).toLocaleString() : 'Non'}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setMemoOpen(false)}>Fermer</Button>
+  </DialogActions>
+</Dialog>
+
     </>
   );
 };

@@ -34,6 +34,12 @@ import Alert from '@mui/material/Alert';
 import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 
+const isValidInternationalPhone = (value) => {
+  return /^(?:\+|00)[1-9][0-9]*$/.test(value)
+    && value.length >= 8
+    && value.length <= 16;
+};
+
 const customFieldStyle = {
   '& .MuiOutlinedInput-root': {
     '& fieldset': { borderColor: '#DDAF26' },
@@ -232,7 +238,12 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         }
       }
     });
-
+    if (currentSection === 1 && isNewDestinataire) {
+      const phone = safeValues.receiverAddress2 || '';
+      if (!isValidInternationalPhone(phone)) {
+        missingFields.push('receiverAddress2');
+      }
+    }
     console.log('Section', currentSection, '- Missing fields:', missingFields);
     return missingFields.length;
   };
@@ -597,10 +608,26 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
               
                 {/* 3. Complément d’adresse */}
                 <TextField
-                  label="Complément d'adresse"
+                  label="N° de téléphone *"
                   fullWidth
                   value={safeValues.receiverAddress2}
                   onChange={(e) => handleChange('receiverAddress2', e.target.value)}
+                  onBlur={() => {
+                    const val = safeValues.receiverAddress2;
+                    if (val && !isValidInternationalPhone(val)) {
+                      setErrorMessage('Numéro invalide (+ ou 00, 8–16 chiffres)');
+                    }
+                  }}
+                  error={
+                    !!errorMessage &&
+                    safeValues.receiverAddress2 &&
+                    !isValidInternationalPhone(safeValues.receiverAddress2)
+                  }
+                  helperText={
+                    safeValues.receiverAddress2 && !isValidInternationalPhone(safeValues.receiverAddress2)
+                      ? 'Format incorrect.'
+                      : ''
+                  }
                   sx={{ mb: 2, ...customFieldStyle }}
                 />
               

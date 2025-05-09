@@ -1,6 +1,6 @@
 const express = require('express');
 const upload = require('../src/middleware/upload'); // Use your existing multer middleware
-const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController, setUnitWeight, deleteUnitWeight, submitOrder, remOrdCertifGoods, remOrdCertifTranspMode, remSingleOrdCertifTranspMode, approveOrder, sendbackOrder, rejectOrder, getOrderStaticsByServices, billOrder, setInvoiceHeader, sendOrderDocument, getOrdCertifAmountByDay } = require('../controllers/OrderController');
+const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController, setUnitWeight, deleteUnitWeight, submitOrder, remOrdCertifGoods, remOrdCertifTranspMode, remSingleOrdCertifTranspMode, approveOrder, sendbackOrder, rejectOrder, getOrderStaticsByServices, billOrder, setInvoiceHeader, sendOrderDocument, getOrdCertifAmountByDay, getHistoOrder, getMemoOrder } = require('../controllers/OrderController');
 
 const router = express.Router();
 router.post('/create', executeAddOrder);
@@ -69,7 +69,8 @@ router.get(
   '/order-amount-by-day',
   getOrdCertifAmountByDay
 );
-
+router.get('/order-histo', getHistoOrder);
+router.get('/order-memo', getMemoOrder);
 router.post('/bill_order', billOrder);
 
 

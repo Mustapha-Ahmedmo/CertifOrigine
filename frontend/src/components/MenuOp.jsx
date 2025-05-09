@@ -30,7 +30,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 const drawerWidth = 240;
-const PARENT_MENUS = ['gestion', 'clients', 'documents', 'myCCD'];
+// Removed 'myCCD' here
+const PARENT_MENUS = ['gestion', 'clients', 'documents'];
 
 const selectedStyle = {
   "&.Mui-selected": {
@@ -133,20 +134,6 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
           </ListItem>
           <Collapse in={openMenu.gestion} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-
-              {/*}    <ListItem disablePadding>
-                <ListItemButton
-                  component={Link}
-                  to="/dashboard/operator/current-orders"
-                  onClick={() => handleLinkClick('gestion', 'commandesValidees')}
-                  selected={activeLink === 'commandesValidees'}
-                  sx={{ pl: 3, ...selectedStyle }}
-                >
-                  <ListItemIcon><FontAwesomeIcon icon={faShoppingCart} /></ListItemIcon>
-                  <ListItemText primary="Liste des commandes validées" primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-    </ListItem>*/}
-
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
@@ -159,7 +146,6 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemText primary="Commandes à traiter" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
-
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
@@ -172,7 +158,6 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemText primary="Commandes en attente des paiements" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
-
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
@@ -188,21 +173,6 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                   />
                 </ListItemButton>
               </ListItem>
-
-
-              {/*}   <ListItem disablePadding>
-                <ListItemButton
-                  component={Link}
-                  to="/dashboard/operator/create-order"
-                  onClick={() => handleLinkClick('gestion', 'generationCertificats')}
-                  selected={activeLink === 'generationCertificats'}
-                  sx={{ pl: 3, ...selectedStyle }}
-                >
-                  <ListItemIcon><FontAwesomeIcon icon={faFileContract} /></ListItemIcon>
-                  <ListItemText primary="Génération des certificats" primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-  </ListItem>*/}
-
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
@@ -255,18 +225,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                 </ListItemButton>
               </ListItem>
 
-              <ListItem disablePadding>
-                <ListItemButton
-                  component={Link}
-                  to="/dashboard/operator/prestation-service"
-                  onClick={() => handleLinkClick('clients', 'prestationService')}
-                  selected={activeLink === 'prestationService'}
-                  sx={{ pl: 3, ...selectedStyle }}
-                >
-                  <ListItemIcon><FontAwesomeIcon icon={faHandshake} /></ListItemIcon>
-                  <ListItemText primary="Prestations de services" primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-              </ListItem>
+              {/* “Prestations de services” entry removed */}
 
             </List>
           </Collapse>
@@ -282,7 +241,6 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
 
           <Collapse in={openMenu.documents} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
@@ -295,7 +253,6 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemText primary="Certificat d'origine" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
-
             </List>
           </Collapse>
 
@@ -317,57 +274,6 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
             </>
           )}
 
-          < Divider sx={{ my: 1, bgcolor: "#FFF", width: "50%", mx: "auto" }} />
-          {/* Ma CCD */}
-          <ListItem disablePadding>
-            <ListItemButton onClick={() => toggleSubmenu('myCCD')} sx={{ cursor: 'pointer' }}>
-              <ListItemIcon><FontAwesomeIcon icon={faBuilding} /></ListItemIcon>
-              <ListItemText primary="Ma CCD" primaryTypographyProps={{ fontSize: "14px" }} />
-            </ListItemButton>
-          </ListItem>
-          <Collapse in={openMenu.myCCD} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {/* CGV */}
-              <ListItem disablePadding>
-                <ListItemButton
-                  component={Link}
-                  to="/dashboard/operator/cgv"
-                  onClick={() => handleLinkClick('myCCD', 'cgv')}
-                  selected={activeLink === 'cgv'}
-                  sx={{ pl: 4, ...selectedStyle }}
-                >
-                  <ListItemIcon><FontAwesomeIcon icon={faFileContract} /></ListItemIcon>
-                  <ListItemText primary="Les C.G.V" primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-              </ListItem>
-              {/* Prestations de services */}
-              <ListItem disablePadding>
-                <ListItemButton
-                  component={Link}
-                  to="/dashboard/operator/prestation-service"
-                  onClick={() => handleLinkClick('myCCD', 'prestation')}
-                  selected={activeLink === 'prestation'}
-                  sx={{ pl: 4, ...selectedStyle }}
-                >
-                  <ListItemIcon><FontAwesomeIcon icon={faHandshake} /></ListItemIcon>
-                  <ListItemText primary="Prestations de services" primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-              </ListItem>
-              {/* Mention légale */}
-              <ListItem disablePadding>
-                <ListItemButton
-                  component={Link}
-                  to="/dashboard/operator/mentions-legales"
-                  onClick={() => handleLinkClick('myCCD', 'mentionLegale')}
-                  selected={activeLink === 'mentionLegale'}
-                  sx={{ pl: 4, ...selectedStyle }}
-                >
-                  <ListItemIcon><FontAwesomeIcon icon={faBalanceScale} /></ListItemIcon>
-                  <ListItemText primary="Mention légale" primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-              </ListItem>
-            </List>
-          </Collapse>
           <Divider sx={{ my: 1, bgcolor: "#FFF", width: "50%", mx: "auto" }} />
 
           {/* Déconnexion */}

@@ -41,7 +41,124 @@ Votre certificat, et le cas échéant les copies conformes, sera (ou seront) dis
   // Assumes that "transporter" is defined in your module (e.g., via nodemailer)
   return transporter.sendMail(mailOptions);
 }
+// Au sommet du fichier
+const getHistoOrder = async (req, res) => {
+  try {
+    const {
+      p_idlogin                    = null,
+      p_date_start                 = null,
+      p_date_end                   = null,
+      p_id_list_order,
+      p_id_custaccount_list        = null,
+      p_id_list_orderstatus        = null,
+      p_order_histo_action_list    = null,
+      p_desc                        = true
+    } = req.query;
 
+    
+    if (!p_id_list_order) {
+      return res
+        .status(400)
+        .json({ message: 'Le paramètre p_id_list_order est requis.' });
+    }
+
+    // Préparation du paramètre p_idlogin : soit un int, soit null
+    const idlogin = p_idlogin !== null && p_idlogin !== ''
+      ? parseInt(p_idlogin, 10)
+      : null;
+
+    const histos = await sequelize.query(
+      `SELECT * FROM get_histo_order(
+          :p_idlogin,
+          :p_date_start,
+          :p_date_end,
+          :p_id_list_order,
+          :p_id_custaccount_list,
+          :p_id_list_orderstatus,
+          :p_order_histo_action_list,
+          :p_desc
+        )`,
+      {
+        replacements: {
+          p_idlogin: idlogin,
+          p_date_start,
+          p_date_end,
+          p_id_list_order,
+          p_id_custaccount_list,
+          p_id_list_orderstatus,
+          p_order_histo_action_list,
+          p_desc
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    return res.json(histos);
+  } catch (err) {
+    console.error('Erreur get_histo_order:', err);
+    return res
+      .status(500)
+      .json({ message: 'Erreur get_histo_order', error: err.message });
+  }
+};
+
+const getMemoOrder = async (req, res) => {
+  try {
+    const {
+      p_id_memo_list            = null,
+      p_id_order_list           = null,
+      p_typeof_list             = null,
+      p_id_cust_account         = null,
+      p_memo_date_start         = null,
+      p_memo_date_end           = null,
+      p_isAck                   = null,
+      p_idlogin                 = null,
+      p_isopuser                = true
+    } = req.query;
+
+    // on exige au moins le filtre order_list
+    if (!p_id_order_list) {
+      return res
+        .status(400)
+        .json({ message: 'Le paramètre p_id_order_list est requis.' });
+    }
+
+    const memos = await sequelize.query(
+      `SELECT * FROM get_memo(
+          :p_id_memo_list,
+          :p_id_order_list,
+          :p_typeof_list,
+          :p_id_cust_account,
+          :p_memo_date_start,
+          :p_memo_date_end,
+          :p_isAck,
+          :p_idlogin,
+          :p_isopuser
+        )`,
+      {
+        replacements: {
+          p_id_memo_list,
+          p_id_order_list,
+          p_typeof_list,
+          p_id_cust_account,
+          p_memo_date_start,
+          p_memo_date_end,
+          p_isAck,
+          p_idlogin: p_idlogin ? parseInt(p_idlogin,10) : null,
+          p_isopuser
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    return res.json(memos);
+  } catch (err) {
+    console.error('Erreur get_memo:', err);
+    return res
+      .status(500)
+      .json({ message: 'Erreur get_memo', error: err.message });
+  }
+};
 const executeAddOrder = async (req, res) => {
   try {
     const { idCustAccount, orderTitle, idloginInsert } = req.body;
@@ -2044,5 +2161,7 @@ module.exports = {
   billOrder,
   setInvoiceHeader,
   sendOrderDocument,
-  getOrdCertifAmountByDay
+  getOrdCertifAmountByDay,
+  getHistoOrder,
+  getMemoOrder
 };
