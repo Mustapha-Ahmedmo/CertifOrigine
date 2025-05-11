@@ -68,6 +68,7 @@ const logoutStyle = {
   },
 };
 
+
 // en haut du fichier Menu.jsx
 const newOrderStyle = {
   color: "#DCAF26",               // texte
@@ -88,16 +89,31 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
   const [openSubmenus, setOpenSubmenus] = useState({
     newOrder: false,
     orders: false,
-    ccd: false,      
+    ccd: false,
   });
+  const [openOrders, setOpenOrders] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { pathname, search } = useLocation();
+  const tabParam = new URLSearchParams(search).get("tab");
+
+  // Auto‐open the submenu when landing on /dashboard/home?tab=…
+  useEffect(() => {
+    if (pathname === "/dashboard/home" && tabParam !== null) {
+      setOpenOrders(true);
+    }
+  }, [pathname, tabParam]);
+
+  const handleToggleOrders = () => {
+    setOpenOrders(o => !o);
+  };
+
+
 
   // Ouvrir automatiquement certains sous-menus selon l'URL courante
   useEffect(() => {
 
-     // --- 0) Ma CCD ---
+    // --- 0) Ma CCD ---
     if (
       location.pathname === "/dashboard/cgv" ||
       location.pathname === "/dashboard/prestation-service" ||
@@ -119,7 +135,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
       });
       return; // on sort, rien d'autre n'est évalué
     }
-  
+
     // 2) Nouvelle Commande → votre ancien bloc
     if (
       location.pathname.startsWith("/dashboard/create-order") ||
@@ -134,7 +150,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
       });
       return;
     }
-  
+
     // 3) Destinataires
     if (location.pathname.startsWith("/dashboard/destinatairelist")) {
       setOpenSubmenus({
@@ -145,7 +161,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
       });
       return;
     }
-  
+
     // 4) Contacts (si vous en avez un autre)
     if (location.pathname.startsWith("/dashboard/contactslist")) {
       setOpenSubmenus({
@@ -156,7 +172,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
       });
       return;
     }
-  
+
     // 5) Sinon, on ferme tout
     setOpenSubmenus({
       newOrder: false,
@@ -165,7 +181,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
       contacts: false,
     });
   }, [location]);
-  
+
 
   // Pour les menus qui ouvrent des sous-menus, on ferme les autres
   const handleToggleSubmenu = (menu) => {
@@ -176,7 +192,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
       [menu]: !prev[menu],
     }));
   };
-  
+
 
 
   // Fermer tous les sous-menus
@@ -273,77 +289,103 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
 
 
           {/* Gestion des commandes en tant que menu parent */}
+          {/* Gestion des commandes (parent header) */}
           <ListItem disablePadding>
             <ListItemButton
               onClick={() => {
-                handleToggleSubmenu("orders");   // ouvre/replie le sous-menu
-                navigate("/dashboard/home");     // charge "Commandes en cours"
-                handleLinkClick();               // ferme le drawer en mobile
+                handleToggleOrders();
+                navigate("/dashboard/home?tab=0");
+                handleLinkClick();
               }}
-              selected={false}                  // ne reste jamais “surbrillé”
-              sx={newOrderStyle}                // même style que “Nouvelle Commande”
+              sx={selectedStyle}
             >
-              <ListItemIcon sx={{ color: "black" }}>
-                <FontAwesomeIcon icon={faClipboardList} />
-              </ListItemIcon>
-              <ListItemText
-                primary="Gestion des commandes"
-                primaryTypographyProps={{ fontSize: "14px" }}
-              />
+              <ListItemIcon><FontAwesomeIcon icon={faClipboardList} /></ListItemIcon>
+              <ListItemText primary="Gestion des commandes" primaryTypographyProps={{ fontSize: "14px" }} />
             </ListItemButton>
           </ListItem>
-          <Collapse in={openSubmenus.orders} timeout="auto" unmountOnExit>
+
+          {/* Gestion des commandes (submenu) */}
+          <Collapse in={openOrders} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {/* Commandes en cours */}
+
+              {/* 0) Commande à soumettre */}
               <ListItem disablePadding>
                 <ListItemButton
-                  sx={{ pl: 4, ...selectedStyle }}
                   component={Link}
-                  to="/dashboard/home"
-                  onClick={() => {
-                    handleParentClick();
-                    handleLinkClick();
-                  }}
-                  selected={location.pathname === "/dashboard/home"}
+                  to="/dashboard/home?tab=0"
+                  selected={pathname === "/dashboard/home" && tabParam === "0"}
+                  sx={{ pl: 4, ...selectedStyle }}
+                  onClick={handleLinkClick}
                 >
-                  <ListItemIcon sx={{ color: "black" }}>
-                    <FontAwesomeIcon icon={faClipboardList} />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Commandes en cours"
-                    primaryTypographyProps={{ fontSize: "12px" }}
-                  />
+                  <ListItemIcon><FontAwesomeIcon icon={faShoppingCart} /></ListItemIcon>
+                  <ListItemText primary="Commande à soumettre" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
-              {/* Historique des commandes */}
+
+              {/* 1) En attente de la CCD */}
               <ListItem disablePadding>
                 <ListItemButton
+                  component={Link}
+                  to="/dashboard/home?tab=1"
+                  selected={pathname === "/dashboard/home" && tabParam === "1"}
                   sx={{ pl: 4, ...selectedStyle }}
+                  onClick={handleLinkClick}
+                >
+                  <ListItemIcon><FontAwesomeIcon icon={faLandmark} /></ListItemIcon>
+                  <ListItemText primary="En attente de la CCD" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+
+              {/* 2) En attente de paiement */}
+              <ListItem disablePadding>
+                <ListItemButton
+                  component={Link}
+                  to="/dashboard/home?tab=2"
+                  selected={pathname === "/dashboard/home" && tabParam === "2"}
+                  sx={{ pl: 4, ...selectedStyle }}
+                  onClick={handleLinkClick}
+                >
+                  <ListItemIcon><FontAwesomeIcon icon={faDollarSign} /></ListItemIcon>
+                  <ListItemText primary="En attente de paiement" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+
+              {/* 3) Retournées par la CCD */}
+              <ListItem disablePadding>
+                <ListItemButton
+                  component={Link}
+                  to="/dashboard/home?tab=3"
+                  selected={pathname === "/dashboard/home" && tabParam === "3"}
+                  sx={{ pl: 4, ...selectedStyle }}
+                  onClick={handleLinkClick}
+                >
+                  <ListItemIcon><FontAwesomeIcon icon={faArrowCircleLeft} /></ListItemIcon>
+                  <ListItemText primary="Retournées par la CCD" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+
+              {/* Historique */}
+              <ListItem disablePadding>
+                <ListItemButton
                   component={Link}
                   to="/dashboard/search-orders"
-                  onClick={() => {
-                    handleParentClick();
-                    handleLinkClick();
-                  }}
-                  selected={location.pathname === "/dashboard/search-orders"}
+                  selected={pathname === "/dashboard/search-orders"}
+                  sx={{ pl: 4, ...selectedStyle }}
+                  onClick={handleLinkClick}
                 >
-                  <ListItemIcon sx={{ color: "black" }}>
-                    <FontAwesomeIcon icon={faHistory} />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Historique des commandes terminées"
-                    primaryTypographyProps={{ fontSize: "12px" }}
-                  />
+                  <ListItemIcon><FontAwesomeIcon icon={faHistory} /></ListItemIcon>
+                  <ListItemText primary="Historique des commandes terminées" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
+
             </List>
           </Collapse>
-          
+
 
 
           {/* Nouvelle Commande (sous-menu) */}
           <ListItem disablePadding>
-          <ListItemButton
+            <ListItemButton
               onClick={() => handleToggleSubmenu("newOrder")}
               selected={false}
               sx={newOrderStyle}
@@ -374,6 +416,20 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                 <ListItemButton
                   sx={{ pl: 4, ...selectedStyle }}
                   component={Link}
+                  to="/dashboard/commercial-invoice"
+                  onClick={handleLinkClick}
+                  selected={location.pathname === "/dashboard/commercial-invoice"}
+                >
+                  <ListItemIcon sx={{ color: "black" }}>
+                    <FontAwesomeIcon icon={faFileInvoice} />
+                  </ListItemIcon>
+                  <ListItemText primary="Visa Facture commercial" primaryTypographyProps={{ fontSize: "12px" }} />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4, ...selectedStyle }}
+                  component={Link}
                   to="/dashboard/legalization"
                   onClick={handleLinkClick}
                   selected={location.pathname === "/dashboard/legalization"}
@@ -384,43 +440,12 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                   <ListItemText primary="Légalisation de commande" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
-              <ListItem disablePadding>
-                <ListItemButton
-                  sx={{ pl: 4, ...selectedStyle }}
-                  component={Link}
-                  to="/dashboard/commercial-invoice"
-                  onClick={handleLinkClick}
-                  selected={location.pathname === "/dashboard/commercial-invoice"}
-                >
-                  <ListItemIcon sx={{ color: "black" }}>
-                    <FontAwesomeIcon icon={faFileInvoice} />
-                  </ListItemIcon>
-                  <ListItemText primary="Facture commercial" primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-              </ListItem>
+
             </List>
           </Collapse>
 
 
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
-
-          <ListItem disablePadding>
-            <ListItemButton
-              component={Link}
-              to="/dashboard/masociete"
-              onClick={() => {
-                handleParentClick();
-                handleLinkClick();
-              }}
-              selected={location.pathname === "/dashboard/masociete"}
-              sx={selectedStyle}
-            >
-              <ListItemIcon sx={{ color: "black" }}>
-                <FontAwesomeIcon icon={faCheckCircle} />
-              </ListItemIcon>
-              <ListItemText primary="Ma société" primaryTypographyProps={{ fontSize: "14px" }} />
-            </ListItemButton>
-          </ListItem>
 
           {/* Mes destinataires (lien direct) */}
           <ListItem disablePadding>
@@ -443,6 +468,26 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               />
             </ListItemButton>
           </ListItem>
+
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
+              to="/dashboard/masociete"
+              onClick={() => {
+                handleParentClick();
+                handleLinkClick();
+              }}
+              selected={location.pathname === "/dashboard/masociete"}
+              sx={selectedStyle}
+            >
+              <ListItemIcon sx={{ color: "black" }}>
+                <FontAwesomeIcon icon={faCheckCircle} />
+              </ListItemIcon>
+              <ListItemText primary="Ma société" primaryTypographyProps={{ fontSize: "14px" }} />
+            </ListItemButton>
+          </ListItem>
+
+
 
           {/* Mes contacts (lien direct) */}
           <ListItem disablePadding>
@@ -468,7 +513,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
 
           <Divider sx={{ my: 1, bgcolor: "#FFFFFF", width: "50%", mx: "auto" }} />
 
-          
+
           {/* Lien vers la page Contactez-nous */}
           <ListItem disablePadding>
             <ListItemButton

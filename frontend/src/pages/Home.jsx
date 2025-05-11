@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getOrdersForCustomer, cancelOrder, submitOrder } from '../services/apiServices';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -80,6 +80,7 @@ function a11yProps(index) {
 // Composant principal Home
 // ---------------------------------------------------
 const Home = () => {
+  const { search } = useLocation();
   // États pour les commandes et le chargement / erreur
   const [ordersVisa, setOrdersVisa] = useState([]);
   const [ordersValidation, setOrdersValidation] = useState([]);
@@ -87,9 +88,6 @@ const Home = () => {
   const [ordersReturned, setOrdersReturned] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // État pour l'onglet actif (index)
-  const [tabIndex, setTabIndex] = useState(0);
 
   const user = useSelector((state) => state.auth.user);
   const idLogin = user?.id_login_user;
@@ -136,13 +134,31 @@ const Home = () => {
     { value: 'returned', label: `Mes commandes retournées par la CDD (${ordersReturned.length})` },
   ];
 
-  const handleTabChange = (event, newValue) => {
+  const initialTab = parseInt(new URLSearchParams(search).get("tab") ?? "0", 10);
+  const [tabIndex, setTabIndex] = useState(
+    Number.isInteger(initialTab) && initialTab >= 0 && initialTab < options.length
+      ? initialTab
+      : 0
+  );
+
+  useEffect(() => {
+    const param = parseInt(new URLSearchParams(search).get("tab") ?? "0", 10);
+    if (!Number.isNaN(param) && param >= 0 && param < options.length) {
+      setTabIndex(param);
+    } else {
+      setTabIndex(0);
+    }
+  }, [search, options.length]);
+
+  const handleTabChange = (e, newValue) => {
     setTabIndex(newValue);
+    navigate(`/dashboard/home?tab=${newValue}`, { replace: true });
   };
 
-  // Gère le changement de valeur de la dropdown sur mobile
-  const handleDropdownChange = (event) => {
-    setTabIndex(Number(event.target.value));
+  const handleDropdownChange = (e) => {
+    const newValue = Number(e.target.value);
+    setTabIndex(newValue);
+    navigate(`/dashboard/home?tab=${newValue}`, { replace: true });
   };
 
   if (loading) {
