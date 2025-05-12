@@ -54,6 +54,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import HistoryIcon from '@mui/icons-material/History';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 
 const ITEM_HEIGHT = 48;
@@ -89,7 +90,7 @@ const SearchOrders = () => {
 
   const currentYear = new Date().getFullYear();
   const [anchorElActions, setAnchorElActions] = useState(null);
-  const [selectedOrder,   setSelectedOrder  ] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const handleActionsOpen = (e, order) => {
     setAnchorElActions(e.currentTarget);
@@ -281,126 +282,154 @@ const SearchOrders = () => {
     fetchTransportModes();
   }, []);
 
-  const handleGeneratePDF = async (order) => {
-    console.log('Génération de PDF pour la commande:', order);
-    console.log("Transmode : ", transpMode);
-    const originCountry = countries.find(c => c.id_country === order.id_country_origin)?.symbol_fr || '';
-    const destinationCountry = countries.find(c => c.id_country === order.id_country_destination)?.symbol_fr || '';
-    const portLoading = countries.find(c => c.id_country === order.id_country_port_loading)?.symbol_fr || '';
-    const portDischarge = countries.find(c => c.id_country === order.id_country_port_discharge)?.symbol_fr || '';
-    const transpResponse = await getCertifTranspMode({
-      idListCT: null,
-      idListCO: order.id_ord_certif_ori ? order.id_ord_certif_ori.toString() : null,
-      isActiveOT: 'true',
-      isActiveTM: 'true',
-      idListOrder: null,
-      idListOrderStatus: null,
-    });
-    let transportModesObj = {};
-    if (transpResponse && transpResponse.data) {
-      transpResponse.data.forEach((mode) => {
-        transportModesObj[mode.symbol_fr.toLowerCase()] = true;
+  // ─── 3) Prépare la fonction de tamponnage “COPIE” ─────────────
+  async function stampCopy(blobPdf) {
+    const arrayBuffer = await blobPdf.arrayBuffer();
+    const pdfDoc = await PDFDocument.load(arrayBuffer);
+    const pages = pdfDoc.getPages();
+    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    pages.forEach(page => {
+      const { width, height } = page.getSize();
+      page.drawText('COPIE', {
+        x: width / 2 - 100,
+        y: height - 40,
+        size: 48,
+        font,
+        color: rgb(0, 0, 1),
       });
-    }
-    console.log("transpResponse ", transportModesObj);
-    const custAccountInfo = await getCustAccountInfo(order.id_cust_account);
-    console.log("custAccountInfo ", custAccountInfo);
-    const exporterCountry = countries.find(c => c.id_country === custAccountInfo.data[0].id_country)?.symbol_fr || '';
-    console.log("exporterCountry ", exporterCountry);
-    const certifGoods = await getCertifGoodsInfo(order.id_ord_certif_ori);
-    console.log("certifGoods =>", certifGoods);
-    const recipientInfoResponse = await fetchRecipients({
-      idListR: order.id_recipient_account ? order.id_recipient_account.toString() : null,
     });
-    const recipient = (recipientInfoResponse.data && recipientInfoResponse.data.length > 0)
-      ? recipientInfoResponse.data[0]
-      : {};
-    console.log("Recipient info:", recipient);
-    const formData = {
-      transportModes: transportModesObj,
-      merchandises: certifGoods.data || [],
-      exporterName: order.cust_name || '',
-      exporterAddress: custAccountInfo.data[0].full_address,
-      exporterCountry: exporterCountry || '',
-      originCountry,
-      destinationCountry,
-      portLoading,
-      portDischarge,
-      recipientName: recipient.recipient_name || '',
-      recipientAddress: [recipient.address_1, recipient.address_2, recipient.address_3].filter(Boolean).join(', '),
-      recipientCountry: recipient.country_symbol_fr_recipient,
-      DateValidation: order.date_validation_ori,
-      Certifid: order.id_ord_certif_ori
-    };
-    const pdfBlob = await generatePDF(formData);
-    const pdfFile = new File(
-      [pdfBlob],
-      `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}.pdf`,
-      { type: 'application/pdf' }
-    );
-    const orderFileData = {
-      uploadType: 'commandes',
-      p_id_order: order.id_order,
-      p_idfiles_repo_typeof: 1000,
-      p_file_origin_name: `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}.pdf`,
-      p_typeof_order: 1,
-      p_idlogin_insert: operatorId,
-      file: pdfFile,
-    };
 
-    console.log('Sending file data to setOrderFiles:', orderFileData);
-    const result = await setOrderFiles(orderFileData);
-    console.log('Result from setOrderFiles:', result);
+    const bytes = await pdfDoc.save();
+    return new Blob([bytes], { type: 'application/pdf' });
+  }
 
-    console.log('Fetching file info for order:', order.id_order);
-    const fileCheck = await getOrderFilesInfo({
-      p_id_order_list: order.id_order,
-      p_idfiles_repo_typeof: 1000,
-    });
-    console.log('File info (fileCheck):', fileCheck);
-
-    if (fileCheck && fileCheck.length > 0) {
-      console.log('Found file record, updating local state orderFilesMap...');
-      setOrderFilesMap((prev) => ({
-        ...prev,
-        [order.id_order]: fileCheck[0],
-      }));
-    } else {
-      console.log('No file record returned in fileCheck. Nothing to update in orderFilesMap.');
-    }
-
-    console.log('PDF generated and order file saved successfully. Now refreshing orders...');
-    await fetchOrders();
-    // ─── ENVOI D'EMAIL AU CLIENT ───────────────────────────────
+  const handleGeneratePDF = async (order) => {
     try {
-      // Récupération du contact principal
-      const mainContact = custAccountInfo.data[0].main_contact
-        ?.find(c => c.ismain_user === true);
-      const toEmail = mainContact?.email;
+      console.log('Génération de PDF pour la commande :', order);
 
-      if (toEmail) {
-        const subject = `Votre PDF de commande #${order.id_order} est disponible`;
-        const body = `
-          <p>Bonjour ${custAccountInfo.data[0].cust_name || ''},</p>
-          <p>Le PDF de votre commande <strong>#${order.id_order}</strong> a été généré${orderFiles[order.id_order] ? ' à nouveau' : ''}.</p>
-          <p>Vous pouvez le télécharger directement via votre espace client.</p>
-          <p>Bien cordialement,<br/>La Chambre de Commerce de Djibouti</p>
-        `;
+      // ─── 0) Collecte des données ───────────────────────────────
+      const originCountry = countries.find(c => c.id_country === order.id_country_origin)?.symbol_fr || '';
+      const destinationCountry = countries.find(c => c.id_country === order.id_country_destination)?.symbol_fr || '';
+      const portLoading = countries.find(c => c.id_country === order.id_country_port_loading)?.symbol_fr || '';
+      const portDischarge = countries.find(c => c.id_country === order.id_country_port_discharge)?.symbol_fr || '';
 
-        await sendEmailAndMemo({
-          to: toEmail,
-          subject,
-          body,
-          isHtml: true,
-          id_cust_account: order.id_cust_account,
-          idlogin: operatorId
+      const transpResponse = await getCertifTranspMode({
+        idListCT: null,
+        idListCO: order.id_ord_certif_ori?.toString() || null,
+        isActiveOT: 'true',
+        isActiveTM: 'true',
+        idListOrder: null,
+        idListOrderStatus: null,
+      });
+      const transportModesObj = {};
+      transpResponse?.data?.forEach(m => {
+        transportModesObj[m.symbol_fr.toLowerCase()] = true;
+      });
+
+      const custAccountInfo = await getCustAccountInfo(order.id_cust_account);
+      const exporterCountry = countries.find(c => c.id_country === custAccountInfo.data[0].id_country)?.symbol_fr || '';
+      const certifGoods = await getCertifGoodsInfo(order.id_ord_certif_ori);
+      const recipientList = await fetchRecipients({
+        idListR: order.id_recipient_account?.toString() || null,
+      });
+      const recipient = recipientList.data?.[0] || {};
+
+      const formData = {
+        transportModes: transportModesObj,
+        merchandises: certifGoods.data || [],
+        exporterName: order.cust_name || '',
+        exporterAddress: custAccountInfo.data[0].full_address,
+        exporterCountry,
+        originCountry,
+        destinationCountry,
+        portLoading,
+        portDischarge,
+        recipientName: recipient.recipient_name || '',
+        recipientAddress: [recipient.address_1, recipient.address_2, recipient.address_3].filter(Boolean).join(', '),
+        recipientCountry: recipient.country_symbol_fr_recipient,
+        DateValidation: order.date_validation_ori,
+        Certifid: order.id_ord_certif_ori,
+      };
+
+      // ─── 1) Génère le PDF original ───────────────────────────────
+      const basePdfBlob = await generatePDF(formData);
+
+      // ─── 2) Upload du PDF ORIGINAL ──────────────────────────────
+      const origFileName = `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}.pdf`;
+      await setOrderFiles({
+        uploadType: 'commandes',
+        p_id_order: order.id_order,
+        p_idfiles_repo_typeof: 1000,
+        p_file_origin_name: origFileName,
+        p_typeof_order: 1,
+        p_idlogin_insert: operatorId,
+        file: new File([basePdfBlob], origFileName, { type: 'application/pdf' }),
+      });
+      console.log('Original uploadé:', origFileName);
+
+
+
+      // ─── 4) Si copies demandées => génère & upload UNE copie ───────
+      if ((order.copy_count_ori || 0) > 0) {
+        console.log('Génération et upload d’une copie tamponnée');
+        const copyBlob = await stampCopy(basePdfBlob);
+        const copyFileName = `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}_COPIE.pdf`;
+        await setOrderFiles({
+          uploadType: 'commandes',
+          p_id_order: order.id_order,
+          p_idfiles_repo_typeof: 1001,
+          p_file_origin_name: copyFileName,
+          p_typeof_order: 1,
+          p_idlogin_insert: operatorId,
+          file: new File([copyBlob], copyFileName, { type: 'application/pdf' }),
         });
-        console.log('E-mail envoyé à', toEmail);
-          } else {
-            console.warn('Aucun contact principal ou e-mail introuvable pour la commande', order.id_order);
-          }
-    } catch (mailErr) {
-      console.error("Erreur lors de l'envoi de l'e-mail au client :", mailErr);
+        console.log('Copie uploadée:', copyFileName);
+      } else {
+        console.log('Aucune copie demandée.');
+      }
+
+      // ─── 5) Mise à jour de l’état local et rafraîchissement ───────
+      const fileCheck = await getOrderFilesInfo({
+        p_id_order_list: order.id_order,
+        p_idfiles_repo_typeof: 1000,
+      });
+      if (fileCheck?.length) {
+        setOrderFilesMap(prev => ({ ...prev, [order.id_order]: fileCheck[0] }));
+      }
+      await fetchOrders();
+
+      // ─── 6) Envoi de l’e-mail au client ──────────────────────────
+      try {
+        const mainContact = custAccountInfo.data[0].main_contact?.find(c => c.ismain_user);
+        const toEmail = mainContact?.email;
+        if (toEmail) {
+          const subject = `Votre PDF de commande #${order.id_order} est disponible`;
+          const body = `
+            <p>Bonjour ${custAccountInfo.data[0].cust_name},</p>
+            <p>Le PDF de votre commande <strong>#${order.id_order}</strong> a été généré${order.copy_count_ori > 0 ? ' et une copie a été créée' : ''
+            }.</p>
+            <p>Vous pouvez le télécharger via votre espace client.</p>
+            <p>Bien cordialement,<br/>La Chambre de Commerce de Djibouti</p>
+          `;
+          await sendEmailAndMemo({
+            to: toEmail,
+            subject,
+            body,
+            isHtml: true,
+            id_cust_account: order.id_cust_account,
+            idlogin: operatorId,
+          });
+          console.log('E-mail envoyé à', toEmail);
+        } else {
+          console.warn('Pas de contact principal pour la commande', order.id_order);
+        }
+      } catch (mailErr) {
+        console.error("Erreur lors de l'envoi de l'e-mail :", mailErr);
+      }
+
+    } catch (err) {
+      console.error('Erreur dans handleGeneratePDF :', err);
     }
   };
 
@@ -493,10 +522,10 @@ const SearchOrders = () => {
               </CardContent>
               <CardActions>
                 <IconButton size="small" onClick={e => handleActionsOpen(e, order)}>
-                <FontAwesomeIcon
-                  icon={faEllipsisV}
-                  style={{ color: '#DCAF26' }}
-                />
+                  <FontAwesomeIcon
+                    icon={faEllipsisV}
+                    style={{ color: '#DCAF26' }}
+                  />
                 </IconButton>
 
                 <Menu
@@ -535,42 +564,42 @@ const SearchOrders = () => {
                         <>
                           {/* Ouvrir si déjà généré */}
                           {orderFiles[order.id_order] && (
-                      <MenuItem
-                        onClick={() => { handleFileClick(orderFiles[order.id_order]); handleActionsClose(); }}
-                        sx={{ color: '#DCAF26' }}
-                      >
-                        <FontAwesomeIcon
-                          icon={faFilePdf}
-                          style={{ color: '#DCAF26', marginRight: 8 }}
-                        />
-                        Ouvrir
-                      </MenuItem>
-                    )}
+                            <MenuItem
+                              onClick={() => { handleFileClick(orderFiles[order.id_order]); handleActionsClose(); }}
+                              sx={{ color: '#DCAF26' }}
+                            >
+                              <FontAwesomeIcon
+                                icon={faFilePdf}
+                                style={{ color: '#DCAF26', marginRight: 8 }}
+                              />
+                              Ouvrir
+                            </MenuItem>
+                          )}
                           {/* Toujours proposer Générer */}
                           <MenuItem
-                      onClick={() => { handleGeneratePDF(order); handleActionsClose(); }}
-                      sx={{ color: '#DCAF26' }}
-                    >
-                      <FontAwesomeIcon
-                        icon={faFilePdf}
-                        style={{ color: '#DCAF26', marginRight: 8 }}
-                      />
-                      Générer PDF
-                    </MenuItem>
+                            onClick={() => { handleGeneratePDF(order); handleActionsClose(); }}
+                            sx={{ color: '#DCAF26' }}
+                          >
+                            <FontAwesomeIcon
+                              icon={faFilePdf}
+                              style={{ color: '#DCAF26', marginRight: 8 }}
+                            />
+                            Générer PDF
+                          </MenuItem>
                         </>
                       )
                       : (
                         <MenuItem onClick={() => {
                           navigate(`/dashboard/order-details?orderId=${order.id_order}&certifId=${order.id_ord_certif_ori}`);
                           handleActionsClose();
-                        }}sx={{ color: '#DCAF26' }}
-                            >
-                              <FontAwesomeIcon
-                                icon={faFilePdf}
-                              style={{ color: '#DCAF26', marginRight: 8 }}
-                              />
-                              Ouvrir
-                            </MenuItem>
+                        }} sx={{ color: '#DCAF26' }}
+                        >
+                          <FontAwesomeIcon
+                            icon={faFilePdf}
+                            style={{ color: '#DCAF26', marginRight: 8 }}
+                          />
+                          Ouvrir
+                        </MenuItem>
                       )
                   )}
                 </Menu>
@@ -661,21 +690,21 @@ const SearchOrders = () => {
                           <>
                             {/* Ouvrir si déjà généré */}
                             {orderFiles[order.id_order] && (
-                            <MenuItem
-                              onClick={() => { handleFileClick(orderFiles[order.id_order]); handleActionsClose(); }}
-                              
-                            >
-                              <FontAwesomeIcon
-                                icon={faFilePdf}
-                                style={{ color: '#DCAF26', marginRight: 8 }}
-                              />
-                              Ouvrir
-                            </MenuItem>
+                              <MenuItem
+                                onClick={() => { handleFileClick(orderFiles[order.id_order]); handleActionsClose(); }}
+
+                              >
+                                <FontAwesomeIcon
+                                  icon={faFilePdf}
+                                  style={{ color: '#DCAF26', marginRight: 8 }}
+                                />
+                                Ouvrir
+                              </MenuItem>
                             )}
                             {/* Toujours possibilité de régénérer */}
                             <MenuItem
                               onClick={() => { handleGeneratePDF(order); handleActionsClose(); }}
-                              
+
                             >
                               <FontAwesomeIcon
                                 icon={faFilePdf}
@@ -691,13 +720,13 @@ const SearchOrders = () => {
                             navigate(`/dashboard/order-details?orderId=${order.id_order}&certifId=${order.id_ord_certif_ori}`);
                             handleActionsClose();
                           }}
-                           >
-                                 <FontAwesomeIcon
-                                   icon={faFilePdf}
-                                   style={{ color: '#DCAF26', marginRight: 8 }}
-                                 />
-                                 Ouvrir
-                               </MenuItem>
+                          >
+                            <FontAwesomeIcon
+                              icon={faFilePdf}
+                              style={{ color: '#DCAF26', marginRight: 8 }}
+                            />
+                            Ouvrir
+                          </MenuItem>
                         )
                     )}
                   </Menu>
