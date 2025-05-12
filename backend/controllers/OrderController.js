@@ -2066,7 +2066,7 @@ const sendOrderDocument = async (req, res) => {
       {
         replacements: {
           p_id_order_list: String(id_order),
-          p_typeof_certif: '1000',
+          p_typeof_certif: '1000,1001',
           p_id_custaccount: String(id_cust_account),
         },
         type: QueryTypes.SELECT,
