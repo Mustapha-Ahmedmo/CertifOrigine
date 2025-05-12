@@ -40,6 +40,21 @@ import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import { faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 
+// services pour récupérer audit & mémos
+import { getOrderHisto, getOrderMemo } from '../../services/apiServices';
+
+// icônes MUI pour le menu
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
+
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import HistoryIcon from '@mui/icons-material/History';
+
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -419,6 +434,36 @@ const SearchOrders = () => {
 
   const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
+  // ──────────── États et handlers audit/mémos ────────────
+  const [auditOpen,  setAuditOpen]  = useState(false);
+  const [memoOpen,   setMemoOpen]   = useState(false);
+  const [auditLogs,  setAuditLogs]  = useState([]);
+  const [memoList,   setMemoList]   = useState([]);
+  const [auditOrder, setAuditOrder] = useState(null);
+
+  const handleOpenAudit = async (order) => {
+    setAuditOrder(order);
+    const logs = await getOrderHisto({ p_id_list_order: String(order.id_order) });
+    setAuditLogs(logs);
+    setAuditOpen(true);
+  };
+
+  const handleOpenMemo = async (order) => {
+    setAuditOrder(order);
+    const memos = await getOrderMemo({
+      p_id_order_list: String(order.id_order),
+      p_idlogin: operatorId,
+      p_isopuser: isOpUser
+    });
+    setMemoList(memos);
+    setMemoOpen(true);
+  };
+
+  const handleCloseAudit = () => setAuditOpen(false);
+  const handleCloseMemo  = () => setMemoOpen(false);
+  // ────────────────────────────────────────────────────────
+
+
   // Rendu en affichage mobile : Cartes
   const renderCardView = () => (
     <Grid container spacing={2}>
@@ -460,15 +505,28 @@ const SearchOrders = () => {
                   onClose={handleActionsClose}
                 >
                   {/* 1) Détails */}
-                  <MenuItem
-                  onClick={() => { handleDetailsClick(order); handleActionsClose(); }}
-                >
-                  <FontAwesomeIcon
-                    icon={faEye}
-                    style={{ color: '#DCAF26', marginRight: 8 }}
-                  />
-                  Détails
-                </MenuItem>
+                  <MenuItem onClick={() => { handleDetailsClick(order); handleActionsClose(); }}>
+                    <ListItemIcon sx={{ color: '#DCAF26' }}>
+                      <VisibilityIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primary="Détails" />
+                  </MenuItem>
+
+                  {/* 2) Piste d'audit */}
+                  <MenuItem onClick={() => { handleOpenAudit(order); handleActionsClose(); }}>
+                    <ListItemIcon sx={{ color: '#DCAF26' }}>
+                      <HistoryIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primary="Piste d’audit" />
+                  </MenuItem>
+
+                  {/* 3) Mémos */}
+                  <MenuItem onClick={() => { handleOpenMemo(order); handleActionsClose(); }}>
+                    <ListItemIcon sx={{ color: '#DCAF26' }}>
+                      <ChatBubbleIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primary="Mémos" />
+                  </MenuItem>
 
                   {/* 2) Si statut = 5, actions PDF */}
                   {order.id_order_status === 5 && (
@@ -574,15 +632,26 @@ const SearchOrders = () => {
                     open={Boolean(anchorElActions) && selectedOrder?.id_order === order.id_order}
                     onClose={handleActionsClose}
                   >
-                    {/* Détails */}
-                    <MenuItem
-                      onClick={() => { handleDetailsClick(order); handleActionsClose(); }}
-                    >
-                      <FontAwesomeIcon
-                        icon={faEye}
-                        style={{ color: '#DCAF26', marginRight: 8 }}
-                      />
+                    {/* 1) Détails */}
+                    <MenuItem onClick={() => { handleDetailsClick(order); handleActionsClose(); }}>
+                      <FontAwesomeIcon icon={faEye} style={{ color: '#DCAF26', marginRight: 8 }} />
                       Détails
+                    </MenuItem>
+
+                    {/* 2) Piste d’audit */}
+                    <MenuItem onClick={() => { handleOpenAudit(order); handleActionsClose(); }}>
+                      <ListItemIcon sx={{ color: '#DCAF26' }}>
+                        <HistoryIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText primary="Piste d’audit" />
+                    </MenuItem>
+
+                    {/* 3) Mémos */}
+                    <MenuItem onClick={() => { handleOpenMemo(order); handleActionsClose(); }}>
+                      <ListItemIcon sx={{ color: '#DCAF26' }}>
+                        <ChatBubbleIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText primary="Mémos" />
                     </MenuItem>
 
                     {/* Seulement si status = 5 */}
@@ -644,6 +713,7 @@ const SearchOrders = () => {
         </TableBody>
       </Table>
     </TableContainer>
+    
   );
 
   return (
@@ -750,6 +820,64 @@ const SearchOrders = () => {
         onRowsPerPageChange={handleChangeRowsPerPage}
         rowsPerPageOptions={[10, 25, 50, 100]}
       />
+      {/* Dialog Audit */}
+<Dialog open={auditOpen} onClose={handleCloseAudit} fullWidth maxWidth="md">
+  <DialogTitle>Piste d’audit – Commande #{auditOrder?.id_order}</DialogTitle>
+  <DialogContent dividers>
+    <Table size="small">
+      <TableHead><TableRow>
+        <TableCell>Date</TableCell>
+        <TableCell>Action</TableCell>
+        <TableCell>Utilisateur</TableCell>
+        <TableCell>Statut</TableCell>
+      </TableRow></TableHead>
+      <TableBody>
+        {auditLogs.map(log => (
+          <TableRow key={log.id_histo_order}>
+            <TableCell>{new Date(log.insertdate_histo).toLocaleString()}</TableCell>
+            <TableCell>{log.order_histo_action}</TableCell>
+            <TableCell>{log.insert_full_name}</TableCell>
+            <TableCell>{log.txt_order_status_fr}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleCloseAudit}>Fermer</Button>
+  </DialogActions>
+</Dialog>
+
+{/* Dialog Mémos */}
+<Dialog open={memoOpen} onClose={handleCloseMemo} fullWidth maxWidth="md">
+  <DialogTitle>Mémos – Commande #{auditOrder?.id_order}</DialogTitle>
+  <DialogContent dividers>
+    <Table size="small">
+      <TableHead><TableRow>
+        <TableCell>Date</TableCell>
+        <TableCell>Sujet</TableCell>
+        <TableCell>Corps</TableCell>
+        <TableCell>De</TableCell>
+        <TableCell>Accusé</TableCell>
+      </TableRow></TableHead>
+      <TableBody>
+        {memoList.map(memo => (
+          <TableRow key={memo.id_memo}>
+            <TableCell>{new Date(memo.memo_date).toLocaleString()}</TableCell>
+            <TableCell>{memo.memo_subject}</TableCell>
+            <TableCell>{memo.memo_body}</TableCell>
+            <TableCell>{memo.cust_user_full_name}</TableCell>
+            <TableCell>{memo.ack_date ? new Date(memo.ack_date).toLocaleString() : 'Non'}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleCloseMemo}>Fermer</Button>
+  </DialogActions>
+</Dialog>
+
     </Box>
   );
 };

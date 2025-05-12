@@ -10,6 +10,9 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
+import HistoryIcon from '@mui/icons-material/History';
+import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
+
 
 import AppBar from '@mui/material/AppBar';
 import Tabs from '@mui/material/Tabs';
@@ -584,7 +587,7 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                           }}
                         >
                           <ListItemIcon sx={{ color: '#DCAF26' }}>
-                            <VisibilityIcon fontSize="small" />
+                            <HistoryIcon fontSize="small" />
                           </ListItemIcon>
                           <ListItemText primary="Piste d’audit" />
                         </MenuItem>
@@ -596,7 +599,7 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                           }}
                         >
                           <ListItemIcon sx={{ color: '#DCAF26' }}>
-                            <PictureAsPdfIcon fontSize="small" />
+                            <ChatBubbleIcon fontSize="small" />
                           </ListItemIcon>
                           <ListItemText primary="Mémos" />
                         </MenuItem>
@@ -675,7 +678,7 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                           }}
                         >
                           <ListItemIcon sx={{ color: '#DCAF26' }}>
-                            <VisibilityIcon fontSize="small" />
+                            <HistoryIcon fontSize="small" />
                           </ListItemIcon>
                           <ListItemText primary="Piste d’audit" />
                         </MenuItem>
@@ -686,7 +689,7 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                           }}
                         >
                           <ListItemIcon sx={{ color: '#DCAF26' }}>
-                            <PictureAsPdfIcon fontSize="small" />
+                            <ChatBubbleIcon fontSize="small" />
                           </ListItemIcon>
                           <ListItemText primary="Mémos" />
                         </MenuItem>
