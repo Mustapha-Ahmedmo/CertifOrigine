@@ -33,6 +33,19 @@ import Divider from '@mui/material/Divider';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PaymentIcon from '@mui/icons-material/Payment';
+
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 
@@ -113,6 +126,8 @@ const HomeOperateur = () => {
   const theme = useTheme();
   // Détection si l'écran est en mobile (largeur <= 768px)
   const isMobile = useMediaQuery('(max-width:768px)');
+
+
 
   // Chargement des commandes de l'opérateur
   const fetchOrders = async () => {
@@ -244,6 +259,11 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // pour piloter l’ancrage et l’ordre courant du menu « Actions »
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [menuOrderId, setMenuOrderId] = useState(null);
+  
+
   // États pour la modale de paiement (utilisée en mode "payment")
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -306,6 +326,16 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
       console.error('Erreur memos :', err);
     }
   };
+
+  const handleMenuOpen = (event, orderId) => {
+    setAnchorEl(event.currentTarget);
+    setMenuOrderId(orderId);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuOrderId(null);
+  };
+  
   
   // -----------------------------
   // Affichage MOBILE : version cartes
@@ -463,9 +493,7 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                 <TableCell>Certificat d'Origine</TableCell>
                 <TableCell>Facture Commerciale</TableCell>
                 <TableCell>Légalisations</TableCell>
-                <TableCell>Piste d’audit</TableCell>
-                <TableCell>Mémos</TableCell>
-                <TableCell>Payer</TableCell>
+                <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
           ) : (
@@ -478,9 +506,7 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                 <TableCell>Certificat d'Origine</TableCell>
                 <TableCell>Facture Commerciale</TableCell>
                 <TableCell>Légalisations</TableCell>
-                <TableCell>Piste d’audit</TableCell>
-                <TableCell>Mémos</TableCell>
-                <TableCell></TableCell>
+                <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
           )}
@@ -538,24 +564,53 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                         '-'
                       )}
                     </TableCell>
-                    <TableCell>
-                      <Button size="small" onClick={() => handleOpenAudit(order.id_order)} sx={{ textTransform: 'none' }}>
-                        Piste d’audit
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <Button size="small" onClick={() => handleOpenMemo(order.id_order)} sx={{ textTransform: 'none', ml: 1 }}>
-                        Mémos
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <button
-                        className="submit-button minimal-button"
-                        onClick={() => handleOpenPayment(order)}
+                    <TableCell align="center">
+                      <IconButton 
+                        size="small"
+                        onClick={(e) => handleMenuOpen(e, order.id_order)}
+                        sx={{ color: '#DCAF26' }}
                       >
-                        Payer
-                      </button>
+                        <MoreVertIcon />
+                      </IconButton>
+                      <Menu
+                        anchorEl={anchorEl}
+                        open={menuOrderId === order.id_order}
+                        onClose={handleMenuClose}
+                      >
+                        <MenuItem
+                          onClick={() => {
+                            handleOpenAudit(order.id_order);
+                            handleMenuClose();
+                          }}
+                        >
+                          <ListItemIcon sx={{ color: '#DCAF26' }}>
+                            <VisibilityIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText primary="Piste d’audit" />
+                        </MenuItem>
+
+                        <MenuItem
+                          onClick={() => {
+                            handleOpenMemo(order.id_order);
+                            handleMenuClose();
+                          }}
+                        >
+                          <ListItemIcon sx={{ color: '#DCAF26' }}>
+                            <PictureAsPdfIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText primary="Mémos" />
+                        </MenuItem>
+
+                        <MenuItem onClick={() => { handleOpenPayment(order); handleMenuClose(); }}>
+                          <ListItemIcon sx={{ color: '#DCAF26' }}>
+                            <PaymentIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText primary="Payer" />
+                        </MenuItem>
+                      </Menu>
+
                     </TableCell>
+
                   </TableRow>
                 ) : (
                   <TableRow key={order.id_order} hover>
@@ -599,30 +654,50 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                         '-'
                       )}
                     </TableCell>
-                    <TableCell>
-                      <Button size="small" onClick={() => handleOpenAudit(order.id_order)} sx={{ textTransform: 'none' }}>
-                        Piste d’audit
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <Button size="small" onClick={() => handleOpenMemo(order.id_order)} sx={{ textTransform: 'none', ml: 1 }}>
-                        Mémos
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <button
-                        className="icon-button minimal-button"
-                        onClick={() => goToOrderDetails(order)}
+                    <TableCell align="center">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => handleMenuOpen(e, order.id_order)}
+                        sx={{ color: '#DCAF26' }}
                       >
-                        Consulter
-                      </button>
+                        <MoreVertIcon />
+                      </IconButton>
+                      {/* À l’emplacement de ton ancien menu non-payment : */}
+                      <Menu
+                        anchorEl={anchorEl}
+                        open={menuOrderId === order.id_order}
+                        onClose={handleMenuClose}
+                      >
+                        <MenuItem
+                          onClick={() => {
+                            handleOpenAudit(order.id_order);
+                            handleMenuClose();
+                          }}
+                        >
+                          <ListItemIcon sx={{ color: '#DCAF26' }}>
+                            <VisibilityIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText primary="Piste d’audit" />
+                        </MenuItem>
+                        <MenuItem
+                          onClick={() => {
+                            handleOpenMemo(order.id_order);
+                            handleMenuClose();
+                          }}
+                        >
+                          <ListItemIcon sx={{ color: '#DCAF26' }}>
+                            <PictureAsPdfIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText primary="Mémos" />
+                        </MenuItem>
+                      </Menu>
                     </TableCell>
                   </TableRow>
                 )
               )
             ) : (
               <TableRow>
-                <TableCell colSpan={mode === "payment" ? 10 : 9}>
+                <TableCell colSpan={mode === "payment" ? 10 : 8}>
                   Aucune commande trouvée.
                 </TableCell>
               </TableRow>
