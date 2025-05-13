@@ -283,6 +283,22 @@ const Step5 = ({
       const mainUser = Array.isArray(users.data) && users.data.length > 0 ? users.data[0] : null;
       const toEmail = mainUser?.email || contactEmail;
 
+      console.log(values);
+
+      const recipientName = mainUser?.full_name || 'Mohamed';
+      const orderLabelText = values.orderLabel || values.orderName || 'ma 1ère commande';
+      const orderDateFormatted = values.date_last_submission
+        ? new Date(values.date_last_submission).toLocaleDateString('fr-FR')
+        : '04/05/2025';
+
+      const emailBody = `
+        <p>Bonjour ${recipientName},</p>
+        <p>Veuillez trouver ci-dessous une information concernant votre commande « ${orderLabelText} » du ${orderDateFormatted}.</p>
+        <p>${contactMessage}</p>
+        <p>Nous restons à votre disposition pour toute question.</p>
+        <p>Bien cordialement,<br/><strong>L'équipe du portail de la Chambre de Commerce de Djibouti</strong></p>
+      `;
+
       // Send the message
       await sendEmailAndMemo({
         to: toEmail,
@@ -291,6 +307,8 @@ const Step5 = ({
         isHtml: true,
         id_cust_account: values.custAccountId,
         idlogin: user.id_login_user,
+        isCustomEmail: true,
+        emailBody,        // full HTML you want to send
       });
 
       alert('Message envoyé !');
@@ -488,10 +506,10 @@ const Step5 = ({
 
   const handleSaveNewRecipient = async () => {
     const phone = newRecipientLocal.receiverAddress2 || '';
-  if (!isValidInternationalPhone(phone)) {
-    setErrorMessage("Le numéro de téléphone est invalide.");
-    return;
-  }
+    if (!isValidInternationalPhone(phone)) {
+      setErrorMessage("Le numéro de téléphone est invalide.");
+      return;
+    }
     try {
       const newRecipientData = {
         idRecipientAccount: null,
@@ -635,7 +653,7 @@ const Step5 = ({
                 <Box component="td" sx={tableCellStyle}>
                   {m.docReference || 'Non spécifié'}
                 </Box>
-               {/*} <Box component="td" sx={tableCellStyle}>
+                {/*} <Box component="td" sx={tableCellStyle}>
                   {m.quantity || 'Non spécifié'}
                 </Box>*/}
                 {/*<Box component="td" sx={tableCellStyle}>
@@ -666,7 +684,7 @@ const Step5 = ({
   // Affichage “cartes” sur mobile
   const renderMerchMobile = () => {
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2}}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {merchandises.map((m, idx) => (
           <Box
             key={idx}
@@ -687,7 +705,7 @@ const Step5 = ({
               <strong>Doc Justif :</strong> {m.docReference || 'Non spécifié'}
             </Typography>
             <Typography variant="body2" sx={{ mb: 1 }}>
-            <strong>Quantité :</strong> {m.quantity ? `${m.quantity} ${m.unit}` : 'Non spécifié'}
+              <strong>Quantité :</strong> {m.quantity ? `${m.quantity} ${m.unit}` : 'Non spécifié'}
             </Typography>
             {isModifiable && (
               <Box sx={{ textAlign: 'right' }}>
@@ -1288,7 +1306,7 @@ const Step5 = ({
             sx={{
               // desktop: hide the last <th> + <td>
               '& table th:nth-of-type(5), & table td:nth-of-type(5)': {
-              display: isEditingMerch && isModifiable ? 'table-cell' : 'none'
+                display: isEditingMerch && isModifiable ? 'table-cell' : 'none'
               },
               // mobile (and anywhere): hide all error‐colored buttons (your Supprimer)
               '& .MuiButton-colorError': {
@@ -1763,7 +1781,7 @@ const Step5 = ({
                 <Typography variant="body2" gutterBottom>
                   <strong>Adresse :</strong> {selectedCompany.full_address}
                 </Typography>
-        
+
 
                 <Typography variant="body2" gutterBottom>
                   <strong>Secteur :</strong> {selectedCompany.sectorName?.symbol_fr || '—'}

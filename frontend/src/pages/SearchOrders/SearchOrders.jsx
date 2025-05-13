@@ -346,7 +346,7 @@ const SearchOrders = () => {
         portLoading,
         portDischarge,
         recipientName: recipient.recipient_name || '',
-        recipientAddress: [recipient.address_1, recipient.address_2, recipient.address_3].filter(Boolean).join(', '),
+        recipientAddress: recipient.address_1,
         recipientCountry: recipient.country_symbol_fr_recipient,
         DateValidation: order.date_validation_ori,
         Certifid: order.id_ord_certif_ori,

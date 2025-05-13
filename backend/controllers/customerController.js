@@ -1332,11 +1332,29 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
       await transaction.commit();
       console.log('Transaction committed successfully.');
 
+      const now = new Date();
+      const formattedDate = now.toLocaleString('fr-FR', {
+        day:   '2-digit',
+        month: '2-digit',
+        year:  'numeric',
+        hour:   '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      
       // Send confirmation email
       await sendEmail(
         email,
-        'Votre compte est en attente de validation',
-        `Bonjour ${full_name},\n\nVotre compte est en attente de validation par un opérateur.\n\nCordialement,\nL'équipe.`
+        'Confirmation de votre demande d’inscription',
+        `Bonjour ${full_name},\n\n` +
+        `Nous avons bien reçu votre demande d’inscription du ${formattedDate}.\n` +
+        `Vous recevrez un autre email lorsque votre compte sera validé par un de nos opérateurs.\n\n` +
+        `En attendant, retrouvez toutes nos informations en cliquant sur le lien ci-dessous :\n` +
+        `https://portal.ccd.dj\n\n` +
+        `⚠️ Si vous n'êtes pas à l'origine de cette demande, nous vous invitons à nous signaler immédiatement cet e-mail à l'adresse : abuse@ccd.dj.\n\n` +
+        `Nous restons à votre disposition pour toute question.\n\n` +
+        `Bien cordialement,\n` +
+        `L'équipe du portail de la Chambre de Commerce de Djibouti`
       );
 
       res.status(201).json({

@@ -495,7 +495,7 @@ export const enableOperator = async (operatorId) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`, 
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
     });
 
@@ -1568,11 +1568,19 @@ export const sendEmailAndMemo = async ({
   body,
   isHtml = false,
   id_cust_account,
-  idlogin
+  idlogin,
+  isCustomEmail = false,
+  emailBody = ''
 }) => {
   try {
     // 1. Envoi de l’email
-    await sendEmail({ to, subject, body, isHtml });
+
+
+    //    if custom, use emailBody; otherwise fall back to body
+    const sendBody = isCustomEmail && emailBody
+      ? emailBody
+      : body;
+    await sendEmail({ to, subject, body: sendBody, isHtml });
 
     // 2. Enregistrement du mémo
     const memoPayload = {
@@ -1601,7 +1609,7 @@ export const sendEmailAndMemo = async ({
 export const getOrderHisto = async ({ p_idlogin, p_id_list_order }) => {
   // 1) Construire la query string
   const params = new URLSearchParams();
-  if (p_id_list_order)      params.append('p_id_list_order', p_id_list_order);
+  if (p_id_list_order) params.append('p_id_list_order', p_id_list_order);
 
   // 2) L’URL doit matcher ton router Express monté sur '/orders'
   const url = `${API_URL}/orders/order-histo?${params.toString()}`;
@@ -1610,7 +1618,7 @@ export const getOrderHisto = async ({ p_idlogin, p_id_list_order }) => {
   const response = await fetch(url, {
     method: 'GET',
     headers: {
-      'Content-Type':  'application/json',
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${localStorage.getItem('token')}`, // si tu l’utilises
     },
   });

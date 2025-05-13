@@ -52,24 +52,24 @@ export const generatePDF = async (formData) => {
     // --- Print exporter information at the top left ---
     if (formData.exporterName) {
       firstPage.drawText(`${formData.exporterName}`, {
-        x: 130,
-        y: 760,
+        x: 100,
+        y: 763,
         size: 12,
         color: rgb(0, 0, 0),
       });
     }
     if (formData.exporterAddress) {
       firstPage.drawText(`${formData.exporterAddress}`, {
-        x: 130,
-        y: 740,
+        x: 113,
+        y: 746,
         size: 12,
         color: rgb(0, 0, 0),
       });
     }
     if (formData.exporterCountry) {
       firstPage.drawText(`${formData.exporterCountry}`, {
-        x: 130,
-        y: 720,
+        x: 100,
+        y: 725,
         size: 12,
         color: rgb(0, 0, 0),
       });
@@ -77,12 +77,12 @@ export const generatePDF = async (formData) => {
 
 
     // --- Print Recipient Information ---
-    let recipientY = 690; // Starting Y coordinate for recipient info
-    let xRecipient = 130; // X position for recipient info
+    let recipientY = 685; // Starting Y coordinate for recipient info
+    let xRecipient = 110; // X position for recipient info
     if (formData.recipientName) {
       firstPage.drawText(`${formData.recipientName}`, {
-        x: xRecipient,
-        y: recipientY,
+        x: 110,
+        y: 685,
         size: 12,
         color: rgb(0, 0, 0),
       });
@@ -90,8 +90,8 @@ export const generatePDF = async (formData) => {
     }
     if (formData.recipientAddress) {
       firstPage.drawText(`${formData.recipientAddress}`, {
-        x: xRecipient,
-        y: recipientY,
+        x: 110,
+        y: 668,
         size: 12,
         color: rgb(0, 0, 0),
       });
@@ -167,7 +167,7 @@ export const generatePDF = async (formData) => {
     // --- New: Draw country and port information ---
     // We'll draw these fields near the bottom-left of the page.
     let countryY = 560; // Starting Y coordinate (adjust as needed)
-    let xCountry = 450; // X position for country info
+    let xCountry = 400; // X position for country info
 
     if (formData.originCountry) {
       firstPage.drawText(`${formData.originCountry}`, {
@@ -180,7 +180,7 @@ export const generatePDF = async (formData) => {
     }
     if (formData.destinationCountry) {
       firstPage.drawText(`${formData.destinationCountry}`, {
-        x: xCountry,
+        x: xCountry + 20,
         y: countryY,
         size: 12,
         color: rgb(0, 0, 0),
@@ -188,13 +188,13 @@ export const generatePDF = async (formData) => {
       countryY -= 30;
     }
 
-    countryY = 600; // Starting Y coordinate (adjust as needed)
-    xCountry = 150; // X position for country info
+    countryY = 590; // Starting Y coordinate (adjust as needed)
+    xCountry = 110; // X position for country info
 
     if (formData.portLoading) {
       firstPage.drawText(`${formData.portLoading}`, {
-        x: xCountry,
-        y: countryY,
+        x: 100,
+        y: 600,
         size: 12,
         color: rgb(0, 0, 0),
       });
@@ -213,7 +213,7 @@ export const generatePDF = async (formData) => {
     // Draw the transport mode(s) under port de déchargement.
     if (selectedTransportModes) {
       firstPage.drawText(`${selectedTransportModes}`, {
-        x: xCountry,
+        x: xCountry + 15,
         y: countryY,
         size: 12,
         color: rgb(0, 0, 0),

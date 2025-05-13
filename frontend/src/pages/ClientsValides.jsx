@@ -713,13 +713,13 @@ const ClientsValides = () => {
   };
 
   const handleDisableConfirm = async () => {
-     if (!selectedDisableAccount) return;
-      // Vérification du motif
-      if (!disableReason.trim()) {
-        // affiche une notification (Snackbar ou alert)
-        alert('Veuillez saisir un motif de désactivation.');
-        return;
-      }
+    if (!selectedDisableAccount) return;
+    // Vérification du motif
+    if (!disableReason.trim()) {
+      // affiche une notification (Snackbar ou alert)
+      alert('Veuillez saisir un motif de désactivation.');
+      return;
+    }
 
     try {
       await disableCustAccount(
@@ -1456,7 +1456,7 @@ const ClientsValides = () => {
             value={disableReason}
             onChange={(e) => setDisableReason(e.target.value)}
             error={!disableReason.trim()}
-           helperText={!disableReason.trim() ? 'Veuillez saisir un motif' : ''}
+            helperText={!disableReason.trim() ? 'Veuillez saisir un motif' : ''}
           />
         </DialogContent>
         <DialogActions>
@@ -1466,7 +1466,7 @@ const ClientsValides = () => {
           >
             Annuler
           </Button>
-           <Button
+          <Button
             onClick={handleDisableConfirm}
             variant="contained"
             style={{ backgroundColor: '#C39408', color: '#fff' }}
@@ -1504,13 +1504,24 @@ const ClientsValides = () => {
             variant="contained"
             style={{ backgroundColor: '#C39408', color: '#fff' }}
             onClick={async () => {
+console.log(selectedAccount);
+              const customerName = selectedAccount?.id_cust_account || order.cust_name || 'Client';
+              const orderTitle = order.order_title;
+              const rawDate = new Date(order.insertdate_order);
+              const formattedDate = rawDate.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+              });
+
+              // 2) Build the HTML body
               const htmlBody = `
-<p>Bonjour,</p>
-<p>La Chambre de Commerce de Djibouti vous a envoyé ce message.</p>
-<p><strong>${mailMessage}</strong></p>
-<p>Si votre compte est actif, vous pouvez retrouver cette correspondance depuis la rubrique « Notifications » à l’adresse <a href="https://www.ccd.dj">www.ccd.dj</a>.</p>
-<p>Chambre de Commerce de Djibouti</p>
-      `.trim();
+  <p>Bonjour ${customerName},</p>
+  <p>Veuillez trouver ci-dessous une information concernant votre commande « ${orderTitle} » du ${formattedDate}.</p>
+  <p><strong>${mailMessage}</strong></p>
+  <p>Nous restons à votre disposition pour toute question.</p>
+  <p>Bien cordialement,<br/><strong>L'équipe du portail de la Chambre de Commerce de Djibouti</strong></p>
+`.trim();
 
               try {
                 if (isOpUser) {
