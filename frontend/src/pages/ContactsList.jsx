@@ -102,6 +102,18 @@ const ContactsList = () => {
   const phoneMobileError =
     currentContact.mobile_number !== '' && !isValidInternationalPhone(currentContact.mobile_number);
 
+  // après la déclaration de phoneFixedError, phoneMobileError, modalError…
+  useEffect(() => {
+    // si le fixe est saisi et est valide, on efface l'erreur
+    if (currentContact.phone_number && !phoneFixedError) {
+      setModalError('');
+    }
+    // idem pour le mobile
+    if (currentContact.mobile_number && !phoneMobileError) {
+      setModalError('');
+    }
+  }, [currentContact.phone_number, currentContact.mobile_number, phoneFixedError, phoneMobileError]);
+
   // Snackbar
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
