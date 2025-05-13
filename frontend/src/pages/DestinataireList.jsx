@@ -69,6 +69,14 @@ const DestinataireList = () => {
   });
   const [errorMessage, setErrorMessage] = useState('');
 
+  // en haut de ton composant, après la déclaration de newRecipient et errorMessage
+  useEffect(() => {
+    if (newRecipient.address2 && isValidInternationalPhone(newRecipient.address2)) {
+      setErrorMessage('');
+    }
+  }, [newRecipient.address2]);
+
+
   // Validation regex pour numéro international (+ ou 00, 8 à 16 chiffres)
 const isValidInternationalPhone = (value) => {
   return /^(?:\+|00)[1-9][0-9]*$/.test(value)
@@ -414,10 +422,10 @@ const isValidInternationalPhone = (value) => {
             value={newRecipient.address2}
             onChange={(e) => handleNewRecipientChange('address2', e.target.value)}
             onBlur={() => {
-               if (newRecipient.address2 && !isValidInternationalPhone(newRecipient.address2)){
-                 setErrorMessage('Numéro invalide (+ ou 00, 8–16 chiffres)');              
-               }
-              }}
+              if (newRecipient.address2 && !isValidInternationalPhone(newRecipient.address2)){
+                setErrorMessage('Numéro invalide (+ ou 00, 8–16 chiffres)');
+              }
+            }}            
               error={!!errorMessage && newRecipient.address2 && !isValidInternationalPhone(newRecipient.address2)}
               helperText={newRecipient.address2 && !isValidInternationalPhone(newRecipient.address2) ? 'Format incorrect.' : ''}
               sx={{ mb: 2 }}
