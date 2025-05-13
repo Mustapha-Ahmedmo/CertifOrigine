@@ -174,6 +174,7 @@ const OpOrderDetails = () => {
 
   const handleChange = (field, value) =>
     setFormData(prev => ({ ...prev, [field]: value }));
+
   const performAction = async (apiFn, reason) => {
     // 1) fetch customer email
     const cu = await getCustUsersByAccount(
@@ -182,36 +183,59 @@ const OpOrderDetails = () => {
     );
     const customerEmail = cu.data[0].email;
 
-    // 2) build args for your API
-    const args = [
-      orderId,
-      formData.custAccountId,
-      idLogin,
-      reason,
-      customerEmail,
-      formData.title,
-    ];
+    let args;
 
-    // 3) decide statusLabel & totalPrice if approving
     let statusLabel = '';
-    let totalPrice = null;
 
     if (apiFn === approveOrder) {
       statusLabel = 'validé';
-      totalPrice = 8500 + 2500 * formData.copy_count_ori;
-      // swap out "reason" slot for email, then append totalPrice
-      args.splice(3, 1, customerEmail);
-      args.push(totalPrice);
+      const totalPrice = 8500 + 2500 * formData.copy_count_ori;
+      // compute a formatted order-date (e.g. "04/05/2025")
+      // compute a formatted order-date (e.g. "04/05/2025") from formData
+      const orderDate = formData.date_last_submission
+        ? new Date(formData.date_last_submission).toLocaleDateString('fr-FR')
+        : new Date().toLocaleDateString('fr-FR');
+
+      // build exactly the 7 parameters approveOrder expects:
+      // (p_id_order, p_id_cust_account, p_idlogin_modify,
+      //  customerEmail, orderTitle, orderDate, totalFD)
+      args = [
+        orderId,
+        formData.custAccountId,
+        idLogin,
+        customerEmail,
+        formData.title,
+        orderDate,
+        totalPrice,
+      ];
     } else if (apiFn === rejectOrder) {
       statusLabel = 'rejeté';
+      args = [
+        orderId,
+        formData.custAccountId,
+        idLogin,
+        reason,
+        customerEmail,
+        formData.title,
+      ];
     } else if (apiFn === sendbackOrder) {
       statusLabel = 'renvoyé';
+      args = [
+        orderId,
+        formData.custAccountId,
+        idLogin,
+        reason,
+        customerEmail,
+        formData.title,
+      ];
     }
 
-    // 4) call your backend
     await apiFn(...args);
 
-    // 6) go back to the dashboard
+    // 4) (optional) you could display a toast/alert, e.g.
+    // alert(`Commande ${statusLabel} avec succès.`);
+
+    // 5) go back to the dashboard
     navigate('/operator-dashboard');
   };
 
