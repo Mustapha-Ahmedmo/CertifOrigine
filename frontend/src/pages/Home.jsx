@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getOrdersForCustomer, cancelOrder, submitOrder } from '../services/apiServices';
+import { getOrdersForCustomer, cancelOrder, submitOrder, getMemo } from '../services/apiServices';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboardList,
@@ -40,6 +40,21 @@ import {
 } from '@mui/material';
 
 import './Home.css';
+
+import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SendIcon from '@mui/icons-material/Send';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+
 
 // ---------------------------------------------------
 // TabPanel : gestion des onglets
@@ -251,13 +266,47 @@ const Home = () => {
 // OrderTable : tableau sur desktop, "inspired card" sur mobile
 // ---------------------------------------------------
 const OrderTable = ({ orders, refreshOrders, hideActions }) => {
+  
   const isMobile = useMediaQuery('(max-width:768px)');
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const currentUserId = user?.id_login_user;
+  const [anchorEl,    setAnchorEl]    = useState(null);
+  const [menuOrderId, setMenuOrderId] = useState(null);
+
+  const [memoOpen,   setMemoOpen]   = useState(false);
+  const [memoList,   setMemoList]   = useState([]);
+  const [selOrderId, setSelOrderId] = useState(null);
+
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const handleMenuOpen = (e, orderId) => {
+    setAnchorEl(e.currentTarget);
+    setMenuOrderId(orderId);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuOrderId(null);
+  };
+  const handleOpenMemo = async (orderId) => {
+    setSelOrderId(orderId);
+    try {
+      const params = {
+        p_isAck: 'false',
+        p_id_cust_account: user.id_cust_account,
+        p_isopuser: user.isopuser ? 'true' : 'false',
+        p_id_order_list: String(orderId),
+      };
+      const resp = await getMemo(params);
+      setMemoList(Array.isArray(resp.data) ? resp.data : []);
+      setMemoOpen(true);
+    } catch (err) {
+      console.error('Erreur getMemo :', err);
+    }
+  };
+  
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -267,6 +316,8 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+
+  
 
   const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
@@ -589,9 +640,37 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
                 </TableCell>
                 {!hideActions && (
                   <TableCell sx={{ textAlign: 'center' }}>
-                    {renderActionButtons(order)}
+                    {/* Bouton “...” */}
+                    <IconButton
+                      size="small"
+                      onClick={e => handleMenuOpen(e, order.id_order)}
+                      sx={{ color: '#DCAF26' }}
+                    >
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
+
+                    {/* Menu contextuel */}
+                    <Menu
+                      anchorEl={anchorEl}
+                      open={menuOrderId === order.id_order}
+                      onClose={handleMenuClose}
+                    >
+                      <MenuItem onClick={() => { handleCancelClick(order.id_order); handleMenuClose(); }}>
+                      <ListItemIcon sx={{ color: '#DCAF26' }}><DeleteIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Supprimer" />
+                      </MenuItem>
+                      <MenuItem onClick={() => { handleSoumettreClick(order.id_order); handleMenuClose(); }}>
+                        <ListItemIcon sx={{ color: '#DCAF26' }}><SendIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Soumettre" />
+                      </MenuItem>
+                      <MenuItem onClick={() => { handleOpenMemo(order.id_order); handleMenuClose(); }}>
+                        <ListItemIcon sx={{ color: '#DCAF26' }}><ChatBubbleIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Mémos" />
+                      </MenuItem>
+                    </Menu>
                   </TableCell>
                 )}
+
               </TableRow>
             ))
           ) : (
@@ -614,6 +693,48 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
         onRowsPerPageChange={handleChangeRowsPerPage}
         rowsPerPageOptions={[10, 25, 50, 100]}
       />
+
+      {/* Dialog Mémos */}
+<Dialog
+  open={memoOpen}
+  onClose={() => setMemoOpen(false)}
+  fullWidth
+  maxWidth="md"
+>
+  <DialogTitle>Mémos – Commande #{selOrderId}</DialogTitle>
+  <DialogContent dividers>
+    <Table size="small">
+      <TableHead>
+        <TableRow>
+          <TableCell>Date</TableCell>
+          <TableCell>Sujet</TableCell>
+          <TableCell>Corps</TableCell>
+          <TableCell>De</TableCell>
+          <TableCell>Accusé</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {memoList.map(memo => (
+          <TableRow key={memo.id_memo}>
+            <TableCell>{new Date(memo.memo_date).toLocaleString()}</TableCell>
+            <TableCell>{memo.memo_subject}</TableCell>
+            <TableCell>{memo.memo_body}</TableCell>
+            <TableCell>{memo.cust_user_full_name}</TableCell>
+            <TableCell>
+              {memo.ack_date
+                ? new Date(memo.ack_date).toLocaleDateString()
+                : 'Non'}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setMemoOpen(false)}>Fermer</Button>
+  </DialogActions>
+</Dialog>
+
     </TableContainer>
   );
 };
