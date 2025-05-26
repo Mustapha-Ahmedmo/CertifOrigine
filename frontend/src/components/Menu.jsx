@@ -94,12 +94,13 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
   const [openOrders, setOpenOrders] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { pathname, search } = useLocation();
+  const location = useLocation();                   // on récupère tout
+  const { pathname, search } = location;
   const tabParam = new URLSearchParams(search).get("tab");
 
   // Auto‐open the submenu when landing on /dashboard/home?tab=…
   useEffect(() => {
-    if (pathname === "/dashboard/home" && tabParam !== null) {
+    if (pathname === "/home" && tabParam !== null) {
       setOpenOrders(true);
     }
   }, [pathname, tabParam]);
@@ -115,17 +116,17 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
 
     // --- 0) Ma CCD ---
     if (
-      location.pathname === "/dashboard/cgv" ||
-      location.pathname === "/dashboard/prestation-service" ||
-      location.pathname === "/dashboard/mentions-legales"
+      location.pathname === "/cgv" ||
+      location.pathname === "/prestation-service" ||
+      location.pathname === "/mentions-legales"
     ) {
       setOpenSubmenus({ newOrder: false, orders: false, ccd: true });
       return;
     }
     // 1) Gestion des commandes → ouvre le sous-menu orders
     if (
-      location.pathname === "/dashboard/home" ||
-      location.pathname === "/dashboard/search-orders"
+      location.pathname === "/home" ||
+      location.pathname === "/search-orders"
     ) {
       setOpenSubmenus({
         newOrder: false,
@@ -138,9 +139,9 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
 
     // 2) Nouvelle Commande → votre ancien bloc
     if (
-      location.pathname.startsWith("/dashboard/create-order") ||
-      location.pathname.startsWith("/dashboard/legalization") ||
-      location.pathname.startsWith("/dashboard/commercial-invoice")
+      location.pathname.startsWith("/create-order") ||
+      location.pathname.startsWith("/legalization") ||
+      location.pathname.startsWith("/commercial-invoice")
     ) {
       setOpenSubmenus({
         newOrder: true,
@@ -152,7 +153,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
     }
 
     // 3) Destinataires
-    if (location.pathname.startsWith("/dashboard/destinatairelist")) {
+    if (location.pathname.startsWith("/destinatairelist")) {
       setOpenSubmenus({
         newOrder: false,
         orders: false,
@@ -163,7 +164,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
     }
 
     // 4) Contacts (si vous en avez un autre)
-    if (location.pathname.startsWith("/dashboard/contactslist")) {
+    if (location.pathname.startsWith("/contactslist")) {
       setOpenSubmenus({
         newOrder: false,
         orders: false,
@@ -250,12 +251,12 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           <ListItem disablePadding>
             <ListItemButton
               component={Link}
-              to="/dashboard/dashboardclient"
+              to="/dashboardclient"
               onClick={() => {
                 handleParentClick();
                 handleLinkClick();
               }}
-              selected={location.pathname === "/dashboard/dashboardclient"}
+              selected={location.pathname === "/dashboardclient"}
               sx={selectedStyle}
             >
               <ListItemIcon sx={{ color: "black" }}>
@@ -269,12 +270,12 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           <ListItem disablePadding>
             <ListItemButton
               component={Link}
-              to="/dashboard/notifications?all=true"
+              to="/notifications?all=true"
               onClick={() => {
                 handleParentClick();
                 handleLinkClick();
               }}
-              selected={location.pathname.startsWith("/dashboard/notifications")}
+              selected={location.pathname.startsWith("/notifications")}
               sx={selectedStyle}
             >
               <ListItemIcon sx={{ color: "black" }}>
@@ -294,7 +295,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
             <ListItemButton
               onClick={() => {
                 handleToggleOrders();
-                navigate("/dashboard/home?tab=0");
+                navigate("/home?tab=0");
                 handleLinkClick();
               }}
               sx={selectedStyle}
@@ -312,8 +313,8 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/dashboard/home?tab=0"
-                  selected={pathname === "/dashboard/home" && tabParam === "0"}
+                  to="/home?tab=0"
+                  selected={pathname === "/home" && tabParam === "0"}
                   sx={{ pl: 4, ...selectedStyle }}
                   onClick={handleLinkClick}
                 >
@@ -326,8 +327,8 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/dashboard/home?tab=1"
-                  selected={pathname === "/dashboard/home" && tabParam === "1"}
+                  to="/home?tab=1"
+                  selected={pathname === "/home" && tabParam === "1"}
                   sx={{ pl: 4, ...selectedStyle }}
                   onClick={handleLinkClick}
                 >
@@ -340,8 +341,8 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/dashboard/home?tab=2"
-                  selected={pathname === "/dashboard/home" && tabParam === "2"}
+                  to="/home?tab=2"
+                  selected={pathname === "/home" && tabParam === "2"}
                   sx={{ pl: 4, ...selectedStyle }}
                   onClick={handleLinkClick}
                 >
@@ -354,8 +355,8 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/dashboard/home?tab=3"
-                  selected={pathname === "/dashboard/home" && tabParam === "3"}
+                  to="/home?tab=3"
+                  selected={pathname === "/home" && tabParam === "3"}
                   sx={{ pl: 4, ...selectedStyle }}
                   onClick={handleLinkClick}
                 >
@@ -368,8 +369,8 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/dashboard/search-orders"
-                  selected={pathname === "/dashboard/search-orders"}
+                  to="/search-orders"
+                  selected={pathname === "/search-orders"}
                   sx={{ pl: 4, ...selectedStyle }}
                   onClick={handleLinkClick}
                 >
@@ -402,9 +403,9 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                 <ListItemButton
                   sx={{ pl: 4, ...selectedStyle }}
                   component={Link}
-                  to="/dashboard/create-order"
+                  to="/create-order"
                   onClick={handleLinkClick}
-                  selected={location.pathname === "/dashboard/create-order"}
+                  selected={location.pathname === "/create-order"}
                 >
                   <ListItemIcon sx={{ color: "black" }}>
                     <FontAwesomeIcon icon={faCertificate} />
@@ -416,9 +417,9 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                 <ListItemButton
                   sx={{ pl: 4, ...selectedStyle }}
                   component={Link}
-                  to="/dashboard/commercial-invoice"
+                  to="/commercial-invoice"
                   onClick={handleLinkClick}
-                  selected={location.pathname === "/dashboard/commercial-invoice"}
+                  selected={location.pathname === "/commercial-invoice"}
                 >
                   <ListItemIcon sx={{ color: "black" }}>
                     <FontAwesomeIcon icon={faFileInvoice} />
@@ -430,9 +431,9 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
                 <ListItemButton
                   sx={{ pl: 4, ...selectedStyle }}
                   component={Link}
-                  to="/dashboard/legalization"
+                  to="/legalization"
                   onClick={handleLinkClick}
-                  selected={location.pathname === "/dashboard/legalization"}
+                  selected={location.pathname === "/legalization"}
                 >
                   <ListItemIcon sx={{ color: "black" }}>
                     <FontAwesomeIcon icon={faGavel} />
@@ -451,12 +452,12 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           <ListItem disablePadding>
             <ListItemButton
               component={Link}
-              to="/dashboard/destinatairelist"
+              to="/destinatairelist"
               onClick={() => {
                 closeAllSubmenus();
                 handleLinkClick();
               }}
-              selected={location.pathname === "/dashboard/destinatairelist"}
+              selected={location.pathname === "/destinatairelist"}
               sx={selectedStyle}
             >
               <ListItemIcon sx={{ color: "black" }}>
@@ -472,12 +473,12 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           <ListItem disablePadding>
             <ListItemButton
               component={Link}
-              to="/dashboard/masociete"
+              to="/masociete"
               onClick={() => {
                 handleParentClick();
                 handleLinkClick();
               }}
-              selected={location.pathname === "/dashboard/masociete"}
+              selected={location.pathname === "/masociete"}
               sx={selectedStyle}
             >
               <ListItemIcon sx={{ color: "black" }}>
@@ -493,12 +494,12 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           <ListItem disablePadding>
             <ListItemButton
               component={Link}
-              to="/dashboard/contactslist"
+              to="/contactslist"
               onClick={() => {
                 closeAllSubmenus();
                 handleLinkClick();
               }}
-              selected={location.pathname === "/dashboard/contactslist"}
+              selected={location.pathname === "/contactslist"}
               sx={selectedStyle}
             >
               <ListItemIcon sx={{ color: "black" }}>
@@ -518,12 +519,12 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
           <ListItem disablePadding>
             <ListItemButton
               component={Link}
-              to="/dashboard/contact-us"
+              to="/contact-us"
               onClick={() => {
                 closeAllSubmenus();
                 handleLinkClick();
               }}
-              selected={location.pathname === "/dashboard/contact-us"}
+              selected={location.pathname === "/contact-us"}
               sx={selectedStyle}
             >
               <ListItemIcon sx={{ color: "black" }}>
