@@ -167,13 +167,13 @@ const Home = () => {
 
   const handleTabChange = (e, newValue) => {
     setTabIndex(newValue);
-    navigate(`/dashboard/home?tab=${newValue}`, { replace: true });
+    navigate(`/home?tab=${newValue}`, { replace: true });
   };
 
   const handleDropdownChange = (e) => {
     const newValue = Number(e.target.value);
     setTabIndex(newValue);
-    navigate(`/dashboard/home?tab=${newValue}`, { replace: true });
+    navigate(`/home?tab=${newValue}`, { replace: true });
   };
 
   if (loading) {
@@ -322,7 +322,7 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
   const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleDetailsClick = (orderId, certifId) => {
-    navigate(`/dashboard/order-details?orderId=${orderId}&certifId=${certifId}`);
+    navigate(`/order-details?orderId=${orderId}&certifId=${certifId}`);
   };
 
   const handleCancelClick = async (orderId) => {
