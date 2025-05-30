@@ -31,7 +31,7 @@ import {
 
 const drawerWidth = 240;
 // Removed 'myCCD' here
-const PARENT_MENUS = ['gestion', 'clients', 'documents'];
+const PARENT_MENUS = ['gestion', 'clients'];
 
 const selectedStyle = {
   "&.Mui-selected": {
@@ -229,32 +229,9 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
 
             </List>
           </Collapse>
-          <Divider sx={{ my: 1, bgcolor: "#FFF", width: "50%", mx: "auto" }} />
 
-          {/* Recherches de Documents */}
-          <ListItem disablePadding>
-            <ListItemButton onClick={() => toggleSubmenu('documents')} sx={{ cursor: 'pointer' }}>
-              <ListItemIcon><FontAwesomeIcon icon={faFileContract} /></ListItemIcon>
-              <ListItemText primary="Recherches de Documents" primaryTypographyProps={{ fontSize: "14px" }} />
-            </ListItemButton>
-          </ListItem>
 
-          <Collapse in={openMenu.documents} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              <ListItem disablePadding>
-                <ListItemButton
-                  component={Link}
-                  to="/operator/certificat-origine"
-                  onClick={() => handleLinkClick('documents', 'certificatOrigine')}
-                  selected={activeLink === 'certificatOrigine'}
-                  sx={{ pl: 3, ...selectedStyle }}
-                >
-                  <ListItemIcon><FontAwesomeIcon icon={faFileContract} /></ListItemIcon>
-                  <ListItemText primary="Certificat d'origine" primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-              </ListItem>
-            </List>
-          </Collapse>
+         
 
           {isAdmin && (
             <>
