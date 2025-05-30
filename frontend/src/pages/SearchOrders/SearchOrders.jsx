@@ -265,7 +265,7 @@ const SearchOrders = () => {
       );
     } else {
       navigate(
-        `/dashboard/order-details?orderId=${order.id_order}&certifId=${certifId}`
+        `/order-details?orderId=${order.id_order}&certifId=${certifId}`
       );
     }
   };
@@ -464,10 +464,10 @@ const SearchOrders = () => {
   const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   // ──────────── États et handlers audit/mémos ────────────
-  const [auditOpen,  setAuditOpen]  = useState(false);
-  const [memoOpen,   setMemoOpen]   = useState(false);
-  const [auditLogs,  setAuditLogs]  = useState([]);
-  const [memoList,   setMemoList]   = useState([]);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [memoOpen, setMemoOpen] = useState(false);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [memoList, setMemoList] = useState([]);
   const [auditOrder, setAuditOrder] = useState(null);
 
   const handleOpenAudit = async (order) => {
@@ -489,7 +489,7 @@ const SearchOrders = () => {
   };
 
   const handleCloseAudit = () => setAuditOpen(false);
-  const handleCloseMemo  = () => setMemoOpen(false);
+  const handleCloseMemo = () => setMemoOpen(false);
   // ────────────────────────────────────────────────────────
 
 
@@ -589,10 +589,12 @@ const SearchOrders = () => {
                         </>
                       )
                       : (
-                        <MenuItem onClick={() => {
-                          navigate(`/dashboard/order-details?orderId=${order.id_order}&certifId=${order.id_ord_certif_ori}`);
-                          handleActionsClose();
-                        }} sx={{ color: '#DCAF26' }}
+                        <MenuItem
+                          onClick={() => {
+                            handleFileClick(orderFiles[order.id_order]);
+                            handleActionsClose();
+                          }}
+                          sx={{ color: '#DCAF26' }}
                         >
                           <FontAwesomeIcon
                             icon={faFilePdf}
@@ -716,17 +718,19 @@ const SearchOrders = () => {
                         )
                         : (
                           /* Pour client non-opUser : link vers l’open côté client */
-                          <MenuItem onClick={() => {
-                            navigate(`/dashboard/order-details?orderId=${order.id_order}&certifId=${order.id_ord_certif_ori}`);
+                          <MenuItem
+                          onClick={() => {
+                            handleFileClick(orderFiles[order.id_order]);
                             handleActionsClose();
                           }}
-                          >
-                            <FontAwesomeIcon
-                              icon={faFilePdf}
-                              style={{ color: '#DCAF26', marginRight: 8 }}
-                            />
-                            Ouvrir
-                          </MenuItem>
+                          sx={{ color: '#DCAF26' }}
+                        >
+                          <FontAwesomeIcon
+                            icon={faFilePdf}
+                            style={{ color: '#DCAF26', marginRight: 8 }}
+                          />
+                          Ouvrir
+                        </MenuItem>
                         )
                     )}
                   </Menu>
@@ -742,7 +746,7 @@ const SearchOrders = () => {
         </TableBody>
       </Table>
     </TableContainer>
-    
+
   );
 
   return (
@@ -850,62 +854,62 @@ const SearchOrders = () => {
         rowsPerPageOptions={[10, 25, 50, 100]}
       />
       {/* Dialog Audit */}
-<Dialog open={auditOpen} onClose={handleCloseAudit} fullWidth maxWidth="md">
-  <DialogTitle>Piste d’audit – Commande #{auditOrder?.id_order}</DialogTitle>
-  <DialogContent dividers>
-    <Table size="small">
-      <TableHead><TableRow>
-        <TableCell>Date</TableCell>
-        <TableCell>Action</TableCell>
-        <TableCell>Utilisateur</TableCell>
-        <TableCell>Statut</TableCell>
-      </TableRow></TableHead>
-      <TableBody>
-        {auditLogs.map(log => (
-          <TableRow key={log.id_histo_order}>
-            <TableCell>{new Date(log.insertdate_histo).toLocaleString()}</TableCell>
-            <TableCell>{log.order_histo_action}</TableCell>
-            <TableCell>{log.insert_full_name}</TableCell>
-            <TableCell>{log.txt_order_status_fr}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={handleCloseAudit}>Fermer</Button>
-  </DialogActions>
-</Dialog>
+      <Dialog open={auditOpen} onClose={handleCloseAudit} fullWidth maxWidth="md">
+        <DialogTitle>Piste d’audit – Commande #{auditOrder?.id_order}</DialogTitle>
+        <DialogContent dividers>
+          <Table size="small">
+            <TableHead><TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>Action</TableCell>
+              <TableCell>Utilisateur</TableCell>
+              <TableCell>Statut</TableCell>
+            </TableRow></TableHead>
+            <TableBody>
+              {auditLogs.map(log => (
+                <TableRow key={log.id_histo_order}>
+                  <TableCell>{new Date(log.insertdate_histo).toLocaleString()}</TableCell>
+                  <TableCell>{log.order_histo_action}</TableCell>
+                  <TableCell>{log.insert_full_name}</TableCell>
+                  <TableCell>{log.txt_order_status_fr}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseAudit}>Fermer</Button>
+        </DialogActions>
+      </Dialog>
 
-{/* Dialog Mémos */}
-<Dialog open={memoOpen} onClose={handleCloseMemo} fullWidth maxWidth="md">
-  <DialogTitle>Mémos – Commande #{auditOrder?.id_order}</DialogTitle>
-  <DialogContent dividers>
-    <Table size="small">
-      <TableHead><TableRow>
-        <TableCell>Date</TableCell>
-        <TableCell>Sujet</TableCell>
-        <TableCell>Corps</TableCell>
-        <TableCell>De</TableCell>
-        <TableCell>Accusé</TableCell>
-      </TableRow></TableHead>
-      <TableBody>
-        {memoList.map(memo => (
-          <TableRow key={memo.id_memo}>
-            <TableCell>{new Date(memo.memo_date).toLocaleString()}</TableCell>
-            <TableCell>{memo.memo_subject}</TableCell>
-            <TableCell>{memo.memo_body}</TableCell>
-            <TableCell>{memo.cust_user_full_name}</TableCell>
-            <TableCell>{memo.ack_date ? new Date(memo.ack_date).toLocaleString() : 'Non'}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={handleCloseMemo}>Fermer</Button>
-  </DialogActions>
-</Dialog>
+      {/* Dialog Mémos */}
+      <Dialog open={memoOpen} onClose={handleCloseMemo} fullWidth maxWidth="md">
+        <DialogTitle>Mémos – Commande #{auditOrder?.id_order}</DialogTitle>
+        <DialogContent dividers>
+          <Table size="small">
+            <TableHead><TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>Sujet</TableCell>
+              <TableCell>Corps</TableCell>
+              <TableCell>De</TableCell>
+              <TableCell>Accusé</TableCell>
+            </TableRow></TableHead>
+            <TableBody>
+              {memoList.map(memo => (
+                <TableRow key={memo.id_memo}>
+                  <TableCell>{new Date(memo.memo_date).toLocaleString()}</TableCell>
+                  <TableCell>{memo.memo_subject}</TableCell>
+                  <TableCell>{memo.memo_body}</TableCell>
+                  <TableCell>{memo.cust_user_full_name}</TableCell>
+                  <TableCell>{memo.ack_date ? new Date(memo.ack_date).toLocaleString() : 'Non'}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseMemo}>Fermer</Button>
+        </DialogActions>
+      </Dialog>
 
     </Box>
   );

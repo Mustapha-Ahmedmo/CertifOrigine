@@ -166,16 +166,16 @@
       }
     }, [search, options.length]);
 
-    const handleTabChange = (e, newValue) => {
-      setTabIndex(newValue);
-      navigate(`/dashboard/home?tab=${newValue}`, { replace: true });
-    };
+  const handleTabChange = (e, newValue) => {
+    setTabIndex(newValue);
+    navigate(`/home?tab=${newValue}`, { replace: true });
+  };
 
-    const handleDropdownChange = (e) => {
-      const newValue = Number(e.target.value);
-      setTabIndex(newValue);
-      navigate(`/dashboard/home?tab=${newValue}`, { replace: true });
-    };
+  const handleDropdownChange = (e) => {
+    const newValue = Number(e.target.value);
+    setTabIndex(newValue);
+    navigate(`/home?tab=${newValue}`, { replace: true });
+  };
 
     if (loading) {
       return <div className="loading">Chargement des commandes...</div>;
@@ -324,9 +324,9 @@
 
     const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-    const handleDetailsClick = (orderId, certifId) => {
-      navigate(`/dashboard/order-details?orderId=${orderId}&certifId=${certifId}`);
-    };
+  const handleDetailsClick = (orderId, certifId) => {
+    navigate(`/order-details?orderId=${orderId}&certifId=${certifId}`);
+  };
 
     const handleCancelClick = async (orderId) => {
       try {
