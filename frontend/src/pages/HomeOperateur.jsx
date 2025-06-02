@@ -323,6 +323,7 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
         p_idlogin: operatorId,   // ou null si vous ne filtrez pas sur l'operateur
         p_isopuser: true
       });
+      console.log('memos reçus pour la commande', orderId, memos);
       setMemoList(memos);
       setMemoOpen(true);
     } catch (err) {
@@ -770,7 +771,6 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
           <TableCell>Sujet</TableCell>
           <TableCell>Corps</TableCell>
           <TableCell>De</TableCell>
-          <TableCell>Accusé</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -779,8 +779,12 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
             <TableCell>{new Date(memo.memo_date).toLocaleString()}</TableCell>
             <TableCell>{memo.memo_subject}</TableCell>
             <TableCell>{memo.memo_body}</TableCell>
-            <TableCell>{memo.cust_user_full_name || memo.cust_user_full_name}</TableCell>
-            <TableCell>{memo.ack_date ? new Date(memo.ack_date).toLocaleString() : 'Non'}</TableCell>
+            <TableCell>
+            { memo.insert_full_name        // premier choix, si ta proc renvoie bien ce champ
+            || memo.cust_user_full_name  // fallback si insert_full_name est undefined
+            || '-'                       // enfin, juste un tiret
+            }
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
