@@ -81,16 +81,13 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
   const unitPriceCertif = order?.unit_price_ord_certif_ori ? parseFloat(order.unit_price_ord_certif_ori) : 8500;
   const unitPriceCopies = order?.unit_price_copies_ord_certif_ori ? parseFloat(order.unit_price_copies_ord_certif_ori) : 2500;
   const copies = order?.copy_count_ori ? parseFloat(order.copy_count_ori) : 1;
-  const computedMontantHT = (unitPriceCertif + copies * unitPriceCopies).toFixed(2);
+  
 
-  // Tax rate constant (e.g. 10% in this example)
-  const rate_tax = 0.10;
-  // Compute default Taxe as rate_tax * Montant HT
-  const computedMontantTaxe = (parseFloat(computedMontantHT) * rate_tax).toFixed(2);
 
-  // Local state for modifiable Montant HT and Taxe
-  const [montantHT, setMontantHT] = useState(computedMontantHT);
-  const [montantTaxe, setMontantTaxe] = useState(computedMontantTaxe);
+  // Calcul du montant total en FDJ directement
+  const computedMontantFDJ = (unitPriceCertif + copies * unitPriceCopies).toFixed(0);
+  // État unique pour le montant FDJ (modifiable si besoin)
+  const [montantFDJ, setMontantFDJ] = useState(computedMontantFDJ);
 
   // Other payment-related state
   const [paymentMethod, setPaymentMethod] = useState('Cash');
@@ -108,9 +105,8 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
 
   // Update montantHT and montantTaxe when order or computed values change.
   useEffect(() => {
-    setMontantHT(computedMontantHT);
-    setMontantTaxe((parseFloat(computedMontantHT) * rate_tax).toFixed(2));
-  }, [order, computedMontantHT, rate_tax]);
+      setMontantFDJ(computedMontantFDJ);
+    }, [order, computedMontantFDJ]);
 
   // Helper function to combine address fields (client address)
   const getClientAddress = () => {
@@ -119,8 +115,7 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
     return [address_1, address_2, address_3].filter(Boolean).join(', ') || 'Adresse client';
   };
 
-  // Compute TOTAL as Montant HT + Taxe
-  const totalAmount = (parseFloat(montantHT) + parseFloat(montantTaxe)).toFixed(2);
+
 
   // Open confirmation dialog on clicking "ENREGISTRER LE PAIEMENT"
   const handleOpenConfirmation = () => {
@@ -157,8 +152,8 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
       const invoiceData = {
         p_id_order: order?.id_order,
         p_invoice_number: invoiceNumber,
-        p_amount_exVat: parseFloat(montantHT),
-        p_amount_Vat: parseFloat(montantTaxe),
+        p_amount_exVat: parseFloat(montantFDJ),
+        p_amount_Vat: 0,
         p_idlogin_insert: operatorId,
         p_paymentDate: invoiceDate, // Must be a valid timestamp (YYYY-MM-DD)
         p_free_txt1: paymentMethod === 'Autre' ? customPaymentMethod : paymentMethod,
@@ -335,23 +330,15 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
             />
           </Box>
 
-          {/* Montant HT (modifiable) */}
+          {/* Montant total en FDJ */}
           <TextField
-            label="Montant HT"
+            label="Montant (FDJ)"
             fullWidth
-            value={montantHT}
-            onChange={(e) => setMontantHT(e.target.value)}
+            value={montantFDJ}
+            onChange={(e) => setMontantFDJ(e.target.value)}
             sx={{ mb: 2 }}
           />
-
-          {/* Taxe (modifiable) */}
-          <TextField
-            label="Taxe"
-            fullWidth
-            value={montantTaxe}
-            onChange={(e) => setMontantTaxe(e.target.value)}
-            sx={{ mb: 2 }}
-          />
+        
 
           {/* Payment Method */}
           <FormControl component="fieldset" sx={{ mb: 2 }}>
@@ -419,15 +406,9 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
             Voulez-vous confirmer que le paiement suivant soit enregistré ?
           </Typography>
           <Box sx={{ mt: 2 }}>
-            <Typography>
-              <strong>Montant HT:</strong> {montantHT} €
-            </Typography>
-            <Typography>
-              <strong>TVA:</strong> {montantTaxe} €
-            </Typography>
-            <Typography>
-              <strong>TOTAL:</strong> {totalAmount} €
-            </Typography>
+          <Typography>
+            <strong>Montant à facturer :</strong> {montantFDJ} FDJ
+          </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
