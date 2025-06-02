@@ -1885,43 +1885,224 @@ CALL set_sector(0, 'AUTRES','OTHERS');
 
 
 DO $$
-DECLARE
-    new_id INT;
 BEGIN
-    INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
-    VALUES ('ETHIOPIE', 'ETHIOPIA')
-    RETURNING ID_COUNTRY INTO new_id;
-    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
-    VALUES (new_id, 'Addis-Abeba', 'Addis-Abeba');
-    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
-    VALUES (new_id, 'Dire Dawa', 'Dire Dawa');
+INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG) VALUES
+('AFGHANISTAN','Afghanistan'),
+('AFRIQUE DU SUD','South Africa'),
+('ALBANIE','Albania'),
+('ALGERIE','Algeria'),
+('ALLEMAGNE','Germany'),
+('ANDORRE','Andorra'),
+('ANGOLA','Angola'),
+('ANGUILLA','Anguilla'),
+('ANTARCTIQUE','Antarctica'),
+('ANTIGUA-ET-BARBUDA','Antigua and Barbuda'),
+('ARABIE SAOUDITE','Saudi Arabia'),
+('ARGENTINE','Argentina'),
+('ARMENIE','Armenia'),
+('ARUBA','Aruba'),
+('AUSTRALIE','Australia'),
+('AUTRICHE','Austria'),
+('AZERBAEDJAN','Azerbaijan'),
+('BAHAMAS','Bahamas'),
+('BAHREEN','Bahrain'),
+('BANGLADESH','Bangladesh'),
+('BARBADE','Barbados'),
+('BELGIQUE','Belgium'),
+('BELIZE','Belize'),
+('BENIN','Benin'),
+('BERMUDES','Bermuda'),
+('BHOUTAN','Bhutan'),
+('BIRMANIE','Myanmar'),
+('BOLIVIE','Bolivia'),
+('BOSNIE-HERZEGOVINE','Bosnia and Herzegovina'),
+('BOTSWANA','Botswana'),
+('BRESIL','Brazil'),
+('BRUNEI','Brunei'),
+('BULGARIE','Bulgaria'),
+('BURKINA FASO','Burkina Faso'),
+('BURUNDI','Burundi'),
+('CAMBODGE','Cambodia'),
+('CAMEROUN','Cameroon'),
+('CANADA','Canada'),
+('CAP-VERT','Cabo Verde'),
+('CAYMAN ISLANDS','Cayman Islands'),
+('CHILI','Chile'),
+('CHINE','China'),
+('CHRISTMAS ISLAND','Christmas Island'),
+('COLOMBIE','Colombia'),
+('COMORES','Comoros'),
+('CONGO','Congo'),
+('CONGO, R�PUBLIQUE D�MOCRATIQUE DU','Congo, Democratic Republic of the'),
+('COOK ISLANDS','Cook Islands'),
+('COR�E DU NORD','Korea, Democratic People�s Republic of'),
+('COR�E DU SUD','Korea, Republic of'),
+('COTE D''IVOIRE','C�te d�Ivoire'),
+('CROATIE','Croatia'),
+('CUBA','Cuba'),
+('CURAAO','Curaao'),
+('DANEMARK','Denmark'),
+('DJIBOUTI','Djibouti'),
+('DOMINIQUE','Dominica'),
+('EGYPTE','Egypt'),
+('EL SALVADOR','El Salvador'),
+('EQUATEUR','Ecuador'),
+('ERYTHREE','Eritrea'),
+('ETATS-UNIS','United States'),
+('ETHIOPIE','Ethiopia'),
+('FIJI','Fiji'),
+('FINLANDE','Finland'),
+('FRANCE','France'),
+('GABON','Gabon'),
+('GAMBIE','Gambia'),
+('GEORGIE','Georgia'),
+('GHANA','Ghana'),
+('GIBRALTAR','Gibraltar'),
+('GRECE','Greece'),
+('GRENADA','Grenada'),
+('GUADELOUPE','Guadeloupe'),
+('GUAM','Guam'),
+('GUATEMALA','Guatemala'),
+('GUINEE','Guinea'),
+('GUINEE-BISSAU','Guinea-Bissau'),
+('GUINEE EQUATORIALE','Equatorial Guinea'),
+('GUYANA','Guyana'),
+('HAITI','Haiti'),
+('HONDURAS','Honduras'),
+('HONGRIE','Hungary'),
+('HONG KONG','Hong Kong'),
+('ILES FAROE','Faroe Islands'),
+('ILES MARSCHALL','Marshall Islands'),
+('ILES SALOMON','Solomon Islands'),
+('ILES TURQUES-ET-CA�QUES','Turks and Caicos Islands'),
+('ILES VIERGES BRITANNIQUES','Virgin Islands, British'),
+('ILES VIERGES DES �TATS-UNIS','Virgin Islands, U.S.'),
+('ILES WALLIS-ET-FUTUNA','Wallis and Futuna'),
+('INDE','India'),
+('INDONESIE','Indonesia'),
+('IRAN','Iran, Islamic Republic of'),
+('IRAQ','Iraq'),
+('IRLANDE','Ireland'),
+('ISLANDE','Iceland'),
+('ISRAEL','Israel'),
+('ITALIE','Italy'),
+('JAMAIQUE','Jamaica'),
+('JAPON','Japan'),
+('JERSEY','Jersey'),
+('JORDANIE','Jordan'),
+('KAZAKHSTAN','Kazakhstan'),
+('KENYA','Kenya'),
+('KIRGHIZISTAN','Kyrgyzstan'),
+('KIRIBATI','Kiribati'),
+('KOWEET','Kuwait'),
+('LAOS','Lao People�s Democratic Republic'),
+('LETTONIE','Latvia'),
+('LIBAN','Lebanon'),
+('LIBERIA','Liberia'),
+('LIBYE','Libya'),
+('LIECHTENSTEIN','Liechtenstein'),
+('LITUANIE','Lithuania'),
+('LUXEMBOURG','Luxembourg'),
+('MACAO','Macao'),
+('MACEDOINE DU NORD','North Macedonia'),
+('MADAGASCAR','Madagascar'),
+('MALAISIE','Malaysia'),
+('MALAWI','Malawi'),
+('MALDIVES','Maldives'),
+('MALI','Mali'),
+('MALTE','Malta'),
+('MAROC','Morocco'),
+('MARTINIQUE','Martinique'),
+('MAURICE','Mauritius'),
+('MAURITANIE','Mauritania'),
+('MAYOTTE','Mayotte'),
+('MEXIQUE','Mexico'),
+('MICRON�SIE','Micronesia, Federated States of'),
+('MOLDAVIE','Moldova, Republic of'),
+('MONACO','Monaco'),
+('MONGOLIE','Mongolia'),
+('MONT�N�GRO','Montenegro'),
+('MOZAMBIQUE','Mozambique'),
+('MYANMAR','Myanmar'),
+('NAMIBIE','Namibia'),
+('NAURU','Nauru'),
+('N�PAL','Nepal'),
+('NICARAGUA','Nicaragua'),
+('NIGER','Niger'),
+('NIGERIA','Nigeria'),
+('NIUE','Niue'),
+('NORV�GE','Norway'),
+('NOUVELLE-CALEDONIE','New Caledonia'),
+('NOUVELLE-Z�LANDE','New Zealand'),
+('OMAN','Oman'),
+('OUGANDA','Uganda'),
+('OUZB�KISTAN','Uzbekistan'),
+('PAKISTAN','Pakistan'),
+('PALAOS','Palau'),
+('PANAMA','Panama'),
+('PAPOUASIE-NOUVELLE-GUIN�E','Papua New Guinea'),
+('PARAGUAY','Paraguay'),
+('PAYS-BAS','Netherlands'),
+('P�ROU','Peru'),
+('PHILIPPINES','Philippines'),
+('POLOGNE','Poland'),
+('PORTUGAL','Portugal'),
+('QATAR','Qatar'),
+('R�PUBLIQUE CENTRAFRICAINE','Central African Republic'),
+('R�PUBLIQUE D�MOCRATIQUE DU CONGO','Congo, Democratic Republic of the'),
+('R�PUBLIQUE DOMINICAINE','Dominican Republic'),
+('R�PUBLIQUE TCH�QUE','Czech Republic'),
+('ROUMANIE','Romania'),
+('ROYAUME-UNI','United Kingdom'),
+('RUSSIE','Russian Federation'),
+('RWANDA','Rwanda'),
+('SAINT-CHRISTOPHE-ET-NI�V�S','Saint Kitts and Nevis'),
+('SAINTE-LUCIE','Saint Lucia'),
+('SAINT-MARIN','San Marino'),
+('SAINT-MARTIN','Saint Martin (French part)'),
+('SAINT-PIERRE-ET-MIQUELON','Saint Pierre and Miquelon'),
+('SAINT-VINCENT-ET-LES-GRENA**DINES**','Saint Vincent and the Grenadines'),
+('SAMOA','Samoa'),
+('SAO TOME-ET-PRINCIPE','Sao Tome and Principe'),
+('S�N�GAL','Senegal'),
+('SERBIE','Serbia'),
+('SEYCHELLES','Seychelles'),
+('SIERRA LEONE','Sierra Leone'),
+('SINGAPOUR','Singapore'),
+('SLOVAQUIE','Slovakia'),
+('SLOV�NIE','Slovenia'),
+('SOMALIE','Somalia'),
+('SOUDAN','Sudan'),
+('SOUDAN DU SUD','South Sudan'),
+('SRI LANKA','Sri Lanka'),
+('SU�DE','Sweden'),
+('SUISSE','Switzerland'),
+('SURINAME','Suriname'),
+('SVALBARD ET JAN MAYEN','Svalbard and Jan Mayen'),
+('SYRIE','Syrian Arab Republic'),
+('TAIWAN','Taiwan, Province of China'),
+('TADJIKISTAN','Tajikistan'),
+('TANZANIE','Tanzania, United Republic of'),
+('THA�LANDE','Thailand'),
+('TIMOR-LESTE','Timor-Leste'),
+('TOGO','Togo'),
+('TONGA','Tonga'),
+('TRINIDAD-ET-TOBAGO','Trinidad and Tobago'),
+('TUNISIE','Tunisia'),
+('TURKM�NISTAN','Turkmenistan'),
+('TURQUIE','Turkey'),
+('TUVALU','Tuvalu'),
+('UKRAINE','Ukraine'),
+('URUGUAY','Uruguay'),
+('VANUATU','Vanuatu'),
+('VATICAN','Holy See (Vatican City State)'),
+('VENEZUELA','Venezuela'),
+('VIET NAM','Viet Nam'),
+('Y�MEN','Yemen'),
+('ZAMBIE','Zambia'),
+('ZIMBABWE','Zimbabwe');
 END $$;
 
-DO $$
-DECLARE
-    new_id INT;
-BEGIN
-    INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
-    VALUES ('REP. DE DJIBOUTI', 'REP. DE DJIBOUTI')
-    RETURNING ID_COUNTRY INTO new_id;
-    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
-    VALUES (new_id, 'Djibouti Ville', 'Djibouti City');
-    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
-    VALUES (new_id, 'Tadjourah','Tadjourah');
-END $$;
-
-
-
-DO $$
-DECLARE
-    new_id INT;
-BEGIN
-    INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG)
-    VALUES ('Emirats arabes unis', 'United Arab Emirates')
-    RETURNING ID_COUNTRY INTO new_id;
-    INSERT INTO CITY (ID_COUNTRY, SYMBOL_FR, SYMBOL_ENG)
-    VALUES (new_id, 'Dubai', 'Dubai');
-END $$;
 
 DROP FUNCTION IF EXISTS get_op_user;
 CREATE OR REPLACE FUNCTION get_op_user(
@@ -4605,6 +4786,10 @@ BEGIN
     RETURN new_memo_id;
 END;
 $$;
+
+
+
+
 DROP FUNCTION IF EXISTS get_order_statics_byservices;
 CREATE OR REPLACE FUNCTION get_order_statics_byservices(
     p_date_start TIMESTAMP,
@@ -4680,6 +4865,157 @@ BEGIN
         ;
 END;
 $$ LANGUAGE plpgsql;
+
+
+
+
+DROP FUNCTION IF EXISTS get_ord_certif_amount_byWeek;
+CREATE OR REPLACE FUNCTION get_ord_certif_amount_byWeek(
+    p_date_start TIMESTAMP,
+    p_date_end TIMESTAMP,
+    p_id_list_order TEXT,
+    p_id_custaccount INT,
+    p_unit_ori_certif FLOAT,
+    p_unit_ori_certif_copy FLOAT
+)
+RETURNS TABLE(
+    amount_ord_certif_ori_approved FLOAT,
+    amount_ord_certif_ori_paid FLOAT,
+    theWeek  FLOAT
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT
+        SUM(
+            CASE WHEN
+                (o."id_order_status"= 3/*approved*/ AND o."date_validation" >= p_date_start  and o."date_validation"  <= p_date_end)
+                OR
+                (o."id_order_status"  = 4/*billed*/ AND o."date_last_return" >= p_date_start  and o."date_last_return"  <= p_date_end)
+            THEN
+                p_unit_ori_certif + p_unit_ori_certif_copy * COPY_COUNT
+            ELSE 0 END
+        ) AS amount_ord_certif_ori_approved,
+       
+       
+       
+        SUM(
+            CASE WHEN
+                o."id_order_status" = 5/*paid*/  AND o."date_last_return" >= p_date_start  and o."date_last_return"  <= p_date_end
+            THEN
+                AMOUNT_ExVAT + AMOUNT_VAT
+            ELSE 0 END
+        ) AS amount_ord_certif_ori_paid,
+
+		date_part('week', 
+            CASE WHEN o."id_order_status" = 3/*approved*/
+            THEN
+                o."date_validation"
+            ELSE  
+                o."date_last_return"
+            END   
+		) AS weekly
+
+
+
+
+    FROM "ORDER" o
+            INNER JOIN ORD_CERTIF_ORI oco ON o."id_order" = oco."id_order"
+            LEFT JOIN INVOICE_HEADER inv ON o."id_order" = inv."id_order"
+    WHERE
+        (p_id_list_order IS NULL OR o."id_order" = ANY (string_to_array(p_id_list_order, ',')::INT[]))
+        AND (p_id_custaccount IS NULL OR o."id_cust_account" = p_id_custaccount)
+        AND o."id_order_status"  IN (3/*approved*/,4/*billed*/, 5/*paid*/)
+    GROUP BY weekly;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+
+
+
+
+
+
+
+
+DROP FUNCTION IF EXISTS get_PaidOrder_amount;
+DROP FUNCTION IF EXISTS get_PaidOrder_amount;
+CREATE OR REPLACE FUNCTION get_PaidOrder_amount(
+    p_date_start TIMESTAMP,
+    p_date_end TIMESTAMP,
+    p_id_list_order TEXT,
+    p_id_custaccount INT,
+    p_idlogin INT
+	
+)
+RETURNS TABLE(
+    amount_ord_certif_ori_paid FLOAT,
+    ord_certif_ori_count BIGINT,
+    ord_legalization_count BIGINT,
+    ord_com_invoice_count BIGINT,
+    recipient_name  VARCHAR(96),
+    address_1  VARCHAR(160),
+    address_2  VARCHAR(160),
+    address_3  VARCHAR(160),
+    country_symbol_fr_recipient VARCHAR(64),
+    country_symbol_eng_recipient VARCHAR(64)
+) AS
+$$
+
+BEGIN
+
+    IF NOT EXISTS (SELECT 1 FROM CUST_USER cu 
+		WHERE cu."id_login_user"  = p_idlogin AND cu."id_cust_account" = p_id_custaccount ) THEN
+		RAISE EXCEPTION 'Acc�s refus�';
+    END IF;
+
+    RETURN QUERY
+    SELECT
+       
+        SUM( COALESCE ( AMOUNT_ExVAT, 0) +COALESCE (AMOUNT_VAT, 0) ) AS amount_ord_certif_ori_paid,
+
+        COALESCE (count(oco."id_ord_certif_ori"), 0) as ord_certif_ori_count,
+        COALESCE (count (ol."id_ord_legalization"), 0)  as ord_legalization_count,
+        COALESCE (count (oi."id_ord_com_invoice"), 0) as ord_com_invoice_count,
+
+        ra."recipient_name",
+        ra."address_1",
+        ra."address_2",
+        ra."address_3",
+
+        crec."symbol_fr" AS country_symbol_fr_recipient,
+        crec."symbol_eng" AS country_symbol_eng_recipient
+
+
+    FROM "ORDER" o
+            --INNER JOIN ORD_CERTIF_ORI oco ON o."id_order" = oco."id_order"
+            LEFT JOIN ORD_CERTIF_ORI oco ON o."id_order" = oco."id_order"
+                LEFT JOIN RECIPIENT_ACCOUNT ra ON oco."id_recipient_account" = ra."id_recipient_account"
+                    LEFT JOIN country crec ON ra."id_country" = crec."id_country"
+            LEFT JOIN ORD_LEGALIZATION ol ON o."id_order" = ol."id_order"
+            LEFT JOIN ORD_COM_INVOICE oi ON o."id_order" = oi."id_order"
+            LEFT JOIN INVOICE_HEADER inv ON o."id_order" = inv."id_order"
+
+    WHERE
+        (p_id_list_order IS NULL OR o."id_order" = ANY (string_to_array(p_id_list_order, ',')::INT[]))
+        --AND (p_id_custaccount IS NULL OR o."id_cust_account" = p_id_custaccount)
+        AND o."id_cust_account" = p_id_custaccount
+        AND o."id_order_status" = 5
+        AND (p_date_start IS NULL OR  o."date_last_return" >= p_date_start)
+        AND (p_date_end IS NULL OR o."date_last_return"  <= p_date_end)
+    
+    GROUP BY 
+        ra."recipient_name" ,ra."address_1",ra."address_2",ra."address_3",crec."symbol_fr",crec."symbol_eng"
+	order by amount_ord_certif_ori_paid, ra."recipient_name"
+    ;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
 
 
 
@@ -5234,30 +5570,30 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
+
 call set_op_user(0, 0, 'M. Admin', 1, TRUE,
 'admin@cdd.dj','4889ba9b',
 '253355445', '25377340000',
 0); -- password mdp
 
-CALL set_unitweight(0, 'Kilo', 'Kilogram');
-CALL set_unitweight(0, 'Tonne', 'Tonne');
-CALL set_unitweight(0, 'Mtonne', 'Megatonne');
+CALL set_unitweight(0, 'Nombre  ', 'Number');
+CALL set_unitweight(0, 'Tonne', 'Ton');
+CALL set_unitweight(0, 'Kilotonne', 'kiloton');
+CALL set_unitweight(0, 'Mégatonne ', 'Megaton');
+CALL set_unitweight(0, 'Quintal', 'Quintal');
+CALL set_unitweight(0, 'Milligramme', 'Milligram');
 CALL set_unitweight(0, 'Gramme', 'Gram');
+CALL set_unitweight(0, 'kilogramme', 'Kilogram');
 CALL set_unitweight(0, 'Livre', 'Pound');
 CALL set_unitweight(0, 'Once', 'Ounce');
 CALL set_unitweight(0, 'Stone', 'Stone');
 CALL set_unitweight(0, 'Carat', 'Carat');
-CALL set_unitweight(0, 'Quintal', 'Quintal');
-CALL set_unitweight(0, 'Milligramme', 'Milligram');
-
-call set_transport_mode(0,'Route','Road');
-
-call set_transport_mode(0,'Mer','Sea');
-
-call set_transport_mode(0,'Train','Train');
 
 call set_transport_mode(0,'Air','Air');
-
+call set_transport_mode(0,'Mer','Sea');
+call set_transport_mode(0,'Route','Road');
+call set_transport_mode(0,'Train','Train');
 call set_transport_mode(0,'Mixte','Mixed');
 
 call set_order_status( 1, 'insertion' ,'insert','Soumission');
@@ -5275,10 +5611,16 @@ CALL add_files_repo_typeof(50, 'Numéro Identification Fiscale (NIF)', 'Tax Iden
 CALL add_files_repo_typeof(51, 'Numéro Immatriculation RCS', 'Registration number', FALSE);
 
 
-CALL add_files_repo_typeof(500, 'Certificat d''origine - Facture Commerciale', 'Certificate of origin - Commercial Invoice', TRUE);
-CALL add_files_repo_typeof(501, 'Certificat d''origine - Liste de colisage', 'Certificate of origin - Packing List', TRUE);
-CALL add_files_repo_typeof(502, 'Certificat d''origine - Certificat de poids', 'Certificate of origin - Weight Certificate', FALSE);
-
+CALL add_files_repo_typeof(500, 'Certificat d''origine - Certificat sanitaire', 'Certificate of origin - Health certificate', TRUE);
+CALL add_files_repo_typeof(501, 'Certificat d''origine - Agrément exploitation', 'Certificate of origin - Operating license', TRUE);
+CALL add_files_repo_typeof(502, 'Certificat d''origine - Bill of loading', 'Certificate of origin - Bill of loading', TRUE);
+CALL add_files_repo_typeof(503, 'Certificat d''origine - Lettre de transport aérien', 'Certificate of origin - Airway Bill', TRUE);
+CALL add_files_repo_typeof(504, 'Certificat d''origine - Facture fournisseur', 'Certificate of origin - Supplier invoice', TRUE);
+CALL add_files_repo_typeof(505, 'Certificat d''origine - Patente industrie', 'Certificate of origin - Industrial patent', TRUE);
+CALL add_files_repo_typeof(506, 'Certificat d''origine - Facture Commerciale', 'Certificate of origin - Commercial Invoice', TRUE);
+CALL add_files_repo_typeof(507, 'Certificat d''origine - Liste de colisage', 'Certificate of origin - Packing List', TRUE);
+CALL add_files_repo_typeof(508, 'Certificat d''origine - Certificat de poids', 'Certificate of origin - Weight Certificate', TRUE);
+CALL add_files_repo_typeof(509, 'Certificat d''origine - Autres', 'Certificate of origin - Others', TRUE);
 
 CALL add_files_repo_typeof(1000, 'Certificat d''origine - Original', 'Certificate of origin - Original', FALSE);
 CALL add_files_repo_typeof(1001, 'Certificat d''origine - Copie', 'Certificate of origin - Copy', FALSE);
