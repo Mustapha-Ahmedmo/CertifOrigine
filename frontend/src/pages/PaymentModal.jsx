@@ -26,7 +26,6 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 function PaymentModal({ open, onClose, onSubmit, order }) {
 
 
-  // ─── Helper pour tamponner “COPIE” ─────────────────────────
   async function stampCopy(blobPdf) {
     const arrayBuffer = await blobPdf.arrayBuffer();
     const pdfDoc = await PDFDocument.load(arrayBuffer);
@@ -35,18 +34,38 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
 
     pages.forEach(page => {
       const { width, height } = page.getSize();
-      page.drawText('COPIE', {
-        x: width / 2 - 100,
-        y: height - 40,
-        size: 48,
+
+      const text = 'COPIE';
+      const fontSize = 12;
+      const textWidth = font.widthOfTextAtSize(text, fontSize);
+      const textHeight = fontSize;
+
+      const x = width / 2 + 115;
+      const y = height - 240;
+
+      // Draw white rectangle behind the text
+      page.drawRectangle({
+        x: x - 4,
+        y: y - 2,
+        width: textWidth + 50,
+        height: textHeight + 4,
+        color: rgb(1, 1, 1), // white
+      });
+
+      // Draw text
+      page.drawText(text, {
+        x,
+        y,
+        size: fontSize,
         font,
-        color: rgb(0, 0, 1),
+        color: rgb(0, 0, 1), // blue
       });
     });
 
-    const stampedBytes = await pdfDoc.save();
-    return new Blob([stampedBytes], { type: 'application/pdf' });
+    const bytes = await pdfDoc.save();
+    return new Blob([bytes], { type: 'application/pdf' });
   }
+
 
   // Default invoice date: today's date (YYYY-MM-DD)
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
