@@ -126,7 +126,7 @@ const CreateOrder = () => {
   // when docs step finishes, jump to details instead of step5
   const goToOrderDetails = () => {
     const { orderId, certifId } = formData;
-    navigate(`/dashboard/order-details?orderId=${orderId}&certifId=${certifId}`);
+    navigate(`/order-details?orderId=${orderId}&certifId=${certifId}`);
   };
 
   const renderStep = () => {

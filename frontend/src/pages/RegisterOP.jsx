@@ -188,7 +188,7 @@ const RegisterOP = ({ onClose }) => {
         if (onClose) {
           onClose();
         } else {
-          navigate('/dashboard/operator/operatorslist');
+          navigate('/operator/operatorslist');
         }
       }, 2000);
     } catch (err) {
