@@ -23,9 +23,18 @@ async function sendEmailNotification(orderId, status, reason, recipientEmail, or
 
   // If status is "Valider" (or "validé" or "approuvé"), send the validation email.
   if (status === 'Valider' || status === 'validé' || status === 'approuvé') {
-    body = `Nous vous informons que votre commande de certificat N° ${orderId} du ${orderDate} est validée. Par conséquent, nous vous invitons à procéder au règlement d’un montant total de ${totalFD} FD. Vous pouvez régler le paiement par chèque, en espèces ou par virement bancaire.
-Votre certificat, et le cas échéant les copies conformes, sera (ou seront) disponible(s) sur votre compte dès le paiement de ce montant.`;
-  } else if (status === 'renvoyé' || status === 'rejeté') {
+    body = `Bonjour,
+
+    Nous avons le plaisir de vous confirmer que votre commande de certificat « ${orderTitle} » du ${orderDate} est validée (Certificat N° ${orderId}).
+    
+    Par conséquent, nous vous invitons à procéder au règlement d’un montant total de ${totalFD} FDJ. 
+    Vous pouvez régler le paiement par chèque, par virement bancaire ou en espèces en vous rendant dans les locaux de la CCD. 
+    Votre certificat, et le cas échéant les copies conformes, sera (ou seront) disponible(s) sur votre compte dès le paiement de ce montant.
+    
+    Nous restons à votre disposition pour toute question.
+    
+    Bien cordialement,
+    **L'équipe du portail de la Chambre de Commerce de Djibouti**`; } else if (status === 'renvoyé' || status === 'rejeté') {
     body = `Votre certificat a été ${status}. Raison : ${reason}`;
   } else {
     body = 'Statut inconnu.';
