@@ -265,7 +265,7 @@ const SearchOrders = () => {
       );
     } else {
       navigate(
-        `/dashboard/order-details?orderId=${order.id_order}&certifId=${certifId}`
+        `/order-details?orderId=${order.id_order}&certifId=${certifId}`
       );
     }
   };
@@ -282,7 +282,6 @@ const SearchOrders = () => {
     fetchTransportModes();
   }, []);
 
-  // ─── 3) Prépare la fonction de tamponnage “COPIE” ─────────────
   async function stampCopy(blobPdf) {
     const arrayBuffer = await blobPdf.arrayBuffer();
     const pdfDoc = await PDFDocument.load(arrayBuffer);
@@ -291,18 +290,38 @@ const SearchOrders = () => {
 
     pages.forEach(page => {
       const { width, height } = page.getSize();
-      page.drawText('COPIE', {
-        x: width / 2 - 100,
-        y: height - 40,
-        size: 48,
+
+      const text = 'COPIE';
+      const fontSize = 12;
+      const textWidth = font.widthOfTextAtSize(text, fontSize);
+      const textHeight = fontSize;
+
+      const x = width / 2 + 115;
+      const y = height - 240;
+
+      // Draw white rectangle behind the text
+      page.drawRectangle({
+        x: x - 4,
+        y: y - 2,
+        width: textWidth + 50,
+        height: textHeight + 4,
+        color: rgb(1, 1, 1), // white
+      });
+
+      // Draw text
+      page.drawText(text, {
+        x,
+        y,
+        size: fontSize,
         font,
-        color: rgb(0, 0, 1),
+        color: rgb(0, 0, 1), // blue
       });
     });
 
     const bytes = await pdfDoc.save();
     return new Blob([bytes], { type: 'application/pdf' });
   }
+
 
   const handleGeneratePDF = async (order) => {
     try {
@@ -464,10 +483,10 @@ const SearchOrders = () => {
   const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   // ──────────── États et handlers audit/mémos ────────────
-  const [auditOpen,  setAuditOpen]  = useState(false);
-  const [memoOpen,   setMemoOpen]   = useState(false);
-  const [auditLogs,  setAuditLogs]  = useState([]);
-  const [memoList,   setMemoList]   = useState([]);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [memoOpen, setMemoOpen] = useState(false);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [memoList, setMemoList] = useState([]);
   const [auditOrder, setAuditOrder] = useState(null);
 
   const handleOpenAudit = async (order) => {
@@ -489,7 +508,7 @@ const SearchOrders = () => {
   };
 
   const handleCloseAudit = () => setAuditOpen(false);
-  const handleCloseMemo  = () => setMemoOpen(false);
+  const handleCloseMemo = () => setMemoOpen(false);
   // ────────────────────────────────────────────────────────
 
 
@@ -589,10 +608,12 @@ const SearchOrders = () => {
                         </>
                       )
                       : (
-                        <MenuItem onClick={() => {
-                          navigate(`/dashboard/order-details?orderId=${order.id_order}&certifId=${order.id_ord_certif_ori}`);
-                          handleActionsClose();
-                        }} sx={{ color: '#DCAF26' }}
+                        <MenuItem
+                          onClick={() => {
+                            handleFileClick(orderFiles[order.id_order]);
+                            handleActionsClose();
+                          }}
+                          sx={{ color: '#DCAF26' }}
                         >
                           <FontAwesomeIcon
                             icon={faFilePdf}
@@ -716,10 +737,12 @@ const SearchOrders = () => {
                         )
                         : (
                           /* Pour client non-opUser : link vers l’open côté client */
-                          <MenuItem onClick={() => {
-                            navigate(`/dashboard/order-details?orderId=${order.id_order}&certifId=${order.id_ord_certif_ori}`);
-                            handleActionsClose();
-                          }}
+                          <MenuItem
+                            onClick={() => {
+                              handleFileClick(orderFiles[order.id_order]);
+                              handleActionsClose();
+                            }}
+                            sx={{ color: '#DCAF26' }}
                           >
                             <FontAwesomeIcon
                               icon={faFilePdf}
@@ -742,7 +765,7 @@ const SearchOrders = () => {
         </TableBody>
       </Table>
     </TableContainer>
-    
+
   );
 
   return (
@@ -850,6 +873,7 @@ const SearchOrders = () => {
         rowsPerPageOptions={[10, 25, 50, 100]}
       />
       {/* Dialog Audit */}
+
 <Dialog open={auditOpen} onClose={handleCloseAudit} fullWidth maxWidth="md">
   <DialogTitle>Piste d’audit – Commande #{auditOrder?.id_order}</DialogTitle>
   <DialogContent dividers>
@@ -913,7 +937,6 @@ const SearchOrders = () => {
     <Button onClick={handleCloseMemo}>Fermer</Button>
   </DialogActions>
 </Dialog>
-
     </Box>
   );
 };

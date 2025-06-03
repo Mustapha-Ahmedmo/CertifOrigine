@@ -71,7 +71,7 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
           className="headerop__icon-container"
           sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
         >
-          <Link to="/dashboard/operator/inscriptions" className="headerop__icon-link">
+          <Link to="/operator/inscriptions" className="headerop__icon-link">
             <Badge badgeContent={inscriptionNotificationCount} color="error" anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
               <FontAwesomeIcon icon={faUserPlus} style={{ fontSize: '1rem' }} />
             </Badge>

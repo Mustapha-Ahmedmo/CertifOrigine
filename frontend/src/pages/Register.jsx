@@ -126,7 +126,7 @@ const Register = () => {
         setAllCountries(countryData);
         const djibouti = countryData.find(
           (country) =>
-            country.symbol_fr.toLowerCase() === 'rep. de djibouti'.toLowerCase()
+            country.symbol_fr.toLowerCase() === 'djibouti'.toLowerCase()
         );
         setResidenceCountries(djibouti ? [djibouti] : []);
         setFormData((prev) => ({
@@ -498,8 +498,8 @@ const Register = () => {
               >
                 {residenceCountries.map((country) => (
                   <MenuItem key={country.id_country} value={country.symbol_fr}>
-                    {country.symbol_fr.toLowerCase() === 'rep. de djibouti'
-                      ? 'République de Djibouti'
+                    {country.symbol_fr.toLowerCase() === 'djibouti'
+                      ? 'DJIBOUTI'
                       : country.symbol_fr}
                   </MenuItem>
                 ))}

@@ -181,7 +181,7 @@ const HomeOperateur = () => {
   // Navigation pour afficher les détails d'une commande
   const goToOrderDetails = (order) => {
     const certifId = order.id_ord_certif_ori || '';
-    navigate(`/dashboard/operator/oporderdetails?orderId=${order.id_order}&certifId=${certifId}`);
+    navigate(`/operator/oporderdetails?orderId=${order.id_order}&certifId=${certifId}`);
   };
 
   if (loading) {

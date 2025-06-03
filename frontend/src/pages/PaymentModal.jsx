@@ -26,7 +26,6 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 function PaymentModal({ open, onClose, onSubmit, order }) {
 
 
-  // ─── Helper pour tamponner “COPIE” ─────────────────────────
   async function stampCopy(blobPdf) {
     const arrayBuffer = await blobPdf.arrayBuffer();
     const pdfDoc = await PDFDocument.load(arrayBuffer);
@@ -35,18 +34,38 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
 
     pages.forEach(page => {
       const { width, height } = page.getSize();
-      page.drawText('COPIE', {
-        x: width / 2 - 100,
-        y: height - 40,
-        size: 48,
+
+      const text = 'COPIE';
+      const fontSize = 12;
+      const textWidth = font.widthOfTextAtSize(text, fontSize);
+      const textHeight = fontSize;
+
+      const x = width / 2 + 115;
+      const y = height - 240;
+
+      // Draw white rectangle behind the text
+      page.drawRectangle({
+        x: x - 4,
+        y: y - 2,
+        width: textWidth + 50,
+        height: textHeight + 4,
+        color: rgb(1, 1, 1), // white
+      });
+
+      // Draw text
+      page.drawText(text, {
+        x,
+        y,
+        size: fontSize,
         font,
-        color: rgb(0, 0, 1),
+        color: rgb(0, 0, 1), // blue
       });
     });
 
-    const stampedBytes = await pdfDoc.save();
-    return new Blob([stampedBytes], { type: 'application/pdf' });
+    const bytes = await pdfDoc.save();
+    return new Blob([bytes], { type: 'application/pdf' });
   }
+
 
   // Default invoice date: today's date (YYYY-MM-DD)
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
@@ -62,16 +81,13 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
   const unitPriceCertif = order?.unit_price_ord_certif_ori ? parseFloat(order.unit_price_ord_certif_ori) : 8500;
   const unitPriceCopies = order?.unit_price_copies_ord_certif_ori ? parseFloat(order.unit_price_copies_ord_certif_ori) : 2500;
   const copies = order?.copy_count_ori ? parseFloat(order.copy_count_ori) : 1;
-  const computedMontantHT = (unitPriceCertif + copies * unitPriceCopies).toFixed(2);
+  
 
-  // Tax rate constant (e.g. 10% in this example)
-  const rate_tax = 0.10;
-  // Compute default Taxe as rate_tax * Montant HT
-  const computedMontantTaxe = (parseFloat(computedMontantHT) * rate_tax).toFixed(2);
 
-  // Local state for modifiable Montant HT and Taxe
-  const [montantHT, setMontantHT] = useState(computedMontantHT);
-  const [montantTaxe, setMontantTaxe] = useState(computedMontantTaxe);
+  // Calcul du montant total en FDJ directement
+  const computedMontantFDJ = (unitPriceCertif + copies * unitPriceCopies).toFixed(0);
+  // État unique pour le montant FDJ (modifiable si besoin)
+  const [montantFDJ, setMontantFDJ] = useState(computedMontantFDJ);
 
   // Other payment-related state
   const [paymentMethod, setPaymentMethod] = useState('Cash');
@@ -89,9 +105,8 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
 
   // Update montantHT and montantTaxe when order or computed values change.
   useEffect(() => {
-    setMontantHT(computedMontantHT);
-    setMontantTaxe((parseFloat(computedMontantHT) * rate_tax).toFixed(2));
-  }, [order, computedMontantHT, rate_tax]);
+      setMontantFDJ(computedMontantFDJ);
+    }, [order, computedMontantFDJ]);
 
   // Helper function to combine address fields (client address)
   const getClientAddress = () => {
@@ -100,8 +115,7 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
     return [address_1, address_2, address_3].filter(Boolean).join(', ') || 'Adresse client';
   };
 
-  // Compute TOTAL as Montant HT + Taxe
-  const totalAmount = (parseFloat(montantHT) + parseFloat(montantTaxe)).toFixed(2);
+
 
   // Open confirmation dialog on clicking "ENREGISTRER LE PAIEMENT"
   const handleOpenConfirmation = () => {
@@ -138,8 +152,8 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
       const invoiceData = {
         p_id_order: order?.id_order,
         p_invoice_number: invoiceNumber,
-        p_amount_exVat: parseFloat(montantHT),
-        p_amount_Vat: parseFloat(montantTaxe),
+        p_amount_exVat: parseFloat(montantFDJ),
+        p_amount_Vat: 0,
         p_idlogin_insert: operatorId,
         p_paymentDate: invoiceDate, // Must be a valid timestamp (YYYY-MM-DD)
         p_free_txt1: paymentMethod === 'Autre' ? customPaymentMethod : paymentMethod,
@@ -316,23 +330,15 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
             />
           </Box>
 
-          {/* Montant HT (modifiable) */}
+          {/* Montant total en FDJ */}
           <TextField
-            label="Montant HT"
+            label="Montant (FDJ)"
             fullWidth
-            value={montantHT}
-            onChange={(e) => setMontantHT(e.target.value)}
+            value={montantFDJ}
+            onChange={(e) => setMontantFDJ(e.target.value)}
             sx={{ mb: 2 }}
           />
-
-          {/* Taxe (modifiable) */}
-          <TextField
-            label="Taxe"
-            fullWidth
-            value={montantTaxe}
-            onChange={(e) => setMontantTaxe(e.target.value)}
-            sx={{ mb: 2 }}
-          />
+        
 
           {/* Payment Method */}
           <FormControl component="fieldset" sx={{ mb: 2 }}>
@@ -400,15 +406,9 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
             Voulez-vous confirmer que le paiement suivant soit enregistré ?
           </Typography>
           <Box sx={{ mt: 2 }}>
-            <Typography>
-              <strong>Montant HT:</strong> {montantHT} €
-            </Typography>
-            <Typography>
-              <strong>TVA:</strong> {montantTaxe} €
-            </Typography>
-            <Typography>
-              <strong>TOTAL:</strong> {totalAmount} €
-            </Typography>
+          <Typography>
+            <strong>Montant à facturer :</strong> {montantFDJ} FDJ
+          </Typography>
           </Box>
         </DialogContent>
         <DialogActions>

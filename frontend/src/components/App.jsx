@@ -127,7 +127,6 @@ const App = () => {
             Dashboard protégé => ProtectedRoute
           */}
           <Route
-            path="/dashboard"
             element={
               <ProtectedRoute>
                 <DashboardWrapper />

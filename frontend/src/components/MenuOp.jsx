@@ -31,7 +31,7 @@ import {
 
 const drawerWidth = 240;
 // Removed 'myCCD' here
-const PARENT_MENUS = ['gestion', 'clients', 'documents'];
+const PARENT_MENUS = ['gestion', 'clients'];
 
 const selectedStyle = {
   "&.Mui-selected": {
@@ -114,7 +114,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
           <ListItem disablePadding>
             <ListItemButton
               component={Link}
-              to="/dashboard/operator/dashboardoperateur"
+              to="/operator/dashboardoperateur"
               onClick={() => handleLinkClick('dashboardoperateur', 'dashboardoperateur')}
               selected={activeLink === 'dashboardoperateur'}
               sx={selectedStyle}
@@ -137,7 +137,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/dashboard/operator?mode=new"
+                  to="/operator?mode=new"
                   onClick={() => handleLinkClick('gestion', 'commandesTraiter')}
                   selected={activeLink === 'commandesTraiter'}
                   sx={{ pl: 3, ...selectedStyle }}
@@ -149,7 +149,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/dashboard/operator?mode=payment"
+                  to="/operator?mode=payment"
                   onClick={() => handleLinkClick('gestion', 'commandesAttentePaiement')}
                   selected={activeLink === 'commandesAttentePaiement'}
                   sx={{ pl: 3, ...selectedStyle }}
@@ -161,7 +161,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/dashboard/operator?mode=returned"
+                  to="/operator?mode=returned"
                   onClick={() => handleLinkClick('gestion', 'commandesRetournees')}
                   selected={activeLink === 'commandesRetournees'}
                   sx={{ pl: 3, ...selectedStyle }}
@@ -176,7 +176,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/dashboard/operator/search-orders"
+                  to="/operator/search-orders"
                   onClick={() => handleLinkClick('gestion', 'historiqueCommandes')}
                   selected={activeLink === 'historiqueCommandes'}
                   sx={{ pl: 3, ...selectedStyle }}
@@ -202,7 +202,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/dashboard/operator/inscriptions"
+                  to="/operator/inscriptions"
                   onClick={() => handleLinkClick('clients', 'inscriptions')}
                   selected={activeLink === 'inscriptions'}
                   sx={{ pl: 3, ...selectedStyle }}
@@ -215,7 +215,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/dashboard/operator/clientvalides"
+                  to="/operator/clientvalides"
                   onClick={() => handleLinkClick('clients', 'clientsvalides')}
                   selected={activeLink === 'clientsvalides'}
                   sx={{ pl: 3, ...selectedStyle }}
@@ -229,32 +229,9 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
 
             </List>
           </Collapse>
-          <Divider sx={{ my: 1, bgcolor: "#FFF", width: "50%", mx: "auto" }} />
 
-          {/* Recherches de Documents */}
-          <ListItem disablePadding>
-            <ListItemButton onClick={() => toggleSubmenu('documents')} sx={{ cursor: 'pointer' }}>
-              <ListItemIcon><FontAwesomeIcon icon={faFileContract} /></ListItemIcon>
-              <ListItemText primary="Recherches de Documents" primaryTypographyProps={{ fontSize: "14px" }} />
-            </ListItemButton>
-          </ListItem>
 
-          <Collapse in={openMenu.documents} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              <ListItem disablePadding>
-                <ListItemButton
-                  component={Link}
-                  to="/dashboard/operator/certificat-origine"
-                  onClick={() => handleLinkClick('documents', 'certificatOrigine')}
-                  selected={activeLink === 'certificatOrigine'}
-                  sx={{ pl: 3, ...selectedStyle }}
-                >
-                  <ListItemIcon><FontAwesomeIcon icon={faFileContract} /></ListItemIcon>
-                  <ListItemText primary="Certificat d'origine" primaryTypographyProps={{ fontSize: "12px" }} />
-                </ListItemButton>
-              </ListItem>
-            </List>
-          </Collapse>
+         
 
           {isAdmin && (
             <>
@@ -262,7 +239,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
               <ListItem disablePadding>
                 <ListItemButton
                   component={Link}
-                  to="/dashboard/operator/operatorslist"
+                  to="/operator/operatorslist"
                   onClick={() => handleLinkClick('admin', 'operatorslist')}
                   selected={activeLink === 'operatorslist'}
                   sx={selectedStyle}
