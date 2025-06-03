@@ -708,8 +708,8 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
         <TableRow>
           <TableCell>Date</TableCell>
           <TableCell>Sujet</TableCell>
-          <TableCell>Corps</TableCell>
-          <TableCell>De</TableCell>
+          <TableCell>Corps </TableCell>
+          <TableCell>De </TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
