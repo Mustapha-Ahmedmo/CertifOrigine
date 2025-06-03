@@ -873,63 +873,70 @@ const SearchOrders = () => {
         rowsPerPageOptions={[10, 25, 50, 100]}
       />
       {/* Dialog Audit */}
-      <Dialog open={auditOpen} onClose={handleCloseAudit} fullWidth maxWidth="md">
-        <DialogTitle>Piste d’audit – Commande #{auditOrder?.id_order}</DialogTitle>
-        <DialogContent dividers>
-          <Table size="small">
-            <TableHead><TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Action</TableCell>
-              <TableCell>Utilisateur</TableCell>
-              <TableCell>Statut</TableCell>
-            </TableRow></TableHead>
-            <TableBody>
-              {auditLogs.map(log => (
-                <TableRow key={log.id_histo_order}>
-                  <TableCell>{new Date(log.insertdate_histo).toLocaleString()}</TableCell>
-                  <TableCell>{log.order_histo_action}</TableCell>
-                  <TableCell>{log.insert_full_name}</TableCell>
-                  <TableCell>{log.txt_order_status_fr}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseAudit}>Fermer</Button>
-        </DialogActions>
-      </Dialog>
 
-      {/* Dialog Mémos */}
-      <Dialog open={memoOpen} onClose={handleCloseMemo} fullWidth maxWidth="md">
-        <DialogTitle>Mémos – Commande #{auditOrder?.id_order}</DialogTitle>
-        <DialogContent dividers>
-          <Table size="small">
-            <TableHead><TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Sujet</TableCell>
-              <TableCell>Corps</TableCell>
-              <TableCell>De</TableCell>
-              <TableCell>Accusé</TableCell>
-            </TableRow></TableHead>
-            <TableBody>
-              {memoList.map(memo => (
-                <TableRow key={memo.id_memo}>
-                  <TableCell>{new Date(memo.memo_date).toLocaleString()}</TableCell>
-                  <TableCell>{memo.memo_subject}</TableCell>
-                  <TableCell>{memo.memo_body}</TableCell>
-                  <TableCell>{memo.cust_user_full_name}</TableCell>
-                  <TableCell>{memo.ack_date ? new Date(memo.ack_date).toLocaleString() : 'Non'}</TableCell>
-                </TableRow>
-              ))}
+<Dialog open={auditOpen} onClose={handleCloseAudit} fullWidth maxWidth="md">
+  <DialogTitle>Piste d’audit – Commande #{auditOrder?.id_order}</DialogTitle>
+  <DialogContent dividers>
+    <Table size="small">
+      <TableHead><TableRow>
+        <TableCell>Date</TableCell>
+        <TableCell>Action</TableCell>
+        <TableCell>Utilisateur</TableCell>
+        <TableCell>Statut</TableCell>
+      </TableRow></TableHead>
+      <TableBody>
+              {auditLogs.map(log => {
+                const infos = log.insert_isopuser
+                  ? 'Opérateur'
+                  : (!log.insert_isopuser && log.insert_role_user === 1)
+                    ? 'Contact principal'
+                    : '';
+                return (
+                  <TableRow key={log.id_histo_order}>
+                    <TableCell>{new Date(log.insertdate_histo).toLocaleString()}</TableCell>
+                    <TableCell>{log.order_histo_action}</TableCell>
+                    <TableCell>
+                      {log.insert_full_name} {infos && `(${infos})`}
+                    </TableCell>
+                    <TableCell>{log.txt_order_status_fr}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
-          </Table>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseMemo}>Fermer</Button>
-        </DialogActions>
-      </Dialog>
+    </Table>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleCloseAudit}>Fermer</Button>
+  </DialogActions>
+</Dialog>
 
+{/* Dialog Mémos */}
+<Dialog open={memoOpen} onClose={handleCloseMemo} fullWidth maxWidth="md">
+  <DialogTitle>Mémos – Commande #{auditOrder?.id_order}</DialogTitle>
+  <DialogContent dividers>
+    <Table size="small">
+      <TableHead><TableRow>
+        <TableCell>Date</TableCell>
+        <TableCell>Sujet</TableCell>
+        <TableCell>Corps</TableCell>
+        <TableCell>De</TableCell>
+      </TableRow></TableHead>
+      <TableBody>
+        {memoList.map(memo => (
+          <TableRow key={memo.id_memo}>
+            <TableCell>{new Date(memo.memo_date).toLocaleString()}</TableCell>
+            <TableCell>{memo.memo_subject}</TableCell>
+            <TableCell>{memo.memo_body}</TableCell>
+            <TableCell>{memo.cust_user_full_name}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleCloseMemo}>Fermer</Button>
+  </DialogActions>
+</Dialog>
     </Box>
   );
 };
