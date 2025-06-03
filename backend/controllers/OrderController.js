@@ -148,7 +148,7 @@ const getMemoOrder = async (req, res) => {
         replacements: {
           p_id_memo_list,
           p_id_order_list,
-          p_typeof_list,
+          p_typeof_list: forcedTypeofList, 
           p_id_cust_account,
           p_memo_date_start,
           p_memo_date_end,
