@@ -770,7 +770,6 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
           <TableCell>Sujet</TableCell>
           <TableCell>Corps</TableCell>
           <TableCell>De</TableCell>
-          <TableCell>Accusé</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -780,7 +779,6 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
             <TableCell>{memo.memo_subject}</TableCell>
             <TableCell>{memo.memo_body}</TableCell>
             <TableCell>{memo.cust_user_full_name || memo.cust_user_full_name}</TableCell>
-            <TableCell>{memo.ack_date ? new Date(memo.ack_date).toLocaleString() : 'Non'}</TableCell>
           </TableRow>
         ))}
       </TableBody>
