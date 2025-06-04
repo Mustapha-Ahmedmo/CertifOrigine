@@ -1,7 +1,30 @@
-// Register.jsx
-
 import React, { useState, forwardRef, useEffect } from 'react';
-import './Register.css';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
+import {
+  Container,
+  Box,
+  Typography,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormControlLabel,
+  FormLabel,
+  Radio,
+  RadioGroup,
+  Checkbox,
+  Button,
+  Grid,
+  CssBaseline,
+  InputAdornment,
+  IconButton,
+} from '@mui/material';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUser,
@@ -14,14 +37,9 @@ import {
   faLock,
   faIndustry,
 } from '@fortawesome/free-solid-svg-icons';
+import './Register.css';
 import logo from '../assets/logo.jpg';
-import { Helmet } from 'react-helmet';
-import { Link, useNavigate } from 'react-router-dom';
-
-// IMPORT DU FICHIER DES INDICATIFS
 import countryCodes from '../components/countryCodes';
-
-// Import des services et utilitaires
 import {
   registerUser,
   fetchSectors,
@@ -31,15 +49,16 @@ import {
   addSubscription,
   addSubscriptionWithFile,
 } from '../services/apiServices';
-
-import Snackbar from '@mui/material/Snackbar';
-import MuiAlert from '@mui/material/Alert';
 import { homemadeHash } from '../utils/hashUtils';
 
-// ↓↓↓ NOUVELLE FONCTION DE VALIDATION SIMPLIFIÉE ↓↓↓
-const isValidLocalNumber = (number) => {
-  // Vérifie que le numéro contient entre 6 et 15 chiffres
-  return /^[0-9]{6,15}$/.test(number);
+// Fonction de validation pour un numéro de téléphone international
+const isValidInternationalPhone = (number) => {
+  return /^\+[0-9]+$/.test(number) && number.length <= 12;
+};
+
+// Fonction de validation pour un email au format standard
+const isValidEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
 const Alert = forwardRef(function Alert(props, ref) {
@@ -47,20 +66,17 @@ const Alert = forwardRef(function Alert(props, ref) {
 });
 
 const Register = () => {
-  const allowedFileTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
   const navigate = useNavigate();
+  const allowedFileTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     gender: 'Mr',
     name: '',
     position: '',
-    // On remplace phoneFixed et phoneMobile par :
-    phoneFixedCountryCode: '+33',
     phoneFixedNumber: '',
-
-    phoneMobileCountryCode: '+33',
     phoneMobileNumber: '',
-
     email: '',
     password: '',
     confirmPassword: '',
@@ -68,7 +84,9 @@ const Register = () => {
     address: '',
     city: '',
     country: '',
+    originCountry: '',
     companyCategory: '',
+    otherCompanyCategory: '',
     sector: '',
     otherSector: '',
     isFreeZoneCompany: false,
@@ -87,28 +105,34 @@ const Register = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [sectors, setSectors] = useState([]);
-  const [countries, setCountries] = useState([]);
+  const [allCountries, setAllCountries] = useState([]);
+  const [residenceCountries, setResidenceCountries] = useState([]);
 
-  // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
   const handleSnackbarClose = (event, reason) => {
-    if (reason === 'clickaway') {
-      return;
-    }
+    if (reason === 'clickaway') return;
     setSnackbarOpen(false);
   };
 
   useEffect(() => {
-    // Fetch sectors and countries
     const fetchData = async () => {
       try {
         const sectorData = await fetchSectors();
         setSectors(sectorData);
         const countryData = await fetchCountries();
-        setCountries(countryData);
+        setAllCountries(countryData);
+        const djibouti = countryData.find(
+          (country) =>
+            country.symbol_fr.toLowerCase() === 'djibouti'.toLowerCase()
+        );
+        setResidenceCountries(djibouti ? [djibouti] : []);
+        setFormData((prev) => ({
+          ...prev,
+          country: djibouti ? djibouti.symbol_fr : '',
+        }));
       } catch (err) {
         console.error('Error fetching data:', err);
         setError('Échec du chargement des secteurs ou des pays');
@@ -121,27 +145,23 @@ const Register = () => {
     fetchData();
   }, []);
 
-  // Validation du type de fichier
   const validateFileType = (file) => {
-    if (!file) return true; // Aucun fichier sélectionné => OK
+    if (!file) return true;
     return allowedFileTypes.includes(file.type);
   };
 
-  // Gère le changement des champs du formulaire
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
-
-    // Checkbox
     if (type === 'checkbox') {
       setFormData((prev) => ({ ...prev, [name]: checked }));
       return;
     }
-
-    // Fichier
     if (type === 'file') {
       const file = files[0];
       if (file && !validateFileType(file)) {
-        setSnackbarMessage(`Seulement les fichiers JPEG, JPG, PNG et PDF sont autorisés pour ${name}.`);
+        setSnackbarMessage(
+          `Seulement les fichiers JPEG, JPG, PNG et PDF sont autorisés pour ${name}.`
+        );
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
         return;
@@ -149,75 +169,99 @@ const Register = () => {
       setFormData((prev) => ({ ...prev, [name]: file }));
       return;
     }
-
-    // Sélection du type d'entreprise (zoneFranche / autre)
     if (name === 'companyType') {
       setFormData((prev) => ({
         ...prev,
         companyType: value,
-        isFreeZoneCompany: value === 'zoneFranche',
+        isFreeZoneCompany: value === 'zoneFranche' ? true : value === 'autre' ? false : null,
         isOtherCompany: value === 'autre',
       }));
       return;
     }
-
-    // Pour les champs "phoneFixedNumber" ou "phoneMobileNumber"
-    if (name === 'phoneFixedNumber' || name === 'phoneMobileNumber') {
-      if (!isValidLocalNumber(value) && value !== '') {
-        setError(`Le champ ${name === 'phoneFixedNumber' ? 'téléphone fixe' : 'téléphone portable'} est invalide (6 à 15 chiffres).`);
-      } else {
-        setError('');
-      }
-    }
-
-    // MàJ générique
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Toggle entre Mr / Mme
-  const toggleGender = () => {
-    setFormData((prev) => ({
-      ...prev,
-      gender: prev.gender === 'Mr' ? 'Mme' : 'Mr',
-    }));
+  const phoneFixedError =
+    formData.phoneFixedNumber !== "" && !isValidInternationalPhone(formData.phoneFixedNumber);
+  const phoneMobileError =
+    formData.phoneMobileNumber !== "" && !isValidInternationalPhone(formData.phoneMobileNumber);
+
+  // Styles communs pour les champs
+  const commonFieldSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '8px',
+      background: 'linear-gradient(135deg, #fff, #f9f9f9)',
+      '&.Mui-focused fieldset': {
+        borderColor: '#DCAF26',
+      },
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+      color: '#DCAF26',
+    },
   };
 
-  // Soumission du formulaire
+  const commonButtonSx = {
+    backgroundColor: '#DCAF26',
+    '&:hover': { backgroundColor: '#DCAF26' },
+  };
+
+  const commonRadioSx = {
+    color: '#DCAF26',
+    '&.Mui-checked': { color: '#DCAF26' },
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Vérif des fichiers
     const filesToValidate = [
       { name: 'licenseFile', file: formData.licenseFile },
       { name: 'patenteFile', file: formData.patenteFile },
       { name: 'rchFile', file: formData.rchFile },
     ];
-    for (const { name, file } of filesToValidate) {
-      if (file && !validateFileType(file)) {
-        setSnackbarMessage(`Seulement les fichiers JPEG, JPG, PNG et PDF sont autorisés pour ${name}.`);
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-        return;
+    if (formData.isFreeZoneCompany != null) {
+      for (const { name, file } of filesToValidate) {
+        if (file && !validateFileType(file)) {
+          setSnackbarMessage(
+            `Seulement les fichiers JPEG, JPG, PNG et PDF sont autorisés pour ${name}.`
+          );
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
+          return;
+        }
       }
     }
 
-    // Vérification du numéro fixe
-    if (!isValidLocalNumber(formData.phoneFixedNumber)) {
-      setSnackbarMessage('Le numéro de téléphone fixe est invalide (6 à 15 chiffres).');
+    // Check if required documents are uploaded
+    if (formData.isFreeZoneCompany && !formData.licenseFile) {
+      setSnackbarMessage("Veuillez télécharger le fichier de licence pour les entreprises en zone franche.");
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
 
-    // Vérification du numéro mobile
-    if (!isValidLocalNumber(formData.phoneMobileNumber)) {
-      setSnackbarMessage('Le numéro de téléphone portable est invalide (6 à 15 chiffres).');
+    if (formData.isOtherCompany && !formData.patenteFile) {
+      setSnackbarMessage("Veuillez télécharger le fichier de patente pour les entreprises de type Entreprise.");
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
-
-    // Vérification de la correspondance des mots de passe
+    if (!isValidEmail(formData.email)) {
+      setSnackbarMessage("Le format de l'email est invalide. Exemple : user@example.com");
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+    if (!isValidInternationalPhone(formData.phoneFixedNumber)) {
+      setSnackbarMessage('Le numéro de téléphone fixe est invalide. Format international requis (max 12 caractères, commence par "+").');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+    if (!isValidInternationalPhone(formData.phoneMobileNumber)) {
+      setSnackbarMessage('Le numéro de téléphone portable est invalide. Format international requis (max 12 caractères, commence par "+").');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       setSnackbarMessage('Les mots de passe ne correspondent pas');
@@ -225,13 +269,12 @@ const Register = () => {
       setSnackbarOpen(true);
       return;
     }
-
     try {
-      // Concatène l’indicatif et le numéro saisi
-      const fullPhoneFixed = formData.phoneFixedCountryCode + formData.phoneFixedNumber;
-      const fullPhoneMobile = formData.phoneMobileCountryCode + formData.phoneMobileNumber;
+      const fullPhoneFixed = formData.phoneFixedNumber;
+      const fullPhoneMobile = formData.phoneMobileNumber;
+      const legalForm = formData.companyCategory === 'Autre' ? null : formData.companyCategory;
+      const otherLegalForm = formData.companyCategory === 'Autre' ? formData.otherCompanyCategory : null;
 
-      // Prépare les données pour l'inscription
       const userData = {
         username: formData.email,
         gender: formData.gender,
@@ -256,31 +299,29 @@ const Register = () => {
         acceptsDataProcessing: formData.acceptsDataProcessing,
       };
 
-      // Sélection du secteur et pays (pour usage dans l’API)
       const selectedSector = sectors.find((s) => s.symbol_fr === formData.sector);
-      const selectedCountry = countries.find((c) => c.symbol_fr === formData.country);
+      const selectedCountry = allCountries.find((c) => c.symbol_fr === formData.country);
+      const selectedHeadOfficeCountry = allCountries.find((c) => c.symbol_fr === formData.originCountry);
 
-      // Prépare les données pour l'abonnement
       const subscriptionData = {
         uploadType: 'inscriptions',
-        legal_form: formData.companyCategory,
+        legal_form: legalForm,
+        p_other_legal_form: otherLegalForm,
         cust_name: formData.companyName,
-        trade_registration_num: formData.licenseNumber,
-        rchNumber: formData.rchNumber,
-        licenseNumber: formData.licenseNumber,
         in_free_zone: formData.isFreeZoneCompany,
-        nif: formData.nif,
-        identification_number: formData.identification_number,
-        register_number: formData.register_number,
+        trade_registration_num: formData.nif || 'null',
+        identification_number: formData.licenseNumber || 'null',
+        register_number: formData.rchNumber || 'null',
         full_address: formData.address,
         id_sector: selectedSector ? selectedSector.id_sector : null,
         other_sector: formData.otherSector || null,
         id_country: selectedCountry ? selectedCountry.id_country : null,
+        id_country_headoffice: selectedHeadOfficeCountry ? selectedHeadOfficeCountry.id_country : null,
+        other_legal_form: formData.otherCompanyCategory,
         statut_flag: 1,
         idlogin: 1,
         billed_cust_name: formData.billed_cust_name,
         bill_full_address: formData.bill_full_address,
-        // Données utilisateur
         gender: formData.gender === 'Mr' ? 0 : 1,
         full_name: formData.name,
         ismain_user: true,
@@ -289,13 +330,11 @@ const Register = () => {
         phone_number: fullPhoneFixed,
         mobile_number: fullPhoneMobile,
         position: formData.position,
-        // Fichiers
         licenseFile: formData.isFreeZoneCompany ? formData.licenseFile : null,
         patenteFile: formData.isOtherCompany ? formData.patenteFile : null,
-        rchFile: formData.isOtherCompany ? formData.rchFile : null,
+        rchFile: null,
       };
 
-      // Appel API avec envoi de fichiers
       const response = await addSubscriptionWithFile(subscriptionData);
       console.log('Add Subscription with File response:', response);
 
@@ -308,573 +347,521 @@ const Register = () => {
       setSnackbarMessage(err.message);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
-      // Ajouter un délai avant la redirection
-      setTimeout(() => {
-        navigate('/account-created'); // Redirection après un délai
-      }, 2000);
     }
   };
 
   return (
-    <div className="register-page-container">
+    <Container maxWidth="md" sx={{ mt: 4, mb: 8 }}>
       <Helmet>
         <title>Créer un Compte</title>
         <meta name="description" content="Inscrivez-vous pour créer un compte." />
       </Helmet>
-      {/* Logo en dehors du formulaire */}
-      <div className="register-logo-container">
-        <img src={logo} alt="Logo" className="register-logo" />
-      </div>
+      <CssBaseline />
 
-      <div className="register-client-container">
-        <h2>Créer son compte</h2>
-        {error && <p className="error-message">{error}</p>}
-        {successMessage && <p className="success-message">{successMessage}</p>}
+      <Box display="flex" justifyContent="center" mb={2}>
+        <Box
+          component="img"
+          src={logo}
+          alt="Logo"
+          sx={{
+            width: 220,
+            height: 'auto',
+          }}
+        />
+      </Box>
 
-        <form onSubmit={handleSubmit} className="register-client-form">
-          {/* Section Information Entreprise */}
-          <div className="register-client-form-section">
-            <h3 className="primary">Information(s) Entreprise</h3>
-            <div className="register-client-form-row">
-              {/* Raison sociale */}
-              <div className="register-client-field register-client-full-width">
-                <div className="register-client-input-wrapper">
-                  <input
-                    type="text"
-                    name="companyName"
-                    value={formData.companyName}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Nom de l'entreprise"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-              {/* Catégorie */}
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <select
-                    name="companyCategory"
-                    value={formData.companyCategory}
-                    onChange={handleChange}
-                    required
-                    className={`register-client-input ${
-                      formData.companyCategory === '' ? 'placeholder' : ''
-                    }`}
-                  >
-                    <option value="" disabled hidden>
-                      Statut juridique
-                    </option>
-                    <option value="Auto-entrepreneur">Auto-entrepreneur</option>
-                    <option value="Entreprise individuelle">Entreprise individuelle</option>
-                    <option value="EIRL">EIRL</option>
-                    <option value="EURL">EURL</option>
-                    <option value="SARL">SARL</option>
-                    <option value="SAS">SAS</option>
-                    <option value="SASU">SASU</option>
-                    <option value="SA">SA</option>
-                    <option value="SNC">SNC</option>
-                    <option value="SCS">SCS</option>
-                    <option value="Autre">Autre</option>
-                  </select>
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
+      <Box textAlign="center" mb={2}>
+        <Typography variant="h4" align="center" sx={{ color: '#DCAF26' }}>
+          Créer son compte
+        </Typography>
+        {error && (
+          <Typography variant="body1" color="error" sx={{ mt: 1 }}>
+            {error}
+          </Typography>
+        )}
+        {successMessage && (
+          <Typography variant="body1" color="success.main" sx={{ mt: 1 }}>
+            {successMessage}
+          </Typography>
+        )}
+      </Box>
 
-              {/* Secteur */}
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <select
-                    name="sector"
-                    value={formData.sector}
-                    onChange={handleChange}
-                    required
-                    className={`register-client-input ${
-                      formData.sector === '' ? 'placeholder' : ''
-                    }`}
-                  >
-                    <option value="" disabled hidden>
-                      Secteur
-                    </option>
-                    {sectors.map((sector) => (
-                      <option key={sector.id_sector} value={sector.symbol_fr}>
-                        {sector.symbol_fr.charAt(0).toUpperCase() +
-                          sector.symbol_fr.slice(1).toLowerCase()}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
+      <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#DCAF26' }}>
+          Information(s) Entreprise
+        </Typography>
 
-            {/* Champ pour 'Autres' secteur */}
-            {formData.sector === 'Autres' && (
-              <div className="register-client-form-row">
-                <div className="register-client-field register-client-full-width">
-                  <div className="register-client-input-wrapper">
-                    <input
-                      type="text"
-                      name="otherSector"
-                      value={formData.otherSector}
-                      onChange={handleChange}
-                      required
-                      className="register-client-input"
-                      placeholder="Veuillez préciser votre secteur d'activité"
-                    />
-                    <span className="register-client-required-asterisk">*</span>
-                  </div>
-                </div>
-              </div>
-            )}
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <TextField
+              required
+              fullWidth
+              label="Nom de l'entreprise"
+              placeholder="Nom de l'entreprise"
+              name="companyName"
+              value={formData.companyName}
+              onChange={handleChange}
+              sx={commonFieldSx}
+            />
+          </Grid>
 
-          
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth required sx={commonFieldSx}>
+              <InputLabel>Statut juridique</InputLabel>
+              <Select
+                name="companyCategory"
+                value={formData.companyCategory}
+                label="Statut juridique"
+                onChange={handleChange}
+                sx={commonFieldSx}
+              >
+                <MenuItem value="" disabled hidden>
+                  Choisir
+                </MenuItem>
+                <MenuItem value="Auto-entrepreneur">Auto-entrepreneur</MenuItem>
+                <MenuItem value="Entreprise individuelle">Entreprise individuelle</MenuItem>
+                <MenuItem value="EIRL">EIRL</MenuItem>
+                <MenuItem value="EURL">EURL</MenuItem>
+                <MenuItem value="SARL">SARL</MenuItem>
+                <MenuItem value="SAS">SAS</MenuItem>
+                <MenuItem value="SASU">SASU</MenuItem>
+                <MenuItem value="SA">SA</MenuItem>
+                <MenuItem value="SNC">SNC</MenuItem>
+                <MenuItem value="SCS">SCS</MenuItem>
+                <MenuItem value="Autre">Autre</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
 
-            <div className="register-client-form-row">
-              {/* Pays */}
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <select
-                    name="country"
-                    value={formData.country}
-                    onChange={handleChange}
-                    required
-                    className={`register-client-input ${
-                      formData.country === '' ? 'placeholder' : ''
-                    }`}
-                  >
-                    <option value="" disabled hidden>
-                      Pays de résidence de l'entreprise
-                    </option>
-                    {countries.map((country) => (
-                      <option key={country.id_country} value={country.symbol_fr}>
-                        {country.symbol_fr.charAt(0).toUpperCase() +
-                          country.symbol_fr.slice(1).toLowerCase()}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
+          {formData.companyCategory === 'Autre' && (
+            <Grid item xs={12}>
+              <TextField
+                required
+                fullWidth
+                label="Précisez votre statut juridique"
+                name="otherCompanyCategory"
+                placeholder="Précisez votre statut juridique"
+                value={formData.otherCompanyCategory}
+                onChange={handleChange}
+                sx={commonFieldSx}
+              />
+            </Grid>
+          )}
 
-          {/* Type d'entreprise et Adresse complète côte à côte */}
-          <div className="register-client-form-row">
-            
-            {/* Type d'entreprise */}
-            <div className="register-client-field register-client-half-width">
-              <div className="register-client-input-wrapper">
-                <select
-                  name="companyType"
-                  value={formData.companyType}
-                  onChange={handleChange}
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth required sx={commonFieldSx}>
+              <InputLabel>Secteur</InputLabel>
+              <Select
+                name="sector"
+                value={formData.sector}
+                label="Secteur"
+                onChange={handleChange}
+                sx={commonFieldSx}
+              >
+                <MenuItem value="" disabled hidden>
+                  Choisir
+                </MenuItem>
+                {sectors.map((sector) => (
+                  <MenuItem key={sector.id_sector} value={sector.symbol_fr}>
+                    {sector.symbol_fr.charAt(0).toUpperCase() +
+                      sector.symbol_fr.slice(1).toLowerCase()}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {formData.sector.toLowerCase() === 'autres' && (
+            <Grid item xs={12}>
+              <TextField
+                required
+                fullWidth
+                label="Précisez votre secteur d'activité"
+                name="otherSector"
+                placeholder="Veuillez préciser votre secteur d'activité"
+                value={formData.otherSector}
+                onChange={handleChange}
+                sx={commonFieldSx}
+              />
+            </Grid>
+          )}
+
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth required sx={commonFieldSx}>
+              <InputLabel>Pays de résidence</InputLabel>
+              <Select
+                name="country"
+                value={formData.country}
+                label="Pays de résidence"
+                disabled
+                sx={commonFieldSx}
+              >
+                {residenceCountries.map((country) => (
+                  <MenuItem key={country.id_country} value={country.symbol_fr}>
+                    {country.symbol_fr.toLowerCase() === 'djibouti'
+                      ? 'DJIBOUTI'
+                      : country.symbol_fr}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth required sx={commonFieldSx}>
+              <InputLabel>Pays d'origine</InputLabel>
+              <Select
+                name="originCountry"
+                value={formData.originCountry}
+                label="Pays d'origine"
+                onChange={handleChange}
+                sx={commonFieldSx}
+              >
+                <MenuItem value="" disabled hidden>
+                  Choisir
+                </MenuItem>
+                {allCountries.map((country) => (
+                  <MenuItem key={country.id_country} value={country.symbol_fr}>
+                    {country.symbol_fr.charAt(0).toUpperCase() +
+                      country.symbol_fr.slice(1).toLowerCase()}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth required sx={commonFieldSx}>
+              <InputLabel>Type d'entreprise</InputLabel>
+              <Select
+                name="companyType"
+                value={formData.companyType}
+                label="Type d'entreprise"
+                onChange={handleChange}
+                sx={commonFieldSx}
+              >
+                <MenuItem value="" disabled hidden>
+                  Choisir
+                </MenuItem>
+                <MenuItem value="autre">Entreprise</MenuItem>
+                <MenuItem value="zoneFranche">Entreprise en zone franche</MenuItem>
+                <MenuItem value="autres">Autre</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              fullWidth
+              label="Adresse complète"
+              name="address"
+              placeholder="Adresse complète"
+              value={formData.address}
+              onChange={handleChange}
+              sx={commonFieldSx}
+            />
+          </Grid>
+
+          {formData.isFreeZoneCompany && (
+            <>
+              <Grid item xs={12} sm={6}>
+                <TextField
                   required
-                  className={`register-client-input ${
-                    formData.companyType === '' ? 'placeholder' : ''
-                  }`}
-                >
-                  <option value="" disabled hidden>
-                    Type d'entreprise
-                  </option>
-                  <option value="zoneFranche">Entreprise en zone franche</option>
-                  <option value="autre">Autre Entreprise</option>
-                </select>
-                <span className="register-client-required-asterisk">*</span>
-              </div>
-            </div>
-
-            {/* Adresse complète */}
-            <div className="register-client-field register-client-half-width">
-              <div className="register-client-input-wrapper">
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
+                  fullWidth
+                  label="Numéro de licence"
+                  name="licenseNumber"
+                  placeholder="Numéro de licence"
+                  value={formData.licenseNumber}
                   onChange={handleChange}
-                  required
-                  className="register-client-input"
-                  placeholder="Adresse complète"
+                  sx={commonFieldSx}
                 />
-                <span className="register-client-required-asterisk">*</span>
-              </div>
-            </div>
-
-          </div>
-
-
-
-            {/* Champs conditionnels basés sur le type d'entreprise */}
-            {formData.isFreeZoneCompany && (
-              <div className="register-client-form-row">
-                {/* Numéro de licence */}
-                <div className="register-client-field register-client-half-width">
-                  <div className="register-client-input-wrapper">
-                    <input
-                      type="text"
-                      name="licenseNumber"
-                      value={formData.licenseNumber}
-                      onChange={handleChange}
-                      required
-                      className="register-client-input"
-                      placeholder="Numéro de licence"
-                    />
-                    <span className="register-client-required-asterisk">*</span>
-                  </div>
-                </div>
-
-                {/* Télécharger la licence */}
-                <div className="register-client-field register-client-half-width">
-                  <label className="register-client-file-label">
-                    {/* Télécharger la licence */}
-                    <div className="register-client-field register-client-half-width">
-                      <div className="register-client-file-upload">
-                        <label htmlFor="licenseFile">Upload</label>
-                        <input
-                          type="file"
-                          id="licenseFile"
-                          name="licenseFile"
-                          className="register-client-file-input"
-                          onChange={(e) => {
-                            const file = e.target.files[0];
-                            if (file) {
-                              setFormData((prev) => ({ ...prev, licenseFile: file }));
-                            }
-                          }}
-                        />
-                        {formData.licenseFile && <span className="register-client-file-name">{formData.licenseFile.name}</span>}
-                      </div>
-                    </div>
-
-                  </label>
-                </div>
-              </div>
-            )}
-
-            {formData.isOtherCompany && (
-              <>
-                <div className="register-client-form-row">
-                  {/* NIF */}
-                  <div className="register-client-field register-client-half-width">
-                    <div className="register-client-input-wrapper">
-                      <input
-                        type="text"
-                        name="nif"
-                        value={formData.nif}
-                        onChange={handleChange}
-                        required
-                        className="register-client-input"
-                        placeholder="NIF"
-                      />
-                      <span className="register-client-required-asterisk">*</span>
-                    </div>
-                  </div>
-
-                  {/* Télécharger patente */}
-                  <div className="register-client-field register-client-half-width">
-                    <label className="register-client-file-label">
-                      {/* Télécharger patente */}
-                      <div className="register-client-field register-client-half-width">
-                        <div className="register-client-file-upload">
-                          <label htmlFor="patenteFile">Upload</label>
-                          <input
-                            type="file"
-                            id="patenteFile"
-                            name="patenteFile"
-                            className="register-client-file-input"
-                            onChange={(e) => {
-                              const file = e.target.files[0];
-                              if (file) {
-                                setFormData((prev) => ({ ...prev, patenteFile: file }));
-                              }
-                            }}
-                          />
-                          {formData.patenteFile && <span className="register-client-file-name">{formData.patenteFile.name}</span>}
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="register-client-form-row">
-                  {/* Numéro d'immatriculation RCS */}
-                  <div className="register-client-field register-client-half-width">
-                    <div className="register-client-input-wrapper">
-                      <input
-                        type="text"
-                        name="rchNumber"
-                        value={formData.rchNumber}
-                        onChange={handleChange}
-                        className="register-client-input"
-                        placeholder="Numéro d'immatriculation RCS"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Télécharger le numéro d'immatriculation RCS */}
-                  <div className="register-client-field register-client-half-width">
-                    <label className="register-client-file-label">
-                      {/* Télécharger le numéro d'immatriculation RCS */}
-                      <div className="register-client-field register-client-half-width">
-                        <div className="register-client-file-upload">
-                          <label htmlFor="rchFile">Upload</label>
-                          <input
-                            type="file"
-                            id="rchFile"
-                            name="rchFile"
-                            className="register-client-file-input"
-                            onChange={(e) => {
-                              const file = e.target.files[0];
-                              if (file) {
-                                setFormData((prev) => ({ ...prev, rchFile: file }));
-                              }
-                            }}
-                          />
-                          {formData.rchFile && <span className="register-client-file-name">{formData.rchFile.name}</span>}
-                        </div>
-                      </div>
-
-                    </label>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Section Contact */}
-          <div className="register-client-form-section">
-            <h3 className="primary">Information(s) Contact</h3>
-            <div className="register-client-form-row">
-              {/* Civilité avec boutons radio sur la même ligne */}
-              <div className="register-client-field register-client-half-width register-client-radio-group">
-                <label className="register-client-radio-label">
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  Licence (Fichier)
+                </Typography>
+                <Button variant="contained" component="label" sx={commonButtonSx}>
+                  Upload
                   <input
-                    type="radio"
-                    name="gender"
-                    value="Mr"
-                    checked={formData.gender === 'Mr'}
-                    onChange={handleChange}
-                    className="register-client-radio-input"
+                    hidden
+                    type="file"
+                    name="licenseFile"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setFormData((prev) => ({ ...prev, licenseFile: file }));
+                      }
+                    }}
                   />
-                  <span className="register-client-radio-custom"></span>
-                  Mr
-                </label>
+                </Button>
+                {formData.licenseFile && (
+                  <Typography variant="caption" sx={{ ml: 1 }}>
+                    {formData.licenseFile.name}
+                  </Typography>
+                )}
+              </Grid>
+            </>
+          )}
 
-                <label className="register-client-radio-label">
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="Mme"
-                    checked={formData.gender === 'Mme'}
-                    onChange={handleChange}
-                    className="register-client-radio-input"
-                  />
-                  <span className="register-client-radio-custom"></span>
-                  Mme
-                </label>
-              </div>
-
-
-              {/* Nom */}
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Nom"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="register-client-form-row">
-              {/* Fonction */}
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <input
-                    type="text"
-                    name="position"
-                    value={formData.position}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Fonction"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Téléphone fixe + indicatif */}
-            <div className="register-client-form-row">
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper phone-wrapper">
-                <select
-                  name="phoneFixedCountryCode"
-                  value={formData.phoneFixedCountryCode}
+          {formData.isOtherCompany && (
+            <>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  required
+                  fullWidth
+                  label="NIF"
+                  name="nif"
+                  placeholder="NIF"
+                  value={formData.nif}
                   onChange={handleChange}
-                  className="register-client-input country-code-select"
-                >
-                  {countryCodes.map((country) => (
-                    <option key={country.code} value={country.code}>
-                      {country.flag} ({country.code})
-                    </option>
-                  ))}
-                </select>
+                  sx={commonFieldSx}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  Patente (Fichier)
+                </Typography>
+                <Button variant="contained" component="label" sx={commonButtonSx}>
+                  Upload
                   <input
-                    type="text"
-                    name="phoneFixedNumber"
-                    value={formData.phoneFixedNumber}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input phone-number-input"
-                    placeholder="Téléphone (fixe)"
+                    hidden
+                    type="file"
+                    name="patenteFile"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setFormData((prev) => ({ ...prev, patenteFile: file }));
+                      }
+                    }}
                   />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
+                </Button>
+                {formData.patenteFile && (
+                  <Typography variant="caption" sx={{ ml: 1 }}>
+                    {formData.patenteFile.name}
+                  </Typography>
+                )}
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Numéro d'immatriculation RCS"
+                  name="rchNumber"
+                  placeholder="Numéro d'immatriculation RCS"
+                  value={formData.rchNumber}
+                  onChange={handleChange}
+                  sx={commonFieldSx}
+                />
+              </Grid>
+            </>
+          )}
+        </Grid>
 
-              {/* Téléphone portable + indicatif */}
-              <div className="register-client-field register-client-full-width">
-                <div className="register-client-input-wrapper phone-wrapper">
-                  <select
-                    name="phoneMobileCountryCode"
-                    value={formData.phoneMobileCountryCode}
-                    onChange={handleChange}
-                    className="register-client-input country-code-select"
-                  >
-                    {countryCodes.map((country) => (
-                      <option key={country.code} value={country.code}>
-                        {country.flag} ({country.code})
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    name="phoneMobileNumber"
-                    value={formData.phoneMobileNumber}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input phone-number-input"
-                    placeholder="Téléphone (portable)"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
+        <Box mt={4}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#DCAF26' }}>
+            Information(s) Contact
+          </Typography>
+        </Box>
 
-            {/* Email */}
-            <div className="register-client-form-row">
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Email"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <FormControl component="fieldset">
+              <FormLabel component="legend">Civilité</FormLabel>
+              <RadioGroup row name="gender" value={formData.gender} onChange={handleChange}>
+                <FormControlLabel value="Mr" control={<Radio sx={commonRadioSx} />} label="Mr" />
+                <FormControlLabel value="Mme" control={<Radio sx={commonRadioSx} />} label="Mme" />
+              </RadioGroup>
+            </FormControl>
+          </Grid>
 
-            {/* Mot de passe + confirmation */}
-            <div className="register-client-form-row">
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Mot de passe"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              fullWidth
+              label="Nom"
+              name="name"
+              placeholder="Nom"
+              value={formData.name}
+              onChange={handleChange}
+              sx={commonFieldSx}
+            />
+          </Grid>
 
-              <div className="register-client-field register-client-half-width">
-                <div className="register-client-input-wrapper">
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                    className="register-client-input"
-                    placeholder="Confirmer mot de passe"
-                  />
-                  <span className="register-client-required-asterisk">*</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              fullWidth
+              label="Fonction"
+              name="position"
+              placeholder="Fonction"
+              value={formData.position}
+              onChange={handleChange}
+              sx={commonFieldSx}
+            />
+          </Grid>
 
-          {/* Conditions */}
-          <div className="register-client-form-section">
-            <label className="register-client-checkbox-label">
-              <input
-                type="checkbox"
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              fullWidth
+              label="Téléphone (fixe, format international)"
+              name="phoneFixedNumber"
+              placeholder="+123456789"
+              value={formData.phoneFixedNumber}
+              onChange={handleChange}
+              inputProps={{ maxLength: 12 }}
+              error={phoneFixedError}
+              helperText={
+                phoneFixedError
+                  ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
+                  : ""
+              }
+              sx={commonFieldSx}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              fullWidth
+              label="Téléphone (portable, format international)"
+              name="phoneMobileNumber"
+              placeholder="+123456789"
+              value={formData.phoneMobileNumber}
+              onChange={handleChange}
+              inputProps={{ maxLength: 12 }}
+              error={phoneMobileError}
+              helperText={
+                phoneMobileError
+                  ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
+                  : ""
+              }
+              sx={commonFieldSx}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              fullWidth
+              type="email"
+              label="Email"
+              name="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={handleChange}
+              sx={commonFieldSx}
+              error={formData.email !== '' && !isValidEmail(formData.email)}
+              helperText={
+                formData.email !== '' && !isValidEmail(formData.email)
+                  ? "Format incorrect. Exemple : user@example.com"
+                  : ""
+              }
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              fullWidth
+              type={showPassword ? 'text' : 'password'}
+              label="Mot de passe"
+              name="password"
+              placeholder="Mot de passe"
+              value={formData.password}
+              onChange={handleChange}
+              sx={commonFieldSx}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              fullWidth
+              type={showPassword ? 'text' : 'password'}
+              label="Confirmer mot de passe"
+              name="confirmPassword"
+              placeholder="Confirmer mot de passe"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              sx={commonFieldSx}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+        </Grid>
+
+        <Box mt={4}>
+          <FormControlLabel
+            control={
+              <Checkbox
                 name="acceptsConditions"
                 checked={formData.acceptsConditions}
                 onChange={handleChange}
                 required
               />
-              Je certifie être habilité à faire des formalités export pour la société que je viens de désigner ci-dessus.
-              <span className="register-client-required-asterisk">*</span>
-            </label>
-            <label className="register-client-checkbox-label">
-              <input
-                type="checkbox"
+            }
+            label="Je certifie être habilité à faire des formalités export pour la société que je viens de désigner ci-dessus."
+          />
+          <br />
+          <FormControlLabel
+            control={
+              <Checkbox
                 name="acceptsDataProcessing"
                 checked={formData.acceptsDataProcessing}
                 onChange={handleChange}
                 required
               />
-              J'accepte les conditions générales de vente
-              <span className="register-client-required-asterisk">*</span>
-            </label>
-          </div>
+            }
+            label="J'accepte les conditions générales de vente"
+          />
+        </Box>
 
-          {/* Bouton d'action */}
-          <div className="register-client-form-actions">
-            <button type="submit" className="register-client-button">
-              Créer
-            </button>
-          </div>
-        </form>
+        <Box mt={4} textAlign="center">
+          <Button variant="contained" type="submit" sx={commonButtonSx}>
+            Créer
+          </Button>
+        </Box>
+      </Box>
 
-        {/* Lien vers la page de connexion */}
-        <div className="register-client-login-link">
-          <Link to="/login">Revenir à la page de connexion</Link>
-        </div>
-      </div>
+      <Box mt={2} textAlign="center">
+        <Typography variant="body2">
+          <Box component={RouterLink} to="/login" sx={{ textDecoration: 'none', color: '#DCAF26' }}>
+            Revenir à la page de connexion
+          </Box>
+        </Typography>
+      </Box>
 
-      {/* Snackbar Component */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbarSeverity}
-          sx={{ width: '100%' }}
-        >
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>
-    </div>
+    </Container>
   );
 };
 

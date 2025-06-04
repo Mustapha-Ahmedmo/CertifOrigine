@@ -1,5 +1,5 @@
 const express = require('express');
-const { getOperators, createOperator, disableOperator } = require('../controllers/operatorController');
+const { getOperators, createOperator, disableOperator, enableOperator } = require('../controllers/operatorController');
 
 const router = express.Router();
 
@@ -11,5 +11,6 @@ router.post('/create', createOperator);
 
 // Route to disable an operator
 router.put('/disable/:id', disableOperator);
+router.put('/enable/:id', enableOperator);
 
 module.exports = router;

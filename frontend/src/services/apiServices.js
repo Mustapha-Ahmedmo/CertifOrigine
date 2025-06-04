@@ -109,6 +109,29 @@ export const setCustUser = async (userData) => {
   }
 };
 
+
+export const setCustSmallUser = async (userData) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/setCustSmallUser`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Setting customer user failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
+  }
+};
+
 export const loginUser = async (email, password) => {
   try {
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -204,6 +227,53 @@ export const rejectCustAccount = async (id, reason, idlogin) => {
   }
 };
 
+export const disableCustAccount = async (id, reason, idlogin) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/disable-cust-account/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // or remove if not needed
+      },
+      body: JSON.stringify({ reason, idlogin }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Disabling customer account failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error disabling customer account:', error);
+    throw error;
+  }
+};
+
+
+export const reactivateCustAccount = async (id, idlogin) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/reactivate-cust-account/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ idlogin }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Reactivating customer account failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error Reactivating customer account:', error);
+    throw error;
+  }
+};
+
 export const addSubscription = async (subscriptionData) => {
   try {
     const response = await fetch(`${API_URL}/customer/add-subscription`, {
@@ -268,6 +338,36 @@ export const addSubscriptionWithFile = async (subscriptionData) => {
     throw error;
   }
 };
+export const addCustAccountFile = async (fileData) => {
+  try {
+    const formData = new FormData();
+
+    for (const key in fileData) {
+      if (fileData.hasOwnProperty(key)) {
+        formData.append(key, fileData[key]);
+      }
+    }
+
+    const response = await fetch(`${API_URL}/customer/add-cust-account-file`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to upload customer account file');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (addCustAccountFile):', error);
+    throw error;
+  }
+};
+
 
 export const requestPasswordReset = async (data) => {
   try {
@@ -388,6 +488,29 @@ export const disableOperator = async (operatorId) => {
     throw error;
   }
 };
+
+export const enableOperator = async (operatorId) => {
+  try {
+    const response = await fetch(`${API_URL}/operators/enable/${operatorId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to enable operator');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (enableOperator):', error);
+    throw error;
+  }
+};
+
 export const getCustUsersByAccount = async (custAccountId, statutflag = null, isactiveCA = 'true', isactiveCU = 'true', ismain_user = 'true') => {
   try {
     const params = new URLSearchParams();
@@ -396,7 +519,7 @@ export const getCustUsersByAccount = async (custAccountId, statutflag = null, is
     params.append('isactiveCA', isactiveCA);
     params.append('isactiveCU', isactiveCU);
     params.append('ismain_user', ismain_user);
-    
+
     const response = await fetch(`${API_URL}/customer/get-cust-users?${params.toString()}`, {
       method: 'GET',
       headers: {
@@ -404,12 +527,12 @@ export const getCustUsersByAccount = async (custAccountId, statutflag = null, is
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       }
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to fetch cust users');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('API call error (getCustUsersByAccount):', error);
@@ -437,4 +560,1090 @@ export const deleteCustUser = async (id) => {
     console.error('API call error (deleteCustUser):', error);
     throw error;
   }
+};
+
+export const reactivateCustUser = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/reactivate-cust-user/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to reactivate customer user');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (reactivateCustUser):', error);
+    throw error;
+  }
+};
+
+export const sendEmail = async (emailPayload) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/send-custom-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({
+        ...emailPayload
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to send email and memo');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (sendEmail):', error);
+    throw error;
+  }
+};
+
+export const createOrder = async (orderTitle, idCustAccount, idloginInsert) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include token if needed
+      },
+      body: JSON.stringify({
+        orderTitle,
+        idCustAccount,
+        idloginInsert,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create order');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (createOrder):', error);
+    throw error;
+  }
+};
+
+export const getTransmodeInfo = async (idList = null, isActive = null) => {
+  try {
+    const params = new URLSearchParams();
+    if (idList) params.append('id_list', idList); // Add ID list to query params
+    if (isActive !== null) params.append('isActive', isActive); // Convert to string and add isActive
+
+    const response = await fetch(`${API_URL}/orders/transport-modes?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include JWT token if required
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch transport mode information');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getTransmodeInfo):', error);
+    throw error;
+  }
+};
+
+export const getUnitWeightInfo = async (idList = null, isActive = null) => {
+  try {
+    const params = new URLSearchParams();
+    if (idList) params.append('id_list', idList); // Add ID list to query params
+    if (isActive !== null) params.append('isActive', isActive); // Convert to string and add isActive
+
+    const response = await fetch(`${API_URL}/orders/unit-weights?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include JWT token if required
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch unit weight information');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getUnitWeightInfo):', error);
+    throw error;
+  }
+};
+
+export const fetchRecipients = async (filters = {}) => {
+  try {
+    const params = new URLSearchParams(filters);
+
+    const response = await fetch(`${API_URL}/orders/recipients?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch recipients');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching recipients:', error);
+  }
+};
+
+export const addRecipient = async (recipientData) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/recipients`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(recipientData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to add or update recipient');
+    }
+
+    const data = await response.json();
+    console.log(data.message); // Success message
+    return data;
+  } catch (error) {
+    console.error('Error adding recipient:', error);
+  }
+};
+
+export const createCertificate = async (certData) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/create-certif`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(certData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create certificate');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating certificate:', error);
+    throw error;
+  }
+};
+
+export const addOrUpdateGoods = async (goodsData) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/certif-goods`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(goodsData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to add or update goods');
+    }
+
+    const data = await response.json();
+    console.log('Goods added/updated successfully:', data);
+
+    return data; // Return the API response, including the new ID
+  } catch (error) {
+    console.error('Error adding/updating goods:', error);
+    throw error; // Ensure the caller can handle errors properly
+  }
+};
+
+export const renameOrder = async (payload) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/rename`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to rename order');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (renameOrder):', error);
+    throw error;
+  }
+};
+
+export const getOrdersForCustomer = async ({ idOrderList = null, idCustAccountList = null, idOrderStatusList = null, idLogin }) => {
+  try {
+    if (!idLogin) {
+      throw new Error('Le champ idLogin est requis.');
+    }
+
+    const params = new URLSearchParams();
+    if (idOrderList) params.append('idOrderList', idOrderList);
+    if (idCustAccountList) params.append('idCustAccountList', idCustAccountList);
+    if (idOrderStatusList) params.append('idOrderStatusList', idOrderStatusList);
+    params.append('idLogin', idLogin);
+
+    const response = await fetch(`${API_URL}/orders/customer-orders?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Include JWT token if required
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch orders');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching orders for customer:', error);
+    throw error;
+  }
+};
+
+export const getCertifGoodsInfo = async (idOrdCertifOri) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/certif-goods?idOrdCertifOri=${idOrdCertifOri}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch certification goods data.');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching certification goods info:', error);
+    throw error;
+  }
+};
+
+export const sendContactForm = async (formData) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/contact`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to send the contact form.');
+    }
+
+    return await response.json(); // Return the response from the server
+  } catch (error) {
+    console.error('Error sending contact form:', error);
+    throw error; // Re-throw the error for handling in the calling code
+  }
+};
+
+export const getCertifTranspMode = async (params) => {
+  try {
+    // Construct query string from params object (you can use URLSearchParams for this)
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(`${API_URL}/orders/certif-transp-mode?${queryString}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // if required
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Fetching transport mode info failed');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getCertifTranspMode):', error);
+    throw error;
+  }
+};
+
+export const setOrdCertifTranspMode = async (payload) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/certif-transpmode`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to set order certif transport mode');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (setOrdCertifTranspMode):', error);
+    throw error;
+  }
+};
+
+export const cancelOrder = async (payload) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/cancel`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to cancel order');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (cancelOrder):', error);
+    throw error;
+  }
+};
+
+export const updateCertificate = async (certData) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/update-certif`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(certData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update certificate');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (updateCertificate):', error);
+    throw error;
+  }
+};
+
+export const getFilesRepoTypeofInfo = async (params) => {
+  try {
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(`${API_URL}/orders/files-repo-typeof?${queryString}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch file repository types');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getFilesRepoTypeofInfo):', error);
+    throw error;
+  }
+};
+
+export const setOrderFiles = async (orderFileData) => {
+  try {
+    const formData = new FormData();
+
+    // Append all keys from orderFileData into FormData
+    for (const key in orderFileData) {
+      if (orderFileData.hasOwnProperty(key)) {
+        formData.append(key, orderFileData[key]);
+      }
+    }
+
+    const response = await fetch(`${API_URL}/orders/order-files`, {
+      method: 'POST',
+      headers: {
+        // Do not set Content-Type manually for FormData!
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to set order files');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (setOrderFiles):', error);
+    throw error;
+  }
+};
+
+
+export const delOrderFiles = async (p_id_order_files) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/order-files/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ p_id_order_files }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete order file');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (delOrderFiles):', error);
+    throw error;
+  }
+};
+
+export const getOrderFilesInfo = async (params) => {
+  try {
+    // Build a query string from the params object
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(`${API_URL}/orders/order-files-info?${queryString}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      }
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to retrieve order files info');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getOrderFilesInfo):', error);
+    throw error;
+  }
+};
+
+export const handleSendDocuments = async (order) => {
+  try {
+    const res = await fetch(`${API_URL}/orders/sendOrderDocuments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({
+        id_order: order.id_order,
+        id_cust_account: order.id_cust_account,
+        order_title: order.order_title,
+      }),
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      // On renvoie le message au composant pour afficher la snackbar
+      return result;
+    } else {
+      // On lève une erreur pour que le catch du composant attrape et ferme la confirmation
+      throw new Error(result.message || "Erreur lors de l'envoi des documents");
+    }
+  } catch (error) {
+    console.error("Erreur lors de l'envoi du mail :", error);
+    // On re-lance pour que le composant sache qu'il y a eu une erreur
+    throw error;
+  }
+};
+
+
+export const getOrderOpInfo = async (params) => {
+  try {
+    // Build the query string from the params object
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(`${API_URL}/orders/op-info?${queryString}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to retrieve operator orders info');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getOrderOpInfo):', error);
+    throw error;
+  }
+};
+
+export const setUnitWeight = async (unitData) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/unit-weight`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(unitData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to set unit weight');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (setUnitWeight):', error);
+    throw error;
+  }
+};
+
+export const deleteUnitWeight = async (id_unit_weight) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/unit-weight/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ id_unit_weight }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete unit weight');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (deleteUnitWeight):', error);
+    throw error;
+  }
+};
+
+export const submitOrder = async (p_id_order, p_idlogin_modify) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/submit-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Include token if required
+      },
+      body: JSON.stringify({ p_id_order, p_idlogin_modify }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to submit order');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (submitOrder):', error);
+    throw error;
+  }
+};
+
+export const deleteCertifGoods = async (p_id_ord_certif_goods, p_idlogin_modify, p_mode = 0) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/certif-goods/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Include token if required
+      },
+      body: JSON.stringify({ p_id_ord_certif_goods, p_idlogin_modify, p_mode }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Échec de la suppression de la marchandise');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (deleteCertifGoods):', error);
+    throw error;
+  }
+};
+
+export const removeCertifTranspMode = async (p_id_ord_certif_ori, p_idlogin_modify) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/certif-transpmode/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Include JWT token if required
+      },
+      body: JSON.stringify({ p_id_ord_certif_ori, p_idlogin_modify })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to remove transport mode');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (removeCertifTranspMode):', error);
+    throw error;
+  }
+};
+
+export const removeSingleCertifTranspMode = async (p_id_ord_certif_ori, p_id_transport_mode, p_idlogin_modify) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/certif-transpmode/delete-single`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ p_id_ord_certif_ori, p_id_transport_mode, p_idlogin_modify }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to remove single transport mode');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (removeSingleCertifTranspMode):', error);
+    throw error;
+  }
+};
+export const approveOrder = async (
+  p_id_order,
+  p_id_cust_account,
+  p_idlogin_modify,
+  customerEmail,
+  orderTitle,
+  orderDate,
+  totalFD
+) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/approve_order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({
+        p_id_order,
+        p_id_cust_account,
+        p_idlogin_modify,
+        customerEmail,
+        orderTitle,
+        orderDate,  // e.g., "12/03/2025"
+        totalFD,    // e.g., the computed total amount (as a number or string)
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to approve order');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (approveOrder):', error);
+    throw error;
+  }
+};
+
+export const sendbackOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, returnReason, customerEmail, orderTitle) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/sendback_order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({
+        p_id_order,
+        p_id_cust_account,
+        p_idlogin_modify,
+        returnReason,
+        customerEmail,
+        orderTitle
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to send back order');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (sendbackOrder):', error);
+    throw error;
+  }
+};
+
+export const rejectOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail, orderTitle) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/reject_order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ p_id_order, p_id_cust_account, p_idlogin_modify, rejectReason, customerEmail, orderTitle }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to reject order');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (rejectOrder):', error);
+    throw error;
+  }
+};
+
+export const setMemo = async (memoData) => {
+  try {
+    const response = await fetch(`${API_URL}/mailers/set_memo`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(memoData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to set memo');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (setMemo):', error);
+    throw error;
+  }
+};
+
+export const getMemo = async (params = {}) => {
+  try {
+    // Construct query string from params object
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(`${API_URL}/mailers/get_memo?${queryString}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to retrieve memos');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getMemo):', error);
+    throw error;
+  }
+};
+
+export const ackMemoCust = async (p_id_memo, p_id_cust_account, p_idlogin) => {
+  try {
+    const response = await fetch(`${API_URL}/mailers/ack_memo_cust`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ p_id_memo, p_id_cust_account, p_idlogin }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to acknowledge memo');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (ackMemoCust):', error);
+    throw error;
+  }
+};
+
+export const getOrderAmountByDay = async (params = {}) => {
+  try {
+    // strip null/undefined
+    const cleaned = {};
+    Object.entries(params).forEach(([k, v]) => {
+      if (v != null && v !== 'null') cleaned[k] = v;
+    });
+    const qs = new URLSearchParams(cleaned).toString();
+    const res = await fetch(`${API_URL}/orders/order-amount-by-day?${qs}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Failed to fetch daily amounts');
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('API call error (getOrderAmountByDay):', err);
+    throw err;
+  }
+};
+
+export const getOrderStaticsByServices = async (params = {}) => {
+  try {
+    // Remove any keys with null, undefined, or the string "null"
+    const cleanedParams = {};
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== "null") {
+        cleanedParams[key] = value;
+      }
+    });
+    const queryString = new URLSearchParams(cleanedParams).toString();
+
+    const response = await fetch(`${API_URL}/orders/order-statistics?${queryString}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch order statistics');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (getOrderStaticsByServices):', error);
+    throw error;
+  }
+};
+
+export const billOrder = async (p_id_order, p_idlogin_modify) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/bill_order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ p_id_order, p_idlogin_modify }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to bill order');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (billOrder):', error);
+    throw error;
+  }
+};
+
+export const setInvoiceHeader = async (invoiceData) => {
+  try {
+    const response = await fetch(`${API_URL}/orders/invoice-header`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(invoiceData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to set invoice header');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (setInvoiceHeader):', error);
+    throw error;
+  }
+};
+
+export const updateCustAccount = async (accountData) => {
+  try {
+    const response = await fetch(`${API_URL}/customer/upd-cust-account`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(accountData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update customer account');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (updateCustAccount):', error);
+    throw error;
+  }
+};
+
+export const deleteCustAccountFile = async (id, mode = 0) => {
+  try {
+    // Build the URL with the id and the mode as a query parameter
+    const url = `${API_URL}/customer/delete-cust-account-file/${id}?p_mode=${mode}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete customer account file');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (deleteCustAccountFile):', error);
+    throw error;
+  }
+};
+
+export const sendEmailAndMemo = async ({
+  to,
+  subject,
+  body,
+  isHtml = false,
+  id_cust_account,
+  idlogin,
+  isCustomEmail = false,
+  emailBody = ''
+}) => {
+  try {
+    // 1. Envoi de l’email
+
+
+    //    if custom, use emailBody; otherwise fall back to body
+    const sendBody = isCustomEmail && emailBody
+      ? emailBody
+      : body;
+    await sendEmail({ to, subject, body: sendBody, isHtml });
+
+    // 2. Enregistrement du mémo
+    const memoPayload = {
+      p_id_order: null,
+      p_id_cust_account: id_cust_account,
+      p_typeof: 1, // à adapter si besoin
+      p_idlogin_insert: idlogin,
+      p_memo_date: new Date().toISOString(),
+      p_memo_subject: subject,
+      p_memo_body: body,
+      p_mail_to: to,
+      p_mail_bcc: null,
+      p_mail_acc: null,
+      p_mail_notifications: null,
+    };
+
+    await setMemo(memoPayload);
+
+    return true;
+  } catch (err) {
+    console.error('Erreur sendEmailAndMemo:', err);
+    throw err;
+  }
+};
+
+export const getOrderHisto = async ({ p_idlogin, p_id_list_order }) => {
+  // 1) Construire la query string
+  const params = new URLSearchParams();
+  if (p_id_list_order) params.append('p_id_list_order', p_id_list_order);
+
+  // 2) L’URL doit matcher ton router Express monté sur '/orders'
+  const url = `${API_URL}/orders/order-histo?${params.toString()}`;
+
+  // 3) Appel fetch
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`, // si tu l’utilises
+    },
+  });
+
+  // 4) Gestion d’erreur
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.message || 'Impossible de récupérer la piste d’audit');
+  }
+
+  // 5) Retour du JSON
+  return await response.json();
+};
+
+export const getOrderMemo = async (params) => {
+  // params : { p_id_order_list, p_idlogin, ... }
+  const query = new URLSearchParams(params).toString();
+  const resp = await fetch(`${API_URL}/orders/order-memo?${query}`, {
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    }
+  });
+  if (!resp.ok) {
+    const err = await resp.json();
+    throw new Error(err.message || 'Failed to fetch memos');
+  }
+  return await resp.json();
 };

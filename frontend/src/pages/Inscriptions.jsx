@@ -5,9 +5,70 @@ import {
   rejectCustAccount,
 } from '../services/apiServices';
 import { formatDate } from '../utils/dateUtils';
-import './Inscriptions.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
+
+// --- MUI ---
+import {
+  Box,
+  Typography,
+  TextField,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tabs,
+  Tab,
+  AppBar,
+  Checkbox,
+  Card,
+  CardContent,
+  CardActions,
+  Grid,
+  useTheme,
+  useMediaQuery,
+  IconButton,
+  Menu,
+  MenuItem
+} from '@mui/material';
+
+// --- CSS perso ---
+import './Inscriptions.css';
+
+// Helpers pour l'accessibilité des onglets
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`inscriptions-tabpanel-${index}`}
+      aria-labelledby={`inscriptions-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 2 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
+function a11yProps(index) {
+  return {
+    id: `inscriptions-tab-${index}`,
+    'aria-controls': `inscriptions-tabpanel-${index}`,
+  };
+}
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -25,12 +86,25 @@ const Inscriptions = () => {
   // État du champ de recherche
   const [searchTerm, setSearchTerm] = useState('');
 
+  // État de l'onglet sélectionné
+  const [tabIndex, setTabIndex] = useState(0);
+
+  // Nouveaux états pour le menu Actions
+  const [anchorElActions, setAnchorElActions] = useState(null);
+  const [selectedForActions, setSelectedForActions] = useState(null);
+
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const handleTabChange = (event, newValue) => {
+    setTabIndex(newValue);
+  };
+
   useEffect(() => {
     const fetchCustAccounts = async () => {
       try {
         const response = await getCustAccountInfo(null, 1, true);
-        const data = response.data || [];
-        setCustAccounts(data);
+        setCustAccounts(response.data || []);
       } catch (err) {
         console.error(err);
       }
@@ -52,8 +126,8 @@ const Inscriptions = () => {
       alert('Le statut du compte client a été mis à jour avec succès.');
       setRemovingAccounts((prev) => [...prev, id]);
       setTimeout(() => {
-        setCustAccounts((prevAccounts) =>
-          prevAccounts.filter((account) => account.id_cust_account !== id)
+        setCustAccounts((prev) =>
+          prev.filter((account) => account.id_cust_account !== id)
         );
         setRemovingAccounts((prev) =>
           prev.filter((accountId) => accountId !== id)
@@ -78,14 +152,14 @@ const Inscriptions = () => {
     }
 
     try {
-      const idlogin = 1; // Replace with actual operator ID from AuthContext
+      const idlogin = 1; // Remplace par l'ID opérateur réel
       await rejectCustAccount(rejectingAccountId, rejectionReason, idlogin);
 
       alert('Le compte client a été rejeté avec succès.');
       setRemovingAccounts((prev) => [...prev, rejectingAccountId]);
       setTimeout(() => {
-        setCustAccounts((prevAccounts) =>
-          prevAccounts.filter((account) => account.id_cust_account !== rejectingAccountId)
+        setCustAccounts((prev) =>
+          prev.filter((account) => account.id_cust_account !== rejectingAccountId)
         );
         setRemovingAccounts((prev) =>
           prev.filter((accountId) => accountId !== rejectingAccountId)
@@ -102,19 +176,27 @@ const Inscriptions = () => {
     }
   };
 
-  // Gère la recherche textuelle
+  // Gestion du menu Actions
+  const handleActionsMenuOpen = (event, registration) => {
+    setAnchorElActions(event.currentTarget);
+    setSelectedForActions(registration);
+  };
+  const handleActionsMenuClose = () => {
+    setAnchorElActions(null);
+    setSelectedForActions(null);
+  };
+
+  // Gestion de la recherche
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  // Filtrage : recherche sur plusieurs champs
+  // Filtrage des inscriptions
   const filteredAccounts = custAccounts.filter((registration) => {
     const search = searchTerm.toLowerCase().trim();
     if (!search) return true;
 
-    // Par exemple, on récupère la date formatée
     const dateString = formatDate(registration.insertdate);
-
     const fields = [
       registration.cust_name,
       registration.legal_form,
@@ -132,87 +214,71 @@ const Inscriptions = () => {
     return fields.some((field) => field.includes(search));
   });
 
-  // Modal : ouvre la fiche de contacts
+  // Ouverture/fermeture de la modal de contacts
   const handleOpenContactsModal = (account) => {
     setSelectedAccount(account);
     setShowContactModal(true);
   };
-
-  // Fermer la modal de contacts
   const handleCloseContactsModal = () => {
     setSelectedAccount(null);
     setShowContactModal(false);
   };
 
-  return (
-    <div className="inscriptions-page-container">
-      <h1>INSCRIPTION A VALIDER ({custAccounts.length})</h1>
-
-      {/* Barre de recherche textuelle à gauche */}
-      <div className="search-container">
-        <label htmlFor="searchInput" className="search-label">
-          Rechercher :
-        </label>
-        <input
-          id="searchInput"
-          className="search-input"
-          type="text"
-          placeholder="Tapez un mot-clé ou un chiffre..."
-          value={searchTerm}
-          onChange={handleSearch}
-        />
-      </div>
-
-      <div className="dashboard-table-container">
-        <table className="dashboard-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Client</th>
-              <th>Secteur</th>
-              <th>Adresse Complète</th>
-              <th>Pays</th>
-              <th>Implantation</th>
-              <th>Fichier Justificatifs</th>
-              <th>Contact Principal</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+  // Rendu en mode Table (desktop)
+  const renderTableView = () => (
+    <Paper>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>Client</TableCell>
+              <TableCell>Secteur</TableCell>
+              <TableCell>Adresse Complète</TableCell>
+              <TableCell>Pays</TableCell>
+              <TableCell>Implantation</TableCell>
+              <TableCell>Fichier Justificatifs</TableCell>
+              <TableCell>Contact Principal</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {filteredAccounts.map((registration) => {
-              const isRemoving = removingAccounts.includes(
-                registration.id_cust_account
-              );
-
+              const isRemoving = removingAccounts.includes(registration.id_cust_account);
               return (
-                <tr
+                <TableRow
                   key={registration.id_cust_account}
                   className={isRemoving ? 'fade-out' : ''}
                 >
-                  <td>{formatDate(registration.insertdate)}</td>
-                  <td>
-                    {registration.legal_form} {registration.cust_name}
-                  </td>
-                  <td>{registration.sectorName?.symbol_fr || 'N/A'}</td>
-                  <td>{registration.full_address}</td>
-                  <td>{registration.co_symbol_fr}</td>
-                  <td>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={registration.in_free_zone}
-                        readOnly
-                      />
-                      <span style={{ marginLeft: '5px' }}>Zone franche</span>
-                    </label>
-                  </td>
-                  <td>
-                    {/* Affichage des fichiers existants */}
-                    {registration.files && registration.files.length > 0 ? (
+                  <TableCell>{formatDate(registration.insertdate)}</TableCell>
+                  <TableCell>
+                    {registration.other_legal_form || registration.legal_form}{' '}
+                    {registration.cust_name}
+                  </TableCell>
+                  <TableCell>
+                    {registration.sectorName?.symbol_fr?.toLowerCase() === 'autres'
+                    ? `AUTRES : ${registration.other_sector || ''}`
+                    : registration.sectorName?.symbol_fr || 'N/A'}
+                  </TableCell>
+                  <TableCell>{registration.full_address}</TableCell>
+                  <TableCell>{registration.co_symbol_fr}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {registration.in_free_zone
+                        ? 'Zone franche'
+                        : (registration.trade_registration_num && registration.trade_registration_num !== 'null') ||
+                          (registration.register_number && registration.register_number !== 'null')
+                          ? 'Entreprise'
+                          : 'Autres'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    {registration.files?.length > 0 ? (
                       registration.files.map((file) => {
                         let fileDescription = file.txt_description_fr || 'Type inconnu';
-                        // Ajouter la valeur NIF / RCS / licence entre parenthèses si dispo
-                        if (fileDescription === 'NIF' && registration.nif) {
+                        if (fileDescription.toLowerCase().includes('nif')) {
+                          fileDescription = 'Patente';
+                        } else if (fileDescription === 'NIF' && registration.nif) {
                           fileDescription += ` (${registration.nif})`;
                         } else if (
                           fileDescription === 'Immatriculation RCS' &&
@@ -225,139 +291,345 @@ const Inscriptions = () => {
                         ) {
                           fileDescription += ` (${registration.licenseNumber})`;
                         }
-
                         return (
-                          <button
+                          <Button
                             key={file.id_files_repo}
-                            className="file-button minimal-button"
+                            variant="text"
                             onClick={() => handleFileClick(file)}
+                            size="small"
+                            style={{ marginRight: '6px', color: '#DCAF26' }}
                           >
                             {fileDescription}
-                          </button>
+                          </Button>
                         );
                       })
                     ) : (
-                      <span>Aucun fichier</span>
+                      <Typography variant="body2">Aucun fichier</Typography>
                     )}
+                    {registration.in_free_zone &&
+                      registration.identification_number &&
+                      registration.identification_number !== 'null' && (
+                        <Box mt={1} fontStyle="italic">
+                          Numéro de licence : <strong>{registration.identification_number}</strong>
+                        </Box>
+                      )}
 
-                    {/* Affichage explicite du numéro en fonction de la situation */}
-                    {registration.in_free_zone && registration.trade_registration_num && (
-                      <div style={{ marginTop: '5px', fontStyle: 'italic' }}>
-                        Numéro de licence : <strong>{registration.trade_registration_num}</strong>
-                      </div>
-                    )}
+                    {!registration.in_free_zone &&
+                      registration.trade_registration_num &&
+                      registration.trade_registration_num !== 'null' && (
+                        <Box mt={1} fontStyle="italic">
+                          NIF : <strong>{registration.trade_registration_num}</strong>
+                        </Box>
+                      )}
 
-                    {/* Si on veut aussi gérer le cas "Autre" entreprise : NIF / RCS */}
-                    {!registration.in_free_zone && registration.nif && (
-                      <div style={{ marginTop: '5px', fontStyle: 'italic' }}>
-                        NIF : <strong>{registration.nif}</strong>
-                      </div>
-                    )}
-                    {!registration.in_free_zone && registration.rchNumber && (
-                      <div style={{ marginTop: '5px', fontStyle: 'italic' }}>
-                        RCS : <strong>{registration.rchNumber}</strong>
-                      </div>
-                    )}
-                  </td>
-                  <td>
-                    <button
-                      className="minimal-button toggle-contact-button"
+                    {!registration.in_free_zone &&
+                      registration.register_number &&
+                      registration.register_number !== 'null' && (
+                        <Box mt={1} fontStyle="italic">
+                          RCS : <strong>{registration.register_number}</strong>
+                        </Box>
+                      )}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={
+                        <FontAwesomeIcon icon={faEye} style={{ color: '#DCAF26' }} />
+                      }
                       onClick={() => handleOpenContactsModal(registration)}
+                      style={{ color: '#DCAF26', borderColor: '#DCAF26' }}
                     >
-                      <FontAwesomeIcon icon={faEye} />
-                      <span className="button-text"> Ouvrir</span>
-                    </button>
-                  </td>
-                  <td>
-                    <button
-                      className="submit-button minimal-button"
-                      onClick={() => handleValidate(registration.id_cust_account)}
+                      Ouvrir
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <IconButton
+                      onClick={(e) => handleActionsMenuOpen(e, registration)}
                     >
-                      Valider
-                    </button>
-                    <button
-                      className="reject-button minimal-button"
-                      onClick={() => handleReject(registration.id_cust_account)}
-                    >
-                      Rejeter
-                    </button>
-                  </td>
-                </tr>
+                      <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
+  );
 
-      {/* Modal pour afficher la/les fiche(s) de contact */}
-      {showContactModal && selectedAccount && (
-        <div className="modal-overlay" onClick={handleCloseContactsModal}>
-          <div className="contacts-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>
-              LISTING DES CONTACTS DE LA SOCIÉTÉ "{selectedAccount.cust_name}"
-            </h2>
-
-            <table className="contacts-modal-table">
-              <thead>
-                <tr>
-                  <th>Nom</th>
-                  <th>Fonction</th>
-                  <th>Email</th>
-                  <th>Tél</th>
-                  <th>Portable</th>
-                  <th>Statut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedAccount.main_contact && (
-                  <tr>
-                    <td>{selectedAccount.main_contact.full_name}</td>
-                    <td>{selectedAccount.main_contact.position || 'N/A'}</td>
-                    <td>{selectedAccount.main_contact.email || 'N/A'}</td>
-                    <td>{selectedAccount.main_contact.phone_number || 'N/A'}</td>
-                    <td>{selectedAccount.main_contact.mobile_number || 'N/A'}</td>
-                    <td>
-                      <input type="checkbox" checked readOnly />
-                      <span style={{ marginLeft: '5px' }}>Contact principal</span>
-                    </td>
-                  </tr>
+  // Rendu en mode Card (mobile)
+  const renderCardView = () => (
+    <Grid container spacing={2}>
+      {filteredAccounts.map((registration) => {
+        const isRemoving = removingAccounts.includes(registration.id_cust_account);
+        return (
+          <Grid item xs={12} key={registration.id_cust_account}>
+            <Card className={isRemoving ? 'fade-out' : ''}>
+              <CardContent>
+                <Typography variant="subtitle2">
+                  <strong>Date :</strong> {formatDate(registration.insertdate)}
+                </Typography>
+                <Typography variant="subtitle2">
+                  <strong>Client :</strong> {registration.other_legal_form || registration.legal_form}{' '}
+                  {registration.cust_name}
+                </Typography>
+                <Typography variant="subtitle2">
+                  <strong>Secteur :</strong> {registration.sectorName?.symbol_fr || 'N/A'}
+                </Typography>
+                <Typography variant="subtitle2">
+                  <strong>Adresse :</strong> {registration.full_address}
+                </Typography>
+                <Typography variant="subtitle2">
+                  <strong>Pays :</strong> {registration.co_symbol_fr}
+                </Typography>
+                <Typography variant="subtitle2">
+                  <strong>Implantation :</strong>{' '}
+                  {registration.in_free_zone
+                    ? 'Zone franche'
+                    : (registration.trade_registration_num && registration.trade_registration_num !== 'null') ||
+                      (registration.register_number && registration.register_number !== 'null')
+                      ? 'Entreprise'
+                      : 'Autres'}
+                </Typography>
+                <Typography variant="subtitle2">
+                  <strong>Fichiers :</strong>
+                </Typography>
+                {registration.files?.length > 0 ? (
+                  registration.files.map((file) => {
+                    let fileDescription = file.txt_description_fr || 'Type inconnu';
+                    if (fileDescription.toLowerCase().includes('nif')) {
+                      fileDescription = 'Patente';
+                    } else if (fileDescription === 'NIF' && registration.nif) {
+                      fileDescription += ` (${registration.nif})`;
+                    } else if (
+                      fileDescription === 'Immatriculation RCS' &&
+                      registration.rchNumber
+                    ) {
+                      fileDescription += ` (${registration.rchNumber})`;
+                    } else if (
+                      fileDescription === 'Numéro de licence' &&
+                      registration.licenseNumber
+                    ) {
+                      fileDescription += ` (${registration.licenseNumber})`;
+                    }
+                    return (
+                      <Button
+                        key={file.id_files_repo}
+                        variant="text"
+                        onClick={() => handleFileClick(file)}
+                        size="small"
+                        style={{ marginRight: '6px', color: '#DCAF26' }}
+                      >
+                        {fileDescription}
+                      </Button>
+                    );
+                  })
+                ) : (
+                  <Typography variant="body2">Aucun fichier</Typography>
                 )}
-              </tbody>
-            </table>
+                {registration.in_free_zone &&
+                  registration.identification_number &&
+                  registration.identification_number !== 'null' && (
+                    <Box mt={1} fontStyle="italic">
+                      Numéro de licence : <strong>{registration.identification_number}</strong>
+                    </Box>
+                  )}
 
-            <div style={{ textAlign: 'right', marginTop: '20px' }}>
-              <button className="cancel-button" onClick={handleCloseContactsModal}>
-                Fermer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                {!registration.in_free_zone &&
+                  registration.trade_registration_num &&
+                  registration.trade_registration_num !== 'null' && (
+                    <Box mt={1} fontStyle="italic">
+                      NIF : <strong>{registration.trade_registration_num}</strong>
+                    </Box>
+                  )}
 
-      {showRejectModal && (
-        <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Raison du rejet</h2>
-            <textarea
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Entrez la raison du rejet..."
-            ></textarea>
-            <div className="modal-actions">
-              <button onClick={submitRejection} className="reject-button">
-                Confirmer le rejet
-              </button>
-              <button
-                onClick={() => setShowRejectModal(false)}
-                className="cancel-button"
-              >
-                Annuler
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+                {!registration.in_free_zone &&
+                  registration.register_number &&
+                  registration.register_number !== 'null' && (
+                    <Box mt={1} fontStyle="italic">
+                      RCS : <strong>{registration.register_number}</strong>
+                    </Box>
+                  )}
+              </CardContent>
+              <CardActions>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={
+                    <FontAwesomeIcon icon={faEye} style={{ color: '#DCAF26' }} />
+                  }
+                  onClick={() => handleOpenContactsModal(registration)}
+                  style={{ color: '#DCAF26', borderColor: '#DCAF26' }}
+                >
+                  Ouvrir
+                </Button>
+                <IconButton
+                  onClick={(e) => handleActionsMenuOpen(e, registration)}
+                >
+                  <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
+                </IconButton>
+              </CardActions>
+            </Card>
+          </Grid>
+        );
+      })}
+    </Grid>
+  );
+
+  return (
+    <Box sx={{ p: 3 }} className="inscriptions-page-container">
+      {/* Barre d'onglets */}
+      <AppBar position="static" color="default">
+        <Tabs
+          value={tabIndex}
+          onChange={handleTabChange}
+          indicatorColor="secondary"
+          textColor="inherit"
+          variant="fullWidth"
+          aria-label="Inscriptions Tabs"
+          sx={{
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#DCAF26',
+            },
+            '& .MuiTab-root.Mui-selected': {
+              color: '#DCAF26',
+            },
+          }}
+        >
+          <Tab
+            label={`Inscriptions à valider (${custAccounts.length})`}
+            {...a11yProps(0)}
+          />
+        </Tabs>
+      </AppBar>
+
+      {/* Panel pour l'onglet "Inscriptions à valider" */}
+      <TabPanel value={tabIndex} index={0}>
+        {/* Barre de recherche */}
+        <Box mb={2} display="flex" alignItems="center" gap={2}>
+          <Typography>Rechercher :</Typography>
+          <TextField
+            id="searchInput"
+            variant="outlined"
+            placeholder="Tapez un mot-clé ou un chiffre..."
+            size="small"
+            value={searchTerm}
+            onChange={handleSearch}
+            style={{ maxWidth: '300px' }}
+          />
+        </Box>
+
+        {isSmallScreen ? renderCardView() : renderTableView()}
+      </TabPanel>
+
+      {/* Dialog pour fiche de contacts */}
+      <Dialog
+        open={showContactModal && !!selectedAccount}
+        onClose={handleCloseContactsModal}
+        fullWidth
+        maxWidth="lg"
+      >
+        <DialogTitle>
+          LISTING DES CONTACTS DE LA SOCIÉTÉ "{selectedAccount?.cust_name}"
+        </DialogTitle>
+        <DialogContent>
+          {selectedAccount?.main_contact && selectedAccount.main_contact.length > 0 ? (
+            <TableContainer component={Paper}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Nom</TableCell>
+                    <TableCell>Fonction</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Tél</TableCell>
+                    <TableCell>Portable</TableCell>
+                    <TableCell>Statut</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {selectedAccount.main_contact.map((c) => (
+                    <TableRow key={c.id_cust_user}>
+                      <TableCell>{c.full_name || 'N/A'}</TableCell>
+                      <TableCell>{c.position || 'N/A'}</TableCell>
+                      <TableCell>{c.email || 'N/A'}</TableCell>
+                      <TableCell>{c.phone_number || 'N/A'}</TableCell>
+                      <TableCell>{c.mobile_number || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Checkbox checked={c.ismain_user} readOnly size="small" />
+                          <Typography variant="body2">Contact principal</Typography>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography>Aucun contact principal trouvé</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseContactsModal} variant="outlined">
+            Fermer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog pour le rejet */}
+      <Dialog
+        open={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        fullWidth
+      >
+        <DialogTitle>Raison du rejet</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            multiline
+            minRows={3}
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+            placeholder="Entrez la raison du rejet..."
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={submitRejection} variant="contained" color="error">
+            Confirmer le rejet
+          </Button>
+          <Button onClick={() => setShowRejectModal(false)} variant="outlined">
+            Annuler
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Menu déroulant Actions */}
+      <Menu
+        anchorEl={anchorElActions}
+        open={Boolean(anchorElActions)}
+        onClose={handleActionsMenuClose}
+      >
+        <MenuItem
+          onClick={() => {
+            handleValidate(selectedForActions.id_cust_account);
+            handleActionsMenuClose();
+          }}
+        >
+          Valider
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleReject(selectedForActions.id_cust_account);
+            handleActionsMenuClose();
+          }}
+        >
+          Rejeter
+        </MenuItem>
+      </Menu>
+    </Box>
   );
 };
 

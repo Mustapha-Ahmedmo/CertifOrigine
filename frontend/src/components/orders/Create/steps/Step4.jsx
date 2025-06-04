@@ -1,152 +1,207 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { getFilesRepoTypeofInfo, setOrderFiles } from '../../../../services/apiServices';
+import Slide from '@mui/material/Slide';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Alert from '@mui/material/Alert';
+import { styled } from '@mui/material/styles';
+import IconButton from '@mui/material/IconButton';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUpload, faTimes } from '@fortawesome/free-solid-svg-icons';
+
+// Définition de l'input caché
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
+
+const customButtonStyle = {
+  backgroundColor: '#DDAF26',
+  '&:hover': { backgroundColor: '#DDAF26' },
+};
 
 const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
-  // Liste des pièces justificatives disponibles
-  const fakeJustificativePieces = [
-    'Certificat sanitaire',
-    'Agrément d’exploitation',
-    'Bill of loading',
-    'Airway Bill',
-    'Facture fournisseur',
-    'Patente industrie',
-    'Autre',
-  ];
+  const params = new URLSearchParams(window.location.search);
+  const certifId = params.get('certifId');
+  const orderId = values.orderId;
 
+  const user = useSelector((state) => state.auth.user);
+  const idloginInsert = user?.id_login_user;
+
+  const [copies, setCopies] = useState(values.copies || 1);
+  const [generalRemark, setGeneralRemark] = useState(values.generalRemark || '');
+  const [Uploads, setUploads] = useState({}); // { fileTypeId: [File, ...], ... }
+  const [FileTypes, setFileTypes] = useState([]);
+  const [errorMessage, setErrorMessage] = useState('');
   const [selectedJustificative, setSelectedJustificative] = useState('');
-  const [justificativeRemarks, setJustificativeRemarks] = useState('');
-  const [documents, setDocuments] = useState(values.documents || []);
-  const [selectedFile, setSelectedFile] = useState(null);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    (async () => {
+      try {
+        const resp = await getFilesRepoTypeofInfo({
+          p_id_files_repo_typeof_first: 500,
+          p_id_files_repo_typeof_last: 649,
+          p_ismandatory: null,
+        });
+        setFileTypes(resp.data);
+      } catch {
+        setErrorMessage("Erreur lors de la récupération des types de fichiers.");
+      }
+    })();
+  }, []);
 
-    if (selectedJustificative) {
-      const newDocument = {
-        type: 'justificative',
-        name: selectedJustificative,
-        remarks: justificativeRemarks,
-        file: selectedFile,
-      };
-
-      const updatedDocuments = [...documents, newDocument];
-
-      // Mettre à jour l'état local
-      setDocuments(updatedDocuments);
-
-      // Mettre à jour les valeurs globales
-      handleChange('documents', updatedDocuments);
-    } else {
-      // Si aucun document n'est sélectionné, transmettre l'état actuel
-      handleChange('documents', documents);
+  const handleFileChange = (fileTypeId, e) => {
+    if (!fileTypeId) {
+      alert("Veuillez sélectionner une pièce.");
+      return;
     }
-
-    // Passer à l'étape suivante
-    nextStep();
+    const files = Array.from(e.target.files);
+    setUploads(prev => ({
+      ...prev,
+      [fileTypeId]: prev[fileTypeId] ? [...prev[fileTypeId], ...files] : files,
+    }));
   };
 
-  const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
+  const handleRemoveFile = (fileTypeId, index) => {
+    setUploads(prev => {
+      const updated = [...(prev[fileTypeId]||[])];
+      updated.splice(index, 1);
+      const next = { ...prev };
+      if (updated.length) next[fileTypeId] = updated;
+      else delete next[fileTypeId];
+      return next;
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const totalFiles = Object.values(Uploads).flat().length;
+    if (totalFiles === 0) {
+      alert("Vous devez uploader au moins un document.");
+      return;
+    }
+    const allDocs = [];
+    Object.entries(Uploads).forEach(([typeId, files]) => {
+      const ft = FileTypes.find(f => f.id_files_repo_typeof === +typeId);
+      files.forEach(file => {
+        allDocs.push({ fileTypeId: +typeId, fileTypeDescription: ft.txt_description_fr, file });
+      });
+    });
+
+    try {
+      for (const doc of allDocs) {
+        await setOrderFiles({
+          uploadType: 'commandes',
+          p_id_order: orderId,
+          p_idfiles_repo_typeof: doc.fileTypeId,
+          p_file_origin_name: doc.file.name,
+          p_typeof_order: 1,
+          p_idlogin_insert: idloginInsert,
+          file: doc.file,
+        });
+      }
+      handleChange('documents', allDocs);
+      handleChange('copies', copies);
+      handleChange('generalRemark', generalRemark);
+      if (certifId) handleChange('certifId', certifId);
+      if (orderId) handleChange('orderId', orderId);
+      nextStep();
+    } catch {
+      alert("Erreur lors de l'upload des fichiers. Veuillez réessayer.");
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="step-form">
-      <h3>Étape 2: Pièces justificatives</h3>
+      <Slide in mountOnEnter unmountOnExit timeout={300}>
+        <Box sx={{ p: 2 }}>
+          <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
+            Upload de documents
+          </Typography>
+          {errorMessage && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {errorMessage}
+            </Alert>
+          )}
 
-      {/* Section pour les pièces justificatives */}
-      <div className="form-inline-group">
-        <label>Choisir une pièce justificative</label>
-        <select
-          value={selectedJustificative}
-          onChange={(e) => setSelectedJustificative(e.target.value)}
-        >
-          <option value="">-- Sélectionnez une pièce --</option>
-          {fakeJustificativePieces.map((piece, index) => (
-            <option key={index} value={piece}>
-              {piece}
-            </option>
-          ))}
-        </select>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
+              Documents
+            </Typography>
+            <select
+              value={selectedJustificative}
+              onChange={e => setSelectedJustificative(e.target.value)}
+            >
+              <option value="">-- Sélectionnez une pièce --</option>
+              {FileTypes.map(ft => (
+                <option key={ft.id_files_repo_typeof} value={ft.id_files_repo_typeof}>
+                  {ft.txt_description_fr}
+                </option>
+              ))}
+            </select>
+            <Button
+              component="label"
+              variant="contained"
+              startIcon={<FontAwesomeIcon icon={faUpload} />}
+              sx={{ ml: 2, ...customButtonStyle }}
+            >
+              Choisir fichier
+              <VisuallyHiddenInput
+                type="file"
+                multiple
+                onChange={e => handleFileChange(selectedJustificative, e)}
+              />
+            </Button>
 
-        {/* Bouton "Choisir le fichier" */}
-        <label htmlFor="file-upload" className="upload-button">
-          Choisir le fichier
-        </label>
-        <input
-          id="file-upload"
-          type="file"
-          onChange={handleFileChange}
-          className="file-input"
-        />
-      </div>
+            {/* Liste des fichiers sélectionnés, avec bouton Supprimer */}
+            <Box sx={{ mt: 2 }}>
+              {Object.entries(Uploads).map(([typeId, files]) => {
+                const desc = FileTypes.find(f => f.id_files_repo_typeof === +typeId)?.txt_description_fr;
+                return (
+                  <Box key={typeId} sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2">{desc}</Typography>
+                    {files.map((file, idx) => (
+                      <Box
+                        key={idx}
+                        sx={{ display: 'flex', alignItems: 'center', mt: 1 }}
+                      >
+                        <Typography variant="body2" sx={{ flexGrow: 1 }}>
+                          {file.name}
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleRemoveFile(typeId, idx)}
+                        >
+                          <FontAwesomeIcon icon={faTimes} />
+                        </IconButton>
+                      </Box>
+                    ))}
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
 
-      {/* Afficher le nom du fichier sélectionné */}
-      {selectedFile && <p>Fichier sélectionné : {selectedFile.name}</p>}
-
-      <div className="form-group">
-        <label>Remarques</label>
-        <textarea
-          value={justificativeRemarks}
-          onChange={(e) => setJustificativeRemarks(e.target.value)}
-          placeholder="Ajouter des remarques"
-        />
-      </div>
-
-      <div className="step-actions">
-        <button type="button" onClick={prevStep}>
-          Retour
-        </button>
-        <button type="submit" className="next-button">
-          Suivant
-        </button>
-      </div>
-
-      {/* Styles en ligne */}
-      <style jsx>{`
-        .form-inline-group {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 15px;
-        }
-        .form-inline-group select {
-          flex-grow: 1;
-          padding: 5px;
-        }
-        .upload-button {
-          padding: 5px 10px;
-          font-size: 0.875rem;
-          background-color: white;
-          color: black;
-          border: 1px solid #ced4da;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: background-color 0.3s ease;
-        }
-        .upload-button:hover {
-          background-color: #e9ecef;
-        }
-        .file-input {
-          display: none;
-        }
-        .form-group {
-          margin-bottom: 20px;
-        }
-        .step-actions {
-          display: flex;
-          justify-content: space-between;
-        }
-        .next-button {
-          background-color: #28a745;
-          color: white;
-          padding: 8px 12px;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-        .next-button:hover {
-          background-color: #218838;
-        }
-      `}</style>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+            <Button variant="outlined" onClick={prevStep}>
+              Retour
+            </Button>
+            <Button variant="contained" type="submit" sx={customButtonStyle}>
+              Suivant
+            </Button>
+          </Box>
+        </Box>
+      </Slide>
     </form>
   );
 };

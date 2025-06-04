@@ -1,15 +1,17 @@
 .contact-us-container {
+  max-width: 1200px;       /* Limite la largeur totale à 1200px (ajustable) */
+  margin: 0 auto;          /* Centre le conteneur horizontalement */
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 2rem;
+  gap: 2rem;               /* Espace entre les éléments à l'intérieur */
   padding: 2rem;
-  background-color: #f9f9f9;
   min-height: 100vh;
   font-family: 'Montserrat', sans-serif;
   position: relative;
-  flex-wrap: wrap; /* Permet aux éléments de passer à la ligne en mobile */
+  flex-wrap: wrap;         /* Permet aux éléments de passer à la ligne en mobile */
 }
+
 
 /* Section texte à gauche */
 .contact-us-text {
@@ -86,9 +88,7 @@ button.send-message-btn:hover {
 
 /* Section responsable produit */
 .responsable-section {
-  position: absolute;
-  bottom: 2rem;
-  left: 2rem;
+  margin-top: 1rem; /* Espace au-dessus pour séparer du paragraphe */
   color: #C39408; /* Police en orange */
   font-size: 0.9rem;
   line-height: 1.5;
@@ -123,6 +123,34 @@ button.send-message-btn:hover {
   text-decoration: underline;
 }
 
+.back-to-login-container {
+  position: absolute;
+  bottom: 2rem;
+  left: 2rem;
+  color: #C39408; /* match your theme color */
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.back-to-login-container a {
+  color: #C39408;
+  text-decoration: none;
+}
+
+.back-to-login-container a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive: for small screens, position it statically and center or left as you wish */
+@media (max-width: 768px) {
+  .back-to-login-container {
+    position: static;
+    margin-top: 1rem;
+    text-align: center; /* or left, depending on your preference */
+  }
+}
+
+
 /* ----------------------------------------------------------------- */
 /* ----------------------- Media Queries --------------------------- */
 /* ----------------------------------------------------------------- */
@@ -156,7 +184,7 @@ button.send-message-btn:hover {
     flex-direction: column; /* Champs en colonne */
   }
 
-  /* RESPONSABLE : position absolue supprimée en mobile */
+  /* RESPONSABLE : en mobile, on passe à une position statique */
   .responsable-section {
     position: static;
     margin-top: 1rem;

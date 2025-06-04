@@ -1,7 +1,66 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import './ContactUs.css';
+import { sendContactForm } from '../services/apiServices';
 
 const ContactUs = () => {
+
+  const location = useLocation();
+  const isInDashboard = location.pathname.startsWith('/dashboard');
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    companyName: '',
+    message: '',
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccessMessage('');
+   
+    try {
+      // Transform formData to match backend requirements
+      const transformedData = {
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
+        email: formData.email,
+        subject: formData.companyName || 'Nouveau message de contact',
+        message: formData.message,
+      };
+  
+      // Validate required fields
+      if (!transformedData.name || !transformedData.email || !transformedData.subject || !transformedData.message) {
+        throw new Error('Tous les champs sont obligatoires : nom, email, sujet et message.');
+      }
+  
+      // Send the data
+      const response = await sendContactForm(transformedData);
+  
+      if (response.message) {
+        setSuccessMessage(response.message || 'Votre message a été envoyé avec succès.');
+      }
+    } catch (err) {
+      setError(err.message || 'Une erreur est survenue lors de l\'envoi du message.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="contact-us-container">
       {/* Section texte à gauche */}
@@ -9,41 +68,92 @@ const ContactUs = () => {
         <h1>Contactez-nous</h1>
         <p>
           Cette prestation s’adresse aux entreprises locales et de zones franches opérant
-          légalement à Djibouti et impliquées dans des opérations d’import-export. <br /><br />
+          légalement à Djibouti et impliquées dans des opérations d’import-export.
+          <br /><br />
           Pour plus d’informations sur les conditions de délivrances ou de légalisation ainsi
           que les tarifs, prière de contacter :
         </p>
+
+        {/* Bloc du responsable produit */}
+        <div className="responsable-section">
+          <p><strong>Le responsable produit :</strong></p>
+          <p><strong>Nom :</strong> Mme Fathia Hassan Ali</p>
+          <p><strong>Téléphone :</strong> 21 35 10 70 poste 130</p>
+          <p><strong>E-mail :</strong> <a href="mailto:siee@ccd.dj">siee@ccd.dj</a></p>
+        </div>
       </div>
 
       {/* Formulaire à droite */}
       <div className="contact-us-form">
-        <form>
+        <form onSubmit={handleSubmit}>
           <div className="form-row">
-            <input type="text" placeholder="First name" required />
-            <input type="text" placeholder="Last name" required />
+            <input
+              type="text"
+              placeholder="Prénom"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+            />
+            <input
+              type="text"
+              placeholder="Nom"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              required
+            />
           </div>
-          <input type="email" placeholder="Email address" required />
-          <input type="text" placeholder="Company name" />
-          <textarea placeholder="Message" rows="5" required></textarea>
-          <button type="submit" className="send-message-btn">Send Message</button>
+          <input
+            type="email"
+            placeholder="Adresse e-mail"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+          <input
+            type="text"
+            placeholder="Nom de l'entreprise"
+            name="companyName"
+            value={formData.companyName}
+            onChange={handleChange}
+          />
+          <textarea
+            placeholder="Message"
+            name="message"
+            rows="5"
+            value={formData.message}
+            onChange={handleChange}
+            required
+          ></textarea>
+          <button type="submit" className="send-message-btn" disabled={loading}>
+            {loading ? 'Envoi en cours...' : 'Envoyer'}
+          </button>
+
+          {/* Messages de succès ou d'erreur */}
+          {successMessage && <p className="success-message">{successMessage}</p>}
+          {error && <p className="error-message">{error}</p>}
         </form>
       </div>
 
-      {/* Section du responsable produit */}
-      <div className="responsable-section">
-        <p><strong>Le responsable produit :</strong></p>
-        <p><strong>Nom :</strong> Mme Fathia Hassan Ali</p>
-        <p><strong>Téléphone :</strong> 21 35 10 70 poste 130</p>
-        <p><strong>E-mail :</strong> <a href="mailto:siee@ccd.dj">siee@ccd.dj</a></p>
-      </div>
+    
 
-      {/* Nouveau bloc en bas à droite */}
-      <div className="footer-info">
-        <p>
-          Chambre de Commerce de Djibouti . Place Djibouti .
-          Tel : +253-21351070 . Email : <a href="mailto:ccd@ccd.dj">ccd@ccd.dj</a>
-        </p>
-      </div>
+      {/* footer-info + back-to-login uniquement quand on n’est PAS dans /dashboard */}
+      {!isInDashboard && (
+        <>
+          <div className="footer-info">
+            <p>
+              Chambre de Commerce de Djibouti . Place Djibouti .
+              Tel : +253-21351070 . Email : <a href="mailto:ccd@ccd.dj">ccd@ccd.dj</a>
+            </p>
+          </div>
+
+          <div className="back-to-login-container">
+            <Link to="/login">Revenir à la page de connexion</Link>
+          </div>
+        </>
+      )}
     </div>
   );
 };

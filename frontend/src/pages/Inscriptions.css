@@ -1,8 +1,10 @@
-.inscriptions-page-container {
-    margin-left: 240px;
-    text-align: center;
+
+  @media (min-width: 960px) {
+    .inscriptions-page-container {
+      margin-left: 240px;
+      text-align: center;
+    }
   }
-  
   .inscriptions-page-container h1 {
     margin-bottom: 35px;
     color: #DCAF26;

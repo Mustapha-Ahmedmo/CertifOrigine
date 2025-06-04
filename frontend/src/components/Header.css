@@ -12,7 +12,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 1000;
+  z-index: 10001;
   overflow: hidden;
 }
 
@@ -26,13 +26,13 @@
 }
 
 /* Logo container */
-.logo-container {
+.header-v2__logo-container {
   display: flex;
   align-items: center;
 }
 
 /* Logo image */
-.logo {
+.header-v2__logo {
   height: 40px;
 }
 

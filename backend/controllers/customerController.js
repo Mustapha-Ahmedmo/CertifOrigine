@@ -1,6 +1,7 @@
 const sequelize = require('../config/db'); // Correctly import sequelize
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const { setMemo } = require('./mailerController');
 const transporter = nodemailer.createTransport({
   host: 'mail.gandi.net',
   port: 587,
@@ -14,6 +15,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const FRONTEND_URL = "http://146.59.239.14"
 
 const sendEmail = async (to, subject, text) => {
   try {
@@ -26,6 +28,20 @@ const sendEmail = async (to, subject, text) => {
     console.log(`Email envoyé à ${to}`);
   } catch (error) {
     console.error(`Erreur lors de l'envoi de l'email à ${to}:`, error);
+  }
+};
+
+const sendHtmlEmail = async (to, subject, htmlContent) => {
+  try {
+    await transporter.sendMail({
+      from: '"Chambre de commerce de Djibouti" <myfolioreport@maesys.fr>',
+      to,
+      subject,
+      html: htmlContent,
+    });
+    console.log(`Email HTML envoyé à ${to}`);
+  } catch (error) {
+    console.error(`Erreur lors de l'envoi de l'email HTML à ${to}:`, error);
   }
 };
 
@@ -110,31 +126,32 @@ const executeSetCustAccount = async (req, res) => {
     });
   }
 };
+
 const executeGetCustUsersByAccount = async (req, res) => {
   try {
     // Extract query parameters. They come in as strings.
     let { custAccountId, statutflag, isactiveCA, isactiveCU, ismain_user } = req.query;
-    
+
     if (!custAccountId) {
       return res.status(400).json({
         message: 'Le paramètre "custAccountId" est requis pour récupérer les utilisateurs du compte client.'
       });
     }
-    
+
     // Convert string "null" to actual null, and convert booleans as needed.
     statutflag = statutflag !== undefined && statutflag !== 'null' ? parseInt(statutflag, 10) : null;
     isactiveCA = (isactiveCA === 'true' || isactiveCA === '1') ? true
-               : (isactiveCA === 'false' || isactiveCA === '0') ? false 
-               : null;
+      : (isactiveCA === 'false' || isactiveCA === '0') ? false
+        : null;
     isactiveCU = (isactiveCU === 'true' || isactiveCU === '1') ? true
-               : (isactiveCU === 'false' || isactiveCU === '0') ? false
-               : null;
+      : (isactiveCU === 'false' || isactiveCU === '0') ? false
+        : null;
     // Convert "null" string to null for p_ismain_user
-    ismain_user = (ismain_user === 'null' || ismain_user === null) 
-               ? null 
-               : ((ismain_user === 'true' || ismain_user === '1') ? true
-               : (ismain_user === 'false' || ismain_user === '0') ? false
-               : null);
+    ismain_user = (ismain_user === 'null' || ismain_user === null)
+      ? null
+      : ((ismain_user === 'true' || ismain_user === '1') ? true
+        : (ismain_user === 'false' || ismain_user === '0') ? false
+          : null);
 
     const replacements = {
       p_id_listCA: custAccountId, // Expecting a string for the CSV list
@@ -252,6 +269,140 @@ const executeSetCustUser = async (req, res) => {
     });
   }
 };
+
+const executeSetCustSmallUser = async (req, res) => {
+  try {
+    const {
+      id_cust_user,
+      id_cust_account,
+      gender,
+      full_name,
+      ismain_user,
+      email,
+      password, // may be empty on update
+      phone_number,
+      mobile_number,
+      idlogin,
+      position,
+    } = req.body;
+
+    console.log('Received set_cust_user data:', req.body);
+
+    const isUpdate = id_cust_user && Number(id_cust_user) !== 0;
+
+    const replacements = {
+      id_cust_user,
+      id_cust_account,
+      gender,
+      full_name,
+      ismain_user,
+      email,
+      phone_number,
+      mobile_number,
+      idlogin,
+      position,
+      password: isUpdate && (!password || password.trim() === '') ? null : password,
+    };
+
+    const result = await sequelize.query(
+      `CALL set_cust_user(
+        :id_cust_user, 
+        :id_cust_account, 
+        :gender, 
+        :full_name, 
+        :ismain_user, 
+        :email, 
+        :password, 
+        :phone_number, 
+        :mobile_number, 
+        :idlogin, 
+        :position
+      )`,
+      {
+        replacements,
+        type: sequelize.QueryTypes.RAW,
+      }
+    );
+
+    console.log('set_cust_user result:', result);
+
+    if (!isUpdate) {
+      // Création d'un compte — générer le token et envoyer le lien
+      const token = crypto.randomUUID();
+      const activationDate = new Date();
+      const deactivationDate = new Date();
+      deactivationDate.setHours(deactivationDate.getHours() + 24);
+
+      await sequelize.query(
+        `CALL add_TokenResetPwd_Settings(
+          :p_token,
+          :p_login,
+          :p_email,
+          :p_activation_date,
+          :p_deactivation,
+          :p_id
+        )`,
+        {
+          replacements: {
+            p_token: token,
+            p_login: email,
+            p_email: email,
+            p_activation_date: activationDate,
+            p_deactivation: deactivationDate,
+            p_id: null,
+          },
+          type: sequelize.QueryTypes.RAW,
+        }
+      );
+
+      const resetLink = `${FRONTEND_URL}/forgot-password?token=${token}`;
+
+      await sendEmail(
+        email,
+        'Réinitialisation de votre mot de passe',
+        `Bonjour ${full_name},
+
+Votre compte a été créé avec succès. Pour sécuriser votre compte, nous vous invitons à réinitialiser votre mot de passe en cliquant sur le lien ci-dessous :
+
+${resetLink}
+
+⚠️ Ce lien expirera dans 24 heures.
+
+Si vous n'avez pas initié cette demande, veuillez contacter notre support immédiatement.
+
+Cordialement,  
+L'équipe`
+      );
+    } else {
+      // Modification d'un compte — notification simple
+      await sendEmail(
+        email,
+        'Modification de votre compte',
+        `Bonjour ${full_name},
+
+Votre compte a été modifié avec succès.  
+Si vous n'avez pas initié cette demande, veuillez contacter le contact principal de votre société.
+
+Cordialement,  
+Chambre de commerce de Djibouti`
+      );
+    }
+
+    res.status(200).json({
+      message: 'Customer user processed successfully',
+      result,
+    });
+  } catch (error) {
+    console.error('Error executing set_cust_user:', error);
+    res.status(500).json({
+      message: 'Error executing set_cust_user',
+      error: error.message || 'Unknown error occurred',
+      details: error.original || error,
+    });
+  }
+};
+
+
 const executeGetCustAccountInfo = async (req, res) => {
   try {
     const { id_list, statutflag, isactive } = req.query;
@@ -260,12 +411,12 @@ const executeGetCustAccountInfo = async (req, res) => {
 
     // Execute the get_custaccount_info function to retrieve customer accounts
     const accounts = await sequelize.query(
-      `SELECT * FROM get_custaccount_info(:id_list, :statutflag, :isactive)`,
+      `SELECT * FROM get_custaccount_info(:p_id_list, :p_statutflag, :p_isactive)`,
       {
         replacements: {
-          id_list: id_list || null,
-          statutflag: statutflag !== undefined ? parseInt(statutflag, 10) : null,
-          isactive: isactive !== undefined ? (isactive === 'true' || isactive === '1') : null,
+          p_id_list: id_list || null,
+          p_statutflag: statutflag !== undefined ? parseInt(statutflag, 10) : null,
+          p_isactive: isactive !== undefined ? (isactive === 'true' || isactive === '1') : null,
         },
         type: sequelize.QueryTypes.SELECT,
       }
@@ -360,9 +511,13 @@ const executeGetCustAccountInfo = async (req, res) => {
     console.log('get_cust_account_files result:', files);
 
     // Create mappings for main contacts and files
+    // Create mapping of id_cust_account to an array of main contacts
     const contactMap = {};
     mainContacts.forEach(contact => {
-      contactMap[contact.id_cust_account] = contact;
+      if (!contactMap[contact.id_cust_account]) {
+        contactMap[contact.id_cust_account] = [];
+      }
+      contactMap[contact.id_cust_account].push(contact);
     });
 
     const fileMap = {};
@@ -400,6 +555,7 @@ const executeGetCustAccountInfo = async (req, res) => {
     });
   }
 };
+
 const updateCustAccountStatus = async (req, res) => {
   try {
     const { id } = req.params; // ID du compte client à mettre à jour
@@ -498,6 +654,7 @@ Bien cordialement,
     });
   }
 };
+
 const rejectCustAccount = async (req, res) => {
   try {
     const { id } = req.params; // ID of the customer account to reject
@@ -556,18 +713,23 @@ const rejectCustAccount = async (req, res) => {
     if (mainContact.length > 0) {
       const { email, full_name } = mainContact[0];
 
+      const htmlContent = `
+      <p>Bonjour,</p>
+      <p>Votre compte a été rejeté par un opérateur.<br />
+      Raison du rejet : <strong>${reason}</strong></p>
+      <p>Prière de vous réinscrire en cliquant 
+      <a href="${FRONTEND_URL}/register" 
+         style="display:inline-block;padding:10px 20px;background-color:#DCAF26;color:white;text-decoration:none;border-radius:5px;">
+         ici
+      </a> 
+      et en prêtant attention au(x) point(s) ci-haut.</p>
+      <p>Chambre de Commerce de Djibouti</p>
+    `;
       // Send an email to notify the rejection
-      await sendEmail(
+      await sendHtmlEmail(
         email,
         'Votre compte a été rejeté',
-        `Bonjour ${full_name},
-
-Votre compte a été rejeté par un opérateur.
-
-Raison du rejet : ${reason}
-
-Cordialement,
-L'équipe.`
+        htmlContent
       );
     }
 
@@ -578,6 +740,209 @@ L'équipe.`
     console.error('Erreur lors du rejet du compte client:', error);
     res.status(500).json({
       message: 'Erreur lors du rejet du compte client.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
+
+const disableCustAccount = async (req, res) => {
+  try {
+    const { id } = req.params; // ID of the customer account to disable
+    const { reason, idlogin } = req.body; // Optional reason and operator ID
+
+    // Validate inputs
+    if (!id) {
+      return res.status(400).json({
+        message: 'ID du compte client requis.',
+      });
+    }
+
+    // Fetch the current details of the customer account
+    const account = await sequelize.query(
+      `SELECT * FROM cust_account WHERE id_cust_account = :id`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (account.length === 0) {
+      return res.status(404).json({
+        message: `Compte client avec ID ${id} non trouvé.`,
+      });
+    }
+
+    // Call the procedure with p_statut_flag = 3 => désactivé
+    await sequelize.query(
+      `CALL upd_cust_account_statut(:p_id_cust_account, :p_statut_flag, :p_idlogin)`,
+      {
+        replacements: {
+          p_id_cust_account: id,
+          p_statut_flag: 3, // 3 => désactivé
+          p_idlogin: idlogin || 1, // Fallback if not provided
+        },
+        type: sequelize.QueryTypes.RAW,
+      }
+    );
+
+    // Fetch the main contact for the account
+    const mainContact = await sequelize.query(
+      `SELECT * FROM cust_user WHERE id_cust_account = :id AND ismain_user = TRUE`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    // Optional: Notify main contact of the disable action
+    if (mainContact.length > 0) {
+      const { email, full_name } = mainContact[0];
+
+      const htmlContent = `
+        <p>Bonjour ${full_name || ''},</p>
+        <p>Votre compte a été désactivé ${reason ? `pour la raison suivante : <strong>${reason}</strong>.` : 'sans motif spécifié.'}</p>
+        <p>Pour toute réclamation ou réactivation, veuillez contacter notre support.</p>
+        <p>Chambre de Commerce de Djibouti</p>
+      `;
+
+      await sendHtmlEmail(
+        email,
+        'Votre compte a été désactivé',
+        htmlContent
+      );
+    }
+
+    const nowISO = new Date().toISOString(); // current date/time in ISO
+    const memoData = {
+      p_id_order: null,                 // or whichever order ID applies (0 if none)
+      p_id_cust_account: id,         // the disabled account
+      p_typeof: 1,   // or any label you prefer
+      p_idlogin_insert: idlogin || 1,
+      p_memo_date: nowISO,           // must be a valid ISO string
+      p_memo_subject: 'Désactivation du compte client',
+      p_memo_body: reason || 'Aucune raison spécifiée.',
+      p_mail_to: mainContact?.[0]?.email || null,
+      p_mail_bcc: null,             // or fill in if you want
+      p_mail_acc: null,             // or fill in if you want
+      p_mail_notifications: null,    // or fill in if you want
+    };
+
+    const memoResult = await setMemo(
+      { body: memoData },            // pass as if it's the Express req
+      { json: () => { }, status: () => ({ json: () => { } }) } // mock res if needed
+    );
+    // You can log or handle it as needed:
+    console.log('Memo created:', memoResult?.newMemoId || memoResult);
+
+
+    res.status(200).json({
+      message: `Compte client avec ID ${id} a été désactivé (statut_flag = 3).`,
+    });
+  } catch (error) {
+    console.error('Erreur lors de la désactivation du compte client:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la désactivation du compte client.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
+
+const reactivateCustAccount = async (req, res) => {
+  try {
+    const { id } = req.params; // ID of the customer account to reactivate
+    const { reason, idlogin } = req.body; // Optional reason and operator ID
+
+    // Validate inputs
+    if (!id) {
+      return res.status(400).json({
+        message: 'ID du compte client requis.',
+      });
+    }
+
+    // Fetch the current details of the customer account
+    const account = await sequelize.query(
+      `SELECT * FROM cust_account WHERE id_cust_account = :id`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (account.length === 0) {
+      return res.status(404).json({
+        message: `Compte client avec ID ${id} non trouvé.`,
+      });
+    }
+
+    // Call the procedure with p_statut_flag = 2 => réactivé
+    await sequelize.query(
+      `CALL upd_cust_account_statut(:p_id_cust_account, :p_statut_flag, :p_idlogin)`,
+      {
+        replacements: {
+          p_id_cust_account: id,
+          p_statut_flag: 2, // 2 => réactivé (ou “validé”)
+          p_idlogin: idlogin || 1, // Fallback if not provided
+        },
+        type: sequelize.QueryTypes.RAW,
+      }
+    );
+
+    // Fetch the main contact for the account
+    const mainContact = await sequelize.query(
+      `SELECT * FROM cust_user WHERE id_cust_account = :id AND ismain_user = TRUE`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    // Optional: Notify main contact of the reactivation
+    if (mainContact.length > 0) {
+      const { email, full_name } = mainContact[0];
+
+      const htmlContent = `
+        <p>Bonjour ${full_name || ''},</p>
+        <p>Votre compte a été réactivé</p>
+        <p>Vous pouvez désormais accéder à nouveau à votre espace client.</p>
+        <p>Chambre de Commerce de Djibouti</p>
+      `;
+
+      await sendHtmlEmail(
+        email,
+        'Votre compte a été réactivé',
+        htmlContent
+      );
+    }
+
+    // Create a memo for the reactivation
+    const nowISO = new Date().toISOString();
+    const memoData = {
+      p_id_order: null,                 // or 0 if none
+      p_id_cust_account: id,
+      p_typeof: 1,                      // distinct from the "disable" type if you prefer
+      p_idlogin_insert: idlogin || 1,
+      p_memo_date: nowISO,
+      p_memo_subject: 'Réactivation du compte client',
+      p_memo_body: 'Aucune raison spécifiée.',
+      p_mail_to: mainContact?.[0]?.email || null,
+      p_mail_bcc: null,
+      p_mail_acc: null,
+      p_mail_notifications: null,
+    };
+
+    const memoResult = await setMemo(
+      { body: memoData },
+      { json: () => { }, status: () => ({ json: () => { } }) }
+    );
+    console.log('Memo created:', memoResult);
+
+    res.status(200).json({
+      message: `Compte client avec ID ${id} a été réactivé (statut_flag = 2).`,
+    });
+  } catch (error) {
+    console.error('Erreur lors de la réactivation du compte client:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la réactivation du compte client.',
       error: error.message || 'Erreur inconnue.',
     });
   }
@@ -742,13 +1107,16 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
       full_name,
       ismain_user,
       email,
-      pwd,
+      pwd, // password (already hashed if needed)
       phone_number,
       mobile_number,
       position,
+      id_country_headoffice,
+      other_legal_form,
+      other_business_type,
     } = req.body;
 
-    // Create a map of required fields and their current values
+    // Create a map of required fields and check for missing ones
     const requiredFields = {
       uploadType,
       legal_form,
@@ -756,7 +1124,6 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
       trade_registration_num,
       in_free_zone,
       identification_number,
-      register_number,
       full_address,
       id_sector,
       id_country,
@@ -774,7 +1141,6 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
       position,
     };
 
-    // Find missing fields
     const missingFields = Object.entries(requiredFields)
       .filter(([key, value]) => value === undefined || value === null || value === '')
       .map(([key]) => key);
@@ -790,82 +1156,101 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
     const transaction = await sequelize.transaction();
 
     try {
-      // Call add_Subscription stored procedure
+      // Call the add_Subscription stored procedure.
+      // The procedure signature is:
+      //   add_Subscription(
+      //     p_legal_form, p_cust_name, p_trade_registration_num, p_in_free_zone, p_identification_number,
+      //     p_register_number, p_full_address, p_id_sector, p_other_sector, p_id_country, p_statut_flag, p_idlogin,
+      //     p_billed_cust_name, p_bill_full_address, p_gender, p_full_name, p_ismain_user, p_email, p_password,
+      //     p_phone_number, p_mobile_number, p_position, p_id_country_headoffice, p_other_legal_form, p_other_business_type,
+      //     INOUT p_id_cust_account
+      //   )
+      // We initialize p_id_cust_account with null.
+
+      let in_free_zone_value = null;
+      if (req.body.in_free_zone === 'true') {
+        in_free_zone_value = true;
+      } else if (req.body.in_free_zone === 'false') {
+        in_free_zone_value = false;
+      }
       const subscriptionResult = await sequelize.query(
         `CALL add_Subscription(
-          :legal_form, 
-          :cust_name, 
-          :trade_registration_num, 
-          :in_free_zone, 
-          :identification_number, 
-          :register_number, 
-          :full_address, 
-          :id_sector, 
-          :other_sector, 
-          :id_country, 
-          :statut_flag, 
-          :idlogin, 
-          :billed_cust_name, 
-          :bill_full_address, 
-          :gender, 
-          :full_name, 
-          :ismain_user, 
-          :email, 
-          :pwd, 
-          :phone_number, 
-          :mobile_number, 
-          :position, 
-          :id_cust_account
+          :p_legal_form, 
+          :p_cust_name, 
+          :p_trade_registration_num, 
+          :p_in_free_zone, 
+          :p_identification_number, 
+          :p_register_number, 
+          :p_full_address, 
+          :p_id_sector, 
+          :p_other_sector, 
+          :p_id_country, 
+          :p_statut_flag, 
+          :p_idlogin, 
+          :p_billed_cust_name, 
+          :p_bill_full_address, 
+          :p_gender, 
+          :p_full_name, 
+          :p_ismain_user, 
+          :p_email, 
+          :p_password, 
+          :p_phone_number, 
+          :p_mobile_number, 
+          :p_position, 
+          :p_id_country_headoffice,  -- <== Now properly included
+          :p_other_legal_form, 
+          :p_other_business_type, 
+          :p_id_cust_account
         )`,
         {
           replacements: {
-            legal_form,
-            cust_name,
-            trade_registration_num,
-            in_free_zone,
-            identification_number,
-            register_number,
-            full_address,
-            id_sector,
-            other_sector: other_sector || null,
-            id_country,
-            statut_flag,
-            idlogin,
-            billed_cust_name,
-            bill_full_address,
-            gender,
-            full_name,
-            ismain_user,
-            email,
-            pwd,
-            phone_number,
-            mobile_number,
-            position,
-            id_cust_account: null, // INOUT parameter; initially null
+            p_legal_form: legal_form,
+            p_cust_name: cust_name,
+            p_trade_registration_num: trade_registration_num,
+            p_in_free_zone: in_free_zone_value,
+            p_identification_number: identification_number,
+            p_register_number: register_number,
+            p_full_address: full_address,
+            p_id_sector: id_sector,
+            p_other_sector: other_sector || null,
+            p_id_country: id_country,
+            p_statut_flag: statut_flag,
+            p_idlogin: idlogin,
+            p_billed_cust_name: billed_cust_name,
+            p_bill_full_address: bill_full_address,
+            p_gender: gender,
+            p_full_name: full_name,
+            p_ismain_user: ismain_user,
+            p_email: email,
+            p_password: pwd,
+            p_phone_number: phone_number,
+            p_mobile_number: mobile_number,
+            p_position: position,
+            p_id_country_headoffice: id_country_headoffice || null, // <== Ensure it's present
+            p_other_legal_form: other_legal_form || null,
+            p_other_business_type: other_business_type || null,
+            p_id_cust_account: null, // INOUT parameter, initially null
           },
           type: sequelize.QueryTypes.RAW,
           transaction,
         }
       );
 
-      // Assuming the stored procedure returns the new id_cust_account
-      const newAccountId =
-        subscriptionResult[0][0].p_id_cust_account;
-
+      // Attempt to extract the new customer account ID from the procedure result.
+      // Note: Due to INOUT parameter handling, Sequelize may not return the updated value.
+      // You might need to perform an additional query or use a wrapper function.
+      const newAccountId = subscriptionResult?.[0]?.[0]?.p_id_cust_account;
       if (!newAccountId) {
         throw new Error('Failed to retrieve id_cust_account from add_Subscription.');
       }
 
-      // Handle file uploads
+      // Process file uploads if provided
       if (req.files) {
         const files = req.files;
-
-        // Determine which files to process based on uploadType and company type
         const fileMappings = [];
 
         if (uploadType === 'inscriptions') {
           if (in_free_zone === 'true' || in_free_zone === true) {
-            // Process licenseFile
             if (files.licenseFile && files.licenseFile.length > 0) {
               console.log('Processing licenseFile:', files.licenseFile);
               fileMappings.push({
@@ -877,22 +1262,20 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
               console.warn('No licenseFile found for inscriptions in free zone.');
             }
           } else {
-            // Process patenteFile and rchFile
             if (files.patenteFile && files.patenteFile.length > 0) {
               console.log('Processing patenteFile:', files.patenteFile);
               fileMappings.push({
-                type: 'inscriptions', // Or another appropriate type
+                type: 'inscriptions', // Or appropriate type
                 idfiles_repo_typeof: 50, // Numéro Identification Fiscale (NIF)
                 file: files.patenteFile[0],
               });
             } else {
               console.warn('No patenteFile found for inscriptions not in free zone.');
             }
-
             if (files.rchFile && files.rchFile.length > 0) {
               console.log('Processing rchFile:', files.rchFile);
               fileMappings.push({
-                type: 'inscriptions', // Or another appropriate type
+                type: 'inscriptions', // Or appropriate type
                 idfiles_repo_typeof: 51, // Numéro Immatriculation RCS
                 file: files.rchFile[0],
               });
@@ -902,22 +1285,15 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
           }
         }
 
-
         console.log('File mappings to process:', fileMappings);
 
-        // Iterate over the file mappings and call the stored procedure for each file
         for (const mapping of fileMappings) {
           const { idfiles_repo_typeof, file } = mapping;
-
           if (!idfiles_repo_typeof || !file) {
             console.warn('Skipping file due to missing type or file:', mapping);
-            continue; // Skip if type or file is missing
+            continue;
           }
-
           console.log(`Uploading file: ${file.originalname}, Type: ${idfiles_repo_typeof}`);
-
-
-          // Call set_cust_account_files stored procedure
           try {
             await sequelize.query(
               `CALL set_cust_account_files(
@@ -956,11 +1332,29 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
       await transaction.commit();
       console.log('Transaction committed successfully.');
 
+      const now = new Date();
+      const formattedDate = now.toLocaleString('fr-FR', {
+        day:   '2-digit',
+        month: '2-digit',
+        year:  'numeric',
+        hour:   '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      
       // Send confirmation email
       await sendEmail(
         email,
-        'Votre compte est en attente de validation',
-        `Bonjour ${full_name},\n\nVotre compte est en attente de validation par un opérateur.\n\nCordialement,\nL'équipe.`
+        'Confirmation de votre demande d’inscription',
+        `Bonjour ${full_name},\n\n` +
+        `Nous avons bien reçu votre demande d’inscription du ${formattedDate}.\n` +
+        `Vous recevrez un autre email lorsque votre compte sera validé par un de nos opérateurs.\n\n` +
+        `En attendant, retrouvez toutes nos informations en cliquant sur le lien ci-dessous :\n` +
+        `https://portal.ccd.dj\n\n` +
+        `⚠️ Si vous n'êtes pas à l'origine de cette demande, nous vous invitons à nous signaler immédiatement cet e-mail à l'adresse : abuse@ccd.dj.\n\n` +
+        `Nous restons à votre disposition pour toute question.\n\n` +
+        `Bien cordialement,\n` +
+        `L'équipe du portail de la Chambre de Commerce de Djibouti`
       );
 
       res.status(201).json({
@@ -980,6 +1374,44 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
     });
   }
 };
+
+const addCustAccountFile = async (req, res) => {
+  try {
+    // 1. Validation des champs requis
+    if (!req.file || !req.body.id_cust_account || 
+        !req.body.idfiles_repo_typeof || !req.body.idlogin) {
+      return res.status(400).json({ error: 'Fichier ou champ requis manquant.' });
+    }
+
+    // 2. Récupération des données nécessaires
+    const idCustAccount = req.body.id_cust_account;
+    const idRepoType = req.body.idfiles_repo_typeof;
+    const idLogin = req.body.idlogin;
+    const fileOriginName = req.file.originalname;    // nom d'origine du fichier
+    const fileGuid = req.file.filename;              // nom généré par multer
+    const filePath = req.file.path;                  // chemin complet sur le serveur
+
+    // 3. Appel de la procédure stockée via Sequelize (MySQL)
+    const sql = 'CALL set_cust_account_files(?, ?, ?, ?, ?, ?, ?)';
+    const replacements = [
+      idCustAccount,
+      idRepoType,
+      fileOriginName,
+      fileGuid,
+      filePath,
+      idLogin,
+      0  // dernier paramètre fixé à 0
+    ];
+    await sequelize.query(sql, { replacements }); 
+
+    // 4. Envoi de la réponse de succès
+    res.json({ message: 'Fichier uploadé et enregistré avec succès.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Échec lors de l’upload du fichier.' });
+  }
+}
+
 
 const executeGetCustAccountFiles = async (req, res) => {
   try {
@@ -1076,7 +1508,7 @@ const requestPasswordReset = async (req, res) => {
     );
 
     // Send reset email
-    const resetLink = `http://146.59.239.14/forgot-password?token=${token}`;
+    const resetLink = `${FRONTEND_URL}/forgot-password?token=${token}`;
     await sendEmail(
       email,
       'Réinitialisation de mot de passe',
@@ -1205,36 +1637,276 @@ L'équipe de la Chambre de Commerce de Djibouti`
     });
   }
 };
-
 const executeDeleteCustUser = async (req, res) => {
   try {
     const { id } = req.params; // id_cust_user to be deactivated
 
-    if (!id) {
+    if (!id || isNaN(parseInt(id))) {
       return res.status(400).json({
-        message: 'L’ID du contact est requis pour la désactivation.'
+        message: "L’ID du contact est requis et doit être un entier valide."
       });
     }
 
+    // Appel de la procédure stockée
     await sequelize.query(
-      `UPDATE cust_user
-       SET DEACTIVATION_DATE = CURRENT_TIMESTAMP
-       WHERE ID_CUST_USER = :id`,
+      `CALL disable_cust_user(:id)`,
       {
-        replacements: { id },
-        type: sequelize.QueryTypes.UPDATE,
+        replacements: { id: parseInt(id) },
+        type: sequelize.QueryTypes.RAW
       }
     );
 
-
     res.status(200).json({
-      message: `Contact (ID: ${id}) désactivé avec succès.`
+      message: `Contact (ID: ${id}) désactivé avec succès via la procédure.`
     });
   } catch (error) {
-    console.error('Erreur lors de la désactivation du contact:', error);
+    console.error("Erreur lors de l'appel à la procédure disable_cust_user:", error);
     res.status(500).json({
-      message: 'Erreur lors de la désactivation du contact.',
+      message: "Erreur lors de la désactivation du contact via la procédure.",
       error: error.message || 'Erreur inconnue.'
+    });
+  }
+};
+
+const handleContactForm = async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({
+        message: 'Tous les champs sont obligatoires : nom, email, sujet et message.',
+      });
+    }
+
+    // Email content for the company
+    const companyEmailText = `
+Nouveau message de contact:
+      
+Nom: ${name}
+Email: ${email}
+Sujet: ${subject}
+      
+Message:
+${message}
+`;
+
+    // Send email to company
+    await sendEmail(
+      email,// 'contact@ccd.dj', // Your company email
+      `[Contact] ${subject}`,
+      companyEmailText
+    );
+
+    // Confirmation email to user
+    const userEmailText = `
+Bonjour ${name},
+
+Nous avons bien reçu votre message et vous remercions de nous avoir contactés.
+
+Nous traitons votre demande et vous répondrons dans les plus brefs délais.
+
+Cordialement,
+L'équipe de la Chambre de Commerce de Djibouti
+`;
+
+    await sendEmail(
+      email,
+      'Confirmation de réception de votre message',
+      userEmailText
+    );
+
+    res.status(200).json({
+      message: 'Votre message a été envoyé avec succès.',
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi du formulaire de contact:', error);
+    res.status(500).json({
+      message: 'Une erreur est survenue lors de l\'envoi du message.',
+      error: error.message || 'Erreur inconnue',
+    });
+  }
+};
+
+const executeUpdCustAccount = async (req, res) => {
+  try {
+    const {
+      id_cust_account,
+      legal_form,
+      cust_name,
+      trade_registration_num,
+      in_free_zone,
+      identification_number,
+      register_number,
+      full_address,
+      id_sector,
+      other_sector,
+      id_country,
+      statut_flag,
+      idlogin,
+      billed_cust_name,
+      bill_full_address,
+      id_country_headoffice,
+      other_legal_form,
+      other_business_type,
+    } = req.body;
+
+    if (!id_cust_account) {
+      return res.status(400).json({ message: "L'ID du compte client est requis." });
+    }
+
+    const result = await sequelize.query(
+      `CALL upd_cust_account(
+          :p_id_cust_account,
+          :p_legal_form,
+          :p_cust_name,
+          :p_trade_registration_num,
+          :p_in_free_zone,
+          :p_identification_number,
+          :p_register_number,
+          :p_full_address,
+          :p_id_sector,
+          :p_other_sector,
+          :p_id_country,
+          :p_statut_flag,
+          :p_idlogin,
+          :p_billed_cust_name,
+          :p_bill_full_address,
+          :p_id_country_headoffice,
+          :p_other_legal_form,
+          :p_other_business_type
+       )`,
+      {
+        replacements: {
+          p_id_cust_account: id_cust_account,
+          p_legal_form: legal_form,
+          p_cust_name: cust_name,
+          p_trade_registration_num: trade_registration_num,
+          p_in_free_zone: in_free_zone,
+          p_identification_number: identification_number,
+          p_register_number: register_number,
+          p_full_address: full_address,
+          p_id_sector: id_sector,
+          p_other_sector: other_sector,
+          p_id_country: id_country,
+          p_statut_flag: statut_flag,
+          p_idlogin: idlogin,
+          p_billed_cust_name: billed_cust_name,
+          p_bill_full_address: bill_full_address,
+          p_id_country_headoffice: id_country_headoffice,
+          p_other_legal_form: other_legal_form,
+          p_other_business_type: other_business_type,
+        },
+        type: sequelize.QueryTypes.RAW,
+      }
+    );
+
+    console.log("upd_cust_account result:", result);
+
+    res.status(200).json({
+      message: "Customer account updated successfully",
+      result,
+    });
+  } catch (error) {
+    console.error("Error executing upd_cust_account:", error);
+    res.status(500).json({
+      message: "Error executing upd_cust_account",
+      error: error.message || "Unknown error occurred",
+      details: error.original || error,
+    });
+  }
+};
+
+const executeDelCustAccountFiles = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { mode } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        message: 'L’ID du fichier du compte client est requis.',
+      });
+    }
+
+    // Execute the stored procedure
+    await sequelize.query(
+      `CALL del_cust_account_files(:p_id_cust_account_files, :p_mode)`,
+      {
+        replacements: {
+          p_id_cust_account_files: id,
+          p_mode: mode || 0, // default to 0 if not provided
+        },
+        type: sequelize.QueryTypes.RAW,
+      }
+    );
+
+    res.status(200).json({
+      message: 'Fichier du compte client supprimé avec succès.',
+    });
+  } catch (error) {
+    console.error('Erreur lors de la suppression du fichier du compte client:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la suppression du fichier du compte client.',
+      error: error.message || 'Erreur inconnue.',
+    });
+  }
+};
+
+const executeReactivateCustUser = async (req, res) => {
+  try {
+    const { id } = req.params; // id_cust_user à réactiver
+
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({
+        message: "L’ID du contact est requis et doit être un entier valide."
+      });
+    }
+
+    // Appel de la procédure stockée de réactivation
+    await sequelize.query(
+      `CALL enable_cust_user(:id)`,
+      {
+        replacements: { id: parseInt(id) },
+        type: sequelize.QueryTypes.RAW
+      }
+    );
+
+    res.status(200).json({
+      message: `Contact (ID: ${id}) réactivé avec succès via la procédure.`
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'appel à la procédure enable_cust_user:", error);
+    res.status(500).json({
+      message: "Erreur lors de la réactivation du contact via la procédure.",
+      error: error.message || 'Erreur inconnue.'
+    });
+  }
+};
+
+const sendCustomEmail = async (req, res) => {
+  try {
+    const { to, subject, body, isHtml = false } = req.body;
+
+    if (!to || !subject || !body) {
+      return res.status(400).json({
+        message: 'Les champs "to", "subject" et "body" sont requis.',
+      });
+    }
+
+    if (isHtml) {
+      await sendHtmlEmail(to, subject, body);
+    } else {
+      await sendEmail(to, subject, body);
+    }
+
+    res.status(200).json({
+      message: `Email envoyé à ${to} avec succès.`,
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi de l\'email personnalisé :', error);
+    res.status(500).json({
+      message: 'Erreur lors de l\'envoi de l\'email.',
+      error: error.message || 'Erreur inconnue.',
     });
   }
 };
@@ -1252,5 +1924,14 @@ module.exports = {
   requestPasswordReset,
   executeResetPassword,
   executeGetCustUsersByAccount,
-  executeDeleteCustUser
+  executeDeleteCustUser,
+  handleContactForm,
+  executeSetCustSmallUser,
+  executeUpdCustAccount,
+  executeDelCustAccountFiles,
+  disableCustAccount,
+  reactivateCustAccount,
+  executeReactivateCustUser,
+  sendCustomEmail,
+  addCustAccountFile
 };
