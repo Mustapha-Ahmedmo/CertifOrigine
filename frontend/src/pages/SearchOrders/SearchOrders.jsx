@@ -898,15 +898,32 @@ const SearchOrders = () => {
         <TableCell>De</TableCell>
       </TableRow></TableHead>
       <TableBody>
-        {memoList.map(memo => (
-          <TableRow key={memo.id_memo}>
-            <TableCell>{new Date(memo.memo_date).toLocaleString()}</TableCell>
-            <TableCell>{memo.memo_subject}</TableCell>
-            <TableCell>{memo.memo_body}</TableCell>
-            <TableCell>{memo.cust_user_full_name}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
+  {memoList.map(memo => {
+    // Si l’ID du login qui a posté le mémo est celui de l’opérateur courant,
+    // on affiche un libellé « Opérateur » (ou le nom du user if vous l’avez déjà en Redux)
+    const isOperatorSender = memo.idlogin_insert === operatorId;
+
+    return (
+      <TableRow key={memo.id_memo}>
+        <TableCell>
+          {new Date(memo.memo_date).toLocaleString()}
+        </TableCell>
+        <TableCell>
+          {memo.memo_subject}
+        </TableCell>
+        <TableCell>
+          {memo.memo_body}
+        </TableCell>
+        <TableCell>
+          {isOperatorSender
+            ? "Opérateur" 
+            : memo.cust_user_full_name // le nom du contact
+          }
+        </TableCell>
+      </TableRow>
+    );
+  })}
+</TableBody>
     </Table>
   </DialogContent>
   <DialogActions>
