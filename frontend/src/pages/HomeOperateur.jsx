@@ -245,18 +245,18 @@ const HomeOperateur = () => {
 // Composant OrderTable : affichage en tableau (desktop) et en cartes (mobile)
 // ---------------------------------------------------
 const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
-  
+
   // Récupère operatorId si besoin
   const user = useSelector(state => state.auth.user);
   const operatorId = user?.id_login_user;
 
   // États pour la piste d’audit
-  const [auditOpen, setAuditOpen]             = useState(false);
-  const [auditLogs, setAuditLogs]             = useState([]);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [auditLogs, setAuditLogs] = useState([]);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   // nouveaux états
-  const [memoOpen, setMemoOpen]         = useState(false);
-  const [memoList, setMemoList]         = useState([]);
+  const [memoOpen, setMemoOpen] = useState(false);
+  const [memoList, setMemoList] = useState([]);
 
   // Pagination
   const [page, setPage] = useState(0);
@@ -265,12 +265,12 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
   // pour piloter l’ancrage et l’ordre courant du menu « Actions »
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuOrderId, setMenuOrderId] = useState(null);
-  
+
 
   // États pour la modale de paiement (utilisée en mode "payment")
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
- const theme = useTheme();
+  const theme = useTheme();
   const isMobile = useMediaQuery('(max-width:768px)');
 
   const handleOpenPayment = (order) => {
@@ -303,17 +303,17 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
   const paginatedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleOpenAudit = async (orderId) => {
-       setSelectedOrderId(orderId);
-       try {
-         // getOrderHisto renvoie directement un Array
-         const logs = await getOrderHisto({
-           p_id_list_order: String(orderId),
-         });
-         setAuditLogs(logs);
-         setAuditOpen(true);
-       } catch (err) {
-         console.error('Erreur piste audit :', err);
-       }
+    setSelectedOrderId(orderId);
+    try {
+      // getOrderHisto renvoie directement un Array
+      const logs = await getOrderHisto({
+        p_id_list_order: String(orderId),
+      });
+      setAuditLogs(logs);
+      setAuditOpen(true);
+    } catch (err) {
+      console.error('Erreur piste audit :', err);
+    }
   };
 
   const handleOpenMemo = async (orderId) => {
@@ -338,8 +338,8 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
     setAnchorEl(null);
     setMenuOrderId(null);
   };
-  
-  
+
+
   // -----------------------------
   // Affichage MOBILE : version cartes
   // -----------------------------
@@ -568,7 +568,7 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
                       )}
                     </TableCell>
                     <TableCell align="center">
-                      <IconButton 
+                      <IconButton
                         size="small"
                         onClick={(e) => handleMenuOpen(e, order.id_order)}
                         sx={{ color: '#DCAF26' }}
@@ -724,70 +724,87 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
         order={selectedOrder}
       />
       <Dialog open={auditOpen} onClose={() => setAuditOpen(false)} fullWidth maxWidth="md">
-  <DialogTitle>Piste d’audit – Commande #{selectedOrderId}</DialogTitle>
-  <DialogContent dividers>
-    <Table size="small">
-      <TableHead>
-        <TableRow>
-          <TableCell>Date Action</TableCell>
-          <TableCell>Action</TableCell>
-          <TableCell>Utilisateur</TableCell>
-          <TableCell>Statut</TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {auditLogs.map(log => {
-          const infos = log.insert_isopuser
-            ? 'Opérateur'
-            : (!log.insert_isopuser && log.insert_role_user === 1)
-              ? 'Contact principal'
-              : '';
-          return (
-            <TableRow key={log.id_histo_order}>
-              <TableCell>{new Date(log.insertdate_histo).toLocaleString()}</TableCell>
-              <TableCell>{log.order_histo_action}</TableCell>
-              <TableCell>
-                {log.insert_full_name} {infos && `(${infos})`}
-              </TableCell>
-              <TableCell>{log.txt_order_status_fr}</TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={() => setAuditOpen(false)}>Fermer</Button>
-  </DialogActions>
-</Dialog>
-<Dialog open={memoOpen} onClose={() => setMemoOpen(false)} fullWidth maxWidth="md">
-  <DialogTitle>Mémos – Commande #{selectedOrderId}</DialogTitle>
-  <DialogContent dividers>
-    <Table size="small">
-      <TableHead>
-        <TableRow>
-          <TableCell>Date</TableCell>
-          <TableCell>Sujet</TableCell>
-          <TableCell>Corps</TableCell>
-          <TableCell>De</TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {memoList.map(memo => (
-          <TableRow key={memo.id_memo}>
-            <TableCell>{new Date(memo.memo_date).toLocaleString()}</TableCell>
-            <TableCell>{memo.memo_subject}</TableCell>
-            <TableCell>{memo.memo_body}</TableCell>
-            <TableCell>{memo.cust_user_full_name || memo.cust_user_full_name}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={() => setMemoOpen(false)}>Fermer</Button>
-  </DialogActions>
-</Dialog>
+        <DialogTitle>Piste d’audit – Commande #{selectedOrderId}</DialogTitle>
+        <DialogContent dividers>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Date Action</TableCell>
+                <TableCell>Action</TableCell>
+                <TableCell>Utilisateur</TableCell>
+                <TableCell>Statut</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {auditLogs.map(log => {
+                const infos = log.insert_isopuser
+                  ? 'Opérateur'
+                  : (!log.insert_isopuser && log.insert_role_user === 1)
+                    ? 'Contact principal'
+                    : '';
+                return (
+                  <TableRow key={log.id_histo_order}>
+                    <TableCell>{new Date(log.insertdate_histo).toLocaleString()}</TableCell>
+                    <TableCell>{log.order_histo_action}</TableCell>
+                    <TableCell>
+                      {log.insert_full_name} {infos && `(${infos})`}
+                    </TableCell>
+                    <TableCell>{log.txt_order_status_fr}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAuditOpen(false)}>Fermer</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={memoOpen} onClose={() => setMemoOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle>Mémos – Commande #{selectedOrderId}</DialogTitle>
+        <DialogContent dividers>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Date</TableCell>
+                <TableCell>Sujet</TableCell>
+                <TableCell>Corps</TableCell>
+                <TableCell>De</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {memoList.map(memo => {
+                // Si l’ID du login qui a posté le mémo est celui de l’opérateur courant,
+                // on affiche un libellé « Opérateur » (ou le nom du user if vous l’avez déjà en Redux)
+                const isOperatorSender = memo.idlogin_insert === operatorId;
+
+                return (
+                  <TableRow key={memo.id_memo}>
+                    <TableCell>
+                      {new Date(memo.memo_date).toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      {memo.memo_subject}
+                    </TableCell>
+                    <TableCell>
+                      {memo.memo_body}
+                    </TableCell>
+                    <TableCell>
+                      {isOperatorSender
+                        ? "Opérateur"
+                        : memo.cust_user_full_name // le nom du contact
+                      }
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setMemoOpen(false)}>Fermer</Button>
+        </DialogActions>
+      </Dialog>
 
     </>
   );
