@@ -1647,3 +1647,56 @@ export const getOrderMemo = async (params) => {
   }
   return await resp.json();
 };
+
+export const getOrderAmountByWeek = async (params = {}) => {
+  try {
+    // supprime les clés nulles ou indéfinies
+    const cleaned = {};
+    Object.entries(params).forEach(([k, v]) => {
+      if (v != null && v !== 'null') cleaned[k] = v;
+    });
+    const qs = new URLSearchParams(cleaned).toString();
+    const res = await fetch(`${API_URL}/orders/order-amount-by-week?${qs}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Failed to fetch weekly amounts');
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('API call error (getOrderAmountByWeek):', err);
+    throw err;
+  }
+};
+
+export const getLastClients = async (params = {}, limit = 5) => {
+  try {
+    // Nettoyage des params
+    const cleaned = {};
+    Object.entries(params).forEach(([k, v]) => {
+      if (v != null && v !== 'null') cleaned[k] = v;
+    });
+    const qs = new URLSearchParams({ ...cleaned, limit }).toString();
+
+    const res = await fetch(`${API_URL}/orders/last-clients?${qs}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Failed to fetch last clients');
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('API call error (getLastClients):', err);
+    throw err;
+  }
+};

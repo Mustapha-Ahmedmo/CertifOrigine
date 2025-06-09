@@ -1763,6 +1763,59 @@ const rejectOrder = async (req, res) => {
     });
   }
 };
+
+
+const getOrdCertifAmountByWeek = async (req, res) => {
+  try {
+    let {
+      p_date_start,
+      p_date_end,
+      p_id_list_order,
+      p_id_custaccount,
+      p_unit_ori_certif,
+      p_unit_ori_certif_copy,
+    } = req.query;
+
+    if (!p_date_start || !p_date_end) {
+      return res.status(400).json({ message: 'p_date_start et p_date_end requis.' });
+    }
+
+    p_id_custaccount      = p_id_custaccount ? parseInt(p_id_custaccount, 10) : null;
+    p_unit_ori_certif     = parseFloat(p_unit_ori_certif)     || 0;
+    p_unit_ori_certif_copy= parseFloat(p_unit_ori_certif_copy)|| 0;
+
+    const result = await sequelize.query(
+      `SELECT * FROM get_ord_certif_amount_byWeek(
+           :p_date_start,
+           :p_date_end,
+           :p_id_list_order,
+           :p_id_custaccount,
+           :p_unit_ori_certif,
+           :p_unit_ori_certif_copy
+      )`,
+      {
+        replacements: {
+          p_date_start,
+          p_date_end,
+          p_id_list_order: p_id_list_order || null,
+          p_id_custaccount,
+          p_unit_ori_certif,
+          p_unit_ori_certif_copy,
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    return res.status(200).json({
+      message: 'Montants par semaine récupérés avec succès.',
+      data: result,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erreur serveur.', error: error.message });
+  }
+};
+
 const getOrdCertifAmountByDay = async (req, res) => {
   try {
     let {
@@ -2135,6 +2188,67 @@ const sendOrderDocument = async (req, res) => {
   }
 };
 
+const LAST_CLIENTS_LIMIT = 5;
+
+const getLastClients = async (req, res) => {
+  try {
+    const {
+      p_date_start,
+      p_date_end,
+      p_id_list_order,
+      p_id_custaccount,
+      p_idlogin
+    } = req.query;
+
+    // Validation minimale
+    if (!p_date_start || !p_date_end || !p_id_custaccount || !p_idlogin) {
+      return res.status(400).json({
+        message: 'p_date_start, p_date_end, p_id_custaccount et p_idlogin sont requis.'
+      });
+    }
+
+    // Prépare les remplacements
+    const replacements = {
+      p_date_start:       new Date(p_date_start),
+      p_date_end:         new Date(p_date_end),
+      p_id_list_order:    p_id_list_order || null,
+      p_id_custaccount:   parseInt(p_id_custaccount, 10),
+      p_idlogin:          parseInt(p_idlogin, 10),
+      limit:              LAST_CLIENTS_LIMIT
+    };
+
+    // Appel SQL avec LIMIT
+    const sql = `
+      SELECT *
+      FROM get_PaidOrder_amount(
+        :p_date_start,
+        :p_date_end,
+        :p_id_list_order,
+        :p_id_custaccount,
+        :p_idlogin
+      )
+      ORDER BY amount_ord_certif_ori_paid DESC
+      LIMIT :limit;
+    `;
+
+    const data = await sequelize.query(sql, {
+      replacements,
+      type: QueryTypes.SELECT
+    });
+
+    return res.status(200).json({
+      message: `Top ${replacements.limit} derniers clients récupérés avec succès.`,
+      data
+    });
+  } catch (error) {
+    console.error('Error in getLastClients:', error);
+    return res.status(500).json({
+      message: 'Erreur lors de la récupération des derniers clients.',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   executeAddOrder,
   getTransmodeInfo,
@@ -2172,5 +2286,7 @@ module.exports = {
   sendOrderDocument,
   getOrdCertifAmountByDay,
   getHistoOrder,
-  getMemoOrder
+  getMemoOrder,
+  getOrdCertifAmountByWeek,
+  getLastClients
 };
