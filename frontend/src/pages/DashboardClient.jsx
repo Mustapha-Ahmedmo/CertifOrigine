@@ -77,98 +77,78 @@ function StatCard({ title, value, diff, trend, icon, periodLabel, bgColor, iconC
 }
 function SpendChartCard({ custAccountId, unitCertif, unitCopy }) {
   const theme = useTheme();
-  const weekCategories = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-  const dayCategories = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+  // State for chart
   const [timeframe, setTimeframe] = useState('month');
-  const [series, setSeries] = useState([{ name: 'Paid', data: Array(4).fill(0) }]);
+  const [series, setSeries]       = useState([{ name: 'Paid', data: [] }]);
+  const [categories, setCategories] = useState([]);               // <<< moved dynamic
 
+  // Custom date modal
   const [openCustomModal, setOpenCustomModal] = useState(false);
   const [customStart, setCustomStart] = useState('');
-  const [customEnd, setCustomEnd] = useState('');
-
+  const [customEnd,   setCustomEnd]   = useState('');
 
   useEffect(() => {
     (async () => {
       const now = new Date();
-      let start = new Date();
-      let end = new Date(now);
-
-      // On fixe la borne haute à fin de journée
-      end.setHours(23, 59, 59, 999);
+      let start, end = new Date(now);
+      end.setHours(23,59,59,999);
 
       if (timeframe === 'week') {
-        // 7 derniers jours
-        start = new Date(now);
-        start.setDate(now.getDate() - 6);
-        start.setHours(0, 0, 0, 0);
-      }
-      else if (timeframe === 'month') {
-        // du 1er du mois
-        start = new Date(now.getFullYear(), now.getMonth(), 1);
-        start.setHours(0, 0, 0, 0);
-      }
-      else if (timeframe === 'semester') {
+        start = new Date(now); start.setDate(now.getDate() - 6); start.setHours(0,0,0,0);
+      } else if (timeframe === 'month') {
+        start = new Date(now.getFullYear(), now.getMonth(), 1); start.setHours(0,0,0,0);
+      } else if (timeframe === 'semester') {
         const m = now.getMonth();
-        start = m < 6
-          ? new Date(now.getFullYear(), 0, 1)
-          : new Date(now.getFullYear(), 6, 1);
-        start.setHours(0, 0, 0, 0);
+        start = m < 6 ? new Date(now.getFullYear(), 0, 1) : new Date(now.getFullYear(), 6, 1);
+        start.setHours(0,0,0,0);
+      } else if (timeframe === 'custom') {
+        start = new Date(customStart); start.setHours(0,0,0,0);
+        end   = new Date(customEnd);   end.setHours(23,59,59,999);
+      } else {
+        start = new Date(now.getFullYear(), 0, 1); start.setHours(0,0,0,0);
       }
-      else if (timeframe === 'custom') {
-        start = new Date(customStart);
-        start.setHours(0, 0, 0, 0);
-        end = new Date(customEnd);
-        end.setHours(23, 59, 59, 999);
-      }
-      else {
-        // année en cours
-        start = new Date(now.getFullYear(), 0, 1);
-        start.setHours(0, 0, 0, 0);
-      }
+
+      const p1 = start.toISOString(), p2 = end.toISOString();
 
       try {
         if (timeframe === 'month') {
-          // → utilise l’agrégation par semaine
+          // → nouvelle fonction week
           const resp = await getOrderAmountByWeek({
-            p_date_start: start.toISOString(),
-            p_date_end: end.toISOString(),
-            p_id_custaccount: custAccountId,
-            p_unit_ori_certif: unitCertif,
+            p_date_start:       p1,
+            p_date_end:         p2,
+            p_id_custaccount:   custAccountId,
+            p_unit_ori_certif:  unitCertif,
             p_unit_ori_certif_copy: unitCopy
           });
 
-          // on s’attend à 4 lignes, theWeek de 1 à 4
-          const paid = [0, 0, 0, 0];
-          resp.data.forEach(r => {
-            const w = Math.min(Math.max(parseInt(r.theweek, 10), 1), 4) - 1;
-            paid[w] = parseFloat(r.amount_ord_certif_ori_paid) || 0;
-          });
+          // build X axis from theYearWeek
+          const cats = resp.data.map(r => r.theyearweek.toString());
+          const dataPaid = resp.data.map(r => parseFloat(r.amount_ord_certif_ori_paid) || 0);
 
-          setSeries([{ name: 'Paid', data: paid }]);
-        }
-        else {
-          // → reste en « par jour »
+          setCategories(cats);
+          setSeries([{ name: 'Paid', data: dataPaid }]);
+        } else {
+          // → fonction day
           const resp = await getOrderAmountByDay({
-            p_date_start: start.toISOString(),
-            p_date_end: end.toISOString(),
-            p_id_custaccount: custAccountId,
-            p_unit_ori_certif: unitCertif,
+            p_date_start:       p1,
+            p_date_end:         p2,
+            p_id_custaccount:   custAccountId,
+            p_unit_ori_certif:  unitCertif,
             p_unit_ori_certif_copy: unitCopy
           });
 
-          // agrégation journalière comme avant
-          if (timeframe === 'week' || timeframe === 'custom') {
-            const mapP = { ...dayCategories.reduce((a, d) => (a[d] = 0, a), {}) };
-            resp.data.forEach(r => {
-              const raw = (r.thedayofweek || '').trim();
-              const day = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
-              if (mapP[day] != null) {
-                mapP[day] = parseFloat(r.amount_ord_certif_ori_paid) || 0;
-              }
-            });
-            setSeries([{ name: 'Paid', data: Object.values(mapP) }]);
-          }
+          // daily X axis fixed
+          const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+          const mapP = days.reduce((acc, d) => ({ ...acc, [d]: 0 }), {});
+          resp.data.forEach(r => {
+            const raw = (r.thedayofweek || '').trim();
+            const day = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+            if (mapP[day] != null) mapP[day] = parseFloat(r.amount_ord_certif_ori_paid) || 0;
+          });
+
+          setCategories(days);
+          setSeries([{ name: 'Paid', data: Object.values(mapP) }]);
         }
       } catch (e) {
         console.error(e);
@@ -177,30 +157,29 @@ function SpendChartCard({ custAccountId, unitCertif, unitCopy }) {
   }, [custAccountId, unitCertif, unitCopy, timeframe, customStart, customEnd]);
 
   const options = useMemo(() => ({
-    chart: { background: 'transparent', toolbar: { show: false } },
-    title: {
-      text: 'Montant dépensé',
+    chart:      { background: 'transparent', toolbar: { show: false } },
+    title:      {
+      text:  'Montant dépensé',
       align: 'center',
-      style: { fontSize: '16px', fontWeight: 'normal', color: theme.palette.text.primary }
+      style:{ fontSize:'16px', fontWeight:'normal', color: theme.palette.text.primary }
     },
     dataLabels: { enabled: false },
-    fill: { opacity: 1 },
-    grid: { borderColor: theme.palette.divider, strokeDashArray: 2 },
-    legend: { position: 'top', showForSingleSeries: true },
-    plotOptions: { bar: { columnWidth: '40px' } },
-    stroke: { show: true, width: 2, colors: ['transparent'] },
-    theme: { mode: theme.palette.mode },
-    xaxis: {
-      categories: timeframe === 'month' ? weekCategories : dayCategories,
+    fill:       { opacity: 1 },
+    grid:       { borderColor: theme.palette.divider, strokeDashArray: 2 },
+    legend:     { position: 'top', showForSingleSeries: true },
+    plotOptions:{ bar: { columnWidth: '40px' }},
+    stroke:     { show:true, width:2, colors:['transparent'] },
+    theme:      { mode: theme.palette.mode },
+    xaxis:      {
+      categories,
       axisBorder: { color: theme.palette.divider },
-      axisTicks: { color: theme.palette.divider },
-      labels: { style: { color: theme.palette.text.secondary } }
+      axisTicks:  { color: theme.palette.divider },
+      labels:     { style: { color: theme.palette.text.secondary } }
     },
     yaxis: {
       labels: { formatter: v => v.toLocaleString(), style: { color: theme.palette.text.secondary } }
     }
-  }), [theme, timeframe]);
-
+  }), [theme, categories]);
 
   return (
     <Card>
@@ -213,15 +192,11 @@ function SpendChartCard({ custAccountId, unitCertif, unitCopy }) {
               value={timeframe}
               label="Période"
               onChange={e => {
-                const v = e.target.value;
-                if (v === 'custom') {
-                  setOpenCustomModal(true);
-                } else {
-                  setTimeframe(v);
-                }
+                if (e.target.value === 'custom') setOpenCustomModal(true);
+                else setTimeframe(e.target.value);
               }}
             >
-
+              <MenuItem value="week">Semaine</MenuItem>
               <MenuItem value="month">Mois</MenuItem>
               <MenuItem value="semester">Semestre</MenuItem>
               <MenuItem value="year">Année</MenuItem>
@@ -233,48 +208,39 @@ function SpendChartCard({ custAccountId, unitCertif, unitCopy }) {
       <CardContent>
         <ReactApexChart type="bar" series={series} options={options} width="100%" height={350} />
       </CardContent>
-      <Modal
-        open={openCustomModal}
-        onClose={() => setOpenCustomModal(false)}
-      >
+
+      <Modal open={openCustomModal} onClose={() => setOpenCustomModal(false)}>
         <Box sx={{
-          position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          bgcolor: 'background.paper', p: 4, boxShadow: 24,
-          display: 'flex', flexDirection: 'column', gap: 2, width: 300
+          position:'absolute', top:'50%', left:'50%',
+          transform:'translate(-50%, -50%)', bgcolor:'background.paper',
+          p:4, boxShadow:24, display:'flex', flexDirection:'column', gap:2, width:300
         }}>
           <Typography variant="h6">Choisissez les dates</Typography>
           <TextField
             label="Début"
             type="date"
-            InputLabelProps={{ shrink: true }}
+            InputLabelProps={{ shrink:true }}
             value={customStart}
             onChange={e => setCustomStart(e.target.value)}
           />
           <TextField
             label="Fin"
             type="date"
-            InputLabelProps={{ shrink: true }}
+            InputLabelProps={{ shrink:true }}
             value={customEnd}
             onChange={e => setCustomEnd(e.target.value)}
           />
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+          <Box sx={{ display:'flex', justifyContent:'flex-end', gap:1 }}>
             <Button onClick={() => setOpenCustomModal(false)}>Annuler</Button>
-            <Button
-              variant="contained"
-              onClick={() => {
-                if (customStart && customEnd) {
-                  setTimeframe('custom');
-                  setOpenCustomModal(false);
-                }
-              }}
-            >
-              Valider
-            </Button>
+            <Button variant="contained" onClick={() => {
+              if (customStart && customEnd) {
+                setTimeframe('custom');
+                setOpenCustomModal(false);
+              }
+            }}>Valider</Button>
           </Box>
         </Box>
       </Modal>
-
     </Card>
   );
 }
