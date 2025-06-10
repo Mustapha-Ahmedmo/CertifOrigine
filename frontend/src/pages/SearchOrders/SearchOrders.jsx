@@ -874,17 +874,17 @@ const SearchOrders = () => {
       />
       {/* Dialog Audit */}
 
-<Dialog open={auditOpen} onClose={handleCloseAudit} fullWidth maxWidth="md">
-  <DialogTitle>Piste d’audit – Commande #{auditOrder?.id_order}</DialogTitle>
-  <DialogContent dividers>
-    <Table size="small">
-      <TableHead><TableRow>
-        <TableCell>Date</TableCell>
-        <TableCell>Action</TableCell>
-        <TableCell>Utilisateur</TableCell>
-        <TableCell>Statut</TableCell>
-      </TableRow></TableHead>
-      <TableBody>
+      <Dialog open={auditOpen} onClose={handleCloseAudit} fullWidth maxWidth="md">
+        <DialogTitle>Piste d’audit – Commande #{auditOrder?.id_order}</DialogTitle>
+        <DialogContent dividers>
+          <Table size="small">
+            <TableHead><TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>Action</TableCell>
+              <TableCell>Utilisateur</TableCell>
+              <TableCell>Statut</TableCell>
+            </TableRow></TableHead>
+            <TableBody>
               {auditLogs.map(log => {
                 const infos = log.insert_isopuser
                   ? 'Opérateur'
@@ -903,40 +903,57 @@ const SearchOrders = () => {
                 );
               })}
             </TableBody>
-    </Table>
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={handleCloseAudit}>Fermer</Button>
-  </DialogActions>
-</Dialog>
+          </Table>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseAudit}>Fermer</Button>
+        </DialogActions>
+      </Dialog>
 
-{/* Dialog Mémos */}
-<Dialog open={memoOpen} onClose={handleCloseMemo} fullWidth maxWidth="md">
-  <DialogTitle>Mémos – Commande #{auditOrder?.id_order}</DialogTitle>
-  <DialogContent dividers>
-    <Table size="small">
-      <TableHead><TableRow>
-        <TableCell>Date</TableCell>
-        <TableCell>Sujet</TableCell>
-        <TableCell>Corps</TableCell>
-        <TableCell>De</TableCell>
-      </TableRow></TableHead>
-      <TableBody>
-        {memoList.map(memo => (
-          <TableRow key={memo.id_memo}>
-            <TableCell>{new Date(memo.memo_date).toLocaleString()}</TableCell>
-            <TableCell>{memo.memo_subject}</TableCell>
-            <TableCell>{memo.memo_body}</TableCell>
-            <TableCell>{memo.cust_user_full_name}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={handleCloseMemo}>Fermer</Button>
-  </DialogActions>
-</Dialog>
+      {/* Dialog Mémos */}
+      <Dialog open={memoOpen} onClose={handleCloseMemo} fullWidth maxWidth="md">
+        <DialogTitle>Mémos – Commande #{auditOrder?.id_order}</DialogTitle>
+        <DialogContent dividers>
+          <Table size="small">
+            <TableHead><TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>Sujet</TableCell>
+              <TableCell>Corps</TableCell>
+              <TableCell>De</TableCell>
+            </TableRow></TableHead>
+            <TableBody>
+              {memoList.map(memo => {
+                // Si l’ID du login qui a posté le mémo est celui de l’opérateur courant,
+                // on affiche un libellé « Opérateur » (ou le nom du user if vous l’avez déjà en Redux)
+                const isOperatorSender = memo.idlogin_insert === operatorId;
+
+                return (
+                  <TableRow key={memo.id_memo}>
+                    <TableCell>
+                      {new Date(memo.memo_date).toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      {memo.memo_subject}
+                    </TableCell>
+                    <TableCell>
+                      {memo.memo_body}
+                    </TableCell>
+                    <TableCell>
+                      {isOperatorSender
+                        ? "Opérateur"
+                        : memo.cust_user_full_name // le nom du contact
+                      }
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseMemo}>Fermer</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

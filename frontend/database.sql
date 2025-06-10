@@ -4881,7 +4881,9 @@ CREATE OR REPLACE FUNCTION get_ord_certif_amount_byWeek(
 RETURNS TABLE(
     amount_ord_certif_ori_approved FLOAT,
     amount_ord_certif_ori_paid FLOAT,
-    theWeek  FLOAT
+    theYear  FLOAT,
+    theWeek  FLOAT,
+    theYearMonth  DECIMAL
 ) AS
 $$
 BEGIN
@@ -4907,6 +4909,18 @@ BEGIN
             ELSE 0 END
         ) AS amount_ord_certif_ori_paid,
 
+		date_part('year',
+            CASE WHEN o."id_order_status" = 3/*approved*/
+            THEN
+                o."date_validation"
+            ELSE  
+                o."date_last_return"
+            END   
+		
+		
+		) as theYear,
+
+
 		date_part('week', 
             CASE WHEN o."id_order_status" = 3/*approved*/
             THEN
@@ -4914,7 +4928,28 @@ BEGIN
             ELSE  
                 o."date_last_return"
             END   
-		) AS weekly
+		) AS theWeek,
+
+		CAST(CONCAT(
+			date_part('year',
+				CASE WHEN o."id_order_status" = 3/*approved*/
+				THEN
+					o."date_validation"
+				ELSE  
+					o."date_last_return"
+				END   		
+			)::text, 
+			LPAD(date_part('week', 
+				CASE WHEN o."id_order_status" = 3/*approved*/
+				THEN
+					o."date_validation"
+				ELSE  
+					o."date_last_return"
+				END   
+			)::text, 2, '0') 
+		)  AS DECIMAL ) as theYearWeek
+
+
 
 
 
@@ -4926,7 +4961,7 @@ BEGIN
         (p_id_list_order IS NULL OR o."id_order" = ANY (string_to_array(p_id_list_order, ',')::INT[]))
         AND (p_id_custaccount IS NULL OR o."id_cust_account" = p_id_custaccount)
         AND o."id_order_status"  IN (3/*approved*/,4/*billed*/, 5/*paid*/)
-    GROUP BY weekly;
+    GROUP BY theYear,theWeek,theYearWeek;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -4941,7 +4976,8 @@ $$ LANGUAGE plpgsql;
 
 
 
-DROP FUNCTION IF EXISTS get_PaidOrder_amount;
+
+
 DROP FUNCTION IF EXISTS get_PaidOrder_amount;
 CREATE OR REPLACE FUNCTION get_PaidOrder_amount(
     p_date_start TIMESTAMP,

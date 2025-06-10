@@ -1,6 +1,6 @@
 const express = require('express');
 const upload = require('../src/middleware/upload'); // Use your existing multer middleware
-const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController, setUnitWeight, deleteUnitWeight, submitOrder, remOrdCertifGoods, remOrdCertifTranspMode, remSingleOrdCertifTranspMode, approveOrder, sendbackOrder, rejectOrder, getOrderStaticsByServices, billOrder, setInvoiceHeader, sendOrderDocument, getOrdCertifAmountByDay, getHistoOrder, getMemoOrder } = require('../controllers/OrderController');
+const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController, setUnitWeight, deleteUnitWeight, submitOrder, remOrdCertifGoods, remOrdCertifTranspMode, remSingleOrdCertifTranspMode, approveOrder, sendbackOrder, rejectOrder, getOrderStaticsByServices, billOrder, setInvoiceHeader, sendOrderDocument, getOrdCertifAmountByDay, getHistoOrder, getMemoOrder, getOrdCertifAmountByWeek, getLastClients } = require('../controllers/OrderController');
 
 const router = express.Router();
 router.post('/create', executeAddOrder);
@@ -65,10 +65,9 @@ router.post('/certif-transpmode/delete-single', remSingleOrdCertifTranspMode);
 
 // New: Order statistics endpoint using getOrderStaticsByServices
 router.get('/order-statistics', getOrderStaticsByServices);
-router.get(
-  '/order-amount-by-day',
-  getOrdCertifAmountByDay
-);
+router.get('/order-amount-by-day', getOrdCertifAmountByDay);
+
+router.get('/order-amount-by-week', getOrdCertifAmountByWeek);
 router.get('/order-histo', getHistoOrder);
 router.get('/order-memo', getMemoOrder);
 router.post('/bill_order', billOrder);
@@ -76,5 +75,7 @@ router.post('/bill_order', billOrder);
 
 router.post('/invoice-header', setInvoiceHeader);
 router.post('/sendOrderDocuments', sendOrderDocument);
+
+router.get('/last-clients', getLastClients);
 
 module.exports = router;
