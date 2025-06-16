@@ -75,106 +75,95 @@ function StatCard({ title, value, diff, trend, icon, periodLabel, bgColor, iconC
     </Card>
   );
 }
+
 function SpendChartCard({ custAccountId, unitCertif, unitCopy }) {
   const theme = useTheme();
 
-  // State for chart
   const [timeframe, setTimeframe] = useState('month');
-  const [series, setSeries]       = useState([{ name: 'Paid', data: [] }]);
-  const [categories, setCategories] = useState([]);               // <<< moved dynamic
+  const [categories, setCategories] = useState([]);
+  const [series, setSeries] = useState([{ name: 'Paid', data: [] }]);
 
-  // Custom date modal
   const [openCustomModal, setOpenCustomModal] = useState(false);
   const [customStart, setCustomStart] = useState('');
-  const [customEnd,   setCustomEnd]   = useState('');
+  const [customEnd, setCustomEnd] = useState('');
 
   useEffect(() => {
     (async () => {
       const now = new Date();
       let start, end = new Date(now);
-      end.setHours(23,59,59,999);
+      end.setHours(23, 59, 59, 999);
 
-      if (timeframe === 'week') {
-        start = new Date(now); start.setDate(now.getDate() - 6); start.setHours(0,0,0,0);
-      } else if (timeframe === 'month') {
-        start = new Date(now.getFullYear(), now.getMonth(), 1); start.setHours(0,0,0,0);
-      } else if (timeframe === 'semester') {
-        const m = now.getMonth();
-        start = m < 6 ? new Date(now.getFullYear(), 0, 1) : new Date(now.getFullYear(), 6, 1);
-        start.setHours(0,0,0,0);
-      } else if (timeframe === 'custom') {
-        start = new Date(customStart); start.setHours(0,0,0,0);
-        end   = new Date(customEnd);   end.setHours(23,59,59,999);
-      } else {
-        start = new Date(now.getFullYear(), 0, 1); start.setHours(0,0,0,0);
+      switch (timeframe) {
+        case 'week':
+          start = new Date(now);
+          start.setDate(now.getDate() - 6);
+          start.setHours(0, 0, 0, 0);
+          break;
+        case 'month':
+          start = new Date(now.getFullYear(), now.getMonth(), 1);
+          start.setHours(0, 0, 0, 0);
+          break;
+        case 'semester': {
+          const m = now.getMonth();
+          start = m < 6
+            ? new Date(now.getFullYear(), 0, 1)
+            : new Date(now.getFullYear(), 6, 1);
+          start.setHours(0, 0, 0, 0);
+          break;
+        }
+        case 'custom':
+          start = new Date(customStart);
+          start.setHours(0, 0, 0, 0);
+          end = new Date(customEnd);
+          end.setHours(23, 59, 59, 999);
+          break;
+        default: // 'year'
+          start = new Date(now.getFullYear(), 0, 1);
+          start.setHours(0, 0, 0, 0);
       }
 
-      const p1 = start.toISOString(), p2 = end.toISOString();
-
       try {
-        if (timeframe === 'month') {
-          // → nouvelle fonction week
-          const resp = await getOrderAmountByWeek({
-            p_date_start:       p1,
-            p_date_end:         p2,
-            p_id_custaccount:   custAccountId,
-            p_unit_ori_certif:  unitCertif,
-            p_unit_ori_certif_copy: unitCopy
-          });
+        console.log("CUST ACC", custAccountId)
+        const resp = await getOrderAmountByWeek({
+          p_date_start: start.toISOString(),
+          p_date_end: end.toISOString(),
+          p_id_custaccount: custAccountId,
+          p_unit_ori_certif: unitCertif,
+          p_unit_ori_certif_copy: unitCopy
+        });
 
-          // build X axis from theYearWeek
-          const cats = resp.data.map(r => r.theyearweek.toString());
-          const dataPaid = resp.data.map(r => parseFloat(r.amount_ord_certif_ori_paid) || 0);
+        // On génère les étiquettes et la série payée
+        // ✅ use theWeek
+        const cats = resp.data.map(r => r.theweek.toString());
 
-          setCategories(cats);
-          setSeries([{ name: 'Paid', data: dataPaid }]);
-        } else {
-          // → fonction day
-          const resp = await getOrderAmountByDay({
-            p_date_start:       p1,
-            p_date_end:         p2,
-            p_id_custaccount:   custAccountId,
-            p_unit_ori_certif:  unitCertif,
-            p_unit_ori_certif_copy: unitCopy
-          });
+        const paid = resp.data.map(r => parseFloat(r.amount_ord_certif_ori_paid) || 0);
 
-          // daily X axis fixed
-          const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-          const mapP = days.reduce((acc, d) => ({ ...acc, [d]: 0 }), {});
-          resp.data.forEach(r => {
-            const raw = (r.thedayofweek || '').trim();
-            const day = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
-            if (mapP[day] != null) mapP[day] = parseFloat(r.amount_ord_certif_ori_paid) || 0;
-          });
-
-          setCategories(days);
-          setSeries([{ name: 'Paid', data: Object.values(mapP) }]);
-        }
+        setCategories(cats);
+        setSeries([{ name: 'Paid', data: paid }]);
       } catch (e) {
-        console.error(e);
+        console.error('Erreur getOrderAmountByWeek:', e);
       }
     })();
   }, [custAccountId, unitCertif, unitCopy, timeframe, customStart, customEnd]);
 
   const options = useMemo(() => ({
-    chart:      { background: 'transparent', toolbar: { show: false } },
-    title:      {
-      text:  'Montant dépensé',
-      align: 'center',
-      style:{ fontSize:'16px', fontWeight:'normal', color: theme.palette.text.primary }
+    chart: { background: 'transparent', toolbar: { show: false } },
+    title: {
+      text: 'Montant dépensé (hebdo)', align: 'center',
+      style: { fontSize: '16px', fontWeight: 'normal', color: theme.palette.text.primary }
     },
     dataLabels: { enabled: false },
-    fill:       { opacity: 1 },
-    grid:       { borderColor: theme.palette.divider, strokeDashArray: 2 },
-    legend:     { position: 'top', showForSingleSeries: true },
-    plotOptions:{ bar: { columnWidth: '40px' }},
-    stroke:     { show:true, width:2, colors:['transparent'] },
-    theme:      { mode: theme.palette.mode },
-    xaxis:      {
+    fill: { opacity: 1 },
+    grid: { borderColor: theme.palette.divider, strokeDashArray: 2 },
+    legend: { position: 'top', showForSingleSeries: true },
+    plotOptions: { bar: { columnWidth: '40px' } },
+    stroke: { show: true, width: 2, colors: ['transparent'] },
+    theme: { mode: theme.palette.mode },
+    xaxis: {
       categories,
       axisBorder: { color: theme.palette.divider },
-      axisTicks:  { color: theme.palette.divider },
-      labels:     { style: { color: theme.palette.text.secondary } }
+      axisTicks: { color: theme.palette.divider },
+      labels: { style: { color: theme.palette.text.secondary } }
     },
     yaxis: {
       labels: { formatter: v => v.toLocaleString(), style: { color: theme.palette.text.secondary } }
@@ -196,7 +185,7 @@ function SpendChartCard({ custAccountId, unitCertif, unitCopy }) {
                 else setTimeframe(e.target.value);
               }}
             >
-              <MenuItem value="week">Semaine</MenuItem>
+              <MenuItem value="week">7 derniers jours</MenuItem>
               <MenuItem value="month">Mois</MenuItem>
               <MenuItem value="semester">Semestre</MenuItem>
               <MenuItem value="year">Année</MenuItem>
@@ -211,26 +200,20 @@ function SpendChartCard({ custAccountId, unitCertif, unitCopy }) {
 
       <Modal open={openCustomModal} onClose={() => setOpenCustomModal(false)}>
         <Box sx={{
-          position:'absolute', top:'50%', left:'50%',
-          transform:'translate(-50%, -50%)', bgcolor:'background.paper',
-          p:4, boxShadow:24, display:'flex', flexDirection:'column', gap:2, width:300
+          position: 'absolute', top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)', bgcolor: 'background.paper',
+          p: 4, boxShadow: 24, display: 'flex', flexDirection: 'column', gap: 2, width: 300
         }}>
           <Typography variant="h6">Choisissez les dates</Typography>
           <TextField
-            label="Début"
-            type="date"
-            InputLabelProps={{ shrink:true }}
-            value={customStart}
-            onChange={e => setCustomStart(e.target.value)}
+            label="Début" type="date" InputLabelProps={{ shrink: true }}
+            value={customStart} onChange={e => setCustomStart(e.target.value)}
           />
           <TextField
-            label="Fin"
-            type="date"
-            InputLabelProps={{ shrink:true }}
-            value={customEnd}
-            onChange={e => setCustomEnd(e.target.value)}
+            label="Fin" type="date" InputLabelProps={{ shrink: true }}
+            value={customEnd} onChange={e => setCustomEnd(e.target.value)}
           />
-          <Box sx={{ display:'flex', justifyContent:'flex-end', gap:1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
             <Button onClick={() => setOpenCustomModal(false)}>Annuler</Button>
             <Button variant="contained" onClick={() => {
               if (customStart && customEnd) {
@@ -355,7 +338,7 @@ export default function DashboardClient() {
   // fetch last clients
   useEffect(() => {
     (async () => {
-    
+
       if (!user?.id_cust_account || !user?.id_login_user) {
         console.log('⚠️ skip getLastClients, missing user info (check id_cust_account & id_login_user)');
         return;
@@ -364,13 +347,13 @@ export default function DashboardClient() {
         const now = new Date();
         const start = new Date(now.getFullYear(), now.getMonth(), 1);
         const end = new Date(now);
-        end.setHours(23,59,59,999);
+        end.setHours(23, 59, 59, 999);
         const resp = await getLastClients({
-          p_date_start:    start.toISOString(),
-          p_date_end:      end.toISOString(),
+          p_date_start: start.toISOString(),
+          p_date_end: end.toISOString(),
           p_id_list_order: null,
           p_id_custaccount: user.id_cust_account,
-          p_idlogin:       user.id_login_user
+          p_idlogin: user.id_login_user
         }, rowsPerPage);
         setLastClients(resp.data || []);
       } catch (e) {
@@ -465,7 +448,7 @@ export default function DashboardClient() {
         {/* Graphique finance */}
         <Grid item xs={12} md={4}>
           <SpendChartCard
-            custAccountId={user?.custAccountId}
+            custAccountId={user?.id_cust_account}
             unitCertif={unitCertif}
             unitCopy={unitCopy}
           />

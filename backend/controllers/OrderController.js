@@ -2249,6 +2249,64 @@ const getLastClients = async (req, res) => {
   }
 };
 
+const getStatisticOrders = async (req, res) => {
+  try {
+    let {
+      p_date_start = null,
+      p_date_end = null,
+      p_id_list_order = null,
+      p_id_custaccount = null,
+      p_orderstatus_exclusif = null,
+      p_idlogin = null
+    } = req.query;
+
+    // Validation minimale
+    if (!p_date_start || !p_date_end || !p_orderstatus_exclusif || !p_idlogin) {
+      return res.status(400).json({
+        message: 'Les paramètres p_date_start, p_date_end, p_orderstatus_exclusif et p_idlogin sont requis.'
+      });
+    }
+
+    // Prépare les replacements
+    const replacements = {
+      p_date_start,
+      p_date_end,
+      p_id_list_order:   p_id_list_order || null,
+      p_id_custaccount:  p_id_custaccount  ? parseInt(p_id_custaccount, 10) : null,
+      p_orderstatus_exclusif: parseInt(p_orderstatus_exclusif, 10),
+      p_idlogin:         parseInt(p_idlogin, 10),
+    };
+
+    const sql = `
+      SELECT * 
+      FROM get_statistic_Orders(
+        :p_date_start,
+        :p_date_end,
+        :p_id_list_order,
+        :p_id_custaccount,
+        :p_orderstatus_exclusif,
+        :p_idlogin
+      );
+    `;
+
+    const data = await sequelize.query(sql, {
+      replacements,
+      type: QueryTypes.SELECT,
+    });
+
+    return res.status(200).json({
+      message: 'Statistiques des commandes récupérées avec succès.',
+      data
+    });
+  } catch (error) {
+    console.error('Erreur getStatisticOrders:', error);
+    return res.status(500).json({
+      message: 'Erreur lors de la récupération des statistiques des commandes.',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   executeAddOrder,
   getTransmodeInfo,
@@ -2288,5 +2346,6 @@ module.exports = {
   getHistoOrder,
   getMemoOrder,
   getOrdCertifAmountByWeek,
-  getLastClients
+  getLastClients,
+  getStatisticOrders
 };
