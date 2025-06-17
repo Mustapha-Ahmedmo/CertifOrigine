@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-async function sendEmailNotification(orderId, status, reason, recipientEmail, orderDate, totalFD) {
+async function sendEmailNotification(orderId, status, reason, recipientEmail, orderTitle, orderDate, totalFD) {
   let subject = `Ordre numéro ${orderId} est ${status}`;
   let body = '';
 
@@ -1613,7 +1613,7 @@ const approveOrder = async (req, res) => {
       }
     );
 
-    await sendEmailNotification(p_id_order, 'approuvé', '', customerEmail, orderDate, totalFD);
+    await sendEmailNotification(p_id_order, 'approuvé', '', customerEmail, orderTitle, orderDate, totalFD);
 
     res.status(200).json({ message: 'Commande approuvée avec succès.' });
   } catch (error) {
