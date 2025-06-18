@@ -12,6 +12,14 @@ import IconButton from '@mui/material/IconButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUpload, faTimes } from '@fortawesome/free-solid-svg-icons';
 
+import { 
+  Table, 
+  TableHead, 
+  TableBody, 
+  TableRow, 
+  TableCell 
+} from '@mui/material';
+
 // Définition de l'input caché
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -134,63 +142,143 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
             </Alert>
           )}
 
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
-              Documents
-            </Typography>
-            <select
-              value={selectedJustificative}
-              onChange={e => setSelectedJustificative(e.target.value)}
-            >
-              <option value="">-- Sélectionnez une pièce --</option>
-              {FileTypes.map(ft => (
-                <option key={ft.id_files_repo_typeof} value={ft.id_files_repo_typeof}>
-                  {ft.txt_description_fr}
-                </option>
-              ))}
-            </select>
-            <Button
-              component="label"
-              variant="contained"
-              startIcon={<FontAwesomeIcon icon={faUpload} />}
-              sx={{ ml: 2, ...customButtonStyle }}
-            >
-              Choisir fichier
-              <VisuallyHiddenInput
-                type="file"
-                multiple
-                onChange={e => handleFileChange(selectedJustificative, e)}
-              />
-            </Button>
+<Box sx={{ mb: 4 }}>
+  <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
+    Documents justificatifs
+  </Typography>
 
-            {/* Liste des fichiers sélectionnés, avec bouton Supprimer */}
-            <Box sx={{ mt: 2 }}>
-              {Object.entries(Uploads).map(([typeId, files]) => {
-                const desc = FileTypes.find(f => f.id_files_repo_typeof === +typeId)?.txt_description_fr;
-                return (
-                  <Box key={typeId} sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2">{desc}</Typography>
-                    {files.map((file, idx) => (
-                      <Box
-                        key={idx}
-                        sx={{ display: 'flex', alignItems: 'center', mt: 1 }}
-                      >
-                        <Typography variant="body2" sx={{ flexGrow: 1 }}>
-                          {file.name}
-                        </Typography>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleRemoveFile(typeId, idx)}
-                        >
-                          <FontAwesomeIcon icon={faTimes} />
-                        </IconButton>
-                      </Box>
-                    ))}
-                  </Box>
-                );
-              })}
-            </Box>
-          </Box>
+  {/* 1. Sélection du type de pièce */}
+  {!(selectedJustificative && Uploads[selectedJustificative]) && (
+  <Box sx={{ mb: 2 }}>
+    <Typography sx={{ mb: 1 }}>
+      Sélectionnez une pièce à téléverser :
+    </Typography>
+    <select
+      value={selectedJustificative}
+      onChange={e => setSelectedJustificative(e.target.value)}
+      style={{ padding: '8px', minWidth: '300px' }}
+    >
+      <option value="">-- Choisir une pièce --</option>
+      {FileTypes.map(ft => (
+        <option
+          key={ft.id_files_repo_typeof}
+          value={ft.id_files_repo_typeof}
+        >
+          {ft.txt_description_fr}
+        </option>
+      ))}
+    </select>
+  </Box>
+)}
+
+
+  {/* 2. Upload du fichier */}
+  {selectedJustificative && !Uploads[selectedJustificative] && (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Button
+        component="label"
+        variant="contained"
+        startIcon={<FontAwesomeIcon icon={faUpload} />}
+        sx={customButtonStyle}
+      >
+        Choisir fichier
+        <VisuallyHiddenInput
+          type="file"
+          multiple={false}
+          onChange={e => handleFileChange(selectedJustificative, e)}
+        />
+      </Button>
+    </Box>
+  )}
+
+  {/* 3. Affichage & validation */}
+  {selectedJustificative && Uploads[selectedJustificative] && (
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="subtitle2">
+        Fichier sélectionné pour :{' '}
+        {
+          FileTypes.find(f => f.id_files_repo_typeof === +selectedJustificative)
+            ?.txt_description_fr
+        }
+      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, gap: 2 }}>
+        <Typography variant="body2">
+          {Uploads[selectedJustificative][0].name}
+        </Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => setSelectedJustificative('')}
+        >
+          Valider
+        </Button>
+        <IconButton
+          size="small"
+          color="error"
+          onClick={() => handleRemoveFile(selectedJustificative, 0)}
+        >
+          <FontAwesomeIcon icon={faTimes} />
+        </IconButton>
+      </Box>
+    </Box>
+  )}
+
+  {/* 4. Ajouter une autre pièce */}
+  {Object.keys(Uploads).length > 0 && !selectedJustificative && (
+    <Box sx={{ mt: 3 }}>
+      <Button
+        variant="contained"
+        sx={customButtonStyle}
+        onClick={() => setSelectedJustificative('')}
+      >
+        Ajouter une autre pièce
+      </Button>
+    </Box>
+  )}
+
+  {/* 5. Liste des pièces déjà ajoutées */}
+  {Object.entries(Uploads).length > 0 && (
+  <Box sx={{ mt: 4 }}>
+    <Typography variant="h6" sx={{ mb: 2 }}>
+      Pièces ajoutées
+    </Typography>
+    <Table size="small">
+      <TableHead>
+        <TableRow>
+          <TableCell>Type de pièce</TableCell>
+          <TableCell>Nom du fichier</TableCell>
+          <TableCell align="center">Supprimer</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {Object.entries(Uploads).flatMap(([typeId, files]) =>
+          files.map((file, idx) => {
+            const desc = FileTypes.find(
+              f => f.id_files_repo_typeof === +typeId
+            )?.txt_description_fr;
+            return (
+              <TableRow key={`${typeId}-${idx}`}>
+                <TableCell>{desc}</TableCell>
+                <TableCell>{file.name}</TableCell>
+                <TableCell align="center">
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRemoveFile(typeId, idx)}
+                  >
+                    <FontAwesomeIcon icon={faTimes} />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            )
+          })
+        )}
+      </TableBody>
+    </Table>
+  </Box>
+)}
+
+</Box>
+
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
             <Button variant="outlined" onClick={prevStep}>
