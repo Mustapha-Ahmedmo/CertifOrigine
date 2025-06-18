@@ -74,74 +74,68 @@ function StatCard({ title, value, diff, trend, icon, periodLabel, bgColor, iconC
       </CardContent>
     </Card>
   );
-}
-
-function SpendChartCard({ custAccountId, unitCertif, unitCopy }) {
+}function SpendChartCard({ custAccountId, unitCertif, unitCopy }) {
   const theme = useTheme();
 
   const [timeframe, setTimeframe] = useState('month');
   const [categories, setCategories] = useState([]);
   const [series, setSeries] = useState([{ name: 'Paid', data: [] }]);
 
-  const [openCustomModal, setOpenCustomModal] = useState(false);
+  const [openCustom, setOpenCustom] = useState(false);
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+
+  // map timeframe → chart title
+  const periodTitles = {
+    month: 'Montant dépensé (1 mois glissant)',
+    semester: 'Montant dépensé (6 mois glissant)',
+    year: 'Montant dépensé (1 an glissant)',
+    custom: `Montant dépensé (${customStart} → ${customEnd})`
+  };
 
   useEffect(() => {
     (async () => {
       const now = new Date();
-      let start, end = new Date(now);
+      let start = new Date(), end = new Date(now);
       end.setHours(23, 59, 59, 999);
 
       switch (timeframe) {
-        case 'week':
-          start = new Date(now);
-          start.setDate(now.getDate() - 6);
-          start.setHours(0, 0, 0, 0);
-          break;
         case 'month':
-          start = new Date(now.getFullYear(), now.getMonth(), 1);
-          start.setHours(0, 0, 0, 0);
+          start.setMonth(now.getMonth() - 1);
           break;
-        case 'semester': {
-          const m = now.getMonth();
-          start = m < 6
-            ? new Date(now.getFullYear(), 0, 1)
-            : new Date(now.getFullYear(), 6, 1);
-          start.setHours(0, 0, 0, 0);
+        case 'semester':
+          start.setMonth(now.getMonth() - 6);
           break;
-        }
+        case 'year':
+          start.setFullYear(now.getFullYear() - 1);
+          break;
         case 'custom':
           start = new Date(customStart);
           start.setHours(0, 0, 0, 0);
           end = new Date(customEnd);
           end.setHours(23, 59, 59, 999);
           break;
-        default: // 'year'
-          start = new Date(now.getFullYear(), 0, 1);
-          start.setHours(0, 0, 0, 0);
+        default:
+          start.setMonth(now.getMonth() - 1);
       }
 
       try {
-        console.log("CUST ACC", custAccountId)
         const resp = await getOrderAmountByWeek({
-          p_date_start: start.toISOString(),
-          p_date_end: end.toISOString(),
-          p_id_custaccount: custAccountId,
-          p_unit_ori_certif: unitCertif,
+          p_date_start:         start.toISOString(),
+          p_date_end:           end.toISOString(),
+          p_id_custaccount:     custAccountId,
+          p_unit_ori_certif:    unitCertif,
           p_unit_ori_certif_copy: unitCopy
         });
+        console.log('Week data →', resp.data);
 
-        // On génère les étiquettes et la série payée
-        // ✅ use theWeek
-        const cats = resp.data.map(r => r.theweek.toString());
-
+        const cats = resp.data.map(r => r.theyearmonth);
         const paid = resp.data.map(r => parseFloat(r.amount_ord_certif_ori_paid) || 0);
 
         setCategories(cats);
         setSeries([{ name: 'Paid', data: paid }]);
-      } catch (e) {
-        console.error('Erreur getOrderAmountByWeek:', e);
+      } catch (err) {
+        console.error('Erreur getOrderAmountByWeek:', err);
       }
     })();
   }, [custAccountId, unitCertif, unitCopy, timeframe, customStart, customEnd]);
@@ -149,46 +143,47 @@ function SpendChartCard({ custAccountId, unitCertif, unitCopy }) {
   const options = useMemo(() => ({
     chart: { background: 'transparent', toolbar: { show: false } },
     title: {
-      text: 'Montant dépensé (hebdo)', align: 'center',
-      style: { fontSize: '16px', fontWeight: 'normal', color: theme.palette.text.primary }
+      text: periodTitles[timeframe] || 'Montant dépensé',
+      align: 'center',
+      style: {
+        fontSize: '16px',
+        fontWeight: 'normal',
+        color: theme.palette.text.primary
+      }
     },
     dataLabels: { enabled: false },
-    fill: { opacity: 1 },
     grid: { borderColor: theme.palette.divider, strokeDashArray: 2 },
-    legend: { position: 'top', showForSingleSeries: true },
     plotOptions: { bar: { columnWidth: '40px' } },
-    stroke: { show: true, width: 2, colors: ['transparent'] },
-    theme: { mode: theme.palette.mode },
     xaxis: {
       categories,
       axisBorder: { color: theme.palette.divider },
-      axisTicks: { color: theme.palette.divider },
-      labels: { style: { color: theme.palette.text.secondary } }
+      axisTicks:  { color: theme.palette.divider },
+      labels:     { style: { color: theme.palette.text.secondary } }
     },
     yaxis: {
       labels: { formatter: v => v.toLocaleString(), style: { color: theme.palette.text.secondary } }
-    }
-  }), [theme, categories]);
+    },
+    theme: { mode: theme.palette.mode }
+  }), [theme, categories, timeframe, customStart, customEnd]);
 
   return (
     <Card>
       <CardHeader
-        title={<strong>Finance</strong>}
+        title="Finance"
         action={
-          <FormControl size="small" sx={{ minWidth: 120 }}>
+          <FormControl size="small" sx={{ minWidth: 140 }}>
             <InputLabel>Période</InputLabel>
             <Select
               value={timeframe}
               label="Période"
               onChange={e => {
-                if (e.target.value === 'custom') setOpenCustomModal(true);
+                if (e.target.value === 'custom') setOpenCustom(true);
                 else setTimeframe(e.target.value);
               }}
             >
-              <MenuItem value="week">7 derniers jours</MenuItem>
-              <MenuItem value="month">Mois</MenuItem>
-              <MenuItem value="semester">Semestre</MenuItem>
-              <MenuItem value="year">Année</MenuItem>
+              <MenuItem value="month">Mois (1 mois glissant)</MenuItem>
+              <MenuItem value="semester">Semestre (6 mois glissant)</MenuItem>
+              <MenuItem value="year">Année (1 an glissant)</MenuItem>
               <MenuItem value="custom">Autre…</MenuItem>
             </Select>
           </FormControl>
@@ -198,11 +193,12 @@ function SpendChartCard({ custAccountId, unitCertif, unitCopy }) {
         <ReactApexChart type="bar" series={series} options={options} width="100%" height={350} />
       </CardContent>
 
-      <Modal open={openCustomModal} onClose={() => setOpenCustomModal(false)}>
+      <Modal open={openCustom} onClose={() => setOpenCustom(false)}>
         <Box sx={{
           position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)', bgcolor: 'background.paper',
-          p: 4, boxShadow: 24, display: 'flex', flexDirection: 'column', gap: 2, width: 300
+          transform: 'translate(-50%,-50%)',
+          bgcolor: 'background.paper', p: 4, boxShadow: 24,
+          display: 'flex', flexDirection: 'column', gap: 2, width: 300
         }}>
           <Typography variant="h6">Choisissez les dates</Typography>
           <TextField
@@ -214,13 +210,18 @@ function SpendChartCard({ custAccountId, unitCertif, unitCopy }) {
             value={customEnd} onChange={e => setCustomEnd(e.target.value)}
           />
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-            <Button onClick={() => setOpenCustomModal(false)}>Annuler</Button>
-            <Button variant="contained" onClick={() => {
-              if (customStart && customEnd) {
-                setTimeframe('custom');
-                setOpenCustomModal(false);
-              }
-            }}>Valider</Button>
+            <Button onClick={() => setOpenCustom(false)}>Annuler</Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                if (customStart && customEnd) {
+                  setTimeframe('custom');
+                  setOpenCustom(false);
+                }
+              }}
+            >
+              Valider
+            </Button>
           </Box>
         </Box>
       </Modal>

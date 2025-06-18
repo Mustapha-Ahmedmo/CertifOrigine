@@ -5669,6 +5669,51 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+--Select * from get_statistic_custaccount('2025-05-18','2025-06-01',null,1);
+
+DROP FUNCTION IF EXISTS get_statistic_custaccount;
+CREATE OR REPLACE FUNCTION get_statistic_custaccount(
+    p_date_start TIMESTAMP,
+    p_date_end TIMESTAMP,
+    p_isactive BOOLEAN,
+    p_idlogin INT
+)
+RETURNS TABLE(
+    count_custaccount BIGINT,
+    count_custaccount_early BIGINT,
+    count_new_custaccount BIGINT,
+    count_suspended_custaccount BIGINT,
+    count_rejected_custaccount BIGINT
+	
+) AS
+$$
+BEGIN
+
+		IF NOT EXISTS (SELECT 1 FROM op_user WHERE id_login_user = p_idlogin) THEN
+			RAISE EXCEPTION 'Acc�s refus�';
+		END IF;
+
+   RETURN QUERY
+   SELECT 
+        SUM(CASE WHEN ca."statut_flag" = 2 THEN 1 ELSE 0 END) AS count_custaccount,
+        SUM(CASE WHEN ca."statut_flag" = 2 and ca."insertdate">= p_date_start  and ca."insertdate"<= p_date_end THEN 1 ELSE 0 END) AS count_custaccount_early,
+        SUM(CASE WHEN ca."statut_flag" = 1 THEN 1 ELSE 0 END) AS count_new_custaccount,
+        SUM(CASE WHEN ca."statut_flag" = 3 THEN 1 ELSE 0 END) AS count_suspended_custaccount,
+        SUM(CASE WHEN ca."statut_flag" = 4 THEN 1 ELSE 0 END) AS count_rejected_custaccount
+
+        from CUST_ACCOUNT ca
+    WHERE 
+	    p_isactive IS NULL
+        OR (p_isactive IS NOT TRUE AND ca."deactivation_date" <= CURRENT_DATE)
+        OR (p_isactive IS TRUE AND ca."deactivation_date" > CURRENT_DATE)
+    ;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+
 call set_op_user(0, 0, 'M. Admin', 1, TRUE,
 'admin@cdd.dj','4889ba9b',
 '253355445', '25377340000',

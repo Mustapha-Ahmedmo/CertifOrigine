@@ -2307,6 +2307,47 @@ const getStatisticOrders = async (req, res) => {
   }
 };
 
+const getStatisticCustaccount = async (req, res) => {
+  try {
+    let { p_date_start, p_date_end, p_isactive = null, p_idlogin } = req.query;
+    if (!p_date_start || !p_date_end || !p_idlogin) {
+      return res.status(400).json({
+        message: 'p_date_start, p_date_end et p_idlogin sont requis.'
+      });
+    }
+
+    const replacements = {
+      p_date_start,
+      p_date_end,
+      p_isactive: p_isactive === 'true' ? true : p_isactive === 'false' ? false : null,
+      p_idlogin: parseInt(p_idlogin, 10)
+    };
+
+    const sql = `SELECT * FROM get_statistic_custaccount(
+      :p_date_start,
+      :p_date_end,
+      :p_isactive,
+      :p_idlogin
+    );`;
+
+    const data = await sequelize.query(sql, {
+      replacements,
+      type: QueryTypes.SELECT
+    });
+
+    return res.status(200).json({
+      message: 'Statistiques des comptes clients récupérées avec succès.',
+      data
+    });
+  } catch (err) {
+    console.error('Erreur getStatisticCustaccount:', err);
+    return res.status(500).json({
+      message: 'Erreur lors de la récupération des statistiques des comptes clients.',
+      error: err.message
+    });
+  }
+};
+
 module.exports = {
   executeAddOrder,
   getTransmodeInfo,
@@ -2347,5 +2388,6 @@ module.exports = {
   getMemoOrder,
   getOrdCertifAmountByWeek,
   getLastClients,
-  getStatisticOrders
+  getStatisticOrders,
+  getStatisticCustaccount
 };
