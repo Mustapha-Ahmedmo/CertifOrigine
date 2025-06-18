@@ -42,25 +42,25 @@ export const generatePDF = async (formData) => {
     }
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-    const baseSize = 10;    // taille de police réduite
+    const baseSize = 8;    // taille de police réduite
     const lineStep = 18;    // espacement vertical
 
     // --- Expéditeur ---
     if (formData.exporterName) {
       firstPage.drawText(formData.exporterName, {
-        x: 100, y: 763,
+        x: 120, y: 763,
         size: baseSize, font, color: rgb(0,0,0)
       });
     }
     if (formData.exporterAddress) {
       firstPage.drawText(formData.exporterAddress, {
-        x: 113, y: 746,
+        x: 120, y: 746,
         size: baseSize, font, color: rgb(0,0,0)
       });
     }
     if (formData.exporterCountry) {
       firstPage.drawText(formData.exporterCountry, {
-        x: 100, y: 725,
+        x: 120, y: 725,
         size: baseSize, font, color: rgb(0,0,0)
       });
     }
@@ -69,21 +69,21 @@ export const generatePDF = async (formData) => {
     let recY = 685;
     if (formData.recipientName) {
       firstPage.drawText(formData.recipientName, {
-        x: 110, y: recY,
+        x: 120, y: recY,
         size: baseSize, font, color: rgb(0,0,0)
       });
       recY -= lineStep;
     }
     if (formData.recipientAddress) {
       firstPage.drawText(formData.recipientAddress, {
-        x: 110, y: recY,
+        x: 120, y: recY,
         size: baseSize, font, color: rgb(0,0,0)
       });
       recY -= lineStep;
     }
     if (formData.recipientCountry) {
       firstPage.drawText(formData.recipientCountry, {
-        x: 110, y: recY,
+        x: 120, y: recY,
         size: baseSize, font, color: rgb(0,0,0)
       });
     }
@@ -132,7 +132,7 @@ if (formData.originCountry) {
   firstPage.drawText(formData.originCountry, {
     // x initial 400 → +10 pour décaler à droite,
     // y initial cy (560) → +10 pour remonter
-    x: 400 + offsetX,
+    x: 410 + offsetX,
     y: cy + offsetYOrigin,
     size: baseSize,
     font,
@@ -143,7 +143,7 @@ if (formData.originCountry) {
 
 if (formData.destinationCountry) {
   firstPage.drawText(formData.destinationCountry, {
-    x: 420 + offsetX,    // 420 → 440
+    x: 410 + offsetX,    // 420 → 440
     y: cy,
     size: baseSize,
     font,
@@ -156,7 +156,7 @@ if (formData.portLoading) {
   firstPage.drawText(formData.portLoading, {
     // x initial 100 → +10 pour décaler à droite,
     // y initial portY (600) → +10 pour remonter
-    x: 100 + offsetX,
+    x: 110 + offsetX,
     y: portY + offsetYLoading,
     size: baseSize,
     font,
@@ -186,7 +186,7 @@ if (selectedTransportModes) {
   // on abaisse encore de 10 points pour les modes de transport
   portY -= 10;
   firstPage.drawText(selectedTransportModes, {
-    x: 125 + offsetX,    // 125 → 145
+    x: 110 + offsetX,    // 125 → 145
     y: portY,
     size: baseSize,
     font,
