@@ -126,7 +126,7 @@ const Footer = () => {
             fontWeight: 'bold',
           }}
         >
-          Ver. 1.4.2
+          Ver. 1.4.3
         </Typography>
       </Container>
     </Box>
