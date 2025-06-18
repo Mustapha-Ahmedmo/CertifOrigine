@@ -233,7 +233,7 @@ const OpOrderDetails = () => {
     await apiFn(...args);
 
     // 4) (optional) you could display a toast/alert, e.g.
-    // alert(`Commande ${statusLabel} avec succès.`);
+     alert(`Commande ${statusLabel} avec succès.`);
 
     // 5) go back to the dashboard
     navigate('/operator-dashboard');

@@ -5608,6 +5608,67 @@ $$ LANGUAGE plpgsql;
 
 
 
+
+--Select * from get_statistic_Orders('2025-04-01','2025-06-01',null,1,4,1);
+DROP FUNCTION IF EXISTS get_statistic_Orders;
+CREATE OR REPLACE FUNCTION get_statistic_Orders(
+    p_date_start TIMESTAMP,
+    p_date_end TIMESTAMP,
+    p_id_list_order TEXT,
+    p_id_custaccount INT,
+    p_orderstatus_exclusif INT,   /*1:insert   |   2:new   |   3:approved   |   4/5:billed/paid   */
+    p_idlogin INT
+)
+RETURNS TABLE(
+    count_ord_certif_ori BIGINT,
+    count_ord_legalization BIGINT,
+    count_ord_com_invoice BIGINT    
+) AS
+$$
+BEGIN
+
+
+	
+    IF p_id_custaccount IS NULL OR p_id_custaccount = 0 THEN
+		IF NOT EXISTS (SELECT 1 FROM op_user WHERE id_login_user = p_idlogin) THEN
+			RAISE EXCEPTION 'Acc�s refus�';
+		END IF;
+    END IF;
+
+    RETURN QUERY
+    SELECT
+        COALESCE(SUM(CASE WHEN MOD(o.TYPEOF, 10) = 1 THEN 1 ELSE 0 END), 0)      AS count_ord_certif_ori,
+        COALESCE(SUM(CASE WHEN MOD(o.TYPEOF/10, 100) IN (1, 11) THEN 1 ELSE 0 END), 0) AS count_ord_legalization,
+        COALESCE(SUM(CASE WHEN MOD(o.TYPEOF/100, 1000) = 1 THEN 1 ELSE 0 END), 0)   AS count_ord_com_invoice
+    FROM "ORDER" o
+    WHERE 
+        (p_id_list_order IS NULL OR o."id_order" = ANY (string_to_array(p_id_list_order, ',')::INT[]))
+        AND (p_id_custaccount IS NULL OR o."id_cust_account" = p_id_custaccount)
+        
+		AND
+		(
+            ( /*insert*/
+                p_orderstatus_exclusif = 1  AND o."id_order_status"  IN (1/*insert*/,6/*pending replace*/) 
+                and ( p_date_start  IS NULL OR o."date_last_submission" >= p_date_start ) and (p_date_end IS NULL or o."date_last_submission"  <= p_date_end)
+            ) OR
+            ( 
+                p_orderstatus_exclusif = 2   AND o."id_order_status"  IN (2/*new*/,7/*replaced*/) 
+                and ( p_date_start  IS NULL OR o."date_last_submission" >= p_date_start)  and (p_date_end IS NULL or o."date_last_submission"  <= p_date_end)
+            )  OR
+            ( 
+                p_orderstatus_exclusif = 3  AND o."id_order_status"  IN (3/*approved*/) 
+                and ( p_date_start  IS NULL OR o."date_validation" >= p_date_start)  and (p_date_end IS NULL or o."date_validation"  <= p_date_end)
+            ) OR
+            ( 
+               p_orderstatus_exclusif  IN (4/*billed*/,5/*paid*/)   AND o."id_order_status"  IN (4/*billed*/,5/*paid*/) 
+                and ( p_date_start  IS NULL OR o."date_last_return" >= p_date_start)  and (p_date_end IS NULL or o."date_last_return"  <= p_date_end)
+            )
+		)
+        ;
+END;
+$$ LANGUAGE plpgsql;
+
+
 call set_op_user(0, 0, 'M. Admin', 1, TRUE,
 'admin@cdd.dj','4889ba9b',
 '253355445', '25377340000',

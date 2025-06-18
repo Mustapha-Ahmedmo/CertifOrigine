@@ -1,5 +1,5 @@
 // src/components/DashboardOperateur.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
 import {
@@ -31,7 +31,7 @@ import {
 } from '@phosphor-icons/react';
 import ReactApexChart from 'react-apexcharts';
 import { Gauge } from '@mui/x-charts/Gauge';
-import { getOrderStaticsByServices } from '../services/apiServices';
+import { fetchStatisticOrders } from '../services/apiServices';
 
 //
 // 1. OverviewCard
@@ -70,7 +70,7 @@ const OverviewCard = ({ title, value, subtitle, icon, iconColor, iconBg }) => (
 );
 
 //
-// 2. ClientsCountCard with stacked bar + legend
+// 2. ClientsCountCard
 //
 const ClientsCountCard = () => (
   <Card sx={{ boxShadow: 3, height: '100%' }}>
@@ -87,13 +87,11 @@ const ClientsCountCard = () => (
       }
     />
     <CardContent>
-      {/* stacked bar */}
       <Box sx={{ display: 'flex', height: 40, mb: 3 }}>
         <Box sx={{ flex: 32, bgcolor: '#0288D1' }} />
         <Box sx={{ flex: 87, bgcolor: '#C2185B' }} />
         <Box sx={{ flex: 286, bgcolor: '#C0CA33' }} />
       </Box>
-      {/* legend */}
       <Grid container spacing={2}>
         <Grid item xs={6}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -134,7 +132,7 @@ const ClientsCountCard = () => (
 );
 
 //
-// 3. ClientsEvolutionCard with thicker line
+// 3. ClientsEvolutionCard
 //
 const ClientsEvolutionCard = () => {
   const theme = useTheme();
@@ -143,7 +141,7 @@ const ClientsEvolutionCard = () => {
     chart: { toolbar: { show: false }, zoom: { enabled: false } },
     stroke: { curve: 'smooth', width: 4 },
     xaxis: {
-      categories: ['Dec 2027','Jan 2028','Feb 2028','Mar 2028','Apr 2028','May 2028'],
+      categories: ['Dec 2027', 'Jan 2028', 'Feb 2028', 'Mar 2028', 'Apr 2028', 'May 2028'],
       labels: { style: { colors: theme.palette.text.secondary } },
       axisBorder: { color: theme.palette.divider },
       axisTicks: { color: theme.palette.divider }
@@ -209,7 +207,7 @@ const CommandEvolutionCard = ({ title, value, diff, trend, bg }) => {
 const RecetteTable = () => {
   const data = [
     { mois: 'Janvier', coN: 40, coM: 35000, fcN: 101, fcM: 30000, legN: 19, legM: 60000 },
-    { mois: 'Février', coN: 50, coM: 50000, fcN: 202, fcM: 2000,  legN: 19, legM: 50000 }
+    { mois: 'Février', coN: 50, coM: 50000, fcN: 202, fcM: 2000, legN: 19, legM: 50000 }
   ];
   const totals = data.reduce(
     (acc, cur) => ({
@@ -278,35 +276,51 @@ const RecetteTable = () => {
 //
 export default function DashboardOperateur() {
   const user = useSelector(state => state.auth.user);
-  const [stats, setStats] = useState({});
+  const [stats, setStats] = useState({
+    count_ord_certif_ori: 0,
+    count_ord_com_invoice: 0,
+    count_ord_legalization: 0
+  });
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('week');
 
+  const [filter, setFilter] = useState('24h');
+
+  const subtitles = {
+    '24h': "Dernières 24 h",
+    week: "7 derniers jours",
+    month: "30 derniers jours"
+  };
+
+  // load overview metrics once (hier→aujourd'hui)
   useEffect(() => {
     (async () => {
       setLoading(true);
       const now = new Date();
       const start = new Date(now);
-      start.setDate(now.getDate() - (filter === 'week' ? 7 : 30));
+      if (filter === '24h') start.setHours(now.getHours() - 24);
+      else if (filter === 'week') start.setDate(now.getDate() - 7);
+      else start.setDate(now.getDate() - 30);
 
       try {
-        const resp = await getOrderStaticsByServices({
+        const { data } = await fetchStatisticOrders({
           p_date_start: start.toISOString(),
           p_date_end: now.toISOString(),
-          p_id_custaccount: null
+          p_id_list_order: null,
+          p_id_custaccount: null,
+          p_orderstatus_exclusif: 4,      // billed/paid
+          p_idlogin: user.id_login_user
         });
-        setStats(resp.data?.[0] || {});
+        setStats(data[0] || {});
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     })();
-  }, [filter]);
+  }, [filter, user.id_login_user]);
 
-  if (loading) {
-    return <Typography>Chargement…</Typography>;
-  }
+
+  if (loading) return <Typography>Chargement…</Typography>;
 
   return (
     <Box sx={{ ml: { xs: 0, md: '240px' }, p: 2 }}>
@@ -315,22 +329,24 @@ export default function DashboardOperateur() {
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <Typography variant="h5" sx={{ flexGrow: 1 }}>Dashboard</Typography>
-        <FormControl size="small" sx={{ minWidth: 120 }}>
+        <FormControl size="small" sx={{ minWidth: 140 }}>
           <InputLabel>Filtre</InputLabel>
           <Select value={filter} label="Filtre" onChange={e => setFilter(e.target.value)}>
-            <MenuItem value="week">This Week</MenuItem>
-            <MenuItem value="month">This Month</MenuItem>
+            <MenuItem value="24h">Dernières 24 h</MenuItem>
+            <MenuItem value="week">7 derniers jours</MenuItem>
+            <MenuItem value="month">30 derniers jours</MenuItem>
           </Select>
         </FormControl>
       </Box>
 
-      {/* Overview */}
+
+      {/* Overview cards */}
       <Grid container spacing={3} mb={4}>
         <Grid item xs={12} md={4}>
           <OverviewCard
             title="Certificat d'origine émis"
-            value={stats.count_ord_certif_ori?.toLocaleString() || '0'}
-            subtitle="Entre hier et aujourd'hui"
+            value={stats.count_ord_certif_ori.toLocaleString()}
+            subtitle={subtitles[filter]}
             icon={<ArrowRightIcon />}
             iconColor="#388E3C"
             iconBg="rgba(56,142,60,0.1)"
@@ -339,8 +355,8 @@ export default function DashboardOperateur() {
         <Grid item xs={12} md={4}>
           <OverviewCard
             title="Factures commerciales visées"
-            value={stats.count_ord_com_invoice?.toLocaleString() || '0'}
-            subtitle="Entre hier et aujourd'hui"
+            value={stats.count_ord_com_invoice.toLocaleString()}
+            subtitle={subtitles[filter]}
             icon={<CurrencyDollarIcon />}
             iconColor="#1E88E5"
             iconBg="rgba(30,136,229,0.1)"
@@ -349,8 +365,8 @@ export default function DashboardOperateur() {
         <Grid item xs={12} md={4}>
           <OverviewCard
             title="Documents légalisés"
-            value={stats.count_ord_legalization?.toLocaleString() || '0'}
-            subtitle="Entre hier et aujourd'hui"
+            value={stats.count_ord_legalization.toLocaleString()}
+            subtitle={subtitles[filter]}
             icon={<CheckCircleIcon />}
             iconColor="#C8A415"
             iconBg="rgba(200,164,21,0.1)"
@@ -358,17 +374,12 @@ export default function DashboardOperateur() {
         </Grid>
       </Grid>
 
-      {/* Clients */}
+      {/* Rest of dashboard... */}
       <Grid container spacing={3} mb={4} alignItems="stretch">
-        <Grid item xs={12} md={6}>
-          <ClientsCountCard />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <ClientsEvolutionCard />
-        </Grid>
+        <Grid item xs={12} md={6}><ClientsCountCard /></Grid>
+        <Grid item xs={12} md={6}><ClientsEvolutionCard /></Grid>
       </Grid>
 
-      {/* Évolution des commandes in white rectangle */}
       <Card sx={{ background: '#fff', boxShadow: 3, p: 2, mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
           <Typography variant="overline">Évolution des commandes</Typography>
@@ -384,34 +395,33 @@ export default function DashboardOperateur() {
           <Grid item xs={12} sm={4}>
             <CommandEvolutionCard
               title="Nombre de C.O effectués"
-              value="128k"
-              diff={37.8}
-              trend="up"
+              value={stats.count_ord_certif_ori.toLocaleString()}
+              diff={stats.diff_certif || 0}
+              trend={stats.trend_certif || 'up'}
               bg="#E8F5E9"
             />
           </Grid>
           <Grid item xs={12} sm={4}>
             <CommandEvolutionCard
               title="Nombre facture commerciale visée"
-              value="521"
-              diff={37.8}
-              trend="down"
+              value={stats.count_ord_com_invoice.toLocaleString()}
+              diff={stats.diff_invoice || 0}
+              trend={stats.trend_invoice || 'down'}
               bg="#E3F2FD"
             />
           </Grid>
           <Grid item xs={12} sm={4}>
             <CommandEvolutionCard
               title="Nombre de document légalisé"
-              value="64k"
-              diff={37.8}
-              trend="up"
+              value={stats.count_ord_legalization.toLocaleString()}
+              diff={stats.diff_legal || 0}
+              trend={stats.trend_legal || 'up'}
               bg="#FFF8E1"
             />
           </Grid>
         </Grid>
       </Card>
 
-      {/* Recette table */}
       <RecetteTable />
     </Box>
   );

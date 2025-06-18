@@ -1700,3 +1700,31 @@ export const getLastClients = async (params = {}, limit = 5) => {
     throw err;
   }
 };
+
+export const fetchStatisticOrders = async (params = {}) => {
+  try {
+    // On nettoie les params null/undefined
+    const cleaned = {};
+    Object.entries(params).forEach(([k, v]) => {
+      if (v != null && v !== 'null') cleaned[k] = v;
+    });
+
+    const qs = new URLSearchParams(cleaned).toString();
+    const res = await fetch(`${API_URL}/orders/statistic-orders?${qs}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Failed to fetch statistic orders');
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('API call error (fetchStatisticOrders):', err);
+    throw err;
+  }
+};

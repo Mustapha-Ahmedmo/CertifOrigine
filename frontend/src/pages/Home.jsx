@@ -245,7 +245,8 @@ const Home = () => {
 
 
 
-        <TabPanel value={tabIndex} index={3} dir={theme.direction}>
+        {/* onglet 2 = retournées par la CCD */}
+        <TabPanel value={tabIndex} index={2} dir={theme.direction}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <OrderTable orders={ordersReturned} refreshOrders={fetchOrders} />
@@ -253,7 +254,8 @@ const Home = () => {
           </Grid>
         </TabPanel>
 
-        <TabPanel value={tabIndex} index={2} dir={theme.direction}>
+        {/* onglet 3 = en attente de paiement */}
+        <TabPanel value={tabIndex} index={3} dir={theme.direction}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <OrderTable orders={ordersPayment} refreshOrders={fetchOrders} hideActions />
