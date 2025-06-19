@@ -107,28 +107,28 @@ const Header = ({ toggleMenu, isMenuOpen }) => {
       <nav className="header-center">
         <Button
           component={Link}
-          to="/dashboard/cgv"
+          to="/cgv"
           startIcon={<FontAwesomeIcon icon={faCertificate} />}
           sx={{ textTransform: 'none', mx: 1 }}
-          color={location.pathname === '/dashboard/cgv' ? 'primary' : 'inherit'}
+          color={location.pathname === '/cgv' ? 'primary' : 'inherit'}
         >
           C.G.V
         </Button>
         <Button
           component={Link}
-          to="/dashboard/prestation-service"
+          to="/prestation-service"
           startIcon={<FontAwesomeIcon icon={faDollarSign} />}
           sx={{ textTransform: 'none', mx: 1 }}
-          color={location.pathname === '/dashboard/prestation-service' ? 'primary' : 'inherit'}
+          color={location.pathname === '/prestation-service' ? 'primary' : 'inherit'}
         >
           Prestation de services
         </Button>
         <Button
           component={Link}
-          to="/dashboard/mentions-legales"
+          to="/mentions-legales"
           startIcon={<FontAwesomeIcon icon={faGavel} />}
           sx={{ textTransform: 'none', mx: 1 }}
-          color={location.pathname === '/dashboard/mentions-legales' ? 'primary' : 'inherit'}
+          color={location.pathname === '/mentions-legales' ? 'primary' : 'inherit'}
         >
           Mentions légales
         </Button>
@@ -138,7 +138,7 @@ const Header = ({ toggleMenu, isMenuOpen }) => {
       <div className="header-right">
         {/* Notifications */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Link to="/dashboard/notifications">
+          <Link to="/notifications">
             <Badge badgeContent={notificationsCount} color="error" anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
               <FontAwesomeIcon icon={faBell} style={{ fontSize: '1rem' }} />
             </Badge>
@@ -147,12 +147,16 @@ const Header = ({ toggleMenu, isMenuOpen }) => {
         </Box>
 
         {/* Cart */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Badge badgeContent={cartItemCount} color="error" anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-            <FontAwesomeIcon icon={faShoppingCart} style={{ fontSize: '1rem' }} />
-          </Badge>
-          <Typography variant="caption">Panier</Typography>
-        </Box>
+        {/* Cart */}
+<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+  <Link to="/home?tab=0">
+    <Badge badgeContent={cartItemCount} color="error" anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+      <FontAwesomeIcon icon={faShoppingCart} style={{ fontSize: '1rem' }} />
+    </Badge>
+  </Link>
+  <Typography variant="caption">Panier</Typography>
+</Box>
+
 
         {/* Profile dropdown */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
