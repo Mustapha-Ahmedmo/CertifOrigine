@@ -224,7 +224,7 @@ const Notifications = () => {
                         variant="body2"
                         onClick={() =>
                           navigate(
-                            `/dashboard/order-details?orderId=${id_order}&certifId=${id_ord_certif_ori || ''}`
+                            `/order-details?orderId=${id_order}&certifId=${id_ord_certif_ori || ''}`
                           )
                         }
                         sx={{ textDecoration: 'underline', cursor: 'pointer', fontSize: '0.7rem' }}
