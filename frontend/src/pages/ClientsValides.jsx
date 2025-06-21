@@ -1252,6 +1252,13 @@ const ClientsValides = () => {
                 >
                   + Ajouter le fichier
                 </Button>
+                <Typography
+                  variant="caption"
+                  sx={{ display: 'block', mt: 1, color: 'text.secondary' }}
+                >
+                  La taille maximale autorisée est de 20 Mo
+                </Typography>
+
               </Box>
 
               {fileData.justificatifFile && (
