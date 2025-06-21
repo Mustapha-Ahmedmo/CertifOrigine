@@ -595,6 +595,13 @@ const Register = () => {
                     }}
                   />
                 </Button>
+                <Typography
+                  variant="caption"
+                  sx={{ display: 'block', mt: 1, color: 'text.secondary' }}
+                >
+                  La taille maximale autorisée est de 20 Mo
+                </Typography>
+
                 {formData.licenseFile && (
                   <Typography variant="caption" sx={{ ml: 1 }}>
                     {formData.licenseFile.name}
@@ -636,6 +643,13 @@ const Register = () => {
                     }}
                   />
                 </Button>
+                <Typography
+                  variant="caption"
+                  sx={{ display: 'block', mt: 1, color: 'text.secondary' }}
+                >
+                  La taille maximale autorisée est de 20 Mo
+                </Typography>
+
                 {formData.patenteFile && (
                   <Typography variant="caption" sx={{ ml: 1 }}>
                     {formData.patenteFile.name}

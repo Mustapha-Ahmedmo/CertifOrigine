@@ -188,6 +188,13 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
           onChange={e => handleFileChange(selectedJustificative, e)}
         />
       </Button>
+      <Typography
+        variant="caption"
+        sx={{ display: 'block', mt: 1, color: 'text.secondary' }}
+      >
+        La taille maximale autorisée est de 20 Mo
+      </Typography>
+
     </Box>
   )}
 
