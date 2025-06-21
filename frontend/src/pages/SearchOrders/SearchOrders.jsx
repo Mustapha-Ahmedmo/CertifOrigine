@@ -261,7 +261,7 @@ const SearchOrders = () => {
     const certifId = order.id_ord_certif_ori || '';
     if (isOpUser) {
       navigate(
-        `/dashboard/operator/oporderdetails?orderId=${order.id_order}&certifId=${certifId}`
+        `/operator/oporderdetails?orderId=${order.id_order}&certifId=${certifId}`
       );
     } else {
       navigate(
