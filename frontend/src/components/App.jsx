@@ -135,7 +135,11 @@ const App = () => {
           >
             <Route
               index
-              element={isOperator ? <HomeOperateur /> : <DashboardClient />}
+              element={
+                isOperator
+                  ? <Navigate to="operator/dashboardoperateur" replace />
+                  : <Navigate to="dashboardclient" replace />
+              }
             />
             <Route path="home" element={<Home />} />
             <Route path="dashboardclient" element={<DashboardClient />} />
