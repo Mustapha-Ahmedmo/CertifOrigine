@@ -1728,3 +1728,101 @@ export const fetchStatisticOrders = async (params = {}) => {
     throw err;
   }
 };
+
+/**
+ * Récupère les statistiques de comptes clients
+ * @param {{ p_date_start: string, p_date_end: string, p_isactive: boolean|null, p_idlogin: number }} params 
+ */
+export const fetchStatisticCustaccount = async ({
+  p_date_start,
+  p_date_end,
+  p_isactive = null,
+  p_idlogin
+}) => {
+  if (!p_date_start || !p_date_end || p_idlogin == null) {
+    throw new Error('p_date_start, p_date_end et p_idlogin sont requis');
+  }
+
+  // Construire la query string
+  const query = new URLSearchParams();
+  query.append('p_date_start', p_date_start);
+  query.append('p_date_end',   p_date_end);
+  if (p_isactive !== null) {
+    query.append('p_isactive', p_isactive.toString());
+  }
+  query.append('p_idlogin',    p_idlogin.toString());
+
+  const res = await fetch(
+    `${API_URL}/orders/statistic-custaccount?${query.toString()}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Échec de la récupération des statistiques des comptes clients');
+  }
+
+  // On s’attend à { message: string, data: { …stats } }
+  const payload = await res.json();
+  return payload;
+};
+
+// src/services/apiService.js
+export const fetchCustAccountEvolutionByMonth = async ({ p_date_start, p_date_end, p_idlogin }) => {
+  const qs = new URLSearchParams({ p_date_start, p_date_end, p_idlogin }).toString();
+  const res = await fetch(`${API_URL}/orders/statistic-by-month?${qs}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('token')}`
+    }
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.message || 'Failed to fetch customer-account evolution.');
+  }
+  const json = await res.json();
+  // **Return the inner array**, not the wrapper object**
+  return Array.isArray(json.data) ? json.data : [];
+};
+
+export const fetchOrderStatisticsByMonth = async ({
+  p_date_start,
+  p_date_end,
+  p_idlogin
+}) => {
+  // validation minimale
+  if (!p_date_start || !p_date_end || p_idlogin == null) {
+    throw new Error('p_date_start, p_date_end et p_idlogin sont requis');
+  }
+
+  // Construire la query string
+  const qs = new URLSearchParams({
+    p_date_start,
+    p_date_end,
+    p_idlogin: p_idlogin.toString()
+  }).toString();
+
+  const res = await fetch(`${API_URL}/orders/order-statistics-month?${qs}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      // ajoutez ici votre JWT si nécessaire :
+      // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+    }
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Échec de la récupération des statistiques mensuelles');
+  }
+
+  const payload = await res.json();
+  // on s’attend à { data: [...] }
+  return Array.isArray(payload.data) ? payload.data : [];
+};

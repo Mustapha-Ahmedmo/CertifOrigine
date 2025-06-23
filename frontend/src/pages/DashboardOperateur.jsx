@@ -31,7 +31,7 @@ import {
 } from '@phosphor-icons/react';
 import ReactApexChart from 'react-apexcharts';
 import { Gauge } from '@mui/x-charts/Gauge';
-import { fetchStatisticOrders } from '../services/apiServices';
+import { fetchStatisticOrders, fetchStatisticCustaccount, fetchCustAccountEvolutionByMonth, fetchOrderStatisticsByMonth } from '../services/apiServices';
 
 //
 // 1. OverviewCard
@@ -68,30 +68,50 @@ const OverviewCard = ({ title, value, subtitle, icon, iconColor, iconBg }) => (
     </CardContent>
   </Card>
 );
-
-//
-// 2. ClientsCountCard
-//
-const ClientsCountCard = () => (
+const ClientsCountCard = ({ custStats, filter, onFilterChange, subtitle }) => (
   <Card sx={{ boxShadow: 3, height: '100%' }}>
     <CardHeader
       title="Nombre des clients"
       titleTypographyProps={{ variant: 'overline', color: 'text.secondary' }}
       action={
         <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Filtre</InputLabel>
-          <Select defaultValue="6m" label="Filtre">
-            <MenuItem value="6m">Last 6 Months</MenuItem>
+          <InputLabel>Date</InputLabel>
+          <Select value={filter} label="Date" onChange={e => onFilterChange(e.target.value)}>
+            <MenuItem value="24h">Dernières 24 h</MenuItem>
+            <MenuItem value="week">7 derniers jours</MenuItem>
+            <MenuItem value="month">30 derniers jours</MenuItem>
           </Select>
         </FormControl>
       }
     />
-    <CardContent>
+    < CardContent >
+      {filter === 'custom' && (
+        <Stack direction="row" spacing={1} mb={2}>
+          <TextField
+            label="From"
+            type="date"
+            size="small"
+            value={customStart}
+            onChange={e => onCustomDateChange('start', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            label="To"
+            type="date"
+            size="small"
+            value={customEnd}
+            onChange={e => onCustomDateChange('end', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Stack>
+      )}
+
       <Box sx={{ display: 'flex', height: 40, mb: 3 }}>
         <Box sx={{ flex: 32, bgcolor: '#0288D1' }} />
         <Box sx={{ flex: 87, bgcolor: '#C2185B' }} />
         <Box sx={{ flex: 286, bgcolor: '#C0CA33' }} />
       </Box>
+
       <Grid container spacing={2}>
         <Grid item xs={6}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -100,10 +120,13 @@ const ClientsCountCard = () => (
               <Typography variant="caption" color="text.secondary">
                 nouvelle inscription
               </Typography>
-              <Typography variant="h5">32</Typography>
+              <Typography variant="h5">
+                {custStats.count_new_custaccount.toLocaleString()}
+              </Typography>
             </Box>
           </Box>
         </Grid>
+
         <Grid item xs={6}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Box sx={{ width: 4, height: 24, bgcolor: '#C2185B', mr: 1 }} />
@@ -111,10 +134,13 @@ const ClientsCountCard = () => (
               <Typography variant="caption" color="text.secondary">
                 Clients rejetés
               </Typography>
-              <Typography variant="h5">87</Typography>
+              <Typography variant="h5">
+                {custStats.count_rejected_custaccount.toLocaleString()}
+              </Typography>
             </Box>
           </Box>
         </Grid>
+
         <Grid item xs={6}>
           <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
             <Box sx={{ width: 4, height: 24, bgcolor: '#C0CA33', mr: 1 }} />
@@ -122,26 +148,38 @@ const ClientsCountCard = () => (
               <Typography variant="caption" color="text.secondary">
                 Client validés
               </Typography>
-              <Typography variant="h5">286</Typography>
+              <Typography variant="h5">
+                {custStats.count_custaccount_early.toLocaleString()}
+              </Typography>
             </Box>
           </Box>
         </Grid>
       </Grid>
-    </CardContent>
-  </Card>
+    </CardContent >
+  </Card >
 );
 
 //
 // 3. ClientsEvolutionCard
 //
-const ClientsEvolutionCard = () => {
+const ClientsEvolutionCard = ({ data = [], evoFilter, onEvoFilterChange }) => {
   const theme = useTheme();
-  const series = [{ name: 'Taux inscrit', data: [60, 50, 85, 70, 90, 75] }];
+  // build categories like "2025-01", etc.
+
+  const categories = data
+    .filter(r => r.theyearmonth)
+    .map(r => r.theyearmonth.toString());
+
+  const series = [{
+    name: 'Nouveaux comptes',
+    data: data.map(r => Number(r.count_custaccount))
+  }];
+
   const options = {
     chart: { toolbar: { show: false }, zoom: { enabled: false } },
     stroke: { curve: 'smooth', width: 4 },
     xaxis: {
-      categories: ['Dec 2027', 'Jan 2028', 'Feb 2028', 'Mar 2028', 'Apr 2028', 'May 2028'],
+      categories,
       labels: { style: { colors: theme.palette.text.secondary } },
       axisBorder: { color: theme.palette.divider },
       axisTicks: { color: theme.palette.divider }
@@ -154,16 +192,22 @@ const ClientsEvolutionCard = () => {
     grid: { borderColor: theme.palette.divider, strokeDashArray: 4 },
     tooltip: { theme: theme.palette.mode }
   };
+
   return (
-    <Card sx={{ boxShadow: 3, height: '100%' }}>
+    <Card sx={{ boxShadow: 3 }}>
       <CardHeader
         title="Évolution des clients"
         titleTypographyProps={{ variant: 'overline', color: 'text.secondary' }}
         action={
           <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>Filtre</InputLabel>
-            <Select defaultValue="6m" label="Filtre">
-              <MenuItem value="6m">Last 6 Months</MenuItem>
+            <InputLabel>Période</InputLabel>
+            <Select
+              value={evoFilter}
+              label="Période"
+              onChange={e => onEvoFilterChange(e.target.value)}
+            >
+              <MenuItem value="6m">Last 6 months</MenuItem>
+              <MenuItem value="1y">Last year</MenuItem>
             </Select>
           </FormControl>
         }
@@ -178,45 +222,49 @@ const ClientsEvolutionCard = () => {
 //
 // 4. CommandEvolutionCard
 //
-const CommandEvolutionCard = ({ title, value, diff, trend, bg }) => {
-  const TrendIcon = trend === 'up' ? ArrowUpIcon : ArrowDownIcon;
-  const color = trend === 'up' ? '#66bb6a' : '#ef5350';
-  return (
-    <Card sx={{ background: bg, boxShadow: 3 }}>
-      <CardHeader
-        title={title}
-        titleTypographyProps={{ variant: 'overline', color: 'text.secondary' }}
-      />
-      <CardContent>
-        <Typography variant="h4">{value}</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-          <TrendIcon size={20} color={color} />
-          <Typography variant="body2" sx={{ color, ml: 0.5 }}>{diff}%</Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-            this week
-          </Typography>
-        </Box>
-      </CardContent>
-    </Card>
-  );
-};
+const CommandEvolutionCard = ({ title, value, diff, trend, bg, subtitle }) => (
+  <Card sx={{ background: bg, boxShadow: 3, height: '100%' }}>
+    <CardHeader
+      title={title}
+      titleTypographyProps={{ variant: 'overline', color: 'text.secondary' }}
+    />
+    <CardContent>
+      <Typography variant="h4">{value}</Typography>
+
+      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+        {(trend === 'up' ? <ArrowUpIcon size={20} /> : <ArrowDownIcon size={20} />)}
+        <Typography variant="body2" sx={{ color: trend === 'up' ? '#66bb6a' : '#ef5350', ml: 0.5 }}>
+          {diff}%
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          - {subtitle}
+        </Typography>
+      </Box>
+    </CardContent>
+  </Card>
+);
+
 
 //
 // 5. RecetteTable
 //
-const RecetteTable = () => {
-  const data = [
-    { mois: 'Janvier', coN: 40, coM: 35000, fcN: 101, fcM: 30000, legN: 19, legM: 60000 },
-    { mois: 'Février', coN: 50, coM: 50000, fcN: 202, fcM: 2000, legN: 19, legM: 50000 }
+const RecetteTable = ({ data = [], filter, onFilterChange }) => {
+  // French month names
+  const monthNames = [
+    'Janvier', 'Février', 'Mars', 'Avril',
+    'Mai', 'Juin', 'Juillet', 'Août',
+    'Septembre', 'Octobre', 'Novembre', 'Décembre'
   ];
+
+  // Compute totals
   const totals = data.reduce(
     (acc, cur) => ({
-      coN: acc.coN + cur.coN,
-      coM: acc.coM + cur.coM,
-      fcN: acc.fcN + cur.fcN,
-      fcM: acc.fcM + cur.fcM,
-      legN: acc.legN + cur.legN,
-      legM: acc.legM + cur.legM
+      coN: acc.coN + Number(cur.count_ord_certif_ori),
+      coM: acc.coM + Number(cur.amount_ord_certif_ori_paid),
+      fcN: acc.fcN + Number(cur.count_ord_com_invoice),
+      fcM: acc.fcM + Number(cur.amount_ord_com_invoice),
+      legN: acc.legN + Number(cur.count_ord_legalization),
+      legM: acc.legM + Number(cur.amount_ord_legalization)
     }),
     { coN: 0, coM: 0, fcN: 0, fcM: 0, legN: 0, legM: 0 }
   );
@@ -226,9 +274,10 @@ const RecetteTable = () => {
       <Box sx={{ p: 1, display: 'flex', justifyContent: 'space-between' }}>
         <Typography variant="overline">État des recettes par prestation</Typography>
         <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Filtre</InputLabel>
-          <Select defaultValue="week" label="Filtre">
-            <MenuItem value="week">This Week</MenuItem>
+          <InputLabel>Période</InputLabel>
+          <Select value={filter} label="Période" onChange={e => onFilterChange(e.target.value)}>
+            <MenuItem value="6m">Last 6 months</MenuItem>
+            <MenuItem value="1y">Last year</MenuItem>
           </Select>
         </FormControl>
       </Box>
@@ -245,32 +294,36 @@ const RecetteTable = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {data.map(r => (
-            <TableRow key={r.mois}>
-              <TableCell>{r.mois}</TableCell>
-              <TableCell>{r.coN}</TableCell>
-              <TableCell>{r.coM.toLocaleString()}</TableCell>
-              <TableCell>{r.fcN}</TableCell>
-              <TableCell>{r.fcM.toLocaleString()}</TableCell>
-              <TableCell>{r.legN}</TableCell>
-              <TableCell>{r.legM.toLocaleString()}</TableCell>
-            </TableRow>
-          ))}
+          {data.map(row => {
+            const monthIndex = Number(row.themonth) - 1;
+            return (
+              <TableRow key={row.theyearmonth}>
+                <TableCell>
+                  {monthNames[monthIndex] || row.theyearmonth.toString()}
+                </TableCell>
+                <TableCell>{Number(row.count_ord_certif_ori)}</TableCell>
+                <TableCell>{Number(row.amount_ord_certif_ori_paid).toLocaleString()}</TableCell>
+                <TableCell>{Number(row.count_ord_com_invoice)}</TableCell>
+                <TableCell>{Number(row.amount_ord_com_invoice).toLocaleString()}</TableCell>
+                <TableCell>{Number(row.count_ord_legalization)}</TableCell>
+                <TableCell>{Number(row.amount_ord_legalization).toLocaleString()}</TableCell>
+              </TableRow>
+            );
+          })}
           <TableRow>
             <TableCell><strong>Totaux</strong></TableCell>
-            <TableCell>{totals.coN}</TableCell>
-            <TableCell>{totals.coM.toLocaleString()}</TableCell>
-            <TableCell>{totals.fcN}</TableCell>
-            <TableCell>{totals.fcM.toLocaleString()}</TableCell>
-            <TableCell>{totals.legN}</TableCell>
-            <TableCell>{totals.legM.toLocaleString()}</TableCell>
+            <TableCell><strong>{totals.coN}</strong></TableCell>
+            <TableCell><strong>{totals.coM.toLocaleString()}</strong></TableCell>
+            <TableCell><strong>{totals.fcN}</strong></TableCell>
+            <TableCell><strong>{totals.fcM.toLocaleString()}</strong></TableCell>
+            <TableCell><strong>{totals.legN}</strong></TableCell>
+            <TableCell><strong>{totals.legM.toLocaleString()}</strong></TableCell>
           </TableRow>
         </TableBody>
       </Table>
     </TableContainer>
   );
 };
-
 //
 // 6. DashboardOperateur
 //
@@ -281,9 +334,24 @@ export default function DashboardOperateur() {
     count_ord_com_invoice: 0,
     count_ord_legalization: 0
   });
+
+  const [custStats, setCustStats] = useState({
+    count_custaccount: 0,
+    count_custaccount_early: 0,
+    count_new_custaccount: 0,
+    count_suspended_custaccount: 0,
+    count_rejected_custaccount: 0
+  });
   const [loading, setLoading] = useState(true);
 
   const [filter, setFilter] = useState('24h');
+
+  const [evoFilter, setEvoFilter] = useState('6m');
+  const [custEvolution, setCustEvolution] = useState([]);
+  const [cmdEvoFilter, setCmdEvoFilter] = useState('month');
+  const [orderEvolution, setOrderEvolution] = useState([]);
+  const [recFilter, setRecFilter] = useState('6m');
+  const [recEvolution, setRecEvolution] = useState([]);
 
   const subtitles = {
     '24h': "Dernières 24 h",
@@ -302,15 +370,21 @@ export default function DashboardOperateur() {
       else start.setDate(now.getDate() - 30);
 
       try {
-        const { data } = await fetchStatisticOrders({
+        const { data: cd } = await fetchStatisticCustaccount({
           p_date_start: start.toISOString(),
           p_date_end: now.toISOString(),
-          p_id_list_order: null,
-          p_id_custaccount: null,
-          p_orderstatus_exclusif: 4,      // billed/paid
+          p_isactive: null,                  // ou true/false si vous voulez filtrer
           p_idlogin: user.id_login_user
         });
-        setStats(data[0] || {});
+        const c0 = (Array.isArray(cd) && cd[0]) || {};
+        setCustStats({
+          count_custaccount: c0.count_custaccount || 0,
+          count_new_custaccount: c0.count_new_custaccount || 0,
+          count_rejected_custaccount: c0.count_rejected_custaccount || 0,
+          count_custaccount_early: c0.count_custaccount_early || 0
+        });
+
+
       } catch (err) {
         console.error(err);
       } finally {
@@ -319,6 +393,92 @@ export default function DashboardOperateur() {
     })();
   }, [filter, user.id_login_user]);
 
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const now = new Date();
+      const start = new Date(now);
+
+      if (cmdEvoFilter === 'week') start.setDate(now.getDate() - 7);
+      else /* month */                   start.setDate(now.getDate() - 30);
+
+      try {
+        const { data } = await fetchStatisticOrders({
+          p_date_start: start.toISOString(),
+          p_date_end: now.toISOString(),
+          p_id_list_order: null,
+          p_id_custaccount: null,
+          p_orderstatus_exclusif: 4,
+          p_idlogin: user.id_login_user
+        });
+        setStats(data[0] || {});
+      } catch (err) {
+        console.error('orders evolution fetch failed', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [cmdEvoFilter, user.id_login_user]);
+
+
+  // fetch monthly evolution
+  useEffect(() => {
+    (async () => {
+      const now = new Date();
+      const start = new Date(now);
+      if (evoFilter === '6m') start.setMonth(now.getMonth() - 6);
+      else /* '1y' */       start.setFullYear(now.getFullYear() - 1);
+
+      try {
+        const rows = await fetchCustAccountEvolutionByMonth({
+          p_date_start: start.toISOString(),
+          p_date_end: now.toISOString(),
+          p_idlogin: user.id_login_user
+        });
+        setCustEvolution(rows);
+      } catch (e) {
+        console.error('Failed to load cust evolution:', e);
+      }
+    })();
+  }, [evoFilter, user.id_login_user]);
+
+  useEffect(() => {
+    (async () => {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+      try {
+        const rows = await fetchOrderStatisticsByMonth({
+          p_date_start: start.toISOString(),
+          p_date_end: now.toISOString(),
+          p_idlogin: user.id_login_user
+        });
+        setOrderEvolution(rows);
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  }, [user.id_login_user]);
+
+  useEffect(() => {
+    (async () => {
+      const now = new Date();
+      const start = new Date(now);
+      if (recFilter === '6m') start.setMonth(now.getMonth() - 6);
+      else /* '1y' */         start.setFullYear(now.getFullYear() - 1);
+
+      try {
+        const rows = await fetchOrderStatisticsByMonth({
+          p_date_start: start.toISOString(),
+          p_date_end: now.toISOString(),
+          p_idlogin: user.id_login_user
+        });
+        setRecEvolution(rows);
+      } catch (err) {
+        console.error('RecetteTable fetch failed', err);
+      }
+    })();
+  }, [recFilter, user.id_login_user]);
 
   if (loading) return <Typography>Chargement…</Typography>;
 
@@ -374,20 +534,38 @@ export default function DashboardOperateur() {
         </Grid>
       </Grid>
 
+
+
       {/* Rest of dashboard... */}
       <Grid container spacing={3} mb={4} alignItems="stretch">
-        <Grid item xs={12} md={6}><ClientsCountCard /></Grid>
-        <Grid item xs={12} md={6}><ClientsEvolutionCard /></Grid>
+        <Grid item xs={12} md={6}>
+          <ClientsCountCard custStats={custStats}
+            filter={filter}
+            onFilterChange={setFilter}
+            subtitle={subtitles[filter]} />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <ClientsEvolutionCard
+            data={custEvolution}
+            evoFilter={evoFilter}
+            onEvoFilterChange={setEvoFilter}
+          />
+        </Grid>
       </Grid>
 
       <Card sx={{ background: '#fff', boxShadow: 3, p: 2, mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
           <Typography variant="overline">Évolution des commandes</Typography>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Filtre</InputLabel>
-            <Select value={filter} label="Filtre" onChange={e => setFilter(e.target.value)}>
-              <MenuItem value="week">This Week</MenuItem>
-              <MenuItem value="month">This Month</MenuItem>
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>Période</InputLabel>
+            <Select
+              value={cmdEvoFilter}
+              label="Période"
+              onChange={e => setCmdEvoFilter(e.target.value)}
+            >
+              <MenuItem value="week">7 derniers jours</MenuItem>
+              <MenuItem value="month">30 derniers jours</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -399,6 +577,7 @@ export default function DashboardOperateur() {
               diff={stats.diff_certif || 0}
               trend={stats.trend_certif || 'up'}
               bg="#E8F5E9"
+              subtitle={subtitles[cmdEvoFilter]}
             />
           </Grid>
           <Grid item xs={12} sm={4}>
@@ -408,6 +587,7 @@ export default function DashboardOperateur() {
               diff={stats.diff_invoice || 0}
               trend={stats.trend_invoice || 'down'}
               bg="#E3F2FD"
+              subtitle={subtitles[cmdEvoFilter]}
             />
           </Grid>
           <Grid item xs={12} sm={4}>
@@ -417,12 +597,18 @@ export default function DashboardOperateur() {
               diff={stats.diff_legal || 0}
               trend={stats.trend_legal || 'up'}
               bg="#FFF8E1"
+              subtitle={subtitles[cmdEvoFilter]}
             />
           </Grid>
         </Grid>
       </Card>
 
-      <RecetteTable />
+      <RecetteTable
+        data={recEvolution}
+        filter={recFilter}
+        onFilterChange={setRecFilter}
+      />
+
     </Box>
   );
 }

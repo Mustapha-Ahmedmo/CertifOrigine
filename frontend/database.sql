@@ -5711,6 +5711,119 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+DROP FUNCTION IF EXISTS get_statistic_custaccount;
+CREATE OR REPLACE FUNCTION get_statistic_custaccount(
+    p_date_start TIMESTAMP,
+    p_date_end TIMESTAMP,
+    p_isactive BOOLEAN,
+    p_idlogin INT
+)
+RETURNS TABLE(
+    count_custaccount BIGINT,
+    count_custaccount_early BIGINT,
+    count_new_custaccount BIGINT,
+    count_suspended_custaccount BIGINT,
+    count_rejected_custaccount BIGINT
+	
+) AS
+$$
+BEGIN
+
+		IF NOT EXISTS (SELECT 1 FROM op_user WHERE id_login_user = p_idlogin) THEN
+			RAISE EXCEPTION 'Acc�s refus�';
+		END IF;
+
+   RETURN QUERY
+   SELECT 
+        SUM(CASE WHEN ca."statut_flag" = 2 THEN 1 ELSE 0 END) AS count_custaccount,
+        SUM(CASE WHEN ca."statut_flag" = 2 and ca."insertdate">= p_date_start  and ca."insertdate"<= p_date_end THEN 1 ELSE 0 END) AS count_custaccount_early,
+        SUM(CASE WHEN ca."statut_flag" = 1 THEN 1 ELSE 0 END) AS count_new_custaccount,
+        SUM(CASE WHEN ca."statut_flag" = 3 THEN 1 ELSE 0 END) AS count_suspended_custaccount,
+        SUM(CASE WHEN ca."statut_flag" = 4 THEN 1 ELSE 0 END) AS count_rejected_custaccount
+
+        from CUST_ACCOUNT ca
+    WHERE 
+	    p_isactive IS NULL
+        OR (p_isactive IS NOT TRUE AND ca."deactivation_date" <= CURRENT_DATE)
+        OR (p_isactive IS TRUE AND ca."deactivation_date" > CURRENT_DATE)
+    ;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+--Select * from get_statistic_Orders_ByMonth('2025-04-01','2025-06-01',1);
+DROP FUNCTION IF EXISTS get_statistic_Orders_ByMonth;
+CREATE OR REPLACE FUNCTION get_statistic_Orders_ByMonth(
+    p_date_start TIMESTAMP,
+    p_date_end TIMESTAMP,
+    p_idlogin INT
+)
+RETURNS TABLE(
+    theYear  FLOAT,
+    theMonth  FLOAT,
+    theYearMonth  DECIMAL,
+    count_ord_certif_ori BIGINT,
+    count_ord_legalization BIGINT,
+    count_ord_com_invoice BIGINT,
+    amount_ord_certif_ori_paid FLOAT,
+    amount_ord_legalization INT,
+    amount_ord_com_invoice INT
+	
+) AS
+$$
+BEGIN
+
+
+	IF NOT EXISTS (SELECT 1 FROM op_user WHERE id_login_user = p_idlogin) THEN
+		RAISE EXCEPTION 'Acc�s refus�';
+	END IF;
+
+    RETURN QUERY
+    SELECT 
+	
+		Months.theYear,
+		Months.theMonth,
+  	    CAST(CONCAT(Months.theYear::text,LPAD(Months.theMonth::text, 2, '0'))  AS DECIMAL ) as theYearMonth,
+
+	
+        SUM(CASE WHEN MOD(o.TYPEOF, 10) = 1 THEN 1 ELSE 0 END) AS count_ord_certif_ori,
+        SUM(CASE 
+              WHEN MOD(o.TYPEOF/10, 100) = 1 
+                OR MOD(o.TYPEOF/10, 100) = 11 
+              THEN 1 ELSE 0 END) AS count_ord_legalization,
+        SUM(CASE WHEN MOD(o.TYPEOF/100, 1000) = 1 THEN 1 ELSE 0 END) AS count_ord_com_invoice,
+      
+        coalesce(SUM(inv.AMOUNT_ExVAT + inv.AMOUNT_VAT),0) AS amount_ord_certif_ori_paid
+
+		,0,0
+
+
+		
+    FROM "ORDER" o
+        INNER JOIN ORD_CERTIF_ORI oco ON o."id_order" = oco."id_order"
+        LEFT JOIN INVOICE_HEADER inv ON o."id_order" = inv."id_order"
+
+		RIGHT OUTER JOIN months_in_range(p_date_start,p_date_end) as Months 
+			ON date_part('month', o."date_last_return" ) = Months.theMonth
+			AND date_part('year', o."date_last_return" ) = Months.theYear
+
+    WHERE 
+	(o."id_order_status" = 5/*paid*/ OR o."id_order_status" IS NULL )
+	AND (
+			(o."date_last_return" >= p_date_start  and o."date_last_return"  <= p_date_end)  
+			or o."date_last_return" IS NULL 
+		)
+		
+
+	group by Months.theYear, Months.theMonth
+	order by Months.theYear, Months.theMonth;		
+        
+END;
+$$ LANGUAGE plpgsql;
+
+
+
 
 
 

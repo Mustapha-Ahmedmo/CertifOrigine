@@ -1,6 +1,6 @@
 const express = require('express');
 const upload = require('../src/middleware/upload'); // Use your existing multer middleware
-const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController, setUnitWeight, deleteUnitWeight, submitOrder, remOrdCertifGoods, remOrdCertifTranspMode, remSingleOrdCertifTranspMode, approveOrder, sendbackOrder, rejectOrder, getOrderStaticsByServices, billOrder, setInvoiceHeader, sendOrderDocument, getOrdCertifAmountByDay, getHistoOrder, getMemoOrder, getOrdCertifAmountByWeek, getLastClients, getStatisticOrders } = require('../controllers/OrderController');
+const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController, setUnitWeight, deleteUnitWeight, submitOrder, remOrdCertifGoods, remOrdCertifTranspMode, remSingleOrdCertifTranspMode, approveOrder, sendbackOrder, rejectOrder, getOrderStaticsByServices, billOrder, setInvoiceHeader, sendOrderDocument, getOrdCertifAmountByDay, getHistoOrder, getMemoOrder, getOrdCertifAmountByWeek, getLastClients, getStatisticOrders, getStatisticCustaccount, getStatisticCustAccountByMonth, getStatisticOrdersByMonth } = require('../controllers/OrderController');
 
 const router = express.Router();
 router.post('/create', executeAddOrder);
@@ -79,5 +79,15 @@ router.post('/sendOrderDocuments', sendOrderDocument);
 router.get('/last-clients', getLastClients);
 
 router.get('/statistic-orders', getStatisticOrders);
+router.get('/statistic-custaccount', getStatisticCustaccount);
+router.get(
+  '/statistic-by-month',
+  getStatisticCustAccountByMonth
+);
+
+router.get(
+  '/order-statistics-month',
+  getStatisticOrdersByMonth
+);
 
 module.exports = router;

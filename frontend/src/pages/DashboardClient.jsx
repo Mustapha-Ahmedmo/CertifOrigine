@@ -346,7 +346,7 @@ export default function DashboardClient() {
       }
       try {
         const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const start = new Date(2000, 0, 1);      // January is month 0
         const end = new Date(now);
         end.setHours(23, 59, 59, 999);
         const resp = await getLastClients({

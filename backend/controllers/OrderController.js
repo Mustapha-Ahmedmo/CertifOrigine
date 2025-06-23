@@ -2348,6 +2348,69 @@ const getStatisticCustaccount = async (req, res) => {
   }
 };
 
+const getStatisticCustAccountByMonth = async (req, res) => {
+  try {
+    const { p_date_start, p_date_end, p_idlogin } = req.query;
+    if (!p_date_start || !p_date_end || !p_idlogin) {
+      return res.status(400).json({ message: 'p_date_start, p_date_end et p_idlogin sont requis.' });
+    }
+
+    // call your plpgsql function
+    const rows = await sequelize.query(
+      `SELECT * 
+         FROM get_statistic_custaccount_byMonth(
+           :p_date_start::timestamp,
+           :p_date_end::timestamp,
+           :p_idlogin::int
+         );`,
+      {
+        replacements: { p_date_start, p_date_end, p_idlogin: parseInt(p_idlogin, 10) },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    return res.json({ data: rows });
+  } catch (err) {
+    console.error('Erreur getStatisticCustAccountByMonth:', err);
+    return res.status(500).json({ message: 'Erreur serveur.', error: err.message });
+  }
+};
+
+const getStatisticOrdersByMonth = async (req, res) => {
+  try {
+    let { p_date_start, p_date_end, p_idlogin } = req.query;
+
+    if (!p_date_start || !p_date_end || !p_idlogin) {
+      return res.status(400).json({
+        message: 'p_date_start, p_date_end et p_idlogin sont requis.'
+      });
+    }
+
+    p_idlogin = parseInt(p_idlogin, 10);
+
+    const result = await sequelize.query(
+      `SELECT * 
+         FROM get_statistic_Orders_ByMonth(
+           :p_date_start,
+           :p_date_end,
+           :p_idlogin
+         );`,
+      {
+        replacements: { p_date_start, p_date_end, p_idlogin },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    return res.status(200).json({ data: result });
+  } catch (err) {
+    console.error('Erreur getStatisticOrdersByMonth:', err);
+    return res.status(500).json({
+      message: 'Erreur lors de la récupération des statistiques des commandes par mois.',
+      error: err.message
+    });
+  }
+};
+
 module.exports = {
   executeAddOrder,
   getTransmodeInfo,
@@ -2389,5 +2452,7 @@ module.exports = {
   getOrdCertifAmountByWeek,
   getLastClients,
   getStatisticOrders,
-  getStatisticCustaccount
+  getStatisticCustaccount,
+  getStatisticCustAccountByMonth,
+  getStatisticOrdersByMonth
 };
