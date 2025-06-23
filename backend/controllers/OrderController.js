@@ -17,37 +17,69 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-async function sendEmailNotification(orderId, status, reason, recipientEmail, orderTitle, orderDate, totalFD) {
-  let subject = `Ordre numéro ${orderId} est ${status}`;
+async function sendEmailNotification({
+  orderId,
+  orderTitle = '',
+  status,
+  reason = '',
+  recipientName = '',
+  recipientEmail,
+  orderDate,
+  totalFD
+}) {
+  console.log('📧 sending:', orderId, orderTitle, status, recipientName, orderDate);
+  // Formate la date en jj/mm/aaaa
+  const d = new Date(orderDate);
+  const formattedDate = isNaN(d)
+    ? '[date inconnue]'
+    : d.toLocaleDateString('fr-FR');
+  const subject = `Votre commande de certificat “${orderTitle}” est ${status}`;
+
   let body = '';
+  if (status === 'validée') {
+    body = `Bonjour ${recipientName},
 
-  // If status is "Valider" (or "validé" or "approuvé"), send the validation email.
-  if (status === 'Valider' || status === 'validé' || status === 'approuvé') {
-    body = `Bonjour,
+Nous vous informons que votre commande de certificat “${orderTitle}” du ${formattedDate} est validée.  
+Montant dû : ${totalFD} FD.  
+Vous pouvez régler par chèque, espèces ou virement bancaire.  
+Votre certificat (et les copies conformes le cas échéant) sera disponible sur votre compte dès réception du paiement.
 
-    Nous avons le plaisir de vous confirmer que votre commande de certificat « ${orderTitle} » du ${orderDate} est validée (Certificat N° ${orderId}).
-    
-    Par conséquent, nous vous invitons à procéder au règlement d’un montant total de ${totalFD} FDJ. 
-    Vous pouvez régler le paiement par chèque, par virement bancaire ou en espèces en vous rendant dans les locaux de la CCD. 
-    Votre certificat, et le cas échéant les copies conformes, sera (ou seront) disponible(s) sur votre compte dès le paiement de ce montant.
-    
-    Nous restons à votre disposition pour toute question.
-    
-    Bien cordialement,
-    **L'équipe du portail de la Chambre de Commerce de Djibouti**`; } else if (status === 'renvoyé' || status === 'rejeté') {
-    body = `Votre certificat a été ${status}. Raison : ${reason}`;
-  } else {
-    body = 'Statut inconnu.';
+Nous restons à votre disposition pour toute question.
+
+Bien cordialement,
+L'équipe du portail de la Chambre de Commerce de Djibouti`;
+  }
+  else if (['renvoyé', 'rejeté'].includes(status)) {
+    body = `Bonjour ${recipientName},
+
+Votre commande de certificat “${orderTitle}” du ${formattedDate} vous a été ${status}.
+
+Raison de ce retour :
+${reason}
+
+Merci de bien vouloir retransmettre votre commande après correction.
+
+Nous restons à votre disposition pour toute question.
+
+Bien cordialement,
+L'équipe du portail de la Chambre de Commerce de Djibouti`;
+  }
+  else {
+    body = `Bonjour ${recipientName},
+
+Statut inconnu pour la commande “${orderName}” (ID : ${orderId}).
+
+Merci de vérifier.`;
   }
 
   const mailOptions = {
     from: '"Chambre de commerce de Djibouti" <myfolioreport@maesys.fr>',
     to: recipientEmail,
     subject,
-    text: body,
+    text: body
   };
 
-  // Assumes that "transporter" is defined in your module (e.g., via nodemailer)
+
   return transporter.sendMail(mailOptions);
 }
 // Au sommet du fichier
@@ -1557,6 +1589,7 @@ const approveOrder = async (req, res) => {
       p_id_cust_account,
       p_idlogin_modify,
       customerEmail,
+      recipientName,
       orderTitle,
       orderDate,   // Expecting a string like "12/03/2025"
       totalFD      // Total amount (as a number or string)
@@ -1613,7 +1646,16 @@ const approveOrder = async (req, res) => {
       }
     );
 
-    await sendEmailNotification(p_id_order, 'approuvé', '', customerEmail, orderTitle, orderDate, totalFD);
+    await sendEmailNotification({
+      orderId:       p_id_order,
+      orderTitle,
+      status:        'validée',
+      reason:        '',
+      recipientName,
+      recipientEmail: customerEmail,
+      orderDate,
+      totalFD
+    });
 
     res.status(200).json({ message: 'Commande approuvée avec succès.' });
   } catch (error) {
@@ -1628,7 +1670,18 @@ const approveOrder = async (req, res) => {
 
 const sendbackOrder = async (req, res) => {
   try {
-    const { p_id_order, p_id_cust_account, p_idlogin_modify, returnReason, customerEmail, orderTitle } = req.body;
+    const {
+      p_id_order,
+      p_id_cust_account,
+      p_idlogin_modify,
+      returnReason,
+      customerEmail,
+      orderTitle,
+      recipientName,
+      orderDate,
+      totalFD
+    } = req.body;
+    console.log('⏳ [sendbackOrder] Payload reçu :', req.body);
 
     if (!p_id_order || !p_id_cust_account || !p_idlogin_modify || !customerEmail) {
       return res.status(400).json({
@@ -1653,36 +1706,60 @@ const sendbackOrder = async (req, res) => {
       p_idlogin_insert: p_idlogin_modify,
       p_memo_date: new Date(),
       p_memo_subject: `Votre commande ${orderTitle} est retournée par la CCD`,
-      p_memo_body: returnReason,
+      p_memo_body: `
+Bonjour ${recipientName},<br><br>
+
+Votre commande de certificat « ${orderTitle} » du ${new Date(orderDate).toLocaleDateString('fr-FR')} vous a été retournée.<br><br>
+
+Raison de ce retour :<br>
+"${returnReason}".<br><br>
+
+Merci de bien vouloir nous retransmettre votre commande après correction.<br><br>
+
+Nous restons à votre disposition pour toute question.<br><br>
+
+Bien cordialement,<br>
+<strong>L'équipe du portail de la Chambre de Commerce de Djibouti</strong>
+`,
+
       p_mail_to: customerEmail,
       p_mail_bcc: null,
       p_mail_acc: null,
       p_mail_notifications: null,
     };
 
-    // Call the stored function without checking for the returned memo ID.
     await sequelize.query(
       `SELECT fn_set_memo(
-             :p_id_order,
-             :p_id_cust_account,
-             :p_typeof,
-             :p_idlogin_insert,
-             :p_memo_date::timestamp,
-             :p_memo_subject,
-             :p_memo_body,
-             :p_mail_to,
-             :p_mail_bcc,
-             :p_mail_acc,
-             :p_mail_notifications
-          )`,
+         :p_id_order,
+         :p_id_cust_account,
+         :p_typeof,
+         :p_idlogin_insert,
+         :p_memo_date::timestamp,
+         :p_memo_subject,
+         :p_memo_body,
+         :p_mail_to,
+         :p_mail_bcc,
+         :p_mail_acc,
+         :p_mail_notifications
+       )`,
       {
         replacements: memoReplacements,
         type: QueryTypes.SELECT,
       }
     );
+    const formattedReturnDate = new Date(orderDate).toLocaleDateString('fr-FR');
 
     // 3. Send an email notification for the sendback
-    await sendEmailNotification(p_id_order, 'renvoyé', returnReason, customerEmail);
+    await sendEmailNotification({
+      orderId : p_id_order,
+      orderTitle,
+      status:        'renvoyé',
+      reason:        returnReason,
+      recipientName: recipientName,
+      recipientEmail: customerEmail,
+      orderDate:     orderDate,
+      totalFD:       totalFD
+    });
 
     res.status(200).json({ message: 'Commande retournée avec succès.' });
   } catch (error) {

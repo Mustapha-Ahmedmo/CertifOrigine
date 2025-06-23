@@ -1256,8 +1256,9 @@ export const approveOrder = async (
   p_id_cust_account,
   p_idlogin_modify,
   customerEmail,
+  recipientName,      // <-- ajouté
   orderTitle,
-  orderDate,
+  orderDate,          // ISO
   totalFD
 ) => {
   try {
@@ -1272,6 +1273,7 @@ export const approveOrder = async (
         p_id_cust_account,
         p_idlogin_modify,
         customerEmail,
+        recipientName,
         orderTitle,
         orderDate,  // e.g., "12/03/2025"
         totalFD,    // e.g., the computed total amount (as a number or string)
@@ -1290,7 +1292,7 @@ export const approveOrder = async (
   }
 };
 
-export const sendbackOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, returnReason, customerEmail, orderTitle) => {
+export const sendbackOrder = async (p_id_order, p_id_cust_account, p_idlogin_modify, returnReason, customerEmail, orderTitle, recipientName, orderDate, totalFD) => {
   try {
     const response = await fetch(`${API_URL}/orders/sendback_order`, {
       method: 'POST',
@@ -1304,7 +1306,10 @@ export const sendbackOrder = async (p_id_order, p_id_cust_account, p_idlogin_mod
         p_idlogin_modify,
         returnReason,
         customerEmail,
-        orderTitle
+        orderTitle,
+        recipientName, 
+        orderDate, 
+        totalFD
       }),
     });
 
