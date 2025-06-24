@@ -28,6 +28,8 @@ DROP TABLE IF EXISTS ORD_LEGALIZATION CASCADE;
 DROP TABLE IF EXISTS ORDER_FILES CASCADE;
 DROP TABLE IF EXISTS MEMO CASCADE;
 DROP TABLE IF EXISTS INVOICE_HEADER CASCADE;
+DROP TABLE IF EXISTS MEMO_FILES CASCADE;
+
 
 CREATE TABLE CURRENCY (
     ID_CURRENCY INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -505,6 +507,14 @@ CREATE TABLE INVOICE_HEADER (
     FOREIGN KEY (IDLOGIN_CREDITNOTE) REFERENCES LOGIN_USER(ID_LOGIN_USER)
 );
 
+CREATE TABLE MEMO_FILES (
+    ID_MEMO_FILES INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ID_MEMO INT NOT NULL,                       -- Non nullable
+    ID_FILES_REPO INT NOT NULL,              -- Non nullable
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par d�faut
+    FOREIGN KEY (ID_MEMO) REFERENCES MEMO(ID_MEMO),
+    FOREIGN KEY (ID_FILES_REPO) REFERENCES FILES_REPO(ID_FILES_REPO)
+);
 DO $$ 
 BEGIN 
     IF EXISTS (SELECT 1 FROM pg_views WHERE viewname = 'view_login') THEN
@@ -5609,6 +5619,91 @@ $$ LANGUAGE plpgsql;
 
 
 
+
+DROP FUNCTION IF EXISTS get_memo_files; 
+DROP FUNCTION IF EXISTS get_memo_files_info; 
+CREATE OR REPLACE FUNCTION get_memo_files_info(
+    p_id_memo_files_list TEXT,
+    p_id_memo_list TEXT,
+	p_id_files_repo_list TEXT,
+    p_id_files_repo_typeof_list TEXT,  
+    p_isactive BOOLEAN,
+	p_id_custaccount INT,
+    p_id_order_list TEXT
+)
+RETURNS TABLE(
+    id_memo_files INT,
+    id_memo INT,
+	memo_subject VARCHAR(256),
+	id_files_repo INT,
+	id_files_repo_typeof INT,
+	file_origin_name VARCHAR(160),
+	file_guid VARCHAR(64),
+	file_path VARCHAR(256),
+	insertdate TIMESTAMP,
+	idlogin_insert INT,
+	lastmodified TIMESTAMP,
+	idlogin_modify INT,
+	deactivation_date TIMESTAMP,
+	txt_description_fr VARCHAR(64),
+	txt_description_eng VARCHAR(64)
+
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT
+		mf."id_memo_files",
+	    mf."id_memo",
+		me."memo_subject",
+		mf."id_files_repo",
+		fr."idfiles_repo_typeof",
+		fr."file_origin_name",
+		fr."file_guid",
+		fr."file_path",
+		fr."insertdate",
+		fr."idlogin_insert",
+		fr."lastmodified",
+		fr."idlogin_modify",
+		fr."deactivation_date",
+		ft."txt_description_fr",
+		ft."txt_description_eng"
+	FROM
+        memo_files mf
+	JOIN 
+		memo me ON mf."id_memo" = me."id_memo"
+	JOIN 
+		files_repo fr ON mf."id_files_repo" = fr."id_files_repo" 
+		JOIN
+			files_repo_typeof ft ON fr."idfiles_repo_typeof" = ft."id_files_repo_typeof"
+    WHERE 
+        (p_id_memo_files_list IS NULL OR mf."id_memo_files" = ANY (string_to_array(p_id_memo_files_list, ',')::INT[]))
+    AND 
+		(p_id_memo_list IS NULL OR mf."id_memo" = ANY(string_to_array(p_id_memo_list, ',')::INT[]))
+	AND 
+        (p_id_files_repo_list IS NULL OR mf."id_files_repo" = ANY(string_to_array(p_id_files_repo_list, ',')::INT[]))
+    AND 
+        (p_id_files_repo_typeof_list IS NULL OR fr."idfiles_repo_typeof" = ANY (string_to_array(p_id_files_repo_typeof_list, ',')::INT[]))
+    AND
+        (p_id_custaccount IS NULL OR me."id_cust_account" = p_id_custaccount)
+    AND 
+        (p_id_order_list IS NULL OR me."id_order" = ANY (string_to_array(p_id_order_list, ',')::INT[]))
+
+	AND (
+	     p_isactive IS NULL
+        -- Si p_isactive = 0, je verifie si une des deux dates de d�sactivation est avant la date du jour
+        OR(p_isactive IS NOT TRUE AND mf."deactivation_date" <= CURRENT_DATE 
+            
+        )
+        -- Si p_isactive = 1, je verifie que les deux dates de d�sactivation sont apr�s la date du jour
+        OR (p_isactive IS TRUE AND mf."deactivation_date" > CURRENT_DATE
+            
+        )
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+
 --Select * from get_statistic_Orders('2025-04-01','2025-06-01',null,1,4,1);
 DROP FUNCTION IF EXISTS get_statistic_Orders;
 CREATE OR REPLACE FUNCTION get_statistic_Orders(
@@ -5879,3 +5974,5 @@ CALL add_files_repo_typeof(509, 'Certificat d''origine - Autres', 'Certificate o
 
 CALL add_files_repo_typeof(1000, 'Certificat d''origine - Original', 'Certificate of origin - Original', FALSE);
 CALL add_files_repo_typeof(1001, 'Certificat d''origine - Copie', 'Certificate of origin - Copy', FALSE);
+CALL add_files_repo_typeof(1002, 'Certificat d''origine - Original', 'Certificate of origin - Original', FALSE);
+CALL add_files_repo_typeof(1003, 'Certificat d''origine - Copie', 'Certificate of origin - Copy', FALSE);
