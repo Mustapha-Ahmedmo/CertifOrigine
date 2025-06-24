@@ -1831,3 +1831,80 @@ export const fetchOrderStatisticsByMonth = async ({
   // on s’attend à { data: [...] }
   return Array.isArray(payload.data) ? payload.data : [];
 };
+
+export const setMemoFiles = async (formData) => {
+  // 1. Validation du paramètre
+  if (!(formData instanceof FormData)) {
+    throw new TypeError('Le paramètre "formData" doit être une instance de FormData');
+  }
+
+  // 2. Récupération et vérification du token
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('Token non trouvé. Veuillez vous reconnecter.');
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/orders/order-files`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      },
+      body: formData,  // multipart/form-data géré automatiquement
+    });
+
+    // 3. Gestion des erreurs HTTP
+    if (!response.ok) {
+      let errorMessage = `Erreur ${response.status} lors de l’envoi du fichier.`;
+      try {
+        const errorBody = await response.json();
+        if (errorBody?.message) {
+          errorMessage = errorBody.message;
+        }
+      } catch {
+        // pas de JSON dans la réponse, on garde le message générique
+      }
+      throw new Error(errorMessage);
+    }
+
+    // 4. Retour des données JSON
+    return await response.json();
+  } catch (error) {
+    console.error('Erreur dans setMemoFiles :', error);
+    throw error;
+  }
+};
+
+export const fetchMemoFilesInfo = async ({ p_id_memo_list, p_isactive }) => {
+  try {
+    // 1) Construire la query string
+    const params = new URLSearchParams();
+    if (p_id_memo_list != null) params.append('p_id_memo_list', p_id_memo_list);
+    if (p_isactive    != null) params.append('p_isactive',     p_isactive);
+
+    // 2) Faire l'appel GET
+    const response = await fetch(
+      `${API_URL}/mailers/get_memo_files_info?${params.toString()}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+      }
+    );
+
+    // 3) Gérer les erreurs HTTP
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to fetch memo files info');
+    }
+
+    // 4) Retourner le JSON
+    return await response.json();
+  } catch (error) {
+    console.error('API call error (fetchMemoFilesInfo):', error);
+    throw error;
+  }
+};

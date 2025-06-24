@@ -18,7 +18,7 @@ import {
   Divider
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { ackMemoCust, getMemo } from '../../services/apiServices';
+import { ackMemoCust, getMemo, fetchMemoFilesInfo } from '../../services/apiServices';
 import { format } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -76,6 +76,7 @@ const Notifications = () => {
         p_isAck: showAll ? null : 'false',
         p_id_cust_account: custAccountId,
         p_isopuser: isOperator ? 'true' : 'false',
+        p_typeof: '1,2', // ← on récupère les mémos de type 1 et 2
       };
       try {
         const result = await getMemo(params);
@@ -92,6 +93,12 @@ const Notifications = () => {
     }
   }, [custAccountId, isOperator, showAll]);
 
+
+  const [memoFiles, setMemoFiles] = useState([]);
+  // { [id_memo]: Array<fileInfo> }
+  const [memoFilesMap, setMemoFilesMap] = useState({});
+
+ 
   useEffect(() => {
     fetchMemos();
   }, [fetchMemos]);
@@ -105,6 +112,24 @@ const Notifications = () => {
       window.removeEventListener('memoAck', handleMemoAck);
     };
   }, [fetchMemos]);
+
+  useEffect(() => {
+    if (!memos.length) return;
+    memos.forEach(memo => {
+      fetchMemoFilesInfo({
+        p_id_memo_list: String(memo.id_memo),
+        p_isactive:     'true'
+      })
+      .then(({ data }) => {
+        console.log('⇢ fichiers pour mémo', memo.id_memo, data);
+        setMemoFilesMap(prev => ({
+          ...prev,
+          [memo.id_memo]: data
+        }));
+      })
+      .catch(err => console.error(err));
+    });
+  }, [memos]);
 
   const handleAcknowledgeClick = (memoId) => {
     setSelectedMemoId(memoId);
@@ -167,7 +192,7 @@ const Notifications = () => {
             const dateFormatted = safeFormatDate(memo_date);
             const dateAckFormatted = ack_date ? safeFormatDate(ack_date) : null;
             const chipProps = getChipPropsBySubject(memo_subject);
-
+            console.log('🔍 memo reçu:', memo);
             return (
               <Box key={id_memo} sx={{ mb: index < memos.length - 1 ? 1 : 0 }}>
                 <Box
@@ -211,28 +236,84 @@ const Notifications = () => {
                     sx={{ mt: 0.5, fontSize: '0.7rem' }}
                     dangerouslySetInnerHTML={{ __html: memo_body || 'Pas de description.' }}
                   />
+{(() => {
+                  const files = memoFilesMap[id_memo] || []
+                  const original = files.find(f => f.id_files_repo_typeof === 1002)
+                  const copie    = files.find(f => f.id_files_repo_typeof === 1003)
 
+                  if (!original && !copie) return null
+
+                  // Construit l'URL publique pour un mémo
+                  const buildUrl = (file) => {
+                    // file.file_path === "/usr/src/app/data/memos/2025/86dae320-...pdf"
+                    const parts = file.file_path.split('/')
+                    const year  = parts[parts.length - 2]   // "2025"
+                    const name  = parts[parts.length - 1]   // "86dae320-...pdf"
+                // Variante 1 : servir depuis le dossier statique
+                return `${import.meta.env.VITE_API_URL}/data/memos/${year}/${name}`
+
+                // Variante 2 : ou via votre route Express download_memo
+                // return `${import.meta.env.VITE_API_URL}/mailers/download_memo/${year}/${name}`
+                }
+                return (
+                  <Box sx={{ mt: 1 }}>
+  <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.7rem', mb: 0.5 }}>
+    Document(s) de la commande :
+  </Typography>
+  <Box sx={{ display: 'flex', flexDirection: 'column', pl: 2 }}>
+    {original && (
+      <MuiLink
+        href={buildUrl(original)}
+        target="_blank"
+        rel="noopener"
+        underline="always"
+        sx={{ fontSize: '0.7rem', mb: 0.5 }}
+      >
+        • PDF Certificat d'Origine
+      </MuiLink>
+    )}
+    {copie && (
+      <MuiLink
+        href={buildUrl(copie)}
+        target="_blank"
+        rel="noopener"
+        underline="always"
+        sx={{ fontSize: '0.7rem' }}
+      >
+        • PDF copie Certificat d'Origine
+      </MuiLink>
+    )}
+  </Box>
+</Box>
+
+                )
+                })()}
                   {isOperator && cust_name && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: '0.7rem' }}>
                       Client : {cust_name}
                     </Typography>
                   )}
-                  {(id_order && id_order !== 0) && (
-                    <Box sx={{ mt: 0.5 }}>
-                      <MuiLink
-                        component="button"
-                        variant="body2"
-                        onClick={() =>
-                          navigate(
-                            `/order-details?orderId=${id_order}&certifId=${id_ord_certif_ori || ''}`
-                          )
-                        }
-                        sx={{ textDecoration: 'underline', cursor: 'pointer', fontSize: '0.7rem' }}
-                      >
-                        Voir la commande
-                      </MuiLink>
-                    </Box>
-                  )}
+                  {(() => {
+  // si id_order est absent, on récupère id_ord_certif_ori en fallback
+  const orderIdToShow = id_order || id_ord_certif_ori;
+  if (!orderIdToShow) return null;
+  return (
+    <Box sx={{ mt: 0.5 }}>
+      <MuiLink
+        component="button"
+        variant="body2"
+        onClick={() =>
+          navigate(
+            `/dashboard/order-details?orderId=${orderIdToShow}&certifId=${id_ord_certif_ori || ''}`
+          )
+        }
+        sx={{ textDecoration: 'underline', cursor: 'pointer', fontSize: '0.7rem' }}
+      >
+        Voir la commande
+      </MuiLink>
+    </Box>
+  );
+})()}
                 </Box>
                 {index < memos.length - 1 && <Divider sx={{ my: 1 }} />}
               </Box>

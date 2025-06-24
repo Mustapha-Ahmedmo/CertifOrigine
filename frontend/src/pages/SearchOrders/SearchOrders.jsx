@@ -32,7 +32,7 @@ import {
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faFilePdf } from '@fortawesome/free-solid-svg-icons';
-import { fetchCountries, fetchRecipients, getCertifGoodsInfo, getCertifTranspMode, getCustAccountInfo, getOrderFilesInfo, getOrderOpInfo, getOrdersForCustomer, getTransmodeInfo, setOrderFiles, sendEmailAndMemo, sendEmail } from '../../services/apiServices';
+import { fetchCountries, fetchRecipients, getCertifGoodsInfo, getCertifTranspMode, getCustAccountInfo, getOrderFilesInfo, getOrderOpInfo, getOrdersForCustomer, getTransmodeInfo, setOrderFiles, sendEmailAndMemo, sendEmail, setMemo, setMemoFiles } from '../../services/apiServices';
 import { formatDate } from '../../utils/dateUtils';
 import './SearchOrders.css';
 import { generatePDF } from '../../components/orders/GeneratePDF';
@@ -326,13 +326,13 @@ const SearchOrders = () => {
   const handleGeneratePDF = async (order) => {
     try {
       console.log('Génération de PDF pour la commande :', order);
-
+  
       // ─── 0) Collecte des données ───────────────────────────────
       const originCountry = countries.find(c => c.id_country === order.id_country_origin)?.symbol_fr || '';
       const destinationCountry = countries.find(c => c.id_country === order.id_country_destination)?.symbol_fr || '';
       const portLoading = countries.find(c => c.id_country === order.id_country_port_loading)?.symbol_fr || '';
       const portDischarge = countries.find(c => c.id_country === order.id_country_port_discharge)?.symbol_fr || '';
-
+  
       const transpResponse = await getCertifTranspMode({
         idListCT: null,
         idListCO: order.id_ord_certif_ori?.toString() || null,
@@ -345,7 +345,7 @@ const SearchOrders = () => {
       transpResponse?.data?.forEach(m => {
         transportModesObj[m.symbol_fr.toLowerCase()] = true;
       });
-
+  
       const custAccountInfo = await getCustAccountInfo(order.id_cust_account);
       const exporterCountry = countries.find(c => c.id_country === custAccountInfo.data[0].id_country)?.symbol_fr || '';
       const certifGoods = await getCertifGoodsInfo(order.id_ord_certif_ori);
@@ -353,7 +353,7 @@ const SearchOrders = () => {
         idListR: order.id_recipient_account?.toString() || null,
       });
       const recipient = recipientList.data?.[0] || {};
-
+  
       const formData = {
         transportModes: transportModesObj,
         merchandises: certifGoods.data || [],
@@ -370,12 +370,12 @@ const SearchOrders = () => {
         DateValidation: order.date_validation_ori,
         Certifid: order.id_ord_certif_ori,
       };
-
+  
       // ─── 1) Génère le PDF original ───────────────────────────────
       const basePdfBlob = await generatePDF(formData);
-
-      // ─── 2) Upload du PDF ORIGINAL ──────────────────────────────
       const origFileName = `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}.pdf`;
+  
+      // ─── 2) Upload du PDF ORIGINAL ──────────────────────────────
       await setOrderFiles({
         uploadType: 'commandes',
         p_id_order: order.id_order,
@@ -386,14 +386,14 @@ const SearchOrders = () => {
         file: new File([basePdfBlob], origFileName, { type: 'application/pdf' }),
       });
       console.log('Original uploadé:', origFileName);
-
-
-
-      // ─── 4) Si copies demandées => génère & upload UNE copie ───────
+  
+      // ─── 3) Génération et upload de la copie si demandée ───────
+      let copyBlob = null;
+      let copyFileName = '';
       if ((order.copy_count_ori || 0) > 0) {
         console.log('Génération et upload d’une copie tamponnée');
-        const copyBlob = await stampCopy(basePdfBlob);
-        const copyFileName = `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}_COPIE.pdf`;
+        copyBlob = await stampCopy(basePdfBlob);
+        copyFileName = `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}_COPIE.pdf`;
         await setOrderFiles({
           uploadType: 'commandes',
           p_id_order: order.id_order,
@@ -404,11 +404,9 @@ const SearchOrders = () => {
           file: new File([copyBlob], copyFileName, { type: 'application/pdf' }),
         });
         console.log('Copie uploadée:', copyFileName);
-      } else {
-        console.log('Aucune copie demandée.');
       }
-
-      // ─── 5) Mise à jour de l’état local et rafraîchissement ───────
+  
+      // ─── 4) Mise à jour de l’état local et rafraîchissement ─────
       const fileCheck = await getOrderFilesInfo({
         p_id_order_list: order.id_order,
         p_idfiles_repo_typeof: 1000,
@@ -417,36 +415,72 @@ const SearchOrders = () => {
         setOrderFilesMap(prev => ({ ...prev, [order.id_order]: fileCheck[0] }));
       }
       await fetchOrders();
-
-      // ─── 6) Envoi de l’e-mail au client ──────────────────────────
-      try {
-        const mainContact = custAccountInfo.data[0].main_contact?.find(c => c.ismain_user);
-        const toEmail = mainContact?.email;
-        if (toEmail) {
-          const subject = `Votre PDF de commande #${order.id_order} est disponible`;
-          const body = `
-            <p>Bonjour ${custAccountInfo.data[0].cust_name},</p>
-            <p>Le PDF de votre commande <strong>#${order.id_order}</strong> a été généré${order.copy_count_ori > 0 ? ' et une copie a été créée' : ''
-            }.</p>
-            <p>Vous pouvez le télécharger via votre espace client.</p>
-            <p>Bien cordialement,<br/>La Chambre de Commerce de Djibouti</p>
-          `;
-          await sendEmailAndMemo({
-            to: toEmail,
-            subject,
-            body,
-            isHtml: true,
-            id_cust_account: order.id_cust_account,
-            idlogin: operatorId,
-          });
-          console.log('E-mail envoyé à', toEmail);
-        } else {
-          console.warn('Pas de contact principal pour la commande', order.id_order);
-        }
-      } catch (mailErr) {
-        console.error("Erreur lors de l'envoi de l'e-mail :", mailErr);
+  
+      // ─── 5) Envoi de l’e-mail + création du mémo ────────────────
+      const mainContact = custAccountInfo.data[0].main_contact?.find(c => c.ismain_user);
+      const toEmail = mainContact?.email;
+      if (!toEmail) {
+        console.warn('Pas de contact principal pour la commande', order.id_order);
+        return;
       }
-
+  
+      const subject = `Votre PDF de commande #${order.id_order} est disponible`;
+      const body = `
+        <p>Bonjour ${custAccountInfo.data[0].cust_name},</p>
+        <p>Le PDF de votre commande <strong>#${order.id_order}</strong> a été généré${order.copy_count_ori > 0 ? ' et une copie a été créée' : ''}.</p>
+        <p>Vous pouvez le télécharger via votre espace client.</p>
+        <p>Bien cordialement,<br/>La Chambre de Commerce de Djibouti</p>
+      `;
+  
+      await sendEmailAndMemo({
+        to: toEmail,
+        subject,
+        body,
+        isHtml: true,
+        id_cust_account: order.id_cust_account,
+        idlogin: operatorId,
+      });
+      console.log('E-mail envoyé à', toEmail);
+  
+      // ─── 6) Création du mémo en base ─────────────────────────────
+      const memoResp = await setMemo({
+        p_id_order:        order.id_order,
+        p_id_cust_account: order.id_cust_account,
+        p_typeof:          1, // mémo « certificat »
+        p_idlogin_insert:  operatorId,
+        p_memo_subject:    subject,
+        p_memo_body:      `<p>Bonjour ${custAccountInfo.data[0].cust_name},</p>
+        <p>Le PDF de votre commande <strong>#${order.id_order}</strong> a été généré${order.copy_count_ori > 0 ? ' et une copie a été créée' : ''}.</p>
+        <p>Bien cordialement,<br/>La Chambre de Commerce de Djibouti</p>
+      `,
+        p_mail_to:         toEmail,
+      });
+      const newMemoId = memoResp.newMemoId;
+      if (!newMemoId) throw new Error('Aucun ID de mémo renvoyé');
+  
+      // ─── 7) Upload du PDF original comme pièce jointe du mémo ────
+      const formOrig = new FormData();
+      formOrig.append('p_id_memo', newMemoId);
+      formOrig.append('p_idfiles_repo_typeof', 1002); // ORIGINAL
+      formOrig.append('p_file_origin_name', origFileName);
+      formOrig.append('p_idlogin_insert', operatorId);
+      formOrig.append('uploadType', 'memos');
+      formOrig.append('file', new File([basePdfBlob], origFileName, { type: 'application/pdf' }));
+      await setMemoFiles(formOrig);
+  
+      // ─── 8) Upload de la copie comme pièce jointe du mémo ────────
+      if (copyBlob) {
+        const formCopy = new FormData();
+        formCopy.append('p_id_memo', newMemoId);
+        formCopy.append('p_idfiles_repo_typeof', 1003); // COPIE
+        formCopy.append('p_file_origin_name', copyFileName);
+        formCopy.append('p_idlogin_insert', operatorId);
+        formCopy.append('uploadType', 'memos');
+        formCopy.append('file', new File([copyBlob], copyFileName, { type: 'application/pdf' }));
+        await setMemoFiles(formCopy);
+      }
+  
+      console.log('Mémo et pièces jointes créés avec succès.');
     } catch (err) {
       console.error('Erreur dans handleGeneratePDF :', err);
     }

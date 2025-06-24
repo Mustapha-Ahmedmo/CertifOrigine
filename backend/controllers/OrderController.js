@@ -80,8 +80,97 @@ Merci de vérifier.`;
   };
 
 
-  return transporter.sendMail(mailOptions);
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email envoyé, messageId =', info.messageId);
+  } catch (mailErr) {
+    console.error('❌ Échec envoi email :', mailErr);
+    // Vous pouvez renvoyer l’erreur ou au moins la logger
+  }
 }
+
+const setMemoFiles = async (req, res) => {
+  try {
+    const {
+      p_id_memo,
+      p_idfiles_repo_typeof,
+      p_file_origin_name,
+      p_idlogin_insert
+    } = req.body;
+
+    // 1) Validation des champs requis
+    if (!p_id_memo) {
+      return res.status(400).json({ message: "Le champ p_id_memo est requis." });
+    }
+    if (!p_idfiles_repo_typeof) {
+      return res.status(400).json({ message: "Le champ p_idfiles_repo_typeof est requis." });
+    }
+    if (!p_file_origin_name) {
+      return res.status(400).json({ message: "Le champ p_file_origin_name est requis." });
+    }
+    if (!p_idlogin_insert) {
+      return res.status(400).json({ message: "Le champ p_idlogin_insert est requis." });
+    }
+    if (!req.file) {
+      return res.status(400).json({ message: "Le fichier associé au mémo est requis." });
+    }
+
+    // 2) Parsing des IDs en int
+    const memoId    = parseInt(p_id_memo, 10);
+    const repoType  = parseInt(p_idfiles_repo_typeof, 10);
+    const loginId   = parseInt(p_idlogin_insert, 10);
+    const fileGuid  = req.file.filename;
+    const filePath  = req.file.path;
+
+    // 3) Trace pour debug
+    console.log('🔍 setMemoFiles params:', {
+      memoId, repoType, fileOriginName: p_file_origin_name,
+      fileGuid, filePath, loginId
+    });
+
+    // 4) Appel SQL (7 paramètres : 6 IN + 1 INOUT)
+    await sequelize.query(
+      `CALL set_memo_files(
+         :memoId,
+         :repoType,
+         :fileOriginName,
+         :fileGuid,
+         :filePath,
+         :loginId,
+         :outId
+       )`,
+      {
+        replacements: {
+          memoId,
+          repoType,
+          fileOriginName: p_file_origin_name,
+          fileGuid,
+          filePath,
+          loginId,
+          outId: 0         // initialisation de l’INOUT
+        },
+        type: QueryTypes.RAW
+      }
+    );
+
+    return res
+      .status(200)
+      .json({ message: 'Fichier joint au mémo avec succès.' });
+
+  } catch (error) {
+    // 5) Log complet de l’erreur SQL
+    console.error('🔥 setMemoFiles ERROR message:', error.message);
+    console.error('🔥 setMemoFiles ERROR original:', error.original);
+    console.error('🔥 setMemoFiles ERROR stack:', error.stack);
+
+    return res.status(500).json({
+      message: "Erreur lors de l’ajout du fichier au mémo.",
+      error: error.message,
+      details: error.original || error
+    });
+  }
+};
+
 // Au sommet du fichier
 const getHistoOrder = async (req, res) => {
   try {
@@ -2531,5 +2620,6 @@ module.exports = {
   getStatisticOrders,
   getStatisticCustaccount,
   getStatisticCustAccountByMonth,
-  getStatisticOrdersByMonth
+  getStatisticOrdersByMonth,
+  setMemoFiles
 };
