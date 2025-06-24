@@ -1,6 +1,6 @@
 const express = require('express');
 const upload = require('../src/middleware/upload'); // Use your existing multer middleware
-const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController, setUnitWeight, deleteUnitWeight, submitOrder, remOrdCertifGoods, remOrdCertifTranspMode, remSingleOrdCertifTranspMode, approveOrder, sendbackOrder, rejectOrder, getOrderStaticsByServices, billOrder, setInvoiceHeader, sendOrderDocument, getOrdCertifAmountByDay, getHistoOrder, getMemoOrder, getOrdCertifAmountByWeek, getLastClients, getStatisticOrders, getStatisticCustaccount, getStatisticCustAccountByMonth, getStatisticOrdersByMonth } = require('../controllers/OrderController');
+const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController, setUnitWeight, deleteUnitWeight, submitOrder, remOrdCertifGoods, remOrdCertifTranspMode, remSingleOrdCertifTranspMode, approveOrder, sendbackOrder, rejectOrder, getOrderStaticsByServices, billOrder, setInvoiceHeader, sendOrderDocument, getOrdCertifAmountByDay, getHistoOrder, getMemoOrder, getOrdCertifAmountByWeek, getLastClients, getStatisticOrders, getStatisticCustaccount, getStatisticCustAccountByMonth, getStatisticOrdersByMonth, setMemoFiles } = require('../controllers/OrderController');
 
 const router = express.Router();
 router.post('/create', executeAddOrder);
@@ -36,16 +36,19 @@ router.post('/sendback_order', sendbackOrder);
 router.post('/reject_order', rejectOrder);
 
 //router.post('/order-files', upload.single('file'), setOrderFiles);
-router.post('/order-files', (req, res, next) => {
-    console.log('Before Multer:', req.body);
-    next();
-  }, 
+router.post(
+  '/order-files',
   upload.single('file'),
   (req, res, next) => {
-    console.log('After Multer:', req.body);
-    next();
-  },
-  setOrderFiles);
+    console.log('After Multer (order/memo-files):', req.body);
+    // If uploading a memo file, call setMemoFiles
+    if (req.body.p_id_memo) {
+      return setMemoFiles(req, res);
+    }
+    // Otherwise, treat as order file
+    return setOrderFiles(req, res);
+  }
+);
 router.post('/order-files/delete', delOrderFiles); // New: Delete order files
 
 router.get('/order-files-info', getOrderFilesInfoController);
