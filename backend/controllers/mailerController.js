@@ -2,89 +2,92 @@ const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/db'); // Your Sequelize instance
 
 const setMemo = async (req, res) => {
-    try {
-      const {
-        p_id_order,
-        p_id_cust_account,
-        p_typeof,
-        p_idlogin_insert,
-        p_memo_date,
-        p_memo_subject,
-        p_memo_body,
-        p_mail_to,
-        p_mail_bcc,
-        p_mail_acc,
-        p_mail_notifications,
-      } = req.body;
-  
-      // Validate required fields (adjust validation as needed)
-      if (
-        !p_id_cust_account ||
-        !p_typeof ||
-        !p_idlogin_insert ||
-        !p_memo_date ||
-        !p_memo_subject ||
-        !p_memo_body
-      ) {
-        return res.status(400).json({
-          message:
-            'Les champs p_id_cust_account, p_typeof, p_idlogin_insert, p_memo_date, p_memo_subject et p_memo_body sont requis.',
-        });
-      }
-  
-      const result = await sequelize.query(
-        `SELECT fn_set_memo(
-                 :p_id_order,
-                 :p_id_cust_account,
-                 :p_typeof,
-                 :p_idlogin_insert,
-                 :p_memo_date::timestamp,
-                 :p_memo_subject,
-                 :p_memo_body,
-                 :p_mail_to,
-                 :p_mail_bcc,
-                 :p_mail_acc,
-                 :p_mail_notifications
-               ) AS newMemoId`,
-        {
-          replacements: {
-            p_id_order,
-            p_id_cust_account,
-            p_typeof,
-            p_idlogin_insert,
-            p_memo_date, // Make sure this is a valid ISO date string (e.g., '2025-03-01T10:00:00Z')
-            p_memo_subject,
-            p_memo_body,
-            p_mail_to: p_mail_to || null,
-            p_mail_bcc: p_mail_bcc || null,
-            p_mail_acc: p_mail_acc || null,
-            p_mail_notifications: p_mail_notifications || null,
-          },
-          type: QueryTypes.SELECT,
-        }
-      );
-  
-      // Extract the new memo ID from the result
-      const newMemoId = result[0]?.newMemoId;
-  /*    if (!newMemoId) {
-        return res.status(500).json({
-          message: 'Erreur lors de la création du memo. Aucune ID de memo retournée.',
-        });
-      }*/
-  
-      res.status(201).json({
-        message: 'Memo créé avec succès.',
-        newMemoId,
-      });
-    } catch (error) {
-      console.error("Erreur lors de l'exécution de wrapper_set_memo:", error);
-      res.status(500).json({
-        message: 'Erreur lors de la création du memo.',
-        error: error.message || 'Erreur inconnue.',
-        details: error.original || error,
+  try {
+    const {
+      p_id_order,
+      p_id_cust_account,
+      p_typeof,
+      p_idlogin_insert,
+      p_memo_date,
+      p_memo_subject,
+      p_memo_body,
+      p_mail_to,
+      p_mail_bcc,
+      p_mail_acc,
+      p_mail_notifications
+    } = req.body;
+
+    // Validation des champs obligatoires
+    if (
+      !p_id_cust_account ||
+      !p_typeof ||
+      !p_idlogin_insert ||
+      !p_memo_date ||
+      !p_memo_subject ||
+      !p_memo_body
+    ) {
+      return res.status(400).json({
+        message:
+          'Les champs p_id_cust_account, p_typeof, p_idlogin_insert, p_memo_date, p_memo_subject et p_memo_body sont requis.'
       });
     }
-  };
+
+    // Appel de la fonction wrapper_set_memo et récupération de l'ID généré
+    const [result] = await sequelize.query(
+      `
+      SELECT wrapper_set_memo(
+        :p_id_order,
+        :p_id_cust_account,
+        :p_typeof,
+        :p_idlogin_insert,
+        :p_memo_date::timestamp,
+        :p_memo_subject,
+        :p_memo_body,
+        :p_mail_to,
+        :p_mail_bcc,
+        :p_mail_acc,
+        :p_mail_notifications
+      ) AS new_memo_id
+      `,
+      {
+        replacements: {
+          p_id_order: p_id_order || null,
+          p_id_cust_account,
+          p_typeof,
+          p_idlogin_insert,
+          p_memo_date,
+          p_memo_subject,
+          p_memo_body,
+          p_mail_to: p_mail_to || null,
+          p_mail_bcc: p_mail_bcc || null,
+          p_mail_acc: p_mail_acc || null,
+          p_mail_notifications: p_mail_notifications || null
+        },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const newMemoId = result.new_memo_id;
+
+    if (!newMemoId) {
+      return res.status(500).json({
+        message: 'Erreur lors de la création du memo. Aucune ID de memo retournée.'
+      });
+    }
+
+    return res.status(201).json({
+      message: 'Memo créé avec succès.',
+      newMemoId
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'exécution de setMemo:", error);
+    return res.status(500).json({
+      message: 'Erreur lors de la création du memo.',
+      error: error.message || 'Erreur inconnue.',
+      details: error.original || error
+    });
+  }
+};
   
 const getMemo = async (req, res) => {
     try {
@@ -174,8 +177,59 @@ const getMemo = async (req, res) => {
     }
   };
 
+  const getMemoFilesInfo = async (req, res) => {
+    try {
+      const {
+        p_id_memo_files_list,
+        p_id_memo_list,
+        p_id_files_repo_list,
+        p_id_files_repo_typeof_list,
+        p_isactive,
+        p_id_custaccount,
+        p_id_order_list
+      } = req.query;
+      console.log('⚙️  get_memo_files_info called with', req.query);
+
+      const result = await sequelize.query(
+        `SELECT * FROM get_memo_files_info(
+           :p_id_memo_files_list,
+           :p_id_memo_list,
+           :p_id_files_repo_list,
+           :p_id_files_repo_typeof_list,
+           :p_isactive,
+           :p_id_custaccount,
+           :p_id_order_list
+         )`,
+        {
+          replacements: {
+            p_id_memo_files_list: p_id_memo_files_list || null,
+            p_id_memo_list:        p_id_memo_list        || null,
+            p_id_files_repo_list:  p_id_files_repo_list  || null,
+            p_id_files_repo_typeof_list: p_id_files_repo_typeof_list || null,
+            p_isactive:            p_isactive  === 'true'  ? true :
+                                   p_isactive  === 'false' ? false : null,
+            p_id_custaccount:      p_id_custaccount      || null,
+            p_id_order_list:       p_id_order_list       || null
+          },
+          type: QueryTypes.SELECT
+        }
+      );
+      console.log('⚙️  get_memo_files_info returns', result.length, 'rows');
+
+      res.status(200).json({ message: 'OK', data: result });
+    } catch (error) {
+      console.error('Error getMemoFilesInfo:', error);
+      res.status(500).json({
+        message: 'Erreur récupération fichiers mémo',
+        error: error.message,
+        details: error.original || error
+      });
+    }
+  };
+
 module.exports = {
   setMemo,
   getMemo,
-  ackMemoCust
+  ackMemoCust,
+  getMemoFilesInfo
 };

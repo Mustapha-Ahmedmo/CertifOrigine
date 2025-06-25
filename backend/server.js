@@ -20,6 +20,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use(
+  '/api/data/memos',
+  express.static(path.join(__dirname, 'data', 'memos'))
+);
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/countries', countriesRoutes);

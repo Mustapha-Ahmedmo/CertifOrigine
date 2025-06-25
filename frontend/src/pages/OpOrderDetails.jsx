@@ -182,7 +182,12 @@ const OpOrderDetails = () => {
       null, 'true', 'true', true
     );
     const customerEmail = cu.data[0].email;
-
+    const recipientName = cu.data[0].full_name;                     // nom du destinataire
+    const orderDateRaw = formData.date_last_submission 
+    ? formData.date_last_submission   // ex. "2025-05-04T08:00:00.000Z"
+    : new Date().toISOString();                   // date formatée
+    const totalFD = 8500 + 2500 * formData.copy_count_ori;          // ou votre calcule réel
+    const orderTitle = formData.title;
     let args;
 
     let statusLabel = '';
@@ -200,14 +205,15 @@ const OpOrderDetails = () => {
       // (p_id_order, p_id_cust_account, p_idlogin_modify,
       //  customerEmail, orderTitle, orderDate, totalFD)
       args = [
-        orderId,
-        formData.custAccountId,
-        idLogin,
-        customerEmail,
-        formData.title,
-        orderDate,
-        totalPrice,
-      ];
+        orderId,                  // p_id_order
+        formData.custAccountId,   // p_id_cust_account
+        idLogin,                  // p_idlogin_modify
+        customerEmail,            // customerEmail
+        recipientName,            // <-- bien ajouter
+        orderTitle,               // formData.title
+        orderDateRaw,             // <-- ISO string, p.ex. "2025-06-23T13:07:25.339Z"
+        totalFD                 // totalFD
+          ];
     } else if (apiFn === rejectOrder) {
       statusLabel = 'rejeté';
       args = [
@@ -226,17 +232,21 @@ const OpOrderDetails = () => {
         idLogin,
         reason,
         customerEmail,
-        formData.title,
-      ];
+        formData.title,   // orderTitle
+        recipientName,  // orderName (ou un champ dédié)
+        orderDateRaw,        // orderDate formaté
+        totalFD           // totalFD calculé
+    ];
     }
-
-    await apiFn(...args);
-
-    // 4) (optional) you could display a toast/alert, e.g.
-     alert(`Commande ${statusLabel} avec succès.`);
-
-    // 5) go back to the dashboard
-    navigate('/operator-dashboard');
+    console.log('🚀 [performAction] sendbackOrder args :', args)
+    try {
+      await apiFn(...args);
+      alert(`Commande ${statusLabel} avec succès.`);
+      navigate('/operator-dashboard');
+    } catch (err) {
+      console.error('❌ Action échouée :', err);
+      alert(`Échec de l’opération : ${err.message}`);
+    }
   };
 
   const handleRejectClick = () => setShowRejectModal(true);

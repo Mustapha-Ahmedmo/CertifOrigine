@@ -16,7 +16,7 @@ import {
   Box,
   FormControlLabel as MuiFormControlLabel,
 } from '@mui/material';
-import { billOrder, fetchCountries, fetchRecipients, getCertifGoodsInfo, getCertifTranspMode, getCustAccountInfo, handleSendDocuments, setInvoiceHeader, setOrderFiles } from '../services/apiServices'; // API service functions
+import { billOrder, fetchCountries, fetchRecipients, getCertifGoodsInfo, getCertifTranspMode, getCustAccountInfo, handleSendDocuments, setInvoiceHeader, setOrderFiles, sendEmail, setMemo, setMemoFiles } from '../services/apiServices'; // API service functions
 import { useSelector } from 'react-redux';
 import { generatePDF } from '../components/orders/GeneratePDF';
 import { Snackbar, Alert } from '@mui/material';
@@ -238,10 +238,13 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
       // ─── Génération et upload d’UNE COPIE si demandé ───────
       console.log("ORDER => ", order);
       const copies = order.copy_count_ori ?? 0;
+      let copyFile = null;    
       if (copies > 0) {
         console.log('Création d’une COPIE tamponnée');
         const copyBlob = await stampCopy(pdfBlob);
         const copyName = `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}_COPIE.pdf`;
+        copyFile = new File([copyBlob], copyName, { type: 'application/pdf' });  // ← stocker
+
         await setOrderFiles({
           uploadType: 'commandes',
           p_id_order: order.id_order,
@@ -249,7 +252,7 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
           p_file_origin_name: copyName,
           p_typeof_order: 1,
           p_idlogin_insert: operatorId,
-          file: new File([copyBlob], copyName, { type: 'application/pdf' }),
+          file: copyFile
         });
         console.log('Copie uploadée :', copyName);
       }
@@ -261,17 +264,98 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
 
       console.log("PDF generated and order file saved successfully.");
 
+      // 1) Définir sujet et corps du mémo de paiement
+      const subjectPaiement = `Paiement reçu pour la facture n°${invoiceNumber}`;
+      const bodyPaiement = `
+      Bonjour ${order.cust_name},<br><br>
 
+      Veuillez trouver en pièce jointe le certificat et les pièces justificatives relatives à votre commande « ${order.order_title} ». <br><br>
 
-      setConfirmationOpen(false);
+      Cordialement,<br>
+      <strong>Chambre de commerce de Djibouti</strong>
+      `;
+      // 2) Enregistrer le mémo de paiement en base
+      // – et on crée SON mémo (p_typeof = 2)
+      // Juste après la création du mémo :
+      const memoResponse = await setMemo({
+        p_id_order:            order.id_order,
+        p_id_cust_account:     order.id_cust_account,
+        p_typeof:              1,
+        p_idlogin_insert:      operatorId,
+        p_memo_date:           new Date().toISOString(),
+        p_memo_subject:        subjectPaiement,
+        p_memo_body:           bodyPaiement,
+        p_mail_to:             order.customerEmail,
+        p_mail_bcc:            null,
+        p_mail_acc:            null,
+        p_mail_notifications:  null
+      });
 
-      // Optionally, invoke parent's onSubmit callback if provided.
+    console.log("Réponse setMemo :", memoResponse);
 
-    } catch (error) {
-      console.error('Erreur lors de la facturation de la commande:', error);
-      // Optionally, display an error notification to the user.
+    const newMemoId = memoResponse.newMemoId;
+    if (!newMemoId) {
+      throw new Error("Aucun ID de mémo retourné par l'API.");
     }
-  };
+    console.log("Mémo créé avec ID :", newMemoId);
+
+    // 3) Préparer l’upload du fichier PDF comme pièce jointe du mémo
+    // Constantes (optionnel mais plus clair)
+    const MEMO_REPO = { ORIGINAL: 1002, COPY: 1003 };
+
+    // Mémo original
+    const formMemoOriginal = new FormData();
+    formMemoOriginal.append('p_id_memo', newMemoId);
+    formMemoOriginal.append('p_idfiles_repo_typeof', MEMO_REPO.ORIGINAL);
+    formMemoOriginal.append('p_file_origin_name', pdfFile.name);
+    formMemoOriginal.append('p_idlogin_insert', operatorId);
+    formMemoOriginal.append('uploadType', 'memos');
+    formMemoOriginal.append('file', pdfFile);
+    
+    // **DEBUG : inspecter le vrai FormData**
+    for (const [key, value] of formMemoOriginal.entries()) {
+      console.log('[Client] formMemoOriginal', key, value);
+    }
+    
+    await setMemoFiles(formMemoOriginal);
+    
+    // Mémo copie si nécessaire
+    if (copies > 0 && copyFile) {
+      const formMemoCopy = new FormData();
+      formMemoCopy.append('p_id_memo', newMemoId);
+      formMemoCopy.append('p_idfiles_repo_typeof', MEMO_REPO.COPY);
+      formMemoCopy.append('p_file_origin_name', copyFile.name);
+      formMemoCopy.append('p_idlogin_insert', operatorId);
+      formMemoCopy.append('uploadType', 'memos');
+      formMemoCopy.append('file', copyFile);
+    
+      // **DEBUG : inspecter la copie**
+      for (const [key, value] of formMemoCopy.entries()) {
+        console.log('[Client] formMemoCopy', key, value);
+      }
+    
+      await setMemoFiles(formMemoCopy);
+    }
+
+
+
+    // – on envoie l’email
+     await sendEmail({
+         to: order.customerEmail,
+         subject: subjectPaiement,
+         body: bodyPaiement,
+         isHtml: false
+       });
+       
+
+    setStep(3);
+    console.log("Email + mémo créés avec succès.");
+
+    setConfirmationOpen(false);
+  } catch (error) {
+    console.error('Erreur lors de la facturation de la commande :', error);
+  }
+};
 
   // Cancel confirmation dialog
   const handleCancelConfirmation = () => {
