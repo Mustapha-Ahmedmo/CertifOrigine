@@ -511,7 +511,7 @@ CREATE TABLE MEMO_FILES (
     ID_MEMO_FILES INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     ID_MEMO INT NOT NULL,                       -- Non nullable
     ID_FILES_REPO INT NOT NULL,              -- Non nullable
-    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par d�faut
+    DEACTIVATION_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '100 years' NOT NULL, -- Non nullable avec valeur par d faut
     FOREIGN KEY (ID_MEMO) REFERENCES MEMO(ID_MEMO),
     FOREIGN KEY (ID_FILES_REPO) REFERENCES FILES_REPO(ID_FILES_REPO)
 );
@@ -1943,11 +1943,11 @@ INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG) VALUES
 ('COLOMBIE','Colombia'),
 ('COMORES','Comoros'),
 ('CONGO','Congo'),
-('CONGO, R�PUBLIQUE D�MOCRATIQUE DU','Congo, Democratic Republic of the'),
+('CONGO, REPUBLIQUE DEMOCRATIQUE DU','Congo, Democratic Republic of the'),
 ('COOK ISLANDS','Cook Islands'),
-('COR�E DU NORD','Korea, Democratic People�s Republic of'),
-('COR�E DU SUD','Korea, Republic of'),
-('COTE D''IVOIRE','C�te d�Ivoire'),
+('COREE DU NORD','Korea, Democratic Peoples Republic of'),
+('COREE DU SUD','Korea, Republic of'),
+('COTE D''IVOIRE','COTE D''IVOIRE'),
 ('CROATIE','Croatia'),
 ('CUBA','Cuba'),
 ('CURAAO','Curaao'),
@@ -1984,9 +1984,9 @@ INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG) VALUES
 ('ILES FAROE','Faroe Islands'),
 ('ILES MARSCHALL','Marshall Islands'),
 ('ILES SALOMON','Solomon Islands'),
-('ILES TURQUES-ET-CA�QUES','Turks and Caicos Islands'),
+('ILES TURQUES-ET-CAIQUES','Turks and Caicos Islands'),
 ('ILES VIERGES BRITANNIQUES','Virgin Islands, British'),
-('ILES VIERGES DES �TATS-UNIS','Virgin Islands, U.S.'),
+('ILES VIERGES DES ETATS-UNIS','Virgin Islands, U.S.'),
 ('ILES WALLIS-ET-FUTUNA','Wallis and Futuna'),
 ('INDE','India'),
 ('INDONESIE','Indonesia'),
@@ -2005,7 +2005,7 @@ INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG) VALUES
 ('KIRGHIZISTAN','Kyrgyzstan'),
 ('KIRIBATI','Kiribati'),
 ('KOWEET','Kuwait'),
-('LAOS','Lao People�s Democratic Republic'),
+('LAOS','Lao People Democratic Republic'),
 ('LETTONIE','Latvia'),
 ('LIBAN','Lebanon'),
 ('LIBERIA','Liberia'),
@@ -2027,46 +2027,46 @@ INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG) VALUES
 ('MAURITANIE','Mauritania'),
 ('MAYOTTE','Mayotte'),
 ('MEXIQUE','Mexico'),
-('MICRON�SIE','Micronesia, Federated States of'),
+('MICRONESIE','Micronesia, Federated States of'),
 ('MOLDAVIE','Moldova, Republic of'),
 ('MONACO','Monaco'),
 ('MONGOLIE','Mongolia'),
-('MONT�N�GRO','Montenegro'),
+('MONTENEGRO','Montenegro'),
 ('MOZAMBIQUE','Mozambique'),
 ('MYANMAR','Myanmar'),
 ('NAMIBIE','Namibia'),
 ('NAURU','Nauru'),
-('N�PAL','Nepal'),
+('NEPAL','Nepal'),
 ('NICARAGUA','Nicaragua'),
 ('NIGER','Niger'),
 ('NIGERIA','Nigeria'),
 ('NIUE','Niue'),
-('NORV�GE','Norway'),
+('NORVEGE','Norway'),
 ('NOUVELLE-CALEDONIE','New Caledonia'),
-('NOUVELLE-Z�LANDE','New Zealand'),
+('NOUVELLE-ZELANDE','New Zealand'),
 ('OMAN','Oman'),
 ('OUGANDA','Uganda'),
-('OUZB�KISTAN','Uzbekistan'),
+('OUZBEKISTAN','Uzbekistan'),
 ('PAKISTAN','Pakistan'),
 ('PALAOS','Palau'),
 ('PANAMA','Panama'),
-('PAPOUASIE-NOUVELLE-GUIN�E','Papua New Guinea'),
+('PAPOUASIE-NOUVELLE-GUINEE','Papua New Guinea'),
 ('PARAGUAY','Paraguay'),
 ('PAYS-BAS','Netherlands'),
-('P�ROU','Peru'),
+('PEROU','Peru'),
 ('PHILIPPINES','Philippines'),
 ('POLOGNE','Poland'),
 ('PORTUGAL','Portugal'),
 ('QATAR','Qatar'),
-('R�PUBLIQUE CENTRAFRICAINE','Central African Republic'),
-('R�PUBLIQUE D�MOCRATIQUE DU CONGO','Congo, Democratic Republic of the'),
-('R�PUBLIQUE DOMINICAINE','Dominican Republic'),
-('R�PUBLIQUE TCH�QUE','Czech Republic'),
+('REPUBLIQUE CENTRAFRICAINE','Central African Republic'),
+('REPUBLIQUE DEMOCRATIQUE DU CONGO','Congo, Democratic Republic of the'),
+('REPUBLIQUE DOMINICAINE','Dominican Republic'),
+('REPUBLIQUE TCHEQUE','Czech Republic'),
 ('ROUMANIE','Romania'),
 ('ROYAUME-UNI','United Kingdom'),
 ('RUSSIE','Russian Federation'),
 ('RWANDA','Rwanda'),
-('SAINT-CHRISTOPHE-ET-NI�V�S','Saint Kitts and Nevis'),
+('SAINT-CHRISTOPHE-ET-NIEVES','Saint Kitts and Nevis'),
 ('SAINTE-LUCIE','Saint Lucia'),
 ('SAINT-MARIN','San Marino'),
 ('SAINT-MARTIN','Saint Martin (French part)'),
@@ -2074,18 +2074,18 @@ INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG) VALUES
 ('SAINT-VINCENT-ET-LES-GRENA**DINES**','Saint Vincent and the Grenadines'),
 ('SAMOA','Samoa'),
 ('SAO TOME-ET-PRINCIPE','Sao Tome and Principe'),
-('S�N�GAL','Senegal'),
+('SENEGAL','Senegal'),
 ('SERBIE','Serbia'),
 ('SEYCHELLES','Seychelles'),
 ('SIERRA LEONE','Sierra Leone'),
 ('SINGAPOUR','Singapore'),
 ('SLOVAQUIE','Slovakia'),
-('SLOV�NIE','Slovenia'),
+('SLOVENIE','Slovenia'),
 ('SOMALIE','Somalia'),
 ('SOUDAN','Sudan'),
 ('SOUDAN DU SUD','South Sudan'),
 ('SRI LANKA','Sri Lanka'),
-('SU�DE','Sweden'),
+('SUEDE','Sweden'),
 ('SUISSE','Switzerland'),
 ('SURINAME','Suriname'),
 ('SVALBARD ET JAN MAYEN','Svalbard and Jan Mayen'),
@@ -2093,13 +2093,13 @@ INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG) VALUES
 ('TAIWAN','Taiwan, Province of China'),
 ('TADJIKISTAN','Tajikistan'),
 ('TANZANIE','Tanzania, United Republic of'),
-('THA�LANDE','Thailand'),
+('THAELANDE','Thailand'),
 ('TIMOR-LESTE','Timor-Leste'),
 ('TOGO','Togo'),
 ('TONGA','Tonga'),
 ('TRINIDAD-ET-TOBAGO','Trinidad and Tobago'),
 ('TUNISIE','Tunisia'),
-('TURKM�NISTAN','Turkmenistan'),
+('TURKMENISTAN','Turkmenistan'),
 ('TURQUIE','Turkey'),
 ('TUVALU','Tuvalu'),
 ('UKRAINE','Ukraine'),
@@ -2108,7 +2108,7 @@ INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG) VALUES
 ('VATICAN','Holy See (Vatican City State)'),
 ('VENEZUELA','Venezuela'),
 ('VIET NAM','Viet Nam'),
-('Y�MEN','Yemen'),
+('YEMEN','Yemen'),
 ('ZAMBIE','Zambia'),
 ('ZIMBABWE','Zimbabwe');
 END $$;
@@ -5015,7 +5015,7 @@ BEGIN
 
     IF NOT EXISTS (SELECT 1 FROM CUST_USER cu 
 		WHERE cu."id_login_user"  = p_idlogin AND cu."id_cust_account" = p_id_custaccount ) THEN
-		RAISE EXCEPTION 'Acc�s refus�';
+		RAISE EXCEPTION 'Accés refusé';
     END IF;
 
     RETURN QUERY
@@ -5691,11 +5691,11 @@ BEGIN
 
 	AND (
 	     p_isactive IS NULL
-        -- Si p_isactive = 0, je verifie si une des deux dates de d�sactivation est avant la date du jour
+        -- Si p_isactive = 0, je verifie si une des deux dates de d sactivation est avant la date du jour
         OR(p_isactive IS NOT TRUE AND mf."deactivation_date" <= CURRENT_DATE 
             
         )
-        -- Si p_isactive = 1, je verifie que les deux dates de d�sactivation sont apr�s la date du jour
+        -- Si p_isactive = 1, je verifie que les deux dates de d sactivation sont apr s la date du jour
         OR (p_isactive IS TRUE AND mf."deactivation_date" > CURRENT_DATE
             
         )
@@ -5726,7 +5726,7 @@ BEGIN
 	
     IF p_id_custaccount IS NULL OR p_id_custaccount = 0 THEN
 		IF NOT EXISTS (SELECT 1 FROM op_user WHERE id_login_user = p_idlogin) THEN
-			RAISE EXCEPTION 'Acc�s refus�';
+			RAISE EXCEPTION 'Accés refusé';
 		END IF;
     END IF;
 
@@ -5765,7 +5765,6 @@ $$ LANGUAGE plpgsql;
 
 
 --Select * from get_statistic_custaccount('2025-05-18','2025-06-01',null,1);
-
 DROP FUNCTION IF EXISTS get_statistic_custaccount;
 CREATE OR REPLACE FUNCTION get_statistic_custaccount(
     p_date_start TIMESTAMP,
@@ -5785,47 +5784,7 @@ $$
 BEGIN
 
 		IF NOT EXISTS (SELECT 1 FROM op_user WHERE id_login_user = p_idlogin) THEN
-			RAISE EXCEPTION 'Acc�s refus�';
-		END IF;
-
-   RETURN QUERY
-   SELECT 
-        SUM(CASE WHEN ca."statut_flag" = 2 THEN 1 ELSE 0 END) AS count_custaccount,
-        SUM(CASE WHEN ca."statut_flag" = 2 and ca."insertdate">= p_date_start  and ca."insertdate"<= p_date_end THEN 1 ELSE 0 END) AS count_custaccount_early,
-        SUM(CASE WHEN ca."statut_flag" = 1 THEN 1 ELSE 0 END) AS count_new_custaccount,
-        SUM(CASE WHEN ca."statut_flag" = 3 THEN 1 ELSE 0 END) AS count_suspended_custaccount,
-        SUM(CASE WHEN ca."statut_flag" = 4 THEN 1 ELSE 0 END) AS count_rejected_custaccount
-
-        from CUST_ACCOUNT ca
-    WHERE 
-	    p_isactive IS NULL
-        OR (p_isactive IS NOT TRUE AND ca."deactivation_date" <= CURRENT_DATE)
-        OR (p_isactive IS TRUE AND ca."deactivation_date" > CURRENT_DATE)
-    ;
-END;
-$$ LANGUAGE plpgsql;
-
-
-DROP FUNCTION IF EXISTS get_statistic_custaccount;
-CREATE OR REPLACE FUNCTION get_statistic_custaccount(
-    p_date_start TIMESTAMP,
-    p_date_end TIMESTAMP,
-    p_isactive BOOLEAN,
-    p_idlogin INT
-)
-RETURNS TABLE(
-    count_custaccount BIGINT,
-    count_custaccount_early BIGINT,
-    count_new_custaccount BIGINT,
-    count_suspended_custaccount BIGINT,
-    count_rejected_custaccount BIGINT
-	
-) AS
-$$
-BEGIN
-
-		IF NOT EXISTS (SELECT 1 FROM op_user WHERE id_login_user = p_idlogin) THEN
-			RAISE EXCEPTION 'Acc�s refus�';
+			RAISE EXCEPTION 'Accés refusé';
 		END IF;
 
    RETURN QUERY
@@ -5871,7 +5830,7 @@ BEGIN
 
 
 	IF NOT EXISTS (SELECT 1 FROM op_user WHERE id_login_user = p_idlogin) THEN
-		RAISE EXCEPTION 'Acc�s refus�';
+		RAISE EXCEPTION 'Accés refusé';
 	END IF;
 
     RETURN QUERY
@@ -5916,6 +5875,173 @@ BEGIN
         
 END;
 $$ LANGUAGE plpgsql;
+
+
+
+
+
+--Select * from weeks_in_range('2025-04-18','2025-06-01');
+DROP FUNCTION IF EXISTS weeks_in_range;
+CREATE OR REPLACE FUNCTION weeks_in_range(
+    p_date_start TIMESTAMP,
+    p_date_end TIMESTAMP
+)
+
+RETURNS TABLE(
+    theYear  FLOAT,
+    theWeek  FLOAT
+) AS
+$$
+BEGIN
+    RETURN QUERY
+		    
+	SELECT date_part('year', dt::date) as theYear,
+		  date_part('week', dt::date) as theWeek
+		from generate_series(p_date_start, p_date_end, '1 week'::interval) AS dt
+		where date_trunc('week', dt::date) >= p_date_start -- check begin of week occurs before start date
+		  and date_trunc('week', dt::date) + interval '6 days' <= p_date_end; -- check end of week occurs before end date	
+				
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+
+--Select * from months_in_range('2024-04-18','2025-06-01');
+DROP FUNCTION IF EXISTS months_in_range;
+CREATE OR REPLACE FUNCTION months_in_range(
+    p_date_start TIMESTAMP,
+    p_date_end TIMESTAMP
+)
+
+RETURNS TABLE(
+    theYear  FLOAT,
+    theMonth  FLOAT
+) AS
+$$
+BEGIN
+    RETURN QUERY
+		    
+	SELECT date_part('year', dt::timestamp::date) as theYear,
+		  date_part('month', dt::timestamp::date) as theMonth
+		from generate_series(date_trunc('day', p_date_start::timestamp::date), date_trunc('day', p_date_end::timestamp::date), '1 month'::interval) AS dt
+		where 
+		--date_trunc('month', dt::timestamp::date) >= p_date_start AND -- check begin of month occurs before start date
+		  date_trunc('month', dt::timestamp::date) + interval '0 month' <= p_date_end; -- check end of month occurs at end date	
+				
+END;
+$$ LANGUAGE plpgsql;
+
+
+--Select * from get_statistic_custaccount_byWeek('2025-01-18','2025-08-01',1);
+
+DROP FUNCTION IF EXISTS get_statistic_custaccount_byWeek;
+CREATE OR REPLACE FUNCTION get_statistic_custaccount_byWeek(
+    p_date_start TIMESTAMP,
+    p_date_end TIMESTAMP,
+    p_idlogin INT
+)
+RETURNS TABLE(
+    theYear  FLOAT,
+    theWeek  FLOAT,
+    theYeartWeek  DECIMAL,
+    count_custaccount bigint ,
+	cum_count_custaccount  DECIMAL,
+	past_count_custaccount bigint 
+) AS
+$$
+BEGIN
+	
+
+	IF NOT EXISTS (SELECT 1 FROM op_user WHERE id_login_user = p_idlogin) THEN
+		RAISE EXCEPTION 'Accès refusé';
+	END IF;
+
+    RETURN QUERY
+    SELECT
+		Weeks.theYear,
+		Weeks.theWeek,
+  	    CAST(CONCAT(Weeks.theYear::text,LPAD(Weeks.theWeek::text, 2, '0'))  AS DECIMAL ) as theYearWeek,
+		  
+        COUNT(insertdate) as count_custaccount, 
+		COALESCE(
+			sum(COUNT(insertdate))
+			OVER (ORDER BY Weeks.theYear, Weeks.theWeek)
+		,0)AS cum_count_custaccount,
+	
+	
+	lag( COUNT(insertdate) ) OVER ( ORDER BY Weeks.theYear, Weeks.theWeek ) as past_count_custaccount
+
+
+        from CUST_ACCOUNT 
+		RIGHT OUTER JOIN weeks_in_range(p_date_start,p_date_end) as Weeks 
+			ON date_part('week', CUST_ACCOUNT."insertdate" ) = Weeks.theWeek
+			AND date_part('year', CUST_ACCOUNT."insertdate" ) = Weeks.theYear
+    WHERE (CUST_ACCOUNT."statut_flag" = 2 OR CUST_ACCOUNT."statut_flag" IS NULL )
+	AND (CUST_ACCOUNT."deactivation_date" > CURRENT_DATE  or CUST_ACCOUNT."deactivation_date"  IS NULL )
+
+	group by Weeks.theYear, Weeks.theWeek
+	order by Weeks.theYear, Weeks.theWeek;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+--Select * from get_statistic_custaccount_byMonth('2025-01-18','2025-08-01',1);
+DROP FUNCTION IF EXISTS get_statistic_custaccount_byMonth;
+CREATE OR REPLACE FUNCTION get_statistic_custaccount_byMonth(
+    p_date_start TIMESTAMP,
+    p_date_end TIMESTAMP,
+    p_idlogin INT
+)
+RETURNS TABLE(
+    theYear  FLOAT,
+    theMonth  FLOAT,
+    theYearMonth  DECIMAL,
+    count_custaccount bigint ,
+	cum_count_custaccount  DECIMAL,
+	past_count_custaccount bigint 
+
+) AS
+$$
+BEGIN
+	
+
+	IF NOT EXISTS (SELECT 1 FROM op_user WHERE id_login_user = p_idlogin) THEN
+		RAISE EXCEPTION 'Accès refusé';
+	END IF;
+
+    RETURN QUERY
+    SELECT
+		Months.theYear,
+		Months.theMonth,
+  	    CAST(CONCAT(Months.theYear::text,LPAD(Months.theMonth::text, 2, '0'))  AS DECIMAL ) as theYearMonth,
+		  
+        COUNT(insertdate) as count_custaccount, 
+		COALESCE(
+			sum(COUNT(insertdate))
+			OVER (ORDER BY Months.theYear, Months.theMonth)
+		,0)AS cum_count_custaccount,
+	
+		COALESCE(
+			lag( COUNT(insertdate) ) OVER ( ORDER BY Months.theYear, Months.theMonth ) 
+		,0)as past_count_custaccount
+		  
+        from CUST_ACCOUNT 
+		RIGHT OUTER JOIN months_in_range(p_date_start,p_date_end) as Months 
+			ON date_part('month', CUST_ACCOUNT."insertdate" ) = Months.theMonth
+			AND date_part('year', CUST_ACCOUNT."insertdate" ) = Months.theYear
+    WHERE (CUST_ACCOUNT."statut_flag" = 2 OR CUST_ACCOUNT."statut_flag" IS NULL )
+	AND (CUST_ACCOUNT."deactivation_date" > CURRENT_DATE  or CUST_ACCOUNT."deactivation_date"  IS NULL )
+
+	group by Months.theYear, Months.theMonth
+	order by Months.theYear, Months.theMonth;
+END;
+$$ LANGUAGE plpgsql;
+
+
 
 
 
