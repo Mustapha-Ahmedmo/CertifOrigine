@@ -714,7 +714,6 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
                 <TableCell>Date</TableCell>
                 <TableCell>Sujet</TableCell>
                 <TableCell>Corps</TableCell>
-                <TableCell>De</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -732,14 +731,8 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
                       {memo.memo_subject}
                     </TableCell>
                     <TableCell>
-                      {memo.memo_body}
-                    </TableCell>
-                    <TableCell>
-                      {isOperatorSender
-                        ? "Opérateur"
-                        : memo.cust_user_full_name // le nom du contact
-                      }
-                    </TableCell>
+  <div dangerouslySetInnerHTML={{ __html: memo.memo_body }} />
+</TableCell>
                   </TableRow>
                 );
               })}

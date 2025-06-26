@@ -532,11 +532,18 @@ const SearchOrders = () => {
 
   const handleOpenMemo = async (order) => {
     setAuditOrder(order);
-    const memos = await getOrderMemo({
-      p_id_order_list: String(order.id_order),
-      p_idlogin: operatorId,
-      p_isopuser: isOpUser
+    const response = await getOrderMemo({
+      p_id_order_list:   String(order.id_order),
+      p_id_cust_account: user.id_cust_account, // vous l’aviez ajouté précédemment
+      p_idlogin:         operatorId,
+      p_isopuser:        isOpUser
     });
+    console.log("getOrderMemo →", response);
+    // selon que l’API renvoie { data: [...] } ou le tableau pur :
+    const memos = Array.isArray(response)
+      ? response
+      : response.data ?? [];
+      console.log("memos array →", memos);
     setMemoList(memos);
     setMemoOpen(true);
   };
@@ -953,7 +960,7 @@ const SearchOrders = () => {
               <TableCell>Date</TableCell>
               <TableCell>Sujet</TableCell>
               <TableCell>Corps</TableCell>
-              <TableCell>De</TableCell>
+              
             </TableRow></TableHead>
             <TableBody>
               {memoList.map(memo => {
@@ -970,13 +977,9 @@ const SearchOrders = () => {
                       {memo.memo_subject}
                     </TableCell>
                     <TableCell>
-                      {memo.memo_body}
-                    </TableCell>
-                    <TableCell>
-                      {isOperatorSender
-                        ? "Opérateur"
-                        : memo.cust_user_full_name // le nom du contact
-                      }
+                      <div
+                        dangerouslySetInnerHTML={{ __html: memo.memo_body }}
+                      />
                     </TableCell>
                   </TableRow>
                 );
