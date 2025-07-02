@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { getFilesRepoTypeofInfo, setOrderFiles } from '../../../../services/apiServices';
+import { getFilesRepoTypeofInfo, getOrderFilesInfo, setOrderFiles, delOrderFiles } from '../../../../services/apiServices';
 import Slide from '@mui/material/Slide';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -68,6 +68,38 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
     })();
   }, []);
 
+  // chaque item : { id_order_files, file_origin_name, file_guid, fileTypeId, file: File || null }
+useEffect(() => {
+  const loadExisting = async () => {
+    if (!orderId) return;
+    try {
+      const resp = await getOrderFilesInfo({
+        p_id_order_list: orderId,
+        p_isactive: true
+      });
+      const docs = resp.data;
+      // regrouper par type
+      const initial = {};
+      docs.forEach(doc => {
+        const typeId = String(doc.p_idfiles_repo_typeof);
+        const entry = {
+          id_order_files: doc.id_order_files,
+          file: null, // pas de File JS, on ne renvoie que le nom
+          name: doc.file_origin_name
+        };
+        initial[typeId] = initial[typeId]
+          ? [...initial[typeId], entry]
+          : [entry];
+      });
+      setUploads(initial);
+    } catch (err) {
+      console.error('Impossible de charger les docs existants', err);
+    }
+  };
+  loadExisting();
+}, [orderId]);
+
+
   const handleFileChange = (fileTypeId, e) => {
     if (!fileTypeId) {
       alert("Veuillez sélectionner une pièce.");
@@ -80,16 +112,26 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
     }));
   };
 
-  const handleRemoveFile = (fileTypeId, index) => {
-    setUploads(prev => {
-      const updated = [...(prev[fileTypeId]||[])];
-      updated.splice(index, 1);
-      const next = { ...prev };
-      if (updated.length) next[fileTypeId] = updated;
-      else delete next[fileTypeId];
-      return next;
-    });
-  };
+  const handleRemoveFile = async (fileTypeId, index) => {
+       setUploads(prev => {
+         const updated = [...(prev[fileTypeId] || [])];
+         // on extrait l’élément supprimé
+         const [ removed ] = updated.splice(index, 1);
+    
+         // si ce fichier venait déjà de la base (id_order_files présent),
+         // on le supprime immédiatement côté serveur
+         if (removed?.id_order_files) {
+           delOrderFiles(removed.id_order_files)
+             .catch(err => console.error('Erreur suppression serveur :', err));
+         }
+    
+         // mise à jour locale
+         const next = { ...prev };
+         if (updated.length) next[fileTypeId] = updated;
+         else delete next[fileTypeId];
+         return next;
+       });
+     };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -148,32 +190,28 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
   </Typography>
 
   {/* 1. Sélection du type de pièce */}
-  {!(selectedJustificative && Uploads[selectedJustificative]) && (
   <Box sx={{ mb: 2 }}>
-    <Typography sx={{ mb: 1 }}>
-      Sélectionnez une pièce à téléverser :
-    </Typography>
-    <select
-      value={selectedJustificative}
-      onChange={e => setSelectedJustificative(e.target.value)}
-      style={{ padding: '8px', minWidth: '300px' }}
-    >
-      <option value="">-- Choisir une pièce --</option>
-      {FileTypes.map(ft => (
-        <option
-          key={ft.id_files_repo_typeof}
-          value={ft.id_files_repo_typeof}
-        >
-          {ft.txt_description_fr}
-        </option>
-      ))}
-    </select>
-  </Box>
-)}
+  <Typography sx={{ mb: 1 }}>
+    Sélectionnez une pièce à téléverser :
+  </Typography>
+  <select
+    value={selectedJustificative}
+    onChange={e => setSelectedJustificative(e.target.value)}
+    style={{ padding: '8px', minWidth: '300px' }}
+  >
+    <option value="">-- Choisir une pièce --</option>
+    {FileTypes.map(ft => (
+      <option key={ft.id_files_repo_typeof} value={ft.id_files_repo_typeof}>
+        {ft.txt_description_fr}
+      </option>
+    ))}
+  </select>
+</Box>
+
 
 
   {/* 2. Upload du fichier */}
-  {selectedJustificative && !Uploads[selectedJustificative] && (
+  {selectedJustificative && (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       <Button
         component="label"
@@ -181,22 +219,19 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
         startIcon={<FontAwesomeIcon icon={faUpload} />}
         sx={customButtonStyle}
       >
-        Choisir fichier
+        Ajouter fichier
         <VisuallyHiddenInput
           type="file"
-          multiple={false}
+          multiple
           onChange={e => handleFileChange(selectedJustificative, e)}
         />
       </Button>
-      <Typography
-        variant="caption"
-        sx={{ display: 'block', mt: 1, color: 'text.secondary' }}
-      >
-        La taille maximale autorisée est de 20 Mo
+      <Typography variant="caption" sx={{ mt: 1, color: 'text.secondary' }}>
+        Taille max 20 Mo; vous pouvez en sélectionner plusieurs.
       </Typography>
-
     </Box>
   )}
+
 
   {/* 3. Affichage & validation */}
   {selectedJustificative && Uploads[selectedJustificative] && (
@@ -209,23 +244,19 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
         }
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, gap: 2 }}>
-        <Typography variant="body2">
-          {Uploads[selectedJustificative][0].name}
-        </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={() => setSelectedJustificative('')}
-        >
-          Valider
-        </Button>
-        <IconButton
-          size="small"
-          color="error"
-          onClick={() => handleRemoveFile(selectedJustificative, 0)}
-        >
-          <FontAwesomeIcon icon={faTimes} />
-        </IconButton>
+      {Uploads[selectedJustificative].map((file, idx) => (
+  <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+    <Typography variant="body2">{file.name}</Typography>
+    <IconButton
+      size="small"
+      color="error"
+      onClick={() => handleRemoveFile(selectedJustificative, idx)}
+    >
+      <FontAwesomeIcon icon={faTimes} />
+    </IconButton>
+  </Box>
+))}
+
       </Box>
     </Box>
   )}
@@ -258,28 +289,31 @@ const Step4 = ({ nextStep, prevStep, handleChange, values }) => {
         </TableRow>
       </TableHead>
       <TableBody>
-        {Object.entries(Uploads).flatMap(([typeId, files]) =>
-          files.map((file, idx) => {
-            const desc = FileTypes.find(
-              f => f.id_files_repo_typeof === +typeId
-            )?.txt_description_fr;
-            return (
-              <TableRow key={`${typeId}-${idx}`}>
-                <TableCell>{desc}</TableCell>
-                <TableCell>{file.name}</TableCell>
-                <TableCell align="center">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleRemoveFile(typeId, idx)}
-                  >
-                    <FontAwesomeIcon icon={faTimes} />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            )
-          })
-        )}
-      </TableBody>
+  {Object.entries(Uploads).flatMap(([typeId, entries]) =>
+    entries.map((entry, idx) => {
+      const desc = FileTypes.find(
+        f => f.id_files_repo_typeof === +typeId
+      )?.txt_description_fr;
+      // S’il s’agit d’un File JS, entry.file est défini ; sinon on prend entry.name
+      const filename = entry.file ? entry.file.name : entry.name;
+      return (
+        <TableRow key={`${typeId}-${idx}`}>
+          <TableCell>{desc}</TableCell>
+          <TableCell>{filename}</TableCell>
+          <TableCell align="center">
+            <IconButton
+              size="small"
+              onClick={() => handleRemoveFile(typeId, idx)}
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </IconButton>
+          </TableCell>
+        </TableRow>
+      );
+    })
+  )}
+</TableBody>
+
     </Table>
   </Box>
 )}
