@@ -792,8 +792,11 @@ const ClientsValides = () => {
   }
 
   const renderTableView = () => (
-    <Paper>
-      <TableContainer>
+    <Paper sx={{ borderRadius: 4, overflow: 'hidden' }}>
+      <TableContainer
+        component={Paper}
+        sx={{ borderRadius: 4, overflow: 'hidden' }}
+      >
         <Table>
           <TableHead>
             <TableRow>
@@ -1083,11 +1086,11 @@ const ClientsValides = () => {
   return (
 
     <Box sx={{ ml: { xs: '2px', md: '240px' }, p: 3 }} className="inscriptions-page-container">
-      <AppBar position="static" color="default">
+      <AppBar position="static" color="default" sx={{ borderRadius: 4 }}>
         <Tabs
           value={tabIndex}
           onChange={handleTabChange}
-          indicatorColor="secondary"
+          TabIndicatorProps={{ style: { display: 'none' } }}
           textColor="inherit"
           variant="fullWidth"
           aria-label="Clients validés Tabs"
@@ -1117,7 +1120,9 @@ const ClientsValides = () => {
         </Box>
       )}
 
-      {isSmallScreen ? renderCardView() : renderTableView()}
+      <Box sx={{ mt: 3 }}>
+        {isSmallScreen ? renderCardView() : renderTableView()}
+      </Box>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         {/* Modifier */}
@@ -1167,6 +1172,7 @@ const ClientsValides = () => {
         onClose={handleCloseFileModal}
         fullWidth
         maxWidth="sm"
+        PaperProps={{ sx: { borderRadius: 2 } }}
       >
         <DialogTitle>Gérer les fichiers justificatifs</DialogTitle>
         <DialogContent>

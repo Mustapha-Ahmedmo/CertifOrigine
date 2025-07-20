@@ -204,7 +204,14 @@ const Home = () => {
       ) : (
         <div className="home-tabs-container">
           <Box sx={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
-            <AppBar position="static" color="default">
+            <AppBar 
+              position="static" 
+              color="default"
+              sx={{
+                    borderRadius: 4,    
+                    overflow: 'hidden'  
+                  }}
+            >
               <Tabs
                 value={tabIndex}
                 onChange={handleTabChange}
@@ -563,6 +570,8 @@ const OrderTable = ({ orders, refreshOrders, hideActions }) => {
       sx={{
         width: '100%',
         overflowX: 'visible',
+        borderRadius: 4,         // arrondi des coins (2 = 16px, tu peux ajuster)
+        overflow: 'hidden',      // pour cloisonner le contenu aux bords arrondis
       }}
     >
       <Table

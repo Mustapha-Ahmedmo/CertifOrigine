@@ -682,7 +682,10 @@ const SearchOrders = () => {
 
   // Rendu en affichage desktop : Tableau
   const renderTableView = () => (
-    <TableContainer component={Paper}>
+    <TableContainer
+      component={Paper}
+      sx={{ borderRadius: 4, overflow: 'hidden' }}
+    >
       <Table sx={{ minWidth: 800 }} aria-label="orders table">
         <TableHead>
           <TableRow>
@@ -812,10 +815,10 @@ const SearchOrders = () => {
   return (
     <Box sx={{ ml: { xs: 0, md: '240px' }, p: 2 }}>
       <Typography variant="h4" sx={{ mb: 2, mt: 2 }}>
-        Historique de commandes terminées - {currentYear}
+       
       </Typography>
       {/* Section des filtres */}
-      <Paper sx={{ p: 2, mb: 2 }}>
+      <Paper sx={{ p: 2, mb: 2, borderRadius: 4 }}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
           <TextField
             label="Date de début"
@@ -892,7 +895,17 @@ const SearchOrders = () => {
               label="Facture Commerciale"
             />
           </Box>
-          <Button variant="contained" color="primary" onClick={handleApplyFilters}>
+          <Button
+            variant="contained"
+            onClick={handleApplyFilters}
+            sx={{
+              backgroundColor: '#DCAF26',
+              color: '#fff',
+              '&:hover': {
+                backgroundColor: '#BF9A22', // foncé au survol
+              },
+            }}
+          >
             Appliquer
           </Button>
         </Box>

@@ -190,7 +190,21 @@ const CreateOrder = () => {
         </Box>
       ) : (
         <Box sx={{ width: '100%', mb: 2 }}>
-          <Stepper activeStep={currentStep - 1} alternativeLabel>
+          <Stepper
+            activeStep={currentStep - 1}
+            alternativeLabel
+            sx={{
+              // Pastille de l'étape active
+              '& .MuiStepIcon-root.Mui-active': {
+                color: '#DCAF26',
+              },
+              // (Optionnel) Texte du label de l'étape active
+              '& .MuiStepLabel-label.Mui-active': {
+                color: '#DCAF26 !important',
+              },
+
+            }}
+          >
             {steps.map((label) => (
               <Step key={label}>
                 <StepLabel>{label}</StepLabel>

@@ -240,8 +240,8 @@ const isValidInternationalPhone = (value) => {
 
   // ----- RENDU Desktop : Table -----
   const renderDesktopTable = () => (
-    <Paper>
-      <TableContainer sx={{ overflowX: 'auto' }}>
+    <Paper sx={{ borderRadius: 4, overflow: 'hidden' }}>
+      <TableContainer sx={{ overflowX: 'auto', borderRadius: 2, overflow: 'hidden' }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -300,6 +300,7 @@ const isValidInternationalPhone = (value) => {
             display: 'flex',
             flexDirection: 'column',
             gap: 1,
+            borderRadius: 2,
           }}
         >
           <Typography variant="body2">
@@ -352,24 +353,37 @@ const isValidInternationalPhone = (value) => {
         py: { xs: 2, sm: 3 },
       }}
     >
-      <AppBar position="static" color="default">
-        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Typography variant="h6">Liste des Destinataires</Typography>
-          <Button
-            variant="contained"
-            onClick={handleOpenAddModal}
-            size="small"
-            sx={{
-              backgroundColor: '#DCAF26',
-              fontSize: { xs: '0.7rem', sm: '0.85rem' },
-              px: { xs: 1, sm: 2 },
-              py: { xs: 0.5, sm: 1 },
-            }}
-          >
-            <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
-            Ajouter un destinataire
-          </Button>
-        </Toolbar>
+      <AppBar position="static" color="default" sx={{ borderRadius: 4 }}>
+      <Toolbar sx={{ position: 'relative', px: 2 }}>
+    <Typography
+      variant="button"
+      sx={theme => ({
+        ...theme.typography.button,
+        textTransform: 'uppercase',
+        position: 'absolute',
+        left: '50%',
+        transform: 'translateX(-50%)',
+      })}
+    >
+      LISTE DES DESTINATAIRES
+    </Typography>
+    <Button
+      variant="contained"
+      onClick={handleOpenAddModal}
+      size="small"
+      sx={{
+        backgroundColor: '#DCAF26',
+        fontSize: { xs: '0.7rem', sm: '0.85rem' },
+        px: { xs: 1, sm: 2 },
+        py: { xs: 0.5, sm: 1 },
+        borderRadius: 2,
+        ml: 'auto',
+      }}
+    >
+      <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
+      Ajouter un destinataire
+    </Button>
+  </Toolbar>
       </AppBar>
 
       <Box mb={2} mt={2} display="flex" alignItems="center" gap={2}>
@@ -386,7 +400,7 @@ const isValidInternationalPhone = (value) => {
 
       {isSmallScreen ? renderMobileCards() : renderDesktopTable()}
 
-      <Dialog open={showAddModal} onClose={handleCloseAddModal} maxWidth="sm" fullWidth>
+      <Dialog open={showAddModal} onClose={handleCloseAddModal} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
         <DialogTitle>
           {editingRecipientId ? 'Modifier un destinataire' : 'Ajouter un destinataire'}
         </DialogTitle>

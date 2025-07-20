@@ -322,9 +322,19 @@ useEffect(() => {
 
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-            <Button variant="outlined" onClick={prevStep}>
-              Retour
-            </Button>
+          <Button
+            variant="contained"
+            onClick={prevStep}
+            sx={{
+              backgroundColor: '#DCAF26',
+              '&:hover': {
+                backgroundColor: '#C3A125',
+              },
+            }}
+          >
+            Retour
+          </Button>
+
             <Button variant="contained" type="submit" sx={customButtonStyle}>
               Suivant
             </Button>

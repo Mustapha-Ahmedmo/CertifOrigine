@@ -51,7 +51,7 @@ function StatCard({ title, value, diff, trend, icon, periodLabel, bgColor, iconC
   const TrendIcon = trend === 'up' ? ArrowUpIcon : ArrowDownIcon;
   const trendColor = trend === 'up' ? '#66bb6a' : '#ef5350';
   return (
-    <Card sx={{ height: '100%', backgroundColor: bgColor }}>
+    <Card sx={{ height: '100%', backgroundColor: bgColor, borderRadius:4 }}>
       <CardContent>
         <Stack spacing={2}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
@@ -167,9 +167,9 @@ function StatCard({ title, value, diff, trend, icon, periodLabel, bgColor, iconC
   }), [theme, categories, timeframe, customStart, customEnd]);
 
   return (
-    <Card>
+    <Card sx={{ borderRadius: 4, overflow: 'hidden' }}>
       <CardHeader
-        title="Finance"
+        title={<strong>Finance</strong>}
         action={
           <FormControl size="small" sx={{ minWidth: 140 }}>
             <InputLabel>Période</InputLabel>
@@ -376,7 +376,7 @@ export default function DashboardClient() {
       <Grid container spacing={3} alignItems="stretch">
         {/* Statistiques client */}
         <Grid item xs={12} md={8}>
-          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius :4 }}>
             <CardHeader
               title={<strong>Client</strong>}
               action={
@@ -502,12 +502,12 @@ export default function DashboardClient() {
       {/* Tableau des derniers clients */}
       <Grid container spacing={3} sx={{ mt: 2 }}>
         <Grid item xs={12}>
-          <Card>
+        <Card sx={{ borderRadius: 4 }}>
             <CardHeader
               title={<strong>Liste des derniers clients</strong>}
             />
             <CardContent>
-              <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+              <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius: 4, overflow: 'hidden' }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow>

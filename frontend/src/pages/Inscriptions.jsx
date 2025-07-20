@@ -226,8 +226,8 @@ const Inscriptions = () => {
 
   // Rendu en mode Table (desktop)
   const renderTableView = () => (
-    <Paper>
-      <TableContainer>
+    <Paper sx={{ borderRadius: 4, overflow: 'hidden' }}>
+      <TableContainer sx={{ borderRadius: 4, overflow: 'hidden' }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -481,7 +481,7 @@ const Inscriptions = () => {
   return (
     <Box sx={{ p: 3 }} className="inscriptions-page-container">
       {/* Barre d'onglets */}
-      <AppBar position="static" color="default">
+      <AppBar position="static" color="default" sx={{ borderRadius: 4, overflow: 'hidden' }}>
         <Tabs
           value={tabIndex}
           onChange={handleTabChange}

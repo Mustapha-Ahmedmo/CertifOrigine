@@ -199,7 +199,7 @@ const HomeOperateur = () => {
       </Helmet>
       <div className="operator-tabs-container" style={{ width: '100%' }}>
         <Box sx={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
-          <AppBar position="static" color="default">
+          <AppBar position="static" color="default" sx={{     borderRadius: 4,     overflow: 'hidden'   }}> 
             <Tabs
               value={tabIndex}
               onChange={handleTabChange}
@@ -483,7 +483,7 @@ const OrderTable = ({ orders, refreshOrders, goToOrderDetails, mode }) => {
   // -----------------------------
   return (
     <>
-      <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+      <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius: 4, overflow: 'hidden' }}>
         <Table stickyHeader aria-label="orders table" sx={{ minWidth: 800 }}>
           {mode === "payment" ? (
             <TableHead>

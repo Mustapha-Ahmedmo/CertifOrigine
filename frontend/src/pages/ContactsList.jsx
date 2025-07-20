@@ -39,6 +39,7 @@ import {
   FormLabel,
   RadioGroup,
   Radio,
+  Toolbar,
 } from '@mui/material';
 import './ContactsList.css';
 
@@ -527,34 +528,43 @@ const ContactsList = () => {
   return (
     <Box sx={{ ml: { xs: 0, md: '240px' }, maxWidth: '1200px', mx: 'auto', px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
       {/* Entête */}
-      <Paper elevation={1} sx={{ mb: 2 }}>
-        <Box
-          sx={{
-            p: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Typography variant="h6">LISTE DES CONTACTS</Typography>
-          <Button
-            variant="contained"
-            onClick={handleOpenAddModal}
-            disabled={!isMainUser}
-            size="small"
-            sx={{
-              backgroundColor: '#DCAF26',
-              fontSize: { xs: '0.7rem', sm: '0.85rem' },
-              px: { xs: 1, sm: 2 },
-              py: { xs: 0.5, sm: 1 },
-              border: 'none'
-            }}
-          >
-            <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
-            Ajouter un contact
-          </Button>
-        </Box>
-      </Paper>
+      <Paper elevation={1} sx={{ mb: 2, borderRadius: 2 }}>
+        <Toolbar>
+     <Typography
+       // reprend la variante “button” des Tabs pour police, taille et graisse
+       variant="button"
+       sx={theme => ({
+         ...theme.typography.button,
+         textTransform: 'uppercase',
+         position: 'absolute',
+         left: '50%',
+         transform: 'translateX(-50%)',
+       })}
+     >
+       LISTE DES CONTACTS
+     </Typography>
+     <Button
+       variant="contained"
+       onClick={handleOpenAddModal}
+       disabled={!isMainUser}
+       size="small"
+       sx={{
+         backgroundColor: '#DCAF26',
+         fontSize: { xs: '0.7rem', sm: '0.85rem' },
+         px: { xs: 1, sm: 2 },
+         py: { xs: 0.5, sm: 1 },
+         borderRadius: 2,
+         position: 'absolute',
+         right: 16,           // décale depuis le bord droit
+         top: '50%',
+         transform: 'translateY(-50%)',
+       }}
+     >
+       <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
+       Ajouter un contact
+     </Button>
+     </Toolbar>
+ </Paper>
 
       {/* Barre de recherche */}
       <Box mb={2} display="flex" alignItems="center" gap={2}>

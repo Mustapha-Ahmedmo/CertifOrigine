@@ -38,9 +38,11 @@ const drawerWidth = 240;
 
 // Style appliqué aux items sélectionnés (fond orange, texte et icône en blanc)
 const selectedStyle = {
+  borderRadius: '10px',   
   "&.Mui-selected": {
     backgroundColor: "#DCAF26",
     color: "white",
+    borderRadius: '10px', 
     "&:hover": {
       backgroundColor: "#DCAF26 !important",
     },

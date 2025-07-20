@@ -136,9 +136,9 @@ const OperatorsList = () => {
   };
 
   const renderTableView = () => (
-    <Paper>
-      <TableContainer>
-        <Table>
+       <Paper sx={{ borderRadius: 4, overflow: 'hidden' }}>
+         <TableContainer sx={{ borderRadius: 4, overflow: 'hidden' }}>
+           <Table sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow>
               <TableCell>Nom</TableCell>
@@ -229,7 +229,7 @@ const OperatorsList = () => {
 
   return (
     <Box sx={{ ml: { xs: '2px', md: '240px' }, p: 3 }} className="operators-page-container">
-      <AppBar position="static" color="default">
+      <AppBar position="static" color="default" sx={{ borderRadius: 4, overflow: 'hidden' }}>
         <Tabs
           value={tabIndex}
           onChange={(e, v) => setTabIndex(v)}

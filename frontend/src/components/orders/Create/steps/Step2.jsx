@@ -861,7 +861,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                         }}
                         label="Quantité"
                         disabled={!isEditable}
-                        endAdornment={<InputAdornment position="end">{m.unit}</InputAdornment>}
+                      
                       />
                     </FormControl>
                     <FormControl variant="outlined" sx={{ width: '150px', ...customFieldStyle }}>
@@ -1108,9 +1108,18 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
         </Alert>
       )}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-        <Button variant="outlined" onClick={onBack}>
-          Retour
-        </Button>
+      <Button
+        variant="contained"
+        onClick={prevStep}
+        sx={{
+          backgroundColor: '#DCAF26',
+          '&:hover': {
+            backgroundColor: '#C3A125',
+          },
+        }}
+      >
+        Retour
+      </Button>
         {currentSection < totalSections - 1 ? (
           <Button variant="contained" onClick={nextSection} sx={customButtonStyle}>
             Suivant
