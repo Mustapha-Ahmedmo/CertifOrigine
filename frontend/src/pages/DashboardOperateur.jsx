@@ -641,7 +641,7 @@ export default function DashboardOperateur() {
 
             {/* Header */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h5" sx={{ flexGrow: 1 }}>Dashboard</Typography>
+                <Typography variant="h5" sx={{ flexGrow: 1 }}>Aperçu des commandes</Typography>
                 <FormControl size="small" sx={{ minWidth: 140 }}>
                     <InputLabel>Filtre</InputLabel>
                     <Select value={overviewFilter} label="Filtre" onChange={e => setOverviewFilter(e.target.value)}>

@@ -378,7 +378,7 @@ export default function DashboardClient() {
         <Grid item xs={12} md={8}>
           <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius :4 }}>
             <CardHeader
-              title={<strong>Client</strong>}
+              title={<strong>Commandes</strong>}
               action={
                 <FormControl size="small" sx={{ minWidth: 140 }}>
                   <InputLabel>Période</InputLabel>
