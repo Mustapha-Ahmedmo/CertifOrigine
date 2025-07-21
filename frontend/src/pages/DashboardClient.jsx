@@ -302,21 +302,21 @@ export default function DashboardClient() {
           p_date_start: p1,
           p_date_end: p2,
           p_borderstatus_approved: true,
-          p_id_custaccount: user?.custAccountId,
+          p_id_custaccount: user?.id_cust_account,
         });
         setCoCount(parseInt(co.data[0]?.count_ord_certif_ori, 10) || 0);
 
         const inv = await getOrderStaticsByServices({
           p_date_start: p1,
           p_date_end: p2,
-          p_id_custaccount: user?.custAccountId,
+          p_id_custaccount: user?.id_cust_account,
         });
         setInvoiceCount(parseInt(inv.data[0]?.count_ord_com_invoice, 10) || 0);
 
         const leg = await getOrderStaticsByServices({
           p_date_start: p1,
           p_date_end: p2,
-          p_id_custaccount: user?.custAccountId,
+          p_id_custaccount: user?.id_cust_account,
         });
         setLegalCount(parseInt(leg.data[0]?.count_ord_legalization, 10) || 0);
       }

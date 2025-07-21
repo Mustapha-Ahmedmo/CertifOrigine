@@ -2577,6 +2577,73 @@ const getStatisticOrdersByMonth = async (req, res) => {
   }
 };
 
+const getStatisticOrdersByCountry = async (req, res) => {
+  try {
+    let {
+      p_date_start,
+      p_date_end,
+      p_id_list_order = null,
+      p_id_custaccount = null,
+      p_orderstatus_exclusif,
+      p_typeOf_country,
+      p_idlogin
+    } = req.query;
+
+    // Required parameters
+    if (
+      !p_date_start ||
+      !p_date_end ||
+      !p_orderstatus_exclusif ||
+      p_typeOf_country === undefined ||
+      !p_idlogin
+    ) {
+      return res.status(400).json({
+        message: 'Les paramètres p_date_start, p_date_end, p_orderstatus_exclusif, p_typeOf_country et p_idlogin sont requis.'
+      });
+    }
+
+    const replacements = {
+      p_date_start,
+      p_date_end,
+      p_id_list_order,
+      p_id_custaccount: p_id_custaccount ? parseInt(p_id_custaccount, 10) : null,
+      p_orderstatus_exclusif: parseInt(p_orderstatus_exclusif, 10),
+      p_typeOf_country: parseInt(p_typeOf_country, 10),
+      p_idlogin: parseInt(p_idlogin, 10),
+    };
+
+    const data = await sequelize.query(
+      `SELECT * 
+         FROM get_statistic_Orders_by_country(
+           :p_date_start,
+           :p_date_end,
+           :p_id_list_order,
+           :p_id_custaccount,
+           :p_orderstatus_exclusif,
+           :p_typeOf_country,
+           :p_idlogin
+         );`,
+      {
+        replacements,
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    res.status(200).json({
+      message: 'Statistiques des commandes par pays récupérées avec succès.',
+      data
+    });
+  } catch (error) {
+    console.error('Erreur getStatisticOrdersByCountry:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la récupération des statistiques des commandes par pays.',
+      error: error.message,
+      details: error.original || error
+    });
+  }
+};
+
+
 module.exports = {
   executeAddOrder,
   getTransmodeInfo,
@@ -2621,5 +2688,6 @@ module.exports = {
   getStatisticCustaccount,
   getStatisticCustAccountByMonth,
   getStatisticOrdersByMonth,
-  setMemoFiles
+  setMemoFiles,
+  getStatisticOrdersByCountry
 };
