@@ -1,6 +1,6 @@
 const express = require('express');
 const upload = require('../src/middleware/upload'); // Use your existing multer middleware
-const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController, setUnitWeight, deleteUnitWeight, submitOrder, remOrdCertifGoods, remOrdCertifTranspMode, remSingleOrdCertifTranspMode, approveOrder, sendbackOrder, rejectOrder, getOrderStaticsByServices, billOrder, setInvoiceHeader, sendOrderDocument, getOrdCertifAmountByDay, getHistoOrder, getMemoOrder, getOrdCertifAmountByWeek, getLastClients, getStatisticOrders, getStatisticCustaccount, getStatisticCustAccountByMonth, getStatisticOrdersByMonth, setMemoFiles } = require('../controllers/OrderController');
+const { executeAddOrder, getTransmodeInfo, getUnitWeightInfo, getRecipientInfo, setRecipientAccount, executeAddCertifOrder, addOrUpdateCertifGood, getOrdersForCustomer, getCertifGoodsInfo, getCertifTranspMode, setOrdCertifTranspMode, cancelOrder, renameOrder, updateCertif, getFilesRepoTypeofInfo, setOrderFiles, delOrderFiles, getOrderFilesInfoController, getOrderOpInfoController, setUnitWeight, deleteUnitWeight, submitOrder, remOrdCertifGoods, remOrdCertifTranspMode, remSingleOrdCertifTranspMode, approveOrder, sendbackOrder, rejectOrder, getOrderStaticsByServices, billOrder, setInvoiceHeader, sendOrderDocument, getOrdCertifAmountByDay, getHistoOrder, getMemoOrder, getOrdCertifAmountByWeek, getLastClients, getStatisticOrders, getStatisticCustaccount, getStatisticCustAccountByMonth, getStatisticOrdersByMonth, setMemoFiles, getStatisticOrdersByCountry } = require('../controllers/OrderController');
 
 const router = express.Router();
 router.post('/create', executeAddOrder);
@@ -91,6 +91,11 @@ router.get(
 router.get(
   '/order-statistics-month',
   getStatisticOrdersByMonth
+);
+
+router.get(
+  '/statistic-orders-by-country',
+  getStatisticOrdersByCountry
 );
 
 module.exports = router;

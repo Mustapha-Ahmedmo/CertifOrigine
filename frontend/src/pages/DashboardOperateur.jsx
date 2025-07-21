@@ -20,7 +20,13 @@ import {
     TableRow,
     TableCell,
     TableBody,
-    Paper
+    Paper,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    TextField,
+    DialogActions,
+    Button
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -32,7 +38,7 @@ import {
 } from '@phosphor-icons/react';
 import ReactApexChart from 'react-apexcharts';
 import { Gauge } from '@mui/x-charts/Gauge';
-import { fetchStatisticOrders, fetchStatisticCustaccount, fetchCustAccountEvolutionByMonth, fetchOrderStatisticsByMonth } from '../services/apiServices';
+import { fetchStatisticOrders, fetchStatisticCustaccount, fetchCustAccountEvolutionByMonth, fetchOrderStatisticsByMonth, fetchStatisticOrdersByCountry } from '../services/apiServices';
 
 //
 // 1. OverviewCard
@@ -326,84 +332,78 @@ const RecetteTable = ({ data = [], filter, onFilterChange }) => {
     );
 };
 
-
-// juste avant DashboardOperateur()
- const CountryOrdersCard = ({
-       title,
-       data,
-       filter,
-       onFilterChange,
-       customStart,
-       customEnd,
-       onCustomDateChange
-     }) => (
+// just before DashboardOperateur()
+const CountryOrdersCard = ({
+    title,
+    data,
+    filter,
+    onFilterChange,
+    onOpenCustom  // ← new
+}) => (
     <Card sx={{ boxShadow: 3, height: '100%' }}>
-      <CardHeader
-        title={title}
-             action={
-                   <FormControl size="small" sx={{ minWidth: 140 }}>
-                     <InputLabel>Période</InputLabel>
-                     <Select
-                       value={filter}
-                       label="Période"
-                       onChange={e => onFilterChange(e.target.value)}
-                     >
-                       <MenuItem value="week">7 derniers jours</MenuItem>
-                       <MenuItem value="month">30 derniers jours</MenuItem>
-                       <MenuItem value="custom">Autre…</MenuItem>
-                     </Select>
-                     {filter === 'custom' && (
-                       <Stack direction="row" spacing={1} mt={1}>
-                         <TextField
-                           label="De"
-                           type="date"
-                           size="small"
-                           value={customStart}
-                           onChange={e => onCustomDateChange('start', e.target.value)}
-                           InputLabelProps={{ shrink: true }}
-                         />
-                         <TextField
-                           label="À"
-                           type="date"
-                           size="small"
-                           value={customEnd}
-                           onChange={e => onCustomDateChange('end', e.target.value)}
-                           InputLabelProps={{ shrink: true }}
-                         />
-                       </Stack>
-                     )}
-                   </FormControl>
-                  
-                 }
-        titleTypographyProps={{ variant: 'overline', color: 'text.secondary' }}
-      />
-      <CardContent>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Pays</TableCell>
-                <TableCell align="right">Nombre Commande</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.map((row) => (
-                <TableRow key={row.country}>
-                  <TableCell>{row.country}</TableCell>
-                  <TableCell align="right">{row.count.toLocaleString()}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
+        <CardHeader
+            title={title}
+            action={
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                    <InputLabel>Période</InputLabel>
+                    <Select
+                        value={filter}
+                        label="Période"
+                        onChange={e => {
+                            const v = e.target.value;
+                            onFilterChange(v);
+                            if (v === 'custom') onOpenCustom();
+                        }}
+                    >
+                        <MenuItem value="week">7 derniers jours</MenuItem>
+                        <MenuItem value="month">30 derniers jours</MenuItem>
+                        <MenuItem value="custom">Autre…</MenuItem>
+                    </Select>
+                </FormControl>
+            }
+            titleTypographyProps={{ variant: 'overline', color: 'text.secondary' }}
+        />
+        <CardContent>
+            <TableContainer>
+                <Table size="small">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Pays</TableCell>
+                            <TableCell align="right">Nombre Commande</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {data.map(row => (
+                            <TableRow key={row.country_symbol_fr_recipient}>
+                                <TableCell>{row.country_symbol_fr_recipient}</TableCell>
+                                <TableCell align="right">
+                                    {Number(row.count_ord_certif_ori).toLocaleString()}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </CardContent>
     </Card>
-  );
-  
+);
+
 //
 // 6. DashboardOperateur
 //
 export default function DashboardOperateur() {
+
+    const [dateModalOpen, setDateModalOpen] = useState(false);
+
+    const openDateModal = () => setDateModalOpen(true);
+    const closeDateModal = () => setDateModalOpen(false);
+
+    const applyCustomDates = () => {
+        // you already have countryCustomStart & countryCustomEnd
+        // now just re-trigger the fetch hook by toggling countryFilter
+        closeDateModal();
+    };
+
     const user = useSelector(state => state.auth.user);
     const [stats, setStats] = useState({
         count_ord_certif_ori: 0,
@@ -430,14 +430,14 @@ export default function DashboardOperateur() {
     const [recFilter, setRecFilter] = useState('6m');
     const [recEvolution, setRecEvolution] = useState([]);
     const [originData, setOriginData] = useState([]);
-    const [destData, setDestData]   = useState([]);
+    const [destData, setDestData] = useState([]);
     // —————— AJOUT POUR FILTRE CUSTOM PAYS ——————
 
     const [countryCustomStart, setCountryCustomStart] = useState('');
     const [countryCustomEnd, setCountryCustomEnd] = useState('');
     const handleCountryCustomDateChange = (field, value) => {
-    if (field === 'start') setCountryCustomStart(value);
-    else setCountryCustomEnd(value);
+        if (field === 'start') setCountryCustomStart(value);
+        else setCountryCustomEnd(value);
     };
 
     const subtitles = {
@@ -447,7 +447,7 @@ export default function DashboardOperateur() {
     };
 
     const [countryFilter, setCountryFilter] = useState('week');
-    
+
 
     // load overview metrics once (hier→aujourd'hui)
     useEffect(() => {
@@ -570,60 +570,68 @@ export default function DashboardOperateur() {
             }
         })();
     }, [recFilter, user.id_login_user]);
+    useEffect(() => {
+        // Si mode « custom » sans dates renseignées → on sort
+        if (countryFilter === 'custom' &&
+            (!countryCustomStart || !countryCustomEnd)) {
+            return;
+        }
 
-     // ————— Hook pour fetch des Pays (origine / destination) —————
- useEffect(() => {
-   const now = new Date();
-   let start = new Date(now);
-   let end   = new Date(now);
+        const now = new Date();
+        let start = new Date(now);
+        let end = new Date(now);
 
-   if (countryFilter === 'custom') {
-     // plage personnalisée
-     start = new Date(countryCustomStart);
-     start.setHours(0, 0, 0, 0);
-     end   = new Date(countryCustomEnd);
-     end.setHours(23, 59, 59, 999);
-   } else if (countryFilter === 'week') {
-     // 7 derniers jours
-     start.setDate(now.getDate() - 6);
-     start.setHours(0, 0, 0, 0);
-     end.setHours(23, 59, 59, 999);
-   } else {
-     // 30 derniers jours
-     start.setMonth(now.getMonth() - 1);
-     start.setHours(0, 0, 0, 0);
-     end.setHours(23, 59, 59, 999);
-   }
+        if (countryFilter === 'custom') {
+            start = new Date(countryCustomStart);
+            end = new Date(countryCustomEnd);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+        }
+        else if (countryFilter === 'week') {
+            start.setDate(now.getDate() - 6);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+        }
+        else { // 30 derniers jours
+            start.setMonth(now.getMonth() - 1);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+        }
 
-   (async () => {
-     try {
-       const { data: origin } = await fetchOrdersByCountry({
-         p_date_start: start.toISOString(),
-         p_date_end:   end.toISOString(),
-         p_type:       'origin',
-         p_idlogin:    user.id_login_user
-       });
-       setOriginData(origin);
+        (async () => {
+            try {
+                const origin = await fetchStatisticOrdersByCountry({
+                    p_date_start: start.toISOString(),
+                    p_date_end: end.toISOString(),
+                    p_id_list_order: null,
+                    p_id_custaccount: null,
+                    p_orderstatus_exclusif: 4,
+                    p_typeOf_country: 0,
+                    p_idlogin: user.id_login_user
+                });
+                setOriginData(origin);
 
-       const { data: dest } = await fetchOrdersByCountry({
-         p_date_start: start.toISOString(),
-         p_date_end:   end.toISOString(),
-         p_type:       'destination',
-         p_idlogin:    user.id_login_user
-       });
-       setDestData(dest);
-     } catch (err) {
-       console.error('Erreur fetch pays :', err);
-     }
-   })();
- }, [
-   countryFilter,
-   countryCustomStart,
-   countryCustomEnd,
-   user.id_login_user
- ]);
- // ———————————————————————————————————————————————
+                const dest = await fetchStatisticOrdersByCountry({
+                    p_date_start: start.toISOString(),
+                    p_date_end: end.toISOString(),
+                    p_id_list_order: null,
+                    p_id_custaccount: null,
+                    p_orderstatus_exclusif: 4,
+                    p_typeOf_country: 1,
+                    p_idlogin: user.id_login_user
+                });
+                setDestData(dest);
 
+            } catch (err) {
+                console.error('Erreur fetch pays :', err);
+            }
+        })();
+    }, [
+        countryFilter,
+        countryCustomStart,
+        countryCustomEnd,
+        user.id_login_user
+    ]);
 
     if (loading) return <Typography>Chargement…</Typography>;
 
@@ -748,39 +756,41 @@ export default function DashboardOperateur() {
                 </Grid>
             </Card>
 
-                      {/* --- New: Dashboard Pays d'origine / destination --- */}
-          <Grid container spacing={3} mb={4}>
-            <Grid item xs={12} md={6}>
-              <CountryOrdersCard
-                title="Pays d’origine"
-                data={originData}
-                       filter={countryFilter}
-       onFilterChange={setCountryFilter}
-       customStart={countryCustomStart}
-       customEnd={countryCustomEnd}
-       onCustomDateChange={handleCountryCustomDateChange}
-      />
-            
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <CountryOrdersCard
-                title="Pays de destination"
-                data={destData}
-                       filter={countryFilter}
-       onFilterChange={setCountryFilter}
-       customStart={countryCustomStart}
-       customEnd={countryCustomEnd}
-       onCustomDateChange={handleCountryCustomDateChange}
-              />
-            </Grid>
-          </Grid>
-          {/* ---------------------------------------------------- */}
+            {/* --- New: Dashboard Pays d'origine / destination --- */}
+            <Grid container spacing={3} mb={4}>
+                <Grid item xs={12} md={6}>
+                    <CountryOrdersCard
+                        title="Pays d’origine"
+                        data={originData}
+                        filter={countryFilter}
+                        onFilterChange={setCountryFilter}
+                        onOpenCustom={openDateModal}
+                        customStart={countryCustomStart}
+                        customEnd={countryCustomEnd}
+                        onCustomDateChange={handleCountryCustomDateChange}
+                    />
 
-          <RecetteTable
-            data={recEvolution}
-            filter={recFilter}
-            onFilterChange={setRecFilter}
-          />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                    <CountryOrdersCard
+                        title="Pays de destination"
+                        data={destData}
+                        filter={countryFilter}
+                        onFilterChange={setCountryFilter}
+                        onOpenCustom={openDateModal}
+                        customStart={countryCustomStart}
+                        customEnd={countryCustomEnd}
+                        onCustomDateChange={handleCountryCustomDateChange}
+                    />
+                </Grid>
+            </Grid>
+            {/* ---------------------------------------------------- */}
+
+            <RecetteTable
+                data={recEvolution}
+                filter={recFilter}
+                onFilterChange={setRecFilter}
+            />
 
 
             <RecetteTable
@@ -789,6 +799,39 @@ export default function DashboardOperateur() {
                 onFilterChange={setRecFilter}
             />
 
+
+            <Dialog open={dateModalOpen} onClose={closeDateModal}>
+                <DialogTitle>Choisir une plage de dates</DialogTitle>
+                <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <TextField
+                        label="Date de début"
+                        type="date"
+                        value={countryCustomStart}
+                        onChange={e => setCountryCustomStart(e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                    />
+                    <TextField
+                        label="Date de fin"
+                        type="date"
+                        value={countryCustomEnd}
+                        onChange={e => setCountryCustomEnd(e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeDateModal}>Annuler</Button>
+                    <Button
+                        onClick={() => {
+                            applyCustomDates();
+                        }}
+                        disabled={!countryCustomStart || !countryCustomEnd}
+                    >
+                        Appliquer
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
+
+
     );
 }
