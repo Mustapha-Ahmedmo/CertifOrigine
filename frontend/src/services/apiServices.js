@@ -1446,6 +1446,9 @@ export const getOrderAmountByDay = async (params = {}) => {
 
 export const getOrderStaticsByServices = async (params = {}) => {
   try {
+
+    console.log('getOrderStaticsByServices params:', params);
+
     // Remove any keys with null, undefined, or the string "null"
     const cleanedParams = {};
     Object.entries(params).forEach(([key, value]) => {
@@ -1453,6 +1456,9 @@ export const getOrderStaticsByServices = async (params = {}) => {
         cleanedParams[key] = value;
       }
     });
+
+    console.log('getOrderStaticsByServices cleanedParams:', cleanedParams);
+
     const queryString = new URLSearchParams(cleanedParams).toString();
 
     const response = await fetch(`${API_URL}/orders/order-statistics?${queryString}`, {
@@ -1907,4 +1913,46 @@ export const fetchMemoFilesInfo = async ({ p_id_memo_list, p_isactive }) => {
     console.error('API call error (fetchMemoFilesInfo):', error);
     throw error;
   }
+};
+
+/**
+ * Fetch order statistics broken down by country.
+ *
+ * @param {{ 
+*   p_date_start: string,
+*   p_date_end: string,
+*   p_id_list_order?: string|null,
+*   p_id_custaccount?: number|null,
+*   p_orderstatus_exclusif: number,
+*   p_typeOf_country: number,
+*   p_idlogin: number
+* }} params
+*/
+export const fetchStatisticOrdersByCountry = async (params) => {
+ // clean out null/undefined
+ const qsObj = {};
+ Object.entries(params).forEach(([k, v]) => {
+   if (v != null && v !== '') qsObj[k] = v;
+ });
+ const queryString = new URLSearchParams(qsObj).toString();
+
+ const res = await fetch(
+   `${API_URL}/orders/statistic-orders-by-country?${queryString}`,
+   {
+     method: 'GET',
+     headers: {
+       'Content-Type':  'application/json',
+       'Authorization': `Bearer ${localStorage.getItem('token')}`
+     }
+   }
+ );
+
+ if (!res.ok) {
+   const err = await res.json().catch(() => ({}));
+   throw new Error(err.message || 'Failed to fetch orders-by-country stats');
+ }
+
+ const payload = await res.json();
+ // { message: string, data: [...] }
+ return payload.data ?? [];
 };
