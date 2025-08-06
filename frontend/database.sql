@@ -5986,6 +5986,153 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+--Select * from get_statistic_Orders_by_country('2025-04-01','2025-07-01',null,1,4,0,2);
+
+DROP FUNCTION IF EXISTS get_statistic_Orders_by_country;
+
+CREATE OR REPLACE FUNCTION get_statistic_Orders_by_country(
+
+    p_date_start TIMESTAMP,
+
+    p_date_end TIMESTAMP,
+
+    p_id_list_order TEXT,
+
+    p_id_custaccount INT,
+
+    p_orderstatus_exclusif INT,   /*1:insert   |   2:new   |   3:approved   |   4/5:billed/paid   */
+
+    p_typeOf_country INT,  /*0 pour origine   |   different de 0 pour destination   */
+
+   p_idlogin INT
+
+)
+
+RETURNS TABLE(
+
+    count_ord_certif_ori BIGINT,
+
+    country_symbol_fr_recipient VARCHAR(64),
+
+    country_symbol_eng_recipient VARCHAR(64)
+
+) AS
+
+$$
+
+BEGIN
+
+ 
+
+ 
+
+               
+
+    IF p_id_custaccount IS NULL OR p_id_custaccount = 0 THEN
+
+                                IF NOT EXISTS (SELECT 1 FROM op_user WHERE id_login_user = p_idlogin) THEN
+
+                                               RAISE EXCEPTION 'Accès refusé';
+
+                                END IF;
+
+    END IF;
+
+ 
+
+    RETURN QUERY
+
+    SELECT
+
+                    COALESCE (count(oco."id_ord_certif_ori"), 0) as ord_certif_ori_count,
+
+        crec."symbol_fr" AS country_symbol_fr_recipient,
+
+        crec."symbol_eng" AS country_symbol_eng_recipient
+
+ 
+
+    FROM "ORDER" o
+
+        INNER JOIN
+
+                                               ORD_CERTIF_ORI oco ON o."id_order" = oco."id_order"
+
+                INNER JOIN country crec ON crec."id_country" = 
+
+                                                                               CASE WHEN p_typeOf_country = 0/*ORIGIN*/
+
+                                                                               THEN
+
+                                                                                              oco."id_country_origin"
+
+                                                                               ELSE 
+
+                                                                                              oco."id_country_destination"
+
+                                                                               END  
+
+    WHERE
+
+        (p_id_list_order IS NULL OR o."id_order" = ANY (string_to_array(p_id_list_order, ',')::INT[]))
+
+        AND (p_id_custaccount IS NULL OR o."id_cust_account" = p_id_custaccount)
+
+       
+
+                                AND
+
+                                (
+
+            ( /*insert*/
+
+                p_orderstatus_exclusif = 1  AND o."id_order_status"  IN (1/*insert*/,6/*pending replace*/)
+
+                and ( p_date_start  IS NULL OR o."date_last_submission" >= p_date_start ) and (p_date_end IS NULL or o."date_last_submission"  <= p_date_end)
+
+            ) OR
+
+            (
+
+                p_orderstatus_exclusif = 2   AND o."id_order_status"  IN (2/*new*/,7/*replaced*/)
+
+                and ( p_date_start  IS NULL OR o."date_last_submission" >= p_date_start)  and (p_date_end IS NULL or o."date_last_submission"  <= p_date_end)
+
+            )  OR
+
+            (
+
+                p_orderstatus_exclusif = 3  AND o."id_order_status"  IN (3/*approved*/)
+
+                and ( p_date_start  IS NULL OR o."date_validation" >= p_date_start)  and (p_date_end IS NULL or o."date_validation"  <= p_date_end)
+
+            ) OR
+
+            (
+
+               p_orderstatus_exclusif  IN (4/*billed*/,5/*paid*/)   AND o."id_order_status"  IN (4/*billed*/,5/*paid*/)
+
+                and ( p_date_start  IS NULL OR o."date_last_return" >= p_date_start)  and (p_date_end IS NULL or o."date_last_return"  <= p_date_end)
+
+            )
+
+                                )
+
+ 
+
+    GROUP BY
+
+        crec."symbol_fr",crec."symbol_eng"
+
+                                order by ord_certif_ori_count, crec."symbol_fr"
+
+ 
+
+        ;
+
+END;
+
+$$ LANGUAGE plpgsql;
 
 
 
