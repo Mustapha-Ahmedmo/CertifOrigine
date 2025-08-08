@@ -77,20 +77,30 @@ function StatCard({ title, value, diff, trend, icon, periodLabel, bgColor, iconC
 }function SpendChartCard({ custAccountId, unitCertif, unitCopy }) {
   const theme = useTheme();
 
-  const [timeframe, setTimeframe] = useState('month');
+  const [timeframe, setTimeframe] = useState('monthly');
   const [categories, setCategories] = useState([]);
   const [series, setSeries] = useState([{ name: 'Paid', data: [] }]);
 
   const [openCustom, setOpenCustom] = useState(false);
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
-
+  const [openMonthly, setOpenMonthly] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return { month: now.getMonth(), year: now.getFullYear() };
+  });
   // map timeframe → chart title
   const periodTitles = {
     month: 'Montant dépensé (1 mois glissant)',
     semester: 'Montant dépensé (6 mois glissant)',
     year: 'Montant dépensé (1 an glissant)',
-    custom: `Montant dépensé (${customStart} → ${customEnd})`
+    custom: `Montant dépensé (${customStart} → ${customEnd})`,
+    monthly: selectedMonth
+  ? `Montant dépensé (${new Date(selectedMonth.year, selectedMonth.month).toLocaleString('fr-FR', {
+      month: 'long',
+      year: 'numeric'
+    })})`
+  : 'Montant dépensé (mois sélectionné)'
   };
 
   useEffect(() => {
@@ -100,6 +110,12 @@ function StatCard({ title, value, diff, trend, icon, periodLabel, bgColor, iconC
       end.setHours(23, 59, 59, 999);
 
       switch (timeframe) {
+        case 'monthly':
+        start = new Date(selectedMonth.year, selectedMonth.month, 1);
+        end = new Date(selectedMonth.year, selectedMonth.month + 1, 0);
+        start.setHours(12, 0, 0, 0);
+        end.setHours(12, 0, 0, 0);
+        break;
         case 'month':
           start.setMonth(now.getMonth() - 1);
           break;
@@ -111,9 +127,9 @@ function StatCard({ title, value, diff, trend, icon, periodLabel, bgColor, iconC
           break;
         case 'custom':
           start = new Date(customStart);
-          start.setHours(0, 0, 0, 0);
+          start.setHours(12, 0, 0, 0);
           end = new Date(customEnd);
-          end.setHours(23, 59, 59, 999);
+          end.setHours(12, 0, 0, 0);
           break;
         default:
           start.setMonth(now.getMonth() - 1);
@@ -128,8 +144,13 @@ function StatCard({ title, value, diff, trend, icon, periodLabel, bgColor, iconC
           p_unit_ori_certif_copy: unitCopy
         });
         console.log('Week data →', resp.data);
+        console.log('📊 Données reçues pour la période mensuelle :', {
+          start: start.toISOString(),
+          end: end.toISOString(),
+          data: resp.data
+        });
 
-        const cats = resp.data.map(r => r.theyearmonth);
+        const cats = resp.data.map((_, i) => `sem${i + 1}`);
         const paid = resp.data.map(r => parseFloat(r.amount_ord_certif_ori_paid) || 0);
 
         setCategories(cats);
@@ -174,17 +195,34 @@ function StatCard({ title, value, diff, trend, icon, periodLabel, bgColor, iconC
           <FormControl size="small" sx={{ minWidth: 140 }}>
             <InputLabel>Période</InputLabel>
             <Select
-              value={timeframe}
-              label="Période"
-              onChange={e => {
-                if (e.target.value === 'custom') setOpenCustom(true);
-                else setTimeframe(e.target.value);
-              }}
-            >
-              <MenuItem value="month">Mois (1 mois glissant)</MenuItem>
-              <MenuItem value="semester">Semestre (6 mois glissant)</MenuItem>
-              <MenuItem value="year">Année (1 an glissant)</MenuItem>
-              <MenuItem value="custom">Autre…</MenuItem>
+  value={timeframe}
+  label="Période"
+  onChange={e => {
+    const v = e.target.value;
+    setTimeframe(v);
+    if (v === 'custom') setOpenCustom(true);
+    // plus besoin du setOpenMonthly ici !
+  }}
+  renderValue={(selected) => {
+    const labelMap = {
+      monthly: 'Mensuel (mois précis)',
+      month: 'Mois (1 mois glissant)',
+      semester: 'Semestre (6 mois glissant)',
+      year: 'Année (1 an glissant)',
+      custom: 'Autre…',
+      '': 'Choisir une période…'
+    };
+    return labelMap[selected] || selected;
+  }}
+>
+
+<MenuItem value="monthly" onClick={() => {
+  setOpenMonthly(true);
+}}>Mensuel (mois précis)</MenuItem>
+              {/* <MenuItem value="month">Mois (1 mois glissant)</MenuItem> */}
+              {/* <MenuItem value="semester">Semestre (6 mois glissant)</MenuItem> */}
+              {/* <MenuItem value="year">Année (1 an glissant)</MenuItem> */}
+              {/* <MenuItem value="custom">Autre…</MenuItem> */}
             </Select>
           </FormControl>
         }
@@ -225,6 +263,70 @@ function StatCard({ title, value, diff, trend, icon, periodLabel, bgColor, iconC
           </Box>
         </Box>
       </Modal>
+      <Modal open={openMonthly} onClose={() => setOpenMonthly(false)}>
+  <Box sx={{
+    position: 'absolute', top: '50%', left: '50%',
+    transform: 'translate(-50%,-50%)',
+    bgcolor: 'background.paper', p: 4, boxShadow: 24,
+    display: 'flex', flexDirection: 'column', gap: 2, width: 300
+  }}>
+    <Typography variant="h6">Choisissez un mois</Typography>
+
+    <TextField
+      label="Année"
+      type="number"
+      value={selectedMonth?.year ?? new Date().getFullYear()}
+      onChange={e => setSelectedMonth(prev => ({ ...prev, year: parseInt(e.target.value, 10) }))}
+    />
+
+    <Grid container spacing={1}>
+      {[
+        'Janvier', 'Février', 'Mars', 'Avril',
+        'Mai', 'Juin', 'Juillet', 'Août',
+        'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      ].map((monthName, index) => (
+        <Grid item xs={4} key={index}>
+          <Button
+            fullWidth
+            variant={(selectedMonth?.month === index) ? 'contained' : 'outlined'}
+            onClick={() => setSelectedMonth(prev => ({ ...prev, month: index }))}
+          >
+            {monthName}
+          </Button>
+        </Grid>
+      ))}
+    </Grid>
+
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+      <Button onClick={() => setOpenMonthly(false)}>Annuler</Button>
+      <Button
+        variant="contained"
+        onClick={() => {
+          if (
+            typeof selectedMonth?.month === 'number' &&
+            typeof selectedMonth?.year === 'number'
+          ) {
+            const firstDay = new Date(selectedMonth.year, selectedMonth.month, 1);
+            const lastDay = new Date(selectedMonth.year, selectedMonth.month + 1, 0);
+      
+            // ✅ Correction pour éviter les problèmes de fuseau horaire (décalage UTC)
+            firstDay.setHours(12, 0, 0, 0);
+            lastDay.setHours(12, 0, 0, 0);
+      
+            setCustomStart(firstDay.toISOString().substring(0, 10));
+            setCustomEnd(lastDay.toISOString().substring(0, 10));
+            setTimeframe('monthly'); // ou 'monthly' si tu gères le titre différemment
+            setOpenMonthly(false);
+          } else {
+            console.warn('❌ selectedMonth incorrect :', selectedMonth);
+          }
+        }}
+      >
+        Valider
+      </Button>
+    </Box>
+  </Box>
+</Modal>
     </Card>
   );
 }
@@ -235,7 +337,7 @@ export default function DashboardClient() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // filtres
-  const [timeframe, setTimeframe] = useState('month');
+  const [timeframe, setTimeframe] = useState('');
   const [openCustomModal, setOpenCustomModal] = useState(false);
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
@@ -270,8 +372,9 @@ export default function DashboardClient() {
         start.setHours(0, 0, 0, 0);
       }
       else if (timeframe === 'month') {
-        // du 1er du mois à aujourd'hui
-        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        // 30 jours glissants
+        start = new Date(now);
+        start.setDate(now.getDate() - 30);
         start.setHours(0, 0, 0, 0);
       }
       else if (timeframe === 'semester') {

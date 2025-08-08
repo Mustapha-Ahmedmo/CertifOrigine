@@ -4880,6 +4880,7 @@ $$ LANGUAGE plpgsql;
 
 
 DROP FUNCTION IF EXISTS get_ord_certif_amount_byWeek;
+
 CREATE OR REPLACE FUNCTION get_ord_certif_amount_byWeek(
     p_date_start TIMESTAMP,
     p_date_end TIMESTAMP,
@@ -4889,89 +4890,41 @@ CREATE OR REPLACE FUNCTION get_ord_certif_amount_byWeek(
     p_unit_ori_certif_copy FLOAT
 )
 RETURNS TABLE(
-    amount_ord_certif_ori_approved FLOAT,
+    amount_ord_certif_ori_approved numeric,
     amount_ord_certif_ori_paid FLOAT,
     theYear  FLOAT,
     theWeek  FLOAT,
-    theYearMonth  DECIMAL
+    theYearMonth  DECIMAL,
+    id_cust_account INT
 ) AS
 $$
 BEGIN
-    RETURN QUERY
-    SELECT
-        SUM(
-            CASE WHEN
-                (o."id_order_status"= 3/*approved*/ AND o."date_validation" >= p_date_start  and o."date_validation"  <= p_date_end)
-                OR
-                (o."id_order_status"  = 4/*billed*/ AND o."date_last_return" >= p_date_start  and o."date_last_return"  <= p_date_end)
-            THEN
-                p_unit_ori_certif + p_unit_ori_certif_copy * COPY_COUNT
-            ELSE 0 END
-        ) AS amount_ord_certif_ori_approved,
-       
-       
-       
-        SUM(
-            CASE WHEN
-                o."id_order_status" = 5/*paid*/  AND o."date_last_return" >= p_date_start  and o."date_last_return"  <= p_date_end
-            THEN
-                AMOUNT_ExVAT + AMOUNT_VAT
-            ELSE 0 END
-        ) AS amount_ord_certif_ori_paid,
+  RETURN QUERY
 
-		date_part('year',
-            CASE WHEN o."id_order_status" = 3/*approved*/
-            THEN
-                o."date_validation"
-            ELSE  
-                o."date_last_return"
-            END   
-		
-		
-		) as theYear,
-
-
-		date_part('week', 
-            CASE WHEN o."id_order_status" = 3/*approved*/
-            THEN
-                o."date_validation"
-            ELSE  
-                o."date_last_return"
-            END   
-		) AS theWeek,
-
-		CAST(CONCAT(
-			date_part('year',
-				CASE WHEN o."id_order_status" = 3/*approved*/
-				THEN
-					o."date_validation"
-				ELSE  
-					o."date_last_return"
-				END   		
-			)::text, 
-			LPAD(date_part('week', 
-				CASE WHEN o."id_order_status" = 3/*approved*/
-				THEN
-					o."date_validation"
-				ELSE  
-					o."date_last_return"
-				END   
-			)::text, 2, '0') 
-		)  AS DECIMAL ) as theYearWeek
-
-
-
-
-
-
-    FROM "ORDER" o
-            INNER JOIN ORD_CERTIF_ORI oco ON o."id_order" = oco."id_order"
-            LEFT JOIN INVOICE_HEADER inv ON o."id_order" = inv."id_order"
-    WHERE
-        (p_id_list_order IS NULL OR o."id_order" = ANY (string_to_array(p_id_list_order, ',')::INT[]))
-        AND (p_id_custaccount IS NULL OR o."id_cust_account" = p_id_custaccount)
-        AND o."id_order_status"  IN (3/*approved*/,4/*billed*/, 5/*paid*/)
-    GROUP BY theYear,theWeek,theYearWeek;
+  SELECT
+    1.0123 AS amount_ord_certif_ori_approved,
+    COALESCE(SUM(inv.AMOUNT_ExVAT + inv.AMOUNT_VAT), 0) AS amount_ord_certif_ori_paid,
+    weeks.theYear,
+    weeks.theWeek,
+    CAST(CONCAT(weeks.theYear::TEXT, LPAD(weeks.theWeek::TEXT, 2, '0')) AS DECIMAL) AS theYearMonth,
+    o.id_cust_account
+  FROM (
+    SELECT DISTINCT
+      EXTRACT(YEAR FROM d)::FLOAT AS theYear,
+      EXTRACT(WEEK FROM d)::FLOAT AS theWeek
+    FROM generate_series(p_date_start::DATE, p_date_end::DATE, '1 day') d
+  ) weeks
+  LEFT JOIN "ORDER" o
+    ON EXTRACT(WEEK FROM o.date_last_return)::FLOAT = weeks.theWeek
+    AND EXTRACT(YEAR FROM o.date_last_return)::FLOAT = weeks.theYear
+    AND o.date_last_return BETWEEN p_date_start AND p_date_end
+    AND (o.id_cust_account = p_id_custaccount OR o.id_cust_account IS NULL)
+    AND (p_id_list_order IS NULL OR o.id_order = ANY(string_to_array(p_id_list_order, ',')::INT[]))
+    AND (o.id_order_status = 5 OR o.id_order_status IS NULL)
+  LEFT JOIN ORD_CERTIF_ORI oco ON o.id_order = oco.id_order
+  LEFT JOIN INVOICE_HEADER inv ON o.id_order = inv.id_order
+  GROUP BY weeks.theYear, weeks.theWeek, o.id_cust_account
+  ORDER BY weeks.theYear, weeks.theWeek;
 END;
 $$ LANGUAGE plpgsql;
 

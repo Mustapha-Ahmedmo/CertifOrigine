@@ -26,7 +26,8 @@ import {
     DialogContent,
     TextField,
     DialogActions,
-    Button
+    Button,
+    Stack
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -75,7 +76,11 @@ const OverviewCard = ({ title, value, subtitle, icon, iconColor, iconBg }) => (
         </CardContent>
     </Card>
 );
-const ClientsCountCard = ({ custStats, filter, onFilterChange, subtitle }) => (
+const ClientsCountCard = ({ custStats, filter, onFilterChange, subtitle, onOpenCustom,
+    customStart,
+    customEnd,
+    onCustomDateChange
+   }) => (
     <Card sx={{ boxShadow: 3, height: '100%' }}>
         <CardHeader
             title="Nombre des clients"
@@ -83,10 +88,15 @@ const ClientsCountCard = ({ custStats, filter, onFilterChange, subtitle }) => (
             action={
                 <FormControl size="small" sx={{ minWidth: 140 }}>
                     <InputLabel>Date</InputLabel>
-                    <Select value={filter} label="Date" onChange={e => onFilterChange(e.target.value)}>
+                    <Select value={filter} label="Date" onChange={e => {
+  const v = e.target.value;
+  if (v === 'custom') onOpenCustom();
+  onFilterChange(v);
+}}>
                         <MenuItem value="24h">Dernières 24 h</MenuItem>
                         <MenuItem value="week">7 derniers jours</MenuItem>
                         <MenuItem value="month">30 derniers jours</MenuItem>
+                        <MenuItem value="custom">Autre…</MenuItem>
                     </Select>
                 </FormControl>
             }
@@ -128,7 +138,7 @@ const ClientsCountCard = ({ custStats, filter, onFilterChange, subtitle }) => (
                                 nouvelle inscription
                             </Typography>
                             <Typography variant="h5">
-                                {custStats.count_new_custaccount.toLocaleString()}
+                                {(custStats.count_new_custaccount || 0).toLocaleString()}
                             </Typography>
                         </Box>
                     </Box>
@@ -142,7 +152,7 @@ const ClientsCountCard = ({ custStats, filter, onFilterChange, subtitle }) => (
                                 Clients rejetés
                             </Typography>
                             <Typography variant="h5">
-                                {custStats.count_rejected_custaccount.toLocaleString()}
+                            {(custStats.count_rejected_custaccount || 0).toLocaleString()}
                             </Typography>
                         </Box>
                     </Box>
@@ -156,7 +166,7 @@ const ClientsCountCard = ({ custStats, filter, onFilterChange, subtitle }) => (
                                 Client validés
                             </Typography>
                             <Typography variant="h5">
-                                {custStats.count_custaccount_early.toLocaleString()}
+                            {(custStats.count_custaccount_early || 0).toLocaleString()}
                             </Typography>
                         </Box>
                     </Box>
@@ -169,7 +179,10 @@ const ClientsCountCard = ({ custStats, filter, onFilterChange, subtitle }) => (
 //
 // 3. ClientsEvolutionCard
 //
-const ClientsEvolutionCard = ({ data = [], evoFilter, onEvoFilterChange }) => {
+const ClientsEvolutionCard = ({ data = [], evoFilter, onEvoFilterChange, onOpenCustom,
+    customStart,
+    customEnd,
+    onCustomDateChange }) => {
     const theme = useTheme();
     // build categories like "2025-01", etc.
 
@@ -211,10 +224,15 @@ const ClientsEvolutionCard = ({ data = [], evoFilter, onEvoFilterChange }) => {
                         <Select
                             value={evoFilter}
                             label="Période"
-                            onChange={e => onEvoFilterChange(e.target.value)}
+                            onChange={e => {
+                                const v = e.target.value;
+                                if (v === 'custom') onOpenCustom();
+                                onEvoFilterChange(v);
+                              }}
                         >
                             <MenuItem value="6m">Last 6 months</MenuItem>
                             <MenuItem value="1y">Last year</MenuItem>
+                            <MenuItem value="custom">Autre…</MenuItem>
                         </Select>
                     </FormControl>
                 }
@@ -255,7 +273,10 @@ const CommandEvolutionCard = ({ title, value, diff, trend, bg, subtitle }) => (
 //
 // 5. RecetteTable
 //
-const RecetteTable = ({ data = [], filter, onFilterChange }) => {
+const RecetteTable = ({ data = [], filter, onFilterChange, onOpenCustom,
+    customStart,
+    customEnd,
+    onCustomDateChange }) => {
     // French month names
     const monthNames = [
         'Janvier', 'Février', 'Mars', 'Avril',
@@ -282,9 +303,15 @@ const RecetteTable = ({ data = [], filter, onFilterChange }) => {
                 <Typography variant="overline">État des recettes par prestation</Typography>
                 <FormControl size="small" sx={{ minWidth: 120 }}>
                     <InputLabel>Période</InputLabel>
-                    <Select value={filter} label="Période" onChange={e => onFilterChange(e.target.value)}>
+                    <Select value={filter} label="Période" onChange={e => {
+  const v = e.target.value;
+  if (v === 'custom') onOpenCustom();
+  onFilterChange(v);
+}}
+>
                         <MenuItem value="6m">Last 6 months</MenuItem>
                         <MenuItem value="1y">Last year</MenuItem>
+                        <MenuItem value="custom">Autre…</MenuItem>
                     </Select>
                 </FormControl>
             </Box>
@@ -377,7 +404,7 @@ const CountryOrdersCard = ({
                             <TableRow key={row.country_symbol_fr_recipient}>
                                 <TableCell>{row.country_symbol_fr_recipient}</TableCell>
                                 <TableCell align="right">
-                                    {Number(row.count_ord_certif_ori).toLocaleString()}
+                                    {Number(row.count_ord_certif_ori ?? 0).toLocaleString()}
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -395,20 +422,66 @@ export default function DashboardOperateur() {
 
     const [dateModalOpen, setDateModalOpen] = useState(false);
 
-    const openDateModal = () => setDateModalOpen(true);
+    const openDateModal = (target) => {
+        setCustomTarget(target);
+        setDateModalOpen(true);
+      };
+      
     const closeDateModal = () => setDateModalOpen(false);
 
     const applyCustomDates = () => {
-        // you already have countryCustomStart & countryCustomEnd
-        // now just re-trigger the fetch hook by toggling countryFilter
-        closeDateModal();
-    };
+        switch (customTarget) {
+          case 'country':
+            setCountryFilter('custom');
+            break;
+          case 'clients':
+            setFilter('custom');
+            break;
+          case 'evolution':
+            setEvoFilter('custom');
+            break;
+          case 'recette':
+            setRecFilter('custom');
+            break;
+          case 'cmd':
+            setCmdEvoFilter('custom');
+            break;
+          default:
+            break;
+            case 'overview':
+            setOverviewFilter('custom');
+            break;
 
+        }
+        closeDateModal();
+      };
+      
+      const [customDates, setCustomDates] = useState({
+        clients: { start: '', end: '' },
+        evolution: { start: '', end: '' },
+        recette: { start: '', end: '' },
+        country: { start: '', end: '' },
+        cmd: { start: '', end: '' },
+        overview: { start: '', end: '' },
+      });
+      
     const user = useSelector(state => state.auth.user);
-    const [stats, setStats] = useState({
+    const [overviewStats, setOverviewStats] = useState({
         count_ord_certif_ori: 0,
         count_ord_com_invoice: 0,
         count_ord_legalization: 0
+    });
+    
+    const [cmdStats, setCmdStats] = useState({
+        count_ord_certif_ori: 0,
+        count_ord_com_invoice: 0,
+        count_ord_legalization: 0,
+        diff_certif: 0,
+        trend_certif: 'up',
+        diff_invoice: 0,
+        trend_invoice: 'down',
+        diff_legal: 0,
+        trend_legal: 'up'
     });
 
     const [custStats, setCustStats] = useState({
@@ -432,13 +505,12 @@ export default function DashboardOperateur() {
     const [originData, setOriginData] = useState([]);
     const [destData, setDestData] = useState([]);
     // —————— AJOUT POUR FILTRE CUSTOM PAYS ——————
+    const [customTarget, setCustomTarget] = useState('');
 
-    const [countryCustomStart, setCountryCustomStart] = useState('');
-    const [countryCustomEnd, setCountryCustomEnd] = useState('');
-    const handleCountryCustomDateChange = (field, value) => {
-        if (field === 'start') setCountryCustomStart(value);
-        else setCountryCustomEnd(value);
-    };
+    const currentCustomStart = customDates[customTarget]?.start || '';
+    const currentCustomEnd = customDates[customTarget]?.end || '';
+
+    
 
     const subtitles = {
         '24h': "Dernières 24 h",
@@ -447,93 +519,160 @@ export default function DashboardOperateur() {
     };
 
     const [countryFilter, setCountryFilter] = useState('week');
-
+    const handleCustomDateChange = (field, value) => {
+        setCustomDates(prev => ({
+          ...prev,
+          [customTarget]: {
+            ...prev[customTarget],
+            [field]: value
+          }
+        }));
+      };
 
     // load overview metrics once (hier→aujourd'hui)
     useEffect(() => {
         (async () => {
-            setLoading(true);
-            const now = new Date();
-            const start = new Date(now);
-            if (filter === '24h') start.setHours(now.getHours() - 24);
-            else if (filter === 'week') start.setDate(now.getDate() - 7);
-            else start.setDate(now.getDate() - 30);
-
-            try {
-                const { data: cd } = await fetchStatisticCustaccount({
-                    p_date_start: start.toISOString(),
-                    p_date_end: now.toISOString(),
-                    p_isactive: null,                  // ou true/false si vous voulez filtrer
-                    p_idlogin: user.id_login_user
-                });
-                const c0 = (Array.isArray(cd) && cd[0]) || {};
-                setCustStats({
-                    count_custaccount: c0.count_custaccount || 0,
-                    count_new_custaccount: c0.count_new_custaccount || 0,
-                    count_rejected_custaccount: c0.count_rejected_custaccount || 0,
-                    count_custaccount_early: c0.count_custaccount_early || 0
-                });
-
-
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
+          const { start, end } = customDates.clients;
+          if (filter === 'custom' && (!start || !end)) return;
+      
+          setLoading(true);
+          const now = new Date();
+          let s = new Date(now), e = new Date(now);
+      
+          if (filter === 'custom') {
+            s = new Date(start);
+            e = new Date(end);
+            s.setHours(0, 0, 0, 0);
+            e.setHours(23, 59, 59, 999);
+          } else if (filter === '24h') s.setHours(now.getHours() - 24);
+          else if (filter === 'week') s.setDate(now.getDate() - 7);
+          else s.setDate(now.getDate() - 30);
+      
+          try {
+            const { data: cd } = await fetchStatisticCustaccount({
+              p_date_start: s.toISOString(),
+              p_date_end: e.toISOString(),
+              p_isactive: null,
+              p_idlogin: user.id_login_user
+            });
+            const c0 = (Array.isArray(cd) && cd[0]) || {};
+            setCustStats({
+              count_custaccount: c0.count_custaccount || 0,
+              count_new_custaccount: c0.count_new_custaccount || 0,
+              count_rejected_custaccount: c0.count_rejected_custaccount || 0,
+              count_custaccount_early: c0.count_custaccount_early || 0
+            });
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setLoading(false);
+          }
         })();
-    }, [filter, user.id_login_user]);
+      }, [filter, customDates.clients, user.id_login_user]);
+      
 
 
-    useEffect(() => {
+      useEffect(() => {
         (async () => {
-            setLoading(true);
-            const now = new Date();
-            const start = new Date(now);
-            if (overviewFilter === '24h') start.setHours(now.getHours() - 24);
-            else if (overviewFilter === 'week') start.setDate(now.getDate() - 7);
-            else start.setDate(now.getDate() - 30);
-
-            try {
-                const { data } = await fetchStatisticOrders({
-                    p_date_start: start.toISOString(),
-                    p_date_end: now.toISOString(),
-                    p_id_list_order: null,
-                    p_id_custaccount: null,
-                    p_orderstatus_exclusif: 4,
-                    p_idlogin: user.id_login_user
-                });
-                setStats(data[0] || {});
-            } catch (err) {
-                console.error('orders evolution fetch failed', err);
-            } finally {
-                setLoading(false);
-            }
+          const { start, end } = customDates.overview;
+          if (overviewFilter === 'custom' && (!start || !end)) return;
+      
+          setLoading(true);
+          const now = new Date();
+          let s = new Date(now), e = new Date(now);
+      
+          if (overviewFilter === 'custom') {
+            s = new Date(start);
+            e = new Date(end);
+            s.setHours(0, 0, 0, 0);
+            e.setHours(23, 59, 59, 999);
+          } else if (overviewFilter === '24h') s.setHours(now.getHours() - 24);
+          else if (overviewFilter === 'week') s.setDate(now.getDate() - 7);
+          else s.setDate(now.getDate() - 30);
+      
+          try {
+            const { data } = await fetchStatisticOrders({
+              p_date_start: s.toISOString(),
+              p_date_end: e.toISOString(),
+              p_id_list_order: null,
+              p_id_custaccount: null,
+              p_orderstatus_exclusif: 4,
+              p_idlogin: user.id_login_user
+            });
+            setOverviewStats(data[0] || {});
+          } catch (err) {
+            console.error('orders overview fetch failed', err);
+          } finally {
+            setLoading(false);
+          }
         })();
-    }, [overviewFilter, user.id_login_user]);
-
-
+      }, [overviewFilter, customDates.overview, user.id_login_user]);
+      
+      useEffect(() => {
+        (async () => {
+          const { start, end } = customDates.cmd;
+          if (cmdEvoFilter === 'custom' && (!start || !end)) return;
+      
+          setLoading(true);
+          const now = new Date();
+          let s = new Date(now), e = new Date(now);
+      
+          if (cmdEvoFilter === 'custom') {
+            s = new Date(start);
+            e = new Date(end);
+            s.setHours(0, 0, 0, 0);
+            e.setHours(23, 59, 59, 999);
+          } else if (cmdEvoFilter === 'week') s.setDate(now.getDate() - 7);
+          else s.setDate(now.getDate() - 30);
+      
+          try {
+            const { data } = await fetchStatisticOrders({
+              p_date_start: s.toISOString(),
+              p_date_end: e.toISOString(),
+              p_id_list_order: null,
+              p_id_custaccount: null,
+              p_orderstatus_exclusif: 4,
+              p_idlogin: user.id_login_user
+            });
+            setCmdStats(data[0] || {});
+          } catch (err) {
+            console.error('orders evolution fetch failed', err);
+          } finally {
+            setLoading(false);
+          }
+        })();
+      }, [cmdEvoFilter, customDates.cmd, user.id_login_user]);
+      
     // fetch monthly evolution
     useEffect(() => {
         (async () => {
-            const now = new Date();
-            const start = new Date(now);
-            if (evoFilter === '6m') start.setMonth(now.getMonth() - 5);
-            else /* '1y' */       start.setFullYear(now.getFullYear() - 1);
-
-            try {
-                const rows = await fetchCustAccountEvolutionByMonth({
-                    p_date_start: start.toISOString(),
-                    p_date_end: now.toISOString(),
-                    p_idlogin: user.id_login_user
-                });
-                setCustEvolution(rows);
-                console.log('custEvolution data', rows);
-            } catch (e) {
-                console.error('Failed to load cust evolution:', e);
-            }
+          const { start, end } = customDates.evolution;
+          if (evoFilter === 'custom' && (!start || !end)) return;
+      
+          const now = new Date();
+          let s = new Date(now), e = new Date(now);
+      
+          if (evoFilter === 'custom') {
+            s = new Date(start);
+            e = new Date(end);
+            s.setHours(0, 0, 0, 0);
+            e.setHours(23, 59, 59, 999);
+          } else if (evoFilter === '6m') s.setMonth(now.getMonth() - 5);
+          else s.setFullYear(now.getFullYear() - 1);
+      
+          try {
+            const rows = await fetchCustAccountEvolutionByMonth({
+              p_date_start: s.toISOString(),
+              p_date_end: e.toISOString(),
+              p_idlogin: user.id_login_user
+            });
+            setCustEvolution(rows);
+          } catch (e) {
+            console.error('Failed to load cust evolution:', e);
+          }
         })();
-    }, [evoFilter, user.id_login_user]);
-
+      }, [evoFilter, customDates.evolution, user.id_login_user]);
+      
     useEffect(() => {
         (async () => {
             const now = new Date();
@@ -553,85 +692,84 @@ export default function DashboardOperateur() {
 
     useEffect(() => {
         (async () => {
-            const now = new Date();
-            const start = new Date(now);
-            if (recFilter === '6m') start.setMonth(now.getMonth() - 6);
-            else /* '1y' */         start.setFullYear(now.getFullYear() - 1);
-
-            try {
-                const rows = await fetchOrderStatisticsByMonth({
-                    p_date_start: start.toISOString(),
-                    p_date_end: now.toISOString(),
-                    p_idlogin: user.id_login_user
-                });
-                setRecEvolution(rows);
-            } catch (err) {
-                console.error('RecetteTable fetch failed', err);
-            }
+          const { start, end } = customDates.recette;
+          if (recFilter === 'custom' && (!start || !end)) return;
+      
+          const now = new Date();
+          let s = new Date(now), e = new Date(now);
+      
+          if (recFilter === 'custom') {
+            s = new Date(start);
+            e = new Date(end);
+            s.setHours(0, 0, 0, 0);
+            e.setHours(23, 59, 59, 999);
+          } else if (recFilter === '6m') s.setMonth(now.getMonth() - 6);
+          else s.setFullYear(now.getFullYear() - 1);
+      
+          try {
+            const rows = await fetchOrderStatisticsByMonth({
+              p_date_start: s.toISOString(),
+              p_date_end: e.toISOString(),
+              p_idlogin: user.id_login_user
+            });
+            setRecEvolution(rows);
+          } catch (err) {
+            console.error('RecetteTable fetch failed', err);
+          }
         })();
-    }, [recFilter, user.id_login_user]);
-    useEffect(() => {
-        // Si mode « custom » sans dates renseignées → on sort
-        if (countryFilter === 'custom' &&
-            (!countryCustomStart || !countryCustomEnd)) {
-            return;
-        }
-
+      }, [recFilter, customDates.recette, user.id_login_user]);
+      
+      useEffect(() => {
+        const { start, end } = customDates.country;
+        if (countryFilter === 'custom' && (!start || !end)) return;
+      
         const now = new Date();
-        let start = new Date(now);
-        let end = new Date(now);
-
+        let s = new Date(now), e = new Date(now);
+      
         if (countryFilter === 'custom') {
-            start = new Date(countryCustomStart);
-            end = new Date(countryCustomEnd);
-            start.setHours(0, 0, 0, 0);
-            end.setHours(23, 59, 59, 999);
+          s = new Date(start);
+          e = new Date(end);
+          s.setHours(0, 0, 0, 0);
+          e.setHours(23, 59, 59, 999);
+        } else if (countryFilter === 'week') {
+          s.setDate(now.getDate() - 6);
+          s.setHours(0, 0, 0, 0);
+          e.setHours(23, 59, 59, 999);
+        } else {
+          s.setMonth(now.getMonth() - 1);
+          s.setHours(0, 0, 0, 0);
+          e.setHours(23, 59, 59, 999);
         }
-        else if (countryFilter === 'week') {
-            start.setDate(now.getDate() - 6);
-            start.setHours(0, 0, 0, 0);
-            end.setHours(23, 59, 59, 999);
-        }
-        else { // 30 derniers jours
-            start.setMonth(now.getMonth() - 1);
-            start.setHours(0, 0, 0, 0);
-            end.setHours(23, 59, 59, 999);
-        }
-
+      
         (async () => {
-            try {
-                const origin = await fetchStatisticOrdersByCountry({
-                    p_date_start: start.toISOString(),
-                    p_date_end: end.toISOString(),
-                    p_id_list_order: null,
-                    p_id_custaccount: null,
-                    p_orderstatus_exclusif: 4,
-                    p_typeOf_country: 0,
-                    p_idlogin: user.id_login_user
-                });
-                setOriginData(origin);
-
-                const dest = await fetchStatisticOrdersByCountry({
-                    p_date_start: start.toISOString(),
-                    p_date_end: end.toISOString(),
-                    p_id_list_order: null,
-                    p_id_custaccount: null,
-                    p_orderstatus_exclusif: 4,
-                    p_typeOf_country: 1,
-                    p_idlogin: user.id_login_user
-                });
-                setDestData(dest);
-
-            } catch (err) {
-                console.error('Erreur fetch pays :', err);
-            }
+          try {
+            const origin = await fetchStatisticOrdersByCountry({
+              p_date_start: s.toISOString(),
+              p_date_end: e.toISOString(),
+              p_id_list_order: null,
+              p_id_custaccount: null,
+              p_orderstatus_exclusif: 4,
+              p_typeOf_country: 0,
+              p_idlogin: user.id_login_user
+            });
+            setOriginData(origin);
+      
+            const dest = await fetchStatisticOrdersByCountry({
+              p_date_start: s.toISOString(),
+              p_date_end: e.toISOString(),
+              p_id_list_order: null,
+              p_id_custaccount: null,
+              p_orderstatus_exclusif: 4,
+              p_typeOf_country: 1,
+              p_idlogin: user.id_login_user
+            });
+            setDestData(dest);
+          } catch (err) {
+            console.error('Erreur fetch pays :', err);
+          }
         })();
-    }, [
-        countryFilter,
-        countryCustomStart,
-        countryCustomEnd,
-        user.id_login_user
-    ]);
+      }, [countryFilter, customDates.country, user.id_login_user]);
+      
 
     if (loading) return <Typography>Chargement…</Typography>;
 
@@ -643,13 +781,25 @@ export default function DashboardOperateur() {
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h5" sx={{ flexGrow: 1 }}>Aperçu des commandes</Typography>
                 <FormControl size="small" sx={{ minWidth: 140 }}>
-                    <InputLabel>Filtre</InputLabel>
-                    <Select value={overviewFilter} label="Filtre" onChange={e => setOverviewFilter(e.target.value)}>
-                        <MenuItem value="24h">Dernières 24 h</MenuItem>
-                        <MenuItem value="week">7 derniers jours</MenuItem>
-                        <MenuItem value="month">30 derniers jours</MenuItem>
-                    </Select>
-                </FormControl>
+  <InputLabel>Filtre</InputLabel>
+  <Select
+    value={overviewFilter}
+    label="Filtre"
+    onChange={e => {
+      const v = e.target.value;
+      if (v === 'custom') {
+        openDateModal('overview'); // 👉 Ouvre le date picker
+      } else {
+        setOverviewFilter(v);     // 👉 Applique les autres filtres directement
+      }
+    }}
+  >
+    <MenuItem value="24h">Dernières 24 h</MenuItem>
+    <MenuItem value="week">7 derniers jours</MenuItem>
+    <MenuItem value="month">30 derniers jours</MenuItem>
+    <MenuItem value="custom">Autre…</MenuItem> {/* ✅ Ajouté */}
+  </Select>
+</FormControl>
             </Box>
 
 
@@ -658,7 +808,7 @@ export default function DashboardOperateur() {
                 <Grid item xs={12} md={4}>
                     <OverviewCard
                         title="Certificat d'origine émis"
-                        value={stats.count_ord_certif_ori.toLocaleString()}
+                        value={(overviewStats.count_ord_certif_ori ?? 0).toLocaleString()}
                         subtitle={subtitles[overviewFilter]}
                         icon={<ArrowRightIcon />}
                         iconColor="#388E3C"
@@ -668,7 +818,7 @@ export default function DashboardOperateur() {
                 <Grid item xs={12} md={4}>
                     <OverviewCard
                         title="Factures commerciales visées"
-                        value={stats.count_ord_com_invoice.toLocaleString()}
+                        value={(overviewStats.count_ord_com_invoice ?? 0).toLocaleString()}
                         subtitle={subtitles[overviewFilter]}
                         icon={<CurrencyDollarIcon />}
                         iconColor="#1E88E5"
@@ -678,7 +828,7 @@ export default function DashboardOperateur() {
                 <Grid item xs={12} md={4}>
                     <OverviewCard
                         title="Documents légalisés"
-                        value={stats.count_ord_legalization.toLocaleString()}
+                        value={(overviewStats.count_ord_legalization ?? 0).toLocaleString()}
                         subtitle={subtitles[overviewFilter]}
                         icon={<CheckCircleIcon />}
                         iconColor="#C8A415"
@@ -692,18 +842,44 @@ export default function DashboardOperateur() {
             {/* Rest of dashboard... */}
             <Grid container spacing={3} mb={4} alignItems="stretch">
                 <Grid item xs={12} md={6}>
-                    <ClientsCountCard custStats={custStats}
-                        filter={filter}
-                        onFilterChange={setFilter}
-                        subtitle={subtitles[filter]} />
+                <ClientsCountCard
+    custStats={custStats}
+    filter={filter}
+    onFilterChange={setFilter}
+    subtitle={subtitles[filter]}
+    onOpenCustom={() => openDateModal('clients')}
+    customStart={customDates.clients.start}
+customEnd={customDates.clients.end}
+onCustomDateChange={(field, value) => {
+  setCustomDates(prev => ({
+    ...prev,
+    clients: {
+      ...prev.clients,
+      [field]: value
+    }
+  }));
+}}
+/>
                 </Grid>
 
                 <Grid item xs={12} md={6}>
-                    <ClientsEvolutionCard
-                        data={custEvolution}
-                        evoFilter={evoFilter}
-                        onEvoFilterChange={setEvoFilter}
-                    />
+                <ClientsEvolutionCard
+    data={custEvolution}
+    evoFilter={evoFilter}
+    onEvoFilterChange={setEvoFilter}
+    onOpenCustom={() => openDateModal('evolution')}
+    customStart={customDates.evolution.start}
+customEnd={customDates.evolution.end}
+onCustomDateChange={(field, value) => {
+  setCustomDates(prev => ({
+    ...prev,
+    evolution: {
+      ...prev.evolution,
+      [field]: value
+    }
+  }));
+}}
+/>
                 </Grid>
             </Grid>
 
@@ -713,12 +889,22 @@ export default function DashboardOperateur() {
                     <FormControl size="small" sx={{ minWidth: 140 }}>
                         <InputLabel>Période</InputLabel>
                         <Select
-                            value={cmdEvoFilter}
-                            label="Période"
-                            onChange={e => setCmdEvoFilter(e.target.value)}
+                        value={cmdEvoFilter}
+                        label="Période"
+                        onChange={e => {
+                            const v = e.target.value;
+                            if (v === 'custom') {
+                            openDateModal('cmd'); // ← seulement ouvrir la modale
+                            } else {
+                            setCmdEvoFilter(v);   // ← ne changer le filtre que si ce n’est pas custom
+                            }
+                        }}
                         >
+
                             <MenuItem value="week">7 derniers jours</MenuItem>
                             <MenuItem value="month">30 derniers jours</MenuItem>
+                            <MenuItem value="custom">Autre…</MenuItem>
+
                         </Select>
                     </FormControl>
                 </Box>
@@ -726,9 +912,9 @@ export default function DashboardOperateur() {
                     <Grid item xs={12} sm={4}>
                         <CommandEvolutionCard
                             title="Nombre de C.O effectués"
-                            value={stats.count_ord_certif_ori.toLocaleString()}
-                            diff={stats.diff_certif || 0}
-                            trend={stats.trend_certif || 'up'}
+                            value={(cmdStats.count_ord_certif_ori ?? 0).toLocaleString()}
+                            diff={cmdStats.diff_certif || 0}
+                            trend={cmdStats.trend_certif || 'up'}
                             bg="#E8F5E9"
                             subtitle={subtitles[cmdEvoFilter]}
                         />
@@ -736,9 +922,9 @@ export default function DashboardOperateur() {
                     <Grid item xs={12} sm={4}>
                         <CommandEvolutionCard
                             title="Nombre facture commerciale visée"
-                            value={stats.count_ord_com_invoice.toLocaleString()}
-                            diff={stats.diff_invoice || 0}
-                            trend={stats.trend_invoice || 'down'}
+                            value={(cmdStats.count_ord_com_invoice ?? 0).toLocaleString()}
+                            diff={cmdStats.diff_invoice || 0}
+                            trend={cmdStats.trend_invoice || 'down'}
                             bg="#E3F2FD"
                             subtitle={subtitles[cmdEvoFilter]}
                         />
@@ -746,9 +932,9 @@ export default function DashboardOperateur() {
                     <Grid item xs={12} sm={4}>
                         <CommandEvolutionCard
                             title="Nombre de document légalisé"
-                            value={stats.count_ord_legalization.toLocaleString()}
-                            diff={stats.diff_legal || 0}
-                            trend={stats.trend_legal || 'up'}
+                            value={(cmdStats.count_ord_legalization ?? 0).toLocaleString()}
+                            diff={cmdStats.diff_legal || 0}
+                            trend={cmdStats.trend_legal || 'up'}
                             bg="#FFF8E1"
                             subtitle={subtitles[cmdEvoFilter]}
                         />
@@ -764,57 +950,81 @@ export default function DashboardOperateur() {
                         data={originData}
                         filter={countryFilter}
                         onFilterChange={setCountryFilter}
-                        onOpenCustom={openDateModal}
-                        customStart={countryCustomStart}
-                        customEnd={countryCustomEnd}
-                        onCustomDateChange={handleCountryCustomDateChange}
+                        onOpenCustom={() => openDateModal('country')}
+customStart={customDates.country.start}
+customEnd={customDates.country.end}
+onCustomDateChange={(field, value) => {
+  setCustomDates(prev => ({
+    ...prev,
+    country: {
+      ...prev.country,
+      [field]: value
+    }
+  }));
+}}
                     />
 
                 </Grid>
                 <Grid item xs={12} md={6}>
-                    <CountryOrdersCard
-                        title="Pays de destination"
-                        data={destData}
-                        filter={countryFilter}
-                        onFilterChange={setCountryFilter}
-                        onOpenCustom={openDateModal}
-                        customStart={countryCustomStart}
-                        customEnd={countryCustomEnd}
-                        onCustomDateChange={handleCountryCustomDateChange}
-                    />
+                <CountryOrdersCard
+    title="Pays de destination"
+    data={destData}
+    filter={countryFilter}
+    onFilterChange={setCountryFilter}
+    onOpenCustom={() => openDateModal('country')}
+    customStart={customDates.country.start}
+    customEnd={customDates.country.end}
+    onCustomDateChange={(field, value) => {
+        setCustomDates(prev => ({
+            ...prev,
+            country: {
+                ...prev.country,
+                [field]: value
+            }
+        }));
+    }}
+/>
                 </Grid>
             </Grid>
             {/* ---------------------------------------------------- */}
 
             <RecetteTable
-                data={recEvolution}
-                filter={recFilter}
-                onFilterChange={setRecFilter}
-            />
+    data={recEvolution}
+    filter={recFilter}
+    onFilterChange={setRecFilter}
+    onOpenCustom={() => openDateModal('recette')}
+    customStart={customDates.recette.start}
+customEnd={customDates.recette.end}
+onCustomDateChange={(field, value) => {
+  setCustomDates(prev => ({
+    ...prev,
+    recette: {
+      ...prev.recette,
+      [field]: value
+    }
+  }));
+}}
+/>
 
 
-            <RecetteTable
-                data={recEvolution}
-                filter={recFilter}
-                onFilterChange={setRecFilter}
-            />
+           
 
 
             <Dialog open={dateModalOpen} onClose={closeDateModal}>
-                <DialogTitle>Choisir une plage de dates</DialogTitle>
+                <DialogTitle>Choisir une plage de dates {customTarget && `(${customTarget})`}</DialogTitle>
                 <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <TextField
                         label="Date de début"
                         type="date"
-                        value={countryCustomStart}
-                        onChange={e => setCountryCustomStart(e.target.value)}
+                        value={currentCustomStart}
+                        onChange={e => handleCustomDateChange('start', e.target.value)}
                         InputLabelProps={{ shrink: true }}
                     />
                     <TextField
                         label="Date de fin"
                         type="date"
-                        value={countryCustomEnd}
-                        onChange={e => setCountryCustomEnd(e.target.value)}
+                        value={currentCustomEnd}
+                        onChange={e => handleCustomDateChange('end', e.target.value)}
                         InputLabelProps={{ shrink: true }}
                     />
                 </DialogContent>
@@ -824,7 +1034,7 @@ export default function DashboardOperateur() {
                         onClick={() => {
                             applyCustomDates();
                         }}
-                        disabled={!countryCustomStart || !countryCustomEnd}
+                        disabled={!currentCustomStart || !currentCustomEnd}
                     >
                         Appliquer
                     </Button>
