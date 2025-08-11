@@ -112,7 +112,7 @@ const Footer = () => {
           color="text.primary"
           sx={{ textAlign: 'center' }}
         >
-          2025 Axentra. All right reserved
+          (Ver. 1.4.6 - 11.08.25) All right reserved
         </Typography>
 
         {/* Version en dur dans le coin inférieur droit */}
@@ -126,7 +126,7 @@ const Footer = () => {
             fontWeight: 'bold',
           }}
         >
-          Ver. 1.4.5
+           
         </Typography>
       </Container>
     </Box>

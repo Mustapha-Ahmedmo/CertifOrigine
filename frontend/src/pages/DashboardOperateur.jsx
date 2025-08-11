@@ -415,6 +415,46 @@ const CountryOrdersCard = ({
     </Card>
 );
 
+// ---- helpers de dates & pourcentages ----
+function getPeriodDates(filter, customRange) {
+  const now = new Date();
+  let s = new Date(now), e = new Date(now);
+
+  if (filter === 'custom' && customRange?.start && customRange?.end) {
+    s = new Date(customRange.start);
+    e = new Date(customRange.end);
+    s.setHours(0,0,0,0);
+    e.setHours(23,59,59,999);
+  } else if (filter === '24h') {
+    s.setHours(now.getHours() - 24);
+  } else if (filter === 'week') {
+    s.setDate(now.getDate() - 7);
+  } else { // 'month' par défaut (30 jours)
+    s.setDate(now.getDate() - 30);
+  }
+  return { s, e };
+}
+
+function getPreviousPeriod(s, e) {
+  // Période précédente de même durée, contiguë et juste avant [s,e]
+  const ms = (e.getTime() - s.getTime()) + 1;
+  const e2 = new Date(s.getTime() - 1);        // la veille du début courant
+  const s2 = new Date(e2.getTime() - ms + 1);  // même durée
+  return { s2, e2 };
+}
+
+function pctChange(curr, prev) {
+  const c = Number(curr || 0);
+  const p = Number(prev || 0);
+  if (p === 0 && c === 0) return 0;
+  if (p === 0) return 100; // ou 0 si tu préfères éviter le +∞
+  return Math.round(((c - p) / p) * 1000) / 10; // 1 décimale
+}
+
+function trendFromPct(p) {
+  return p >= 0 ? 'up' : 'down';
+}
+
 //
 // 6. DashboardOperateur
 //
@@ -510,7 +550,8 @@ export default function DashboardOperateur() {
     const currentCustomStart = customDates[customTarget]?.start || '';
     const currentCustomEnd = customDates[customTarget]?.end || '';
 
-    
+    const isAdmin = user?.isadmin_login;
+
 
     const subtitles = {
         '24h': "Dernières 24 h",
@@ -614,19 +655,14 @@ export default function DashboardOperateur() {
           if (cmdEvoFilter === 'custom' && (!start || !end)) return;
       
           setLoading(true);
-          const now = new Date();
-          let s = new Date(now), e = new Date(now);
-      
-          if (cmdEvoFilter === 'custom') {
-            s = new Date(start);
-            e = new Date(end);
-            s.setHours(0, 0, 0, 0);
-            e.setHours(23, 59, 59, 999);
-          } else if (cmdEvoFilter === 'week') s.setDate(now.getDate() - 7);
-          else s.setDate(now.getDate() - 30);
       
           try {
-            const { data } = await fetchStatisticOrders({
+            // 1) Calcule (s,e) puis (s2,e2)
+            const { s, e } = getPeriodDates(cmdEvoFilter, customDates.cmd);
+            const { s2, e2 } = getPreviousPeriod(s, e);
+      
+            // 2) Appel période courante
+            const { data: currData } = await fetchStatisticOrders({
               p_date_start: s.toISOString(),
               p_date_end: e.toISOString(),
               p_id_list_order: null,
@@ -634,7 +670,35 @@ export default function DashboardOperateur() {
               p_orderstatus_exclusif: 4,
               p_idlogin: user.id_login_user
             });
-            setCmdStats(data[0] || {});
+            const curr = (Array.isArray(currData) && currData[0]) || {};
+      
+            // 3) Appel période précédente
+            const { data: prevData } = await fetchStatisticOrders({
+              p_date_start: s2.toISOString(),
+              p_date_end: e2.toISOString(),
+              p_id_list_order: null,
+              p_id_custaccount: null,
+              p_orderstatus_exclusif: 4,
+              p_idlogin: user.id_login_user
+            });
+            const prev = (Array.isArray(prevData) && prevData[0]) || {};
+      
+            // 4) Calculs % + tendance
+            const diff_certif  = pctChange(curr.count_ord_certif_ori,     prev.count_ord_certif_ori);
+            const diff_invoice = pctChange(curr.count_ord_com_invoice,    prev.count_ord_com_invoice);
+            const diff_legal   = pctChange(curr.count_ord_legalization,   prev.count_ord_legalization);
+      
+            setCmdStats({
+              count_ord_certif_ori:   curr.count_ord_certif_ori    || 0,
+              count_ord_com_invoice:  curr.count_ord_com_invoice   || 0,
+              count_ord_legalization: curr.count_ord_legalization  || 0,
+              diff_certif,
+              trend_certif:  trendFromPct(diff_certif),
+              diff_invoice,
+              trend_invoice: trendFromPct(diff_invoice),
+              diff_legal,
+              trend_legal:   trendFromPct(diff_legal)
+            });
           } catch (err) {
             console.error('orders evolution fetch failed', err);
           } finally {
@@ -943,49 +1007,51 @@ onCustomDateChange={(field, value) => {
             </Card>
 
             {/* --- New: Dashboard Pays d'origine / destination --- */}
-            <Grid container spacing={3} mb={4}>
-                <Grid item xs={12} md={6}>
-                    <CountryOrdersCard
-                        title="Pays d’origine"
-                        data={originData}
-                        filter={countryFilter}
-                        onFilterChange={setCountryFilter}
-                        onOpenCustom={() => openDateModal('country')}
-customStart={customDates.country.start}
-customEnd={customDates.country.end}
-onCustomDateChange={(field, value) => {
-  setCustomDates(prev => ({
-    ...prev,
-    country: {
-      ...prev.country,
-      [field]: value
-    }
-  }));
-}}
-                    />
-
-                </Grid>
-                <Grid item xs={12} md={6}>
-                <CountryOrdersCard
-    title="Pays de destination"
-    data={destData}
-    filter={countryFilter}
-    onFilterChange={setCountryFilter}
-    onOpenCustom={() => openDateModal('country')}
-    customStart={customDates.country.start}
-    customEnd={customDates.country.end}
-    onCustomDateChange={(field, value) => {
-        setCustomDates(prev => ({
+            {isAdmin && (
+  <Grid container spacing={3} mb={4}>
+    <Grid item xs={12} md={6}>
+      <CountryOrdersCard
+        title="Pays d’origine"
+        data={originData}
+        filter={countryFilter}
+        onFilterChange={setCountryFilter}
+        onOpenCustom={() => openDateModal('country')}
+        customStart={customDates.country.start}
+        customEnd={customDates.country.end}
+        onCustomDateChange={(field, value) => {
+          setCustomDates(prev => ({
             ...prev,
             country: {
-                ...prev.country,
-                [field]: value
+              ...prev.country,
+              [field]: value
             }
-        }));
-    }}
-/>
-                </Grid>
-            </Grid>
+          }));
+        }}
+      />
+    </Grid>
+    <Grid item xs={12} md={6}>
+      <CountryOrdersCard
+        title="Pays de destination"
+        data={destData}
+        filter={countryFilter}
+        onFilterChange={setCountryFilter}
+        onOpenCustom={() => openDateModal('country')}
+        customStart={customDates.country.start}
+        customEnd={customDates.country.end}
+        onCustomDateChange={(field, value) => {
+          setCustomDates(prev => ({
+            ...prev,
+            country: {
+              ...prev.country,
+              [field]: value
+            }
+          }));
+        }}
+      />
+    </Grid>
+  </Grid>
+)}
+
             {/* ---------------------------------------------------- */}
 
             <RecetteTable
