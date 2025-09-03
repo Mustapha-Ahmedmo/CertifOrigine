@@ -242,7 +242,7 @@ const OpOrderDetails = () => {
     try {
       await apiFn(...args);
       alert(`Commande ${statusLabel} avec succès.`);
-      navigate('/operator-dashboard');
+      navigate('/operator?mode=new');
     } catch (err) {
       console.error('❌ Action échouée :', err);
       alert(`Échec de l’opération : ${err.message}`);
