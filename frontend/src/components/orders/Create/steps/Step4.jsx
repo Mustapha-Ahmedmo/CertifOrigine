@@ -173,8 +173,7 @@ useEffect(() => {
 
   return (
     <form onSubmit={handleSubmit} className="step-form">
-      <Slide in mountOnEnter unmountOnExit timeout={300}>
-        <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 2 }}>
           <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
             Upload de documents
           </Typography>
@@ -340,7 +339,6 @@ useEffect(() => {
             </Button>
           </Box>
         </Box>
-      </Slide>
     </form>
   );
 };

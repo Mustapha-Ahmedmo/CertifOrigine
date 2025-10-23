@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef} from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './ContactUs.css';
 import { sendContactForm } from '../services/apiServices';
+import ReCAPTCHA from 'react-google-recaptcha';
+
+
+
 
 const ContactUs = () => {
 
+  
   const location = useLocation();
   const isInDashboard = location.pathname.startsWith('/dashboard');
   const [formData, setFormData] = useState({
@@ -27,13 +32,19 @@ const ContactUs = () => {
       [name]: value,
     }));
   };
-
+  const SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+    const [captchaToken, setCaptchaToken] = useState(null);
+    const recaptchaRef = useRef(null);
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setSuccessMessage('');
-   
+    if (SITE_KEY && !captchaToken) {
+            setLoading(false);
+            setError("Veuillez valider le reCAPTCHA avant d'envoyer.");
+            return;
+          }
     try {
       // Transform formData to match backend requirements
       const transformedData = {
@@ -41,6 +52,7 @@ const ContactUs = () => {
         email: formData.email,
         subject: formData.companyName || 'Nouveau message de contact',
         message: formData.message,
+        captchaToken: captchaToken || undefined,
       };
   
       // Validate required fields
@@ -53,6 +65,9 @@ const ContactUs = () => {
   
       if (response.message) {
         setSuccessMessage(response.message || 'Votre message a été envoyé avec succès.');
+        setFormData({ firstName:'', lastName:'', email:'', companyName:'', message:'' });
+        setCaptchaToken(null);
+        if (recaptchaRef.current) recaptchaRef.current.reset();
       }
     } catch (err) {
       setError(err.message || 'Une erreur est survenue lors de l\'envoi du message.');
@@ -60,7 +75,7 @@ const ContactUs = () => {
       setLoading(false);
     }
   };
-
+  
   return (
     <div className="contact-us-container">
       {/* Section texte à gauche */}
@@ -127,8 +142,25 @@ const ContactUs = () => {
             onChange={handleChange}
             required
           ></textarea>
-          <button type="submit" className="send-message-btn" disabled={loading}>
-            {loading ? 'Envoi en cours...' : 'Envoyer'}
+
+           {/* reCAPTCHA */}
+           {SITE_KEY && (
+            <div style={{ margin: '12px 0', display: 'flex', justifyContent: 'center' }}>
+              <ReCAPTCHA
+              ref={recaptchaRef}
+                sitekey={SITE_KEY}
+                onChange={(t)=>setCaptchaToken(t)}
+                onExpired={()=>setCaptchaToken(null)}
+              />
+            </div>
+          )}
+
+<button
+            type="submit"
+            className="send-message-btn"
+            disabled={loading || (!!SITE_KEY && !captchaToken)}
+          >
+  {loading ? 'Envoi en cours...' : 'Envoyer'}
           </button>
 
           {/* Messages de succès ou d'erreur */}

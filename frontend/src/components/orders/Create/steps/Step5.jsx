@@ -51,13 +51,21 @@ import {
   getCustUsersByAccount,
   getCustAccountInfo,
 } from '../../../../services/apiServices';
+import countryCodes from '../../../countryCodes';
+import Autocomplete from '@mui/material/Autocomplete';
 
-// Regex téléphone international : + ou 00 suivi de 8 à 16 chiffres
-const isValidInternationalPhone = (value) =>
-  /^(?:\+|00)[1-9][0-9]*$/.test(value) &&
-  value.length >= 8 &&
-  value.length <= 16;
+const normalize = (s='') =>
+  s.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
 
+// Helpers téléphone (même logique que Step2)
+const isValidFr10 = (val) => /^0\d{9}$/.test(val);
+const isUpTo10Digits = (val) => /^0\d{0,9}$/.test(val);
+const joinE164 = (code, national) => {
+  if (!code || !national) return '';
+  const plusCode = code.replace(/^00/, '+');
+  const digits = String(national).replace(/\D/g, '').replace(/^0/, '');
+  return `${plusCode}${digits}`;
+};
 
 const Step5 = ({
   prevStep,
@@ -128,8 +136,10 @@ const Step5 = ({
   const [newRecipientLocal, setNewRecipientLocal] = useState({
     receiverName: '',
     receiverAddress: '',
-    receiverAddress2: '',
-    receiverPostalCity: '',    // 
+    receiverAddress2: '',              // contiendra le numéro au format E.164 (ex: +33612345678)
+    receiverPhoneMobileCode: '+33',    // indicatif affiché dans l’UI
+    receiverPhoneMobileNumber: '',     // numéro FR affiché dans l’UI (0XXXXXXXXX)
+    receiverPostalCity: '',
     receiverCountry: '',
   });
 
@@ -505,18 +515,26 @@ const Step5 = ({
   };
 
   const handleSaveNewRecipient = async () => {
-    const phone = newRecipientLocal.receiverAddress2 || '';
-    if (!isValidInternationalPhone(phone)) {
-      setErrorMessage("Le numéro de téléphone est invalide.");
-      return;
-    }
+        // Validation téléphone : indicatif + numéro FR 10 chiffres (0XXXXXXXXX)
+        const okMobile =
+          !!newRecipientLocal.receiverPhoneMobileCode &&
+          isValidFr10(newRecipientLocal.receiverPhoneMobileNumber);
+        if (!okMobile) {
+          setErrorMessage('Numéro mobile invalide (ex: 0XXXXXXXXX) ou indicatif manquant.');
+          return;
+        }
+        // Concat E.164 pour l’API
+        const e164 = joinE164(
+          newRecipientLocal.receiverPhoneMobileCode,
+          newRecipientLocal.receiverPhoneMobileNumber
+        );
     try {
       const newRecipientData = {
         idRecipientAccount: null,
         idCustAccount: customerAccountId,
         recipientName: newRecipientLocal.receiverName,
         address1: newRecipientLocal.receiverAddress,
-        address2: newRecipientLocal.receiverAddress2,
+        address2: e164, // stocke l’E.164 côté API
         address3: newRecipientLocal.receiverPostalCity,
         idCity: 1,
         statutFlag: 1,
@@ -543,8 +561,9 @@ const Step5 = ({
         receiverName: '',
         receiverAddress: '',
         receiverAddress2: '',
-        receiverPostalCode: '',
-        receiverCity: '',
+        receiverPhoneMobileCode: '+33',
+        receiverPhoneMobileNumber: '',
+        receiverPostalCity: '',
         receiverCountry: '',
       });
     } catch (error) {
@@ -1905,29 +1924,106 @@ const Step5 = ({
               fullWidth
             />
 
-            <TextField
-              label="N° de téléphone *"
-              value={newRecipientLocal.receiverAddress2}
-              onChange={e => handleNewRecipientChange('receiverAddress2', e.target.value)}
-              fullWidth
-              onBlur={() => {
-                const val = newRecipientLocal.receiverAddress2;
-                if (val && !isValidInternationalPhone(val)) {
-                  setErrorMessage('Numéro invalide (+ ou 00, 8–16 chiffres)');
-                }
-              }}
-              error={
-                !!errorMessage &&
-                newRecipientLocal.receiverAddress2 &&
-                !isValidInternationalPhone(newRecipientLocal.receiverAddress2)
-              }
-              helperText={
-                newRecipientLocal.receiverAddress2 && !isValidInternationalPhone(newRecipientLocal.receiverAddress2)
-                  ? 'Format incorrect.'
-                  : ''
-              }
-              sx={{ mb: 2 }}
-            />
+            {/* Téléphone mobile : indicatif (sélecteur) + numéro FR (0XXXXXXXXX) */}
+<Box
+  sx={{
+    display: 'grid',
+    gridTemplateColumns: { xs: '1fr', sm: '220px 24px 1fr' },
+    alignItems: 'center',
+    gap: 2,
+  }}
+>
+  {/* Indicatif */}
+  {/* Indicatif (saisissable) */}
+<Autocomplete
+  options={countryCodes}
+  value={
+    countryCodes.find(c => c.code === (newRecipientLocal.receiverPhoneMobileCode || '+33'))
+    || null
+  }
+  onChange={(_, val) => {
+    const code = val ? val.code : '';
+    setNewRecipientLocal(prev => {
+      const next = { ...prev, receiverPhoneMobileCode: code };
+      // Maintenir l’E.164 à jour (stockée dans receiverAddress2 pour l’API)
+      next.receiverAddress2 = joinE164(code, next.receiverPhoneMobileNumber);
+      return next;
+    });
+  }}
+  // autorise la recherche par nom (“france”), par code (“+33”, “33”)…
+  filterOptions={(options, state) => {
+    const q  = state.inputValue.trim();
+    const nq = normalize(q.replace('+',''));
+    return options.filter(o => {
+      const name   = normalize(o.name);
+      const digits = o.code.replace('+','');
+      return (
+        name.includes(nq) ||
+        digits.startsWith(nq) ||
+        (`+${digits}`).startsWith(q)
+      );
+    });
+  }}
+  getOptionLabel={(opt) => opt ? `${opt.flag} ${opt.code} — ${opt.name}` : ''}
+  isOptionEqualToValue={(o, v) => o.code === v.code}
+  renderInput={(params) => (
+    <TextField
+      {...params}
+      label="Indicatif (mobile)"
+      placeholder="France, +33…"
+      fullWidth
+    />
+  )}
+  autoHighlight
+  disableClearable
+/>
+
+
+  {/* Séparateur visuel */}
+  <Typography
+    variant="h6"
+    component="div"
+    sx={{ textAlign: 'center', userSelect: 'none' }}
+    aria-hidden
+  >
+    -
+  </Typography>
+
+  {/* Numéro FR (0XXXXXXXXX) */}
+  <TextField
+    fullWidth
+    required
+    label="Numéro mobile"
+    placeholder="0XXXXXXXXX"
+    value={newRecipientLocal.receiverPhoneMobileNumber}
+    onChange={(e) => {
+      const val = e.target.value;
+      if (!isUpTo10Digits(val)) return;
+      setNewRecipientLocal((prev) => {
+        const next = { ...prev, receiverPhoneMobileNumber: val };
+        // MAJ E.164 pour l’API
+        next.receiverAddress2 = joinE164(
+          next.receiverPhoneMobileCode,
+          val
+        );
+        return next;
+      });
+    }}
+    inputProps={{ maxLength: 10 }}
+    error={
+      !!newRecipientLocal.receiverPhoneMobileNumber &&
+      !isValidFr10(newRecipientLocal.receiverPhoneMobileNumber)
+    }
+    helperText={
+      newRecipientLocal.receiverPhoneMobileNumber &&
+      !isValidFr10(newRecipientLocal.receiverPhoneMobileNumber)
+        ? 'Doit commencer par 0 et contenir 10 chiffres'
+        : ''
+    }
+  />
+</Box>
+<Divider sx={{ my: 1 }} />
+
 
 
             {/* Fusion code postal + ville */}

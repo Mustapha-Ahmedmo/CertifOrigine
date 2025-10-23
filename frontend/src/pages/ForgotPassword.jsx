@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import './ForgotPassword.css';  // Utiliser le nouveau fichier CSS
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'; // Pour la navigation
 import logo from '../assets/logo3.jpeg'; // Assurez-vous que le logo est dans le bon chemin
 import { requestPasswordReset, resetPassword } from '../services/apiServices';
 import { homemadeHash } from '../utils/hashUtils';
+import { IconButton, InputAdornment } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import ReCAPTCHA from 'react-google-recaptcha';
+
+
 
 const ForgotPassword = () => {
 
+  const SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const recaptchaRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
   // Extract query parameters
@@ -37,9 +46,22 @@ const ForgotPassword = () => {
     setRequestMessage('');
     setRequestError('');
     setIsRequesting(true);
+    if (SITE_KEY && !captchaToken) {
+            setIsRequesting(false);
+            setRequestError("Veuillez valider le reCAPTCHA avant d'envoyer.");
+            return;
+          }
     try {
-      const response = await requestPasswordReset({ email });
-      setRequestMessage(response.message);
+      const response = await requestPasswordReset({
+                email,
+                // ✅ transmettre le token au backend pour validation serveur
+                captchaToken: captchaToken || undefined,
+              });
+        setRequestMessage(response.message);
+        // ✅ Reset du formulaire + captcha après succès
+      setEmail('');
+      setCaptchaToken(null);
+      if (recaptchaRef.current) recaptchaRef.current.reset();
     } catch (error) {
       setRequestError(error.message);
     } finally {
@@ -73,6 +95,9 @@ const ForgotPassword = () => {
     }
   };
 
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   return (
     <div className="forgot-password-container">
       <div className="forgot-password-card">
@@ -97,8 +122,22 @@ const ForgotPassword = () => {
                     className="forgot-password-input-field"
                   />
                 </div>
-              <button type="submit" className="forgot-password-btn-submit" disabled={isRequesting}>
-                {isRequesting ? 'Envoi...' : 'Envoyer'}
+                {SITE_KEY && (
+                <div style={{ margin: '12px 0', display: 'flex', justifyContent: 'center' }}>
+                                  <ReCAPTCHA
+                                    ref={recaptchaRef}
+                                    sitekey={SITE_KEY}
+                                    onChange={(t)=>setCaptchaToken(t)}
+                                    onExpired={()=>setCaptchaToken(null)}
+                                  />
+                                </div>
+              )}
+              <button
+                type="submit"
+                className="forgot-password-btn-submit"
+                disabled={isRequesting || (!!SITE_KEY && !captchaToken)}
+              >
+  {isRequesting ? 'Envoi...' : 'Envoyer'}
               </button>
             </form>
             {requestMessage && <p className="success-message">{requestMessage}</p>}
@@ -115,30 +154,49 @@ const ForgotPassword = () => {
               Entrez votre nouveau mot de passe.
             </p>
             <form onSubmit={handleResetSubmit}>
-              <div className="forgot-password-form-group">
-                <label htmlFor="newPassword">Nouveau mot de passe</label>
-                <input
-                  type="password"
-                  id="newPassword"
-                  name="newPassword"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  className="forgot-password-input-field"
-                />
-              </div>
-              <div className="forgot-password-form-group">
-                <label htmlFor="confirmPassword">Confirmez le mot de passe</label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="forgot-password-input-field"
-                />
-              </div>
+            <div className="forgot-password-form-group">
+  <label htmlFor="newPassword">Nouveau mot de passe</label>
+  <div className="forgot-password-input-wrapper">
+    <input
+      type={showNewPassword ? "text" : "password"}
+      id="newPassword"
+      name="newPassword"
+      value={newPassword}
+      onChange={(e) => setNewPassword(e.target.value)}
+      required
+      className="forgot-password-input-field"
+    />
+    <IconButton
+      onClick={() => setShowNewPassword(!showNewPassword)}
+      edge="end"
+      size="small"
+    >
+      {showNewPassword ? <VisibilityOff /> : <Visibility />}
+    </IconButton>
+  </div>
+</div>
+
+<div className="forgot-password-form-group">
+  <label htmlFor="confirmPassword">Confirmez le mot de passe</label>
+  <div className="forgot-password-input-wrapper">
+    <input
+      type={showConfirmPassword ? "text" : "password"}
+      id="confirmPassword"
+      name="confirmPassword"
+      value={confirmPassword}
+      onChange={(e) => setConfirmPassword(e.target.value)}
+      required
+      className="forgot-password-input-field"
+    />
+    <IconButton
+      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+      edge="end"
+      size="small"
+    >
+      {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+    </IconButton>
+  </div>
+</div>
               {passwordError && <p className="error-message">{passwordError}</p>}
               <button type="submit" className="forgot-password-btn-submit" disabled={isResetting}>
                 {isResetting ? 'Réinitialisation...' : 'Réinitialiser'}

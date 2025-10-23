@@ -119,10 +119,10 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
 
   // Open confirmation dialog on clicking "ENREGISTRER LE PAIEMENT"
   const handleOpenConfirmation = () => {
-    if (!invoiceNumber.trim() || !paymentInfo.trim()) {
-      // ex. afficher un snackbar ou toast d’alerte
-      return;
-    }
+    const needInfo = paymentMethod !== 'Cash';
+if (!invoiceNumber.trim() || (needInfo && !paymentInfo.trim())) {
+  return;
+}
     setConfirmationOpen(true);
   };
 
@@ -157,7 +157,7 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
         p_idlogin_insert: operatorId,
         p_paymentDate: invoiceDate, // Must be a valid timestamp (YYYY-MM-DD)
         p_free_txt1: paymentMethod === 'Autre' ? customPaymentMethod : paymentMethod,
-        p_free_txt2: paymentInfo, // Payment information field added here.
+        p_free_txt2: paymentMethod === 'Cash' ? null : paymentInfo, // Payment information field added here.
         p_idlogin_modify: operatorId,
       };
 
@@ -236,26 +236,28 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
       await setOrderFiles(orderFileData);
 
       // ─── Génération et upload d’UNE COPIE si demandé ───────
-      console.log("ORDER => ", order);
-      const copies = order.copy_count_ori ?? 0;
-      let copyFile = null;    
-      if (copies > 0) {
-        console.log('Création d’une COPIE tamponnée');
-        const copyBlob = await stampCopy(pdfBlob);
-        const copyName = `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}_COPIE.pdf`;
-        copyFile = new File([copyBlob], copyName, { type: 'application/pdf' });  // ← stocker
+      // ─── Génération et upload de N COPIES ───────
+console.log("ORDER => ", order);
+const nbCopies = Number(order.copy_count_ori ?? 0);
+const copyFiles = []; // on garde une référence pour le mémo
 
-        await setOrderFiles({
-          uploadType: 'commandes',
-          p_id_order: order.id_order,
-          p_idfiles_repo_typeof: 1001,        // COPIE
-          p_file_origin_name: copyName,
-          p_typeof_order: 1,
-          p_idlogin_insert: operatorId,
-          file: copyFile
-        });
-        console.log('Copie uploadée :', copyName);
-      }
+for (let i = 1; i <= nbCopies; i++) {
+  const stampedBlob = await stampCopy(pdfBlob);
+  const copyName = `certificat_${String(order.id_ord_certif_ori).padStart(8, '0')}_COPIE_${i}.pdf`;
+  const copyFileI = new File([stampedBlob], copyName, { type: 'application/pdf' });
+  copyFiles.push(copyFileI);
+
+  await setOrderFiles({
+    uploadType: 'commandes',
+    p_id_order: order.id_order,
+    p_idfiles_repo_typeof: 1001, // COPIE
+    p_file_origin_name: copyName,
+    p_typeof_order: 1,
+    p_idlogin_insert: operatorId,
+    file: copyFileI,
+  });
+}
+
 
 
 
@@ -319,16 +321,16 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
     
     await setMemoFiles(formMemoOriginal);
     
-    // Mémo copie si nécessaire
-    if (copies > 0 && copyFile) {
-      const formMemoCopy = new FormData();
-      formMemoCopy.append('p_id_memo', newMemoId);
-      formMemoCopy.append('p_idfiles_repo_typeof', MEMO_REPO.COPY);
-      formMemoCopy.append('p_file_origin_name', copyFile.name);
-      formMemoCopy.append('p_idlogin_insert', operatorId);
-      formMemoCopy.append('uploadType', 'memos');
-      formMemoCopy.append('file', copyFile);
-    
+    // Mémo : joindre toutes les copies
+for (const cf of copyFiles) {
+  const formMemoCopy = new FormData();
+  formMemoCopy.append('p_id_memo', newMemoId);
+  formMemoCopy.append('p_idfiles_repo_typeof', MEMO_REPO.COPY); // 1003
+  formMemoCopy.append('p_file_origin_name', cf.name);
+  formMemoCopy.append('p_idlogin_insert', operatorId);
+  formMemoCopy.append('uploadType', 'memos');
+  formMemoCopy.append('file', cf);
+
       // **DEBUG : inspecter la copie**
       for (const [key, value] of formMemoCopy.entries()) {
         console.log('[Client] formMemoCopy', key, value);
@@ -448,16 +450,30 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
             )}
           </FormControl>
 
-          {/* NEW: Payment Information Input */}
-          <TextField
-            label="Informations concernant le paiement"
-            required
-            fullWidth
-            value={paymentInfo}
-            onChange={e => setPaymentInfo(e.target.value)}
-            error={!paymentInfo.trim()}
-            helperText={!paymentInfo.trim() ? "Veuillez préciser les informations de paiement" : ""}
-          />
+          {/* Informations paiement : affiché uniquement si mode ≠ Cash */}
+{paymentMethod !== 'Cash' && (
+  <TextField
+    label={
+      paymentMethod === 'Chèque'
+        ? "Informations chèque (banque, n° chèque)"
+        : paymentMethod === 'Virement'
+        ? "Référence de virement"
+        : "Informations concernant le paiement"
+    }
+    required
+    fullWidth
+    value={paymentInfo}
+    onChange={(e) => setPaymentInfo(e.target.value)}
+    error={paymentMethod !== 'Cash' && !paymentInfo.trim()}
+    helperText={
+      paymentMethod !== 'Cash' && !paymentInfo.trim()
+        ? "Veuillez préciser les informations de paiement"
+        : ""
+    }
+    sx={{ mt: 1 }}
+  />
+)}
+
 
 
 
@@ -472,7 +488,7 @@ function PaymentModal({ open, onClose, onSubmit, order }) {
             variant="contained"
             color="success"
             onClick={handleOpenConfirmation}
-            disabled={!invoiceNumber.trim() || !paymentInfo.trim()}
+            disabled={!invoiceNumber.trim() || (paymentMethod !== 'Cash' && !paymentInfo.trim())}
           >
             ENREGISTRER LE PAIEMENT
           </Button>

@@ -7,7 +7,7 @@ import {
   reactivateCustUser,
 } from '../services/apiServices';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrashAlt, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 import {
   Box,
   Typography,
@@ -36,31 +36,47 @@ import {
   FormControlLabel,
   Checkbox,
   FormControl,
-  FormLabel,
   RadioGroup,
   Radio,
   Toolbar,
 } from '@mui/material';
+import Autocomplete from '@mui/material/Autocomplete';
 import './ContactsList.css';
+import countryCodes from '../components/countryCodes';
 
-// Générer un mot de passe aléatoire si nécessaire
+/* =========================
+   Helpers & validations
+   ========================= */
+const GOLD = '#DCAF26';
+
+const onlyDigits = (s = '') => String(s).replace(/\D+/g, '');
+
+// Construit E.164 : +code + numéro national (sans zéros de tête)
+const joinE164 = (code, national) => {
+  const cleanCode = String(code || '').trim(); // ex: +33
+  const natNoTrunk = onlyDigits(national).replace(/^0+/, '');
+  return `${cleanCode}${natNoTrunk}`;
+};
+
+// Numéro national : 6–14 chiffres
+const isValidNational = (n) => /^\d{6,14}$/.test(onlyDigits(n));
+
+// E.164 (international) : + suivi de 6–15 chiffres
+const isValidInternationalPhone = (v) => /^\+[0-9]{6,15}$/.test(String(v || ''));
+
+// Email standard
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+// Autocomplete helpers
+const normalize = (s) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+const dialOptions = countryCodes.map((c) => ({ name: c.name, code: c.code, flag: c.flag }));
+
+// Mot de passe aléatoire (si backend l’utilise à la création)
 const generateRandomPassword = (length = 12) => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
   let password = '';
-  for (let i = 0; i < length; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+  for (let i = 0; i < length; i++) password += chars.charAt(Math.floor(Math.random() * chars.length));
   return password;
-};
-
-// Valider un numéro de téléphone international
-const isValidInternationalPhone = (number) => {
-  return /^\+[0-9]+$/.test(number) && number.length <= 12;
-};
-
-// Valider un email standard
-const isValidEmail = (email) => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
 const ContactsList = () => {
@@ -75,45 +91,32 @@ const ContactsList = () => {
   // Recherche
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Etats pour showActive / showInactive
-  const [showActive, setShowActive] = useState(true);
-  const [showInactive, setShowInactive] = useState(false);
+  // Filtre actif/inactif (même logique que l’autre fichier)
+  const [radioValue, setRadioValue] = useState('active');
 
-  // Modale d'ajout/édition
+  // Modale d’ajout/édition
   const [showModal, setShowModal] = useState(false);
   const [modalError, setModalError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
-  // Contact en cours d'édition
+  // Contact courant (création vs édition)
   const [currentContact, setCurrentContact] = useState({
     id_cust_user: 0,
     full_name: '',
     position: '',
     email: '',
+    // ÉDITION: E.164 direct
     phone_number: '',
     mobile_number: '',
+    // CRÉATION: indicatif + national
+    phone_code: '+253',
+    phone_national: '',
+    mobile_code: '+253',
+    mobile_national: '',
     ismain_user: false,
     password: '',
     confirmPassword: '',
   });
-
-  // Vérifications téléphone
-  const phoneFixedError =
-    currentContact.phone_number !== '' && !isValidInternationalPhone(currentContact.phone_number);
-  const phoneMobileError =
-    currentContact.mobile_number !== '' && !isValidInternationalPhone(currentContact.mobile_number);
-
-  // après la déclaration de phoneFixedError, phoneMobileError, modalError…
-  useEffect(() => {
-    // si le fixe est saisi et est valide, on efface l'erreur
-    if (currentContact.phone_number && !phoneFixedError) {
-      setModalError('');
-    }
-    // idem pour le mobile
-    if (currentContact.mobile_number && !phoneMobileError) {
-      setModalError('');
-    }
-  }, [currentContact.phone_number, currentContact.mobile_number, phoneFixedError, phoneMobileError]);
 
   // Snackbar
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -125,9 +128,8 @@ const ContactsList = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   // --- menu Actions (⋮) ---
-  const [anchorEl, setAnchorEl] = useState(null);   // ancre du Menu
-  const [selectedRow, setSelectedRow] = useState(null); // contact cliqué
-
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedRow, setSelectedRow] = useState(null);
   const handleMenuOpen = (e, contact) => {
     setAnchorEl(e.currentTarget);
     setSelectedRow(contact);
@@ -137,133 +139,55 @@ const ContactsList = () => {
     setSelectedRow(null);
   };
 
-  const GOLD = '#DCAF26';
-
   const StatusFilter = () =>
     isSmallScreen ? (
-      /* ----- version mobile : Select ----- */
       <FormControl
         size="small"
         sx={{
           minWidth: 180,
-
-          /* === BORDURE === */
-          '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: GOLD,
-          },
-          '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: GOLD,
-          },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: GOLD,
-          },
-
-          /* === LABEL === */
-          '& .MuiInputLabel-root.Mui-focused': {
-            color: GOLD,
-          },
-
-          /* === ICÔNE ▾ === */
-          '& .MuiSelect-icon': {
-            color: GOLD,
-          },
+          '& .MuiOutlinedInput-notchedOutline': { borderColor: GOLD },
+          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: GOLD },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: GOLD },
+          '& .MuiInputLabel-root.Mui-focused': { color: GOLD },
+          '& .MuiSelect-icon': { color: GOLD },
         }}
       >
         <InputLabel id="status-label">Filtrer</InputLabel>
-
         <Select
           labelId="status-label"
           id="status-select"
           value={radioValue}
           label="Filtrer"
-          onChange={handleRadioChange}
-          sx={{ color: '#000' }}          /* couleur du texte sélectionné */
+          onChange={(e) => setRadioValue(e.target.value)}
+          sx={{ color: '#000' }}
           MenuProps={{
             MenuListProps: {
               sx: {
-                '& .Mui-selected': {
-                  backgroundColor: '#F4E6B4 !important',
-                  color: '#000',
-                },
-                '& .Mui-selected:hover': {
-                  backgroundColor: '#EBD68A !important',
-                },
+                '& .Mui-selected': { backgroundColor: '#F4E6B4 !important', color: '#000' },
+                '& .Mui-selected:hover': { backgroundColor: '#EBD68A !important' },
               },
             },
           }}
         >
-          <MenuItem
-            value="active"
-            sx={{
-              '&.Mui-selected': {
-                backgroundColor: '#F4E6B4',
-                color: '#000',
-              },
-              '&.Mui-selected:hover': {
-                backgroundColor: '#EBD68A',
-              },
-            }}
-          >
+          <MenuItem value="active" sx={{ '&.Mui-selected': { backgroundColor: '#F4E6B4', color: '#000' } }}>
             Contacts Actifs
           </MenuItem>
-
-          <MenuItem
-            value="inactive"
-            sx={{
-              '&.Mui-selected': {
-                backgroundColor: '#F4E6B4',
-                color: '#000',
-              },
-              '&.Mui-selected:hover': {
-                backgroundColor: '#EBD68A',
-              },
-            }}
-          >
+          <MenuItem value="inactive" sx={{ '&.Mui-selected': { backgroundColor: '#F4E6B4', color: '#000' } }}>
             Contacts Désactivés
           </MenuItem>
-
         </Select>
       </FormControl>
     ) : (
-      /* ----- version desktop : RadioGroup ----- */
       <FormControl component="fieldset">
-        <RadioGroup
-          row
-          name="contactsFilter"
-          value={radioValue}
-          onChange={handleRadioChange}
-        >
+        <RadioGroup row name="contactsFilter" value={radioValue} onChange={(e) => setRadioValue(e.target.value)}>
           <FormControlLabel value="active" control={<Radio />} label="Contacts Actifs" />
           <FormControlLabel value="inactive" control={<Radio />} label="Contacts Désactivés" />
         </RadioGroup>
       </FormControl>
     );
 
-  // Ouvrir la modale d'ajout
-  const handleOpenAddModal = () => {
-    setModalError('');
-    setIsEditing(false);
-    setCurrentContact({
-      id_cust_user: 0,
-      full_name: '',
-      position: '',
-      email: '',
-      phone_number: '',
-      mobile_number: '',
-      ismain_user: false,
-      password: '',
-      confirmPassword: '',
-    });
-    setShowModal(true);
-  };
+  const buildIsactiveCU = () => (radioValue === 'active' ? 'true' : 'false');
 
-  const [radioValue, setRadioValue] = useState('active');
-
-  const buildIsactiveCU = () => {
-    // If radioValue === 'active' => 'true'
-    // If radioValue === 'inactive' => 'false'
-    return radioValue === 'active' ? 'true' : 'false';
-  };
   useEffect(() => {
     const fetchContacts = async () => {
       try {
@@ -274,12 +198,11 @@ const ContactsList = () => {
         }
         setLoading(true);
         const isactiveCUParam = buildIsactiveCU();
-        // Récupérer contacts (actifs ou inactifs selon radioValue)
         const result = await getCustUsersByAccount(
           custAccountId,
-          null,      // statutflag
-          'true',    // isactiveCA => true => compte client actif
-          isactiveCUParam, // isactiveCU => 'true' ou 'false'
+          null,   // statutflag
+          'true', // compte client actif
+          isactiveCUParam,
           null
         );
         setContacts(result.data || []);
@@ -293,11 +216,29 @@ const ContactsList = () => {
     fetchContacts();
   }, [custAccountId, radioValue]);
 
-  const handleRadioChange = (event) => {
-    setRadioValue(event.target.value);
+  // Ouvrir ajout
+  const handleOpenAddModal = () => {
+    setModalError('');
+    setIsEditing(false);
+    setCurrentContact({
+      id_cust_user: 0,
+      full_name: '',
+      position: '',
+      email: '',
+      phone_number: '',
+      mobile_number: '',
+      phone_code: '+253',
+      phone_national: '',
+      mobile_code: '+253',
+      mobile_national: '',
+      ismain_user: false,
+      password: '',
+      confirmPassword: '',
+    });
+    setShowModal(true);
   };
 
-  // Ouvrir la modale d'édition
+  // Ouvrir édition
   const handleOpenEditModal = (contact) => {
     setModalError('');
     setIsEditing(true);
@@ -308,6 +249,10 @@ const ContactsList = () => {
       email: contact.email || '',
       phone_number: contact.phone_number || '',
       mobile_number: contact.mobile_number || '',
+      phone_code: '+253',      // non utilisés en édition
+      phone_national: '',
+      mobile_code: '+253',     // non utilisés en édition
+      mobile_national: '',
       ismain_user: contact.ismain_user || false,
       password: '',
       confirmPassword: '',
@@ -315,16 +260,13 @@ const ContactsList = () => {
     setShowModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
+  const handleCloseModal = () => setShowModal(false);
 
-  // Gérer la saisie dans la modale
   const handleChange = (field, value) => {
     setCurrentContact((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Sauvegarder
+  // Sauvegarder (même logique que l’autre fichier)
   const handleSaveContact = async () => {
     const {
       id_cust_user,
@@ -333,34 +275,71 @@ const ContactsList = () => {
       email,
       phone_number,
       mobile_number,
+      phone_code,
+      phone_national,
+      mobile_code,
+      mobile_national,
       ismain_user,
       password,
       confirmPassword,
     } = currentContact;
 
-    // Vérifications simples
+    // Champs obligatoires
     if (!full_name || !email) {
       setModalError("Veuillez renseigner au minimum le nom et l'email du contact.");
       return;
     }
-
     if (!isValidEmail(email)) {
       setModalError("Le format de l'email est invalide.");
       return;
     }
 
-    if (!phone_number || !isValidInternationalPhone(phone_number)) {
-      setModalError("Le téléphone fixe doit être au format international (e.g. '+123456').");
-      return;
-    }
-    if (!mobile_number || !isValidInternationalPhone(mobile_number)) {
-      setModalError("Le téléphone portable doit être au format international (e.g. '+123456').");
-      return;
-    }
+    // Téléphones (création vs édition)
+    let phone_number_to_send = phone_number;
+    let mobile_number_to_send = mobile_number;
 
-    if (isEditing && (password || confirmPassword)) {
-      if (password !== confirmPassword) {
-        setModalError('Les mots de passe ne correspondent pas.');
+    if (isEditing) {
+      // ÉDITION : E.164 direct
+      if (!isValidInternationalPhone(phone_number_to_send)) {
+        setModalError("Le téléphone fixe doit être au format international (ex. +123456...).");
+        return;
+      }
+      if (!isValidInternationalPhone(mobile_number_to_send)) {
+        setModalError("Le téléphone portable doit être au format international (ex. +123456...).");
+        return;
+      }
+      if (password || confirmPassword) {
+        if (password !== confirmPassword) {
+          setModalError('Les mots de passe ne correspondent pas.');
+          return;
+        }
+      }
+    } else {
+      // CRÉATION : indicatif + national
+      if (!phone_code) {
+        setModalError("Veuillez choisir l’indicatif du téléphone fixe.");
+        return;
+      }
+      if (!mobile_code) {
+        setModalError("Veuillez choisir l’indicatif du téléphone portable.");
+        return;
+      }
+      if (!isValidNational(phone_national)) {
+        setModalError('Téléphone fixe : entre 6 et 14 chiffres (sans indicatif).');
+        return;
+      }
+      if (!isValidNational(mobile_national)) {
+        setModalError('Téléphone portable : entre 6 et 14 chiffres (sans indicatif).');
+        return;
+      }
+      phone_number_to_send = joinE164(phone_code, phone_national);
+      mobile_number_to_send = joinE164(mobile_code, mobile_national);
+      if (!isValidInternationalPhone(phone_number_to_send)) {
+        setModalError('Téléphone fixe invalide (format international).');
+        return;
+      }
+      if (!isValidInternationalPhone(mobile_number_to_send)) {
+        setModalError('Téléphone portable invalide (format international).');
         return;
       }
     }
@@ -368,18 +347,6 @@ const ContactsList = () => {
     try {
       setModalError('');
 
-      // Si on modifie, on n'envoie un pwd que si l'utilisateur a saisi qqchose
-      let pwdToSend = null;
-      if (isEditing) {
-        if (password.trim()) {
-          pwdToSend = password.trim();
-        }
-      } else {
-        // En création
-        pwdToSend = null;
-      }
-
-      // On suppose statut_flag = 1 => actif
       const payload = {
         id_cust_user: isEditing ? id_cust_user : 0,
         id_cust_account: custAccountId,
@@ -387,42 +354,40 @@ const ContactsList = () => {
         full_name,
         position,
         email,
-        phone_number,
-        mobile_number,
-        pwd: pwdToSend,
+        phone_number: phone_number_to_send,
+        mobile_number: mobile_number_to_send,
+        pwd: isEditing ? (password?.trim() ? password.trim() : null) : null,
         ismain_user,
         statut_flag: 1, // actif
         id_login_insert: user?.id_login_user || 1,
         id_login_modify: isEditing ? (user?.id_login_user || 1) : null,
-        password: isEditing ? null : generateRandomPassword(),
+        password: isEditing ? null : generateRandomPassword(), // si utilisé côté backend
         idlogin: user?.id_login_user || 1,
       };
 
       await setCustSmallUser(payload);
-      // Recharger la liste complète
-      const updated = await getCustUsersByAccount(custAccountId, null, 'true', 'true', null);
-      setContacts(updated.data || []);
+
+      // Recharge selon le filtre actif/inactif
+      const refreshed = await getCustUsersByAccount(
+        custAccountId,
+        null,
+        'true',
+        buildIsactiveCU(),
+        null
+      );
+      setContacts(refreshed.data || []);
       setShowModal(false);
     } catch (err) {
       console.error('Erreur lors de la création/édition du contact:', err);
-      setModalError(
-        isEditing
-          ? 'Impossible de modifier ce contact.'
-          : 'Impossible de créer ce contact.'
-      );
+      setModalError(isEditing ? 'Impossible de modifier ce contact.' : 'Impossible de créer ce contact.');
     }
   };
 
   const handleReactivate = async (contactId) => {
-    if (!window.confirm('Voulez-vous vraiment réactiver ce contact ?')) {
-      return;
-    }
+    if (!window.confirm('Voulez-vous vraiment réactiver ce contact ?')) return;
     try {
       await reactivateCustUser(contactId);
-
-      // Retirer le contact réactivé de la liste locale
       setContacts((prev) => prev.filter((c) => c.id_cust_user !== contactId));
-
       setSnackbarMessage('Contact réactivé avec succès.');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
@@ -432,11 +397,8 @@ const ContactsList = () => {
     }
   };
 
-  // Suppression => on suppose statut_flag != 1 => inactif
   const handleDelete = async (contactId) => {
-    if (!window.confirm('Voulez-vous vraiment désactiver ce contact ?')) {
-      return;
-    }
+    if (!window.confirm('Voulez-vous vraiment désactiver ce contact ?')) return;
     try {
       await deleteCustUser(contactId);
       setContacts((prev) => prev.filter((c) => c.id_cust_user !== contactId));
@@ -447,12 +409,11 @@ const ContactsList = () => {
     }
   };
 
-  // Premier filtrage => Search
+  // Filtrage recherche
   const searchFilteredContacts = contacts.filter((contact) => {
     const search = searchTerm.toLowerCase().trim();
     if (!search) return true;
-
-    const fieldsToSearch = [
+    const fields = [
       contact.full_name,
       contact.position,
       contact.email,
@@ -460,49 +421,27 @@ const ContactsList = () => {
       contact.mobile_number,
     ]
       .filter(Boolean)
-      .map((val) => val.toLowerCase());
-    return fieldsToSearch.some((field) => field.includes(search));
+      .map((v) => v.toLowerCase());
+    return fields.some((f) => f.includes(search));
   });
-
 
   const renderMobileCards = () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {searchFilteredContacts.map((contact) => (
-        <Paper
-          key={contact.id_cust_user}
-          sx={{
-            p: 2,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1,
-          }}
-        >
-          <Typography variant="body2">
-            <strong>Nom : </strong> {contact.full_name}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Fonction : </strong> {contact.position}
-          </Typography>
+        <Paper key={contact.id_cust_user} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Typography variant="body2"><strong>Nom : </strong> {contact.full_name}</Typography>
+          <Typography variant="body2"><strong>Fonction : </strong> {contact.position}</Typography>
           <Typography variant="body2">
             <strong>Email : </strong>
-            <a href={`mailto:${contact.email}`} style={{ color: '#DCAF26' }}>
-              {contact.email}
-            </a>
+            <a href={`mailto:${contact.email}`} style={{ color: '#DCAF26' }}>{contact.email}</a>
           </Typography>
-          <Typography variant="body2">
-            <strong>Tél : </strong> {contact.phone_number}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Portable : </strong> {contact.mobile_number}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Contact Principal : </strong> {contact.ismain_user ? 'Oui' : 'Non'}
-          </Typography>
+          <Typography variant="body2"><strong>Tél : </strong> {contact.phone_number}</Typography>
+          <Typography variant="body2"><strong>Portable : </strong> {contact.mobile_number}</Typography>
+          <Typography variant="body2"><strong>Contact Principal : </strong> {contact.ismain_user ? 'Oui' : 'Non'}</Typography>
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
             <IconButton onClick={(e) => handleMenuOpen(e, contact)} sx={{ p: 0 }}>
               <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
             </IconButton>
-
           </Box>
         </Paper>
       ))}
@@ -530,41 +469,40 @@ const ContactsList = () => {
       {/* Entête */}
       <Paper elevation={1} sx={{ mb: 2, borderRadius: 2 }}>
         <Toolbar>
-     <Typography
-       // reprend la variante “button” des Tabs pour police, taille et graisse
-       variant="button"
-       sx={theme => ({
-         ...theme.typography.button,
-         textTransform: 'uppercase',
-         position: 'absolute',
-         left: '50%',
-         transform: 'translateX(-50%)',
-       })}
-     >
-       LISTE DES CONTACTS
-     </Typography>
-     <Button
-       variant="contained"
-       onClick={handleOpenAddModal}
-       disabled={!isMainUser}
-       size="small"
-       sx={{
-         backgroundColor: '#DCAF26',
-         fontSize: { xs: '0.7rem', sm: '0.85rem' },
-         px: { xs: 1, sm: 2 },
-         py: { xs: 0.5, sm: 1 },
-         borderRadius: 2,
-         position: 'absolute',
-         right: 16,           // décale depuis le bord droit
-         top: '50%',
-         transform: 'translateY(-50%)',
-       }}
-     >
-       <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
-       Ajouter un contact
-     </Button>
-     </Toolbar>
- </Paper>
+          <Typography
+            variant="button"
+            sx={(theme) => ({
+              ...theme.typography.button,
+              textTransform: 'uppercase',
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+            })}
+          >
+            LISTE DES CONTACTS
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={handleOpenAddModal}
+            disabled={!isMainUser}
+            size="small"
+            sx={{
+              backgroundColor: '#DCAF26',
+              fontSize: { xs: '0.7rem', sm: '0.85rem' },
+              px: { xs: 1, sm: 2 },
+              py: { xs: 0.5, sm: 1 },
+              borderRadius: 2,
+              position: 'absolute',
+              right: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+            }}
+          >
+            <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
+            Ajouter un contact
+          </Button>
+        </Toolbar>
+      </Paper>
 
       {/* Barre de recherche */}
       <Box mb={2} display="flex" alignItems="center" gap={2}>
@@ -580,7 +518,7 @@ const ContactsList = () => {
         <StatusFilter />
       </Box>
 
-      {/* Affichage conditionnel : tableau ou cartes mobiles */}
+      {/* Affichage conditionnel */}
       {isSmallScreen ? (
         renderMobileCards()
       ) : (
@@ -644,6 +582,7 @@ const ContactsList = () => {
               {modalError}
             </Alert>
           )}
+
           <TextField
             label="Nom du contact *"
             variant="outlined"
@@ -675,44 +614,174 @@ const ContactsList = () => {
                 : ""
             }
           />
-          <TextField
-            label="Téléphone fixe (format international)"
-            variant="outlined"
-            fullWidth
-            value={currentContact.phone_number}
-            onChange={(e) => handleChange('phone_number', e.target.value)}
-            sx={{ mb: 2 }}
-            inputProps={{ maxLength: 12 }}
-            error={phoneFixedError}
-            helperText={
-              phoneFixedError
-                ? "Format incorrect. Doit commencer par '+' et max 12 caractères."
-                : ""
-            }
-            required
-          />
-          <TextField
-            label="Téléphone portable (format international)"
-            variant="outlined"
-            fullWidth
-            value={currentContact.mobile_number}
-            onChange={(e) => handleChange('mobile_number', e.target.value)}
-            sx={{ mb: 2 }}
-            inputProps={{ maxLength: 12 }}
-            error={phoneMobileError}
-            helperText={
-              phoneMobileError
-                ? "Format incorrect. Doit commencer par '+' et max 12 caractères."
-                : ""
-            }
-            required
-          />
 
+          {isEditing ? (
+            <>
+              {/* ÉDITION : E.164 */}
+              <TextField
+                label="Téléphone fixe (format international)"
+                variant="outlined"
+                fullWidth
+                value={currentContact.phone_number}
+                onChange={(e) => handleChange('phone_number', e.target.value)}
+                sx={{ mb: 2 }}
+                inputProps={{ maxLength: 20 }}
+                error={currentContact.phone_number !== '' && !isValidInternationalPhone(currentContact.phone_number)}
+                helperText={
+                  currentContact.phone_number !== '' && !isValidInternationalPhone(currentContact.phone_number)
+                    ? "Format incorrect. Exemple : +25366111569"
+                    : ""
+                }
+                required
+              />
+              <TextField
+                label="Téléphone portable (format international)"
+                variant="outlined"
+                fullWidth
+                value={currentContact.mobile_number}
+                onChange={(e) => handleChange('mobile_number', e.target.value)}
+                sx={{ mb: 2 }}
+                inputProps={{ maxLength: 20 }}
+                error={currentContact.mobile_number !== '' && !isValidInternationalPhone(currentContact.mobile_number)}
+                helperText={
+                  currentContact.mobile_number !== '' && !isValidInternationalPhone(currentContact.mobile_number)
+                    ? "Format incorrect. Exemple : +25366111569"
+                    : ""
+                }
+                required
+              />
+            </>
+          ) : (
+            <>
+              {/* CRÉATION : indicatif + numéro national (Autocomplete + input) */}
+              {/* Fixe */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr' }, gap: 2, mb: 2 }}>
+                <Autocomplete
+                  options={dialOptions}
+                  value={dialOptions.find((o) => o.code === currentContact.phone_code) || null}
+                  onChange={(_, val) => { if (val) handleChange('phone_code', val.code); }}
+                  getOptionLabel={(opt) => (opt ? opt.code : '')}
+                  filterOptions={(options, state) => {
+                    const q = state.inputValue.trim();
+                    const nq = normalize(q.replace('+', ''));
+                    return options.filter((o) => {
+                      const name = normalize(o.name);
+                      const digits = o.code.replace('+', '');
+                      return name.includes(nq) || digits.startsWith(nq) || (`+${digits}`).startsWith(q);
+                    });
+                  }}
+                  renderOption={(props, option) => (
+                    <li {...props}>
+                      <Box display="flex" alignItems="center" gap={8}>
+                        <span>{option.flag}</span>
+                        <span>{option.name}</span>
+                        <span>({option.code})</span>
+                      </Box>
+                    </li>
+                  )}
+                  isOptionEqualToValue={(o, v) => o.code === v.code}
+                  renderInput={(params) => {
+                    const current = dialOptions.find((o) => o.code === currentContact.phone_code);
+                    return (
+                      <TextField
+                        {...params}
+                        label="Indicatif (téléphone fixe)"
+                        InputProps={{
+                          ...params.InputProps,
+                          startAdornment: current ? <Box mr={1}>{current.flag}</Box> : params.InputProps.startAdornment,
+                        }}
+                        fullWidth
+                      />
+                    );
+                  }}
+                  autoHighlight
+                  disableClearable
+                  fullWidth
+                />
+                <TextField
+                  fullWidth
+                  required
+                  label="Téléphone fixe (sans indicatif)"
+                  placeholder="numéro national"
+                  value={currentContact.phone_national || ''}
+                  onChange={(e) => handleChange('phone_national', e.target.value)}
+                  inputProps={{ maxLength: 14 }}
+                  error={currentContact.phone_national !== '' && !isValidNational(currentContact.phone_national)}
+                  helperText={
+                    currentContact.phone_national !== '' && !isValidNational(currentContact.phone_national)
+                      ? 'Entre 6 et 14 chiffres (sans indicatif)'
+                      : ''
+                  }
+                />
+              </Box>
+
+              {/* Mobile */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr' }, gap: 2, mb: 2 }}>
+                <Autocomplete
+                  options={dialOptions}
+                  value={dialOptions.find((o) => o.code === currentContact.mobile_code) || null}
+                  onChange={(_, val) => { if (val) handleChange('mobile_code', val.code); }}
+                  getOptionLabel={(opt) => (opt ? opt.code : '')}
+                  filterOptions={(options, state) => {
+                    const q = state.inputValue.trim();
+                    const nq = normalize(q.replace('+', ''));
+                    return options.filter((o) => {
+                      const name = normalize(o.name);
+                      const digits = o.code.replace('+', '');
+                      return name.includes(nq) || digits.startsWith(nq) || (`+${digits}`).startsWith(q);
+                    });
+                  }}
+                  renderOption={(props, option) => (
+                    <li {...props}>
+                      <Box display="flex" alignItems="center" gap={8}>
+                        <span>{option.flag}</span>
+                        <span>{option.name}</span>
+                        <span>({option.code})</span>
+                      </Box>
+                    </li>
+                  )}
+                  isOptionEqualToValue={(o, v) => o.code === v.code}
+                  renderInput={(params) => {
+                    const current = dialOptions.find((o) => o.code === currentContact.mobile_code);
+                    return (
+                      <TextField
+                        {...params}
+                        label="Indicatif (téléphone portable)"
+                        InputProps={{
+                          ...params.InputProps,
+                          startAdornment: current ? <Box mr={1}>{current.flag}</Box> : params.InputProps.startAdornment,
+                        }}
+                        fullWidth
+                      />
+                    );
+                  }}
+                  autoHighlight
+                  disableClearable
+                  fullWidth
+                />
+                <TextField
+                  fullWidth
+                  required
+                  label="Téléphone portable (sans indicatif)"
+                  placeholder="numéro national"
+                  value={currentContact.mobile_national || ''}
+                  onChange={(e) => handleChange('mobile_national', e.target.value)}
+                  inputProps={{ maxLength: 14 }}
+                  error={currentContact.mobile_national !== '' && !isValidNational(currentContact.mobile_national)}
+                  helperText={
+                    currentContact.mobile_national !== '' && !isValidNational(currentContact.mobile_national)
+                      ? 'Entre 6 et 14 chiffres (sans indicatif)'
+                      : ''
+                  }
+                />
+              </Box>
+            </>
+          )}
         </DialogContent>
 
         {isMainUser && (
           <FormControlLabel
-            sx={{ ml: 2 }}
+            sx={{ ml: 2, mt: 1 }}
             control={
               <Checkbox
                 checked={currentContact.ismain_user}
@@ -723,6 +792,7 @@ const ContactsList = () => {
             label="Contact principal"
           />
         )}
+
         <DialogActions>
           <Button onClick={handleCloseModal}>Annuler</Button>
           <Button variant="contained" onClick={handleSaveContact} sx={{ backgroundColor: '#DCAF26' }}>
@@ -740,17 +810,13 @@ const ContactsList = () => {
           setSnackbarOpen(false);
         }}
       >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity={snackbarSeverity}
-          sx={{ width: '100%' }}
-        >
+        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>
 
+      {/* Menu actions */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        {/* --- Modifier --- */}
         <MenuItem
           onClick={() => {
             handleOpenEditModal(selectedRow);
@@ -760,7 +826,6 @@ const ContactsList = () => {
           Modifier
         </MenuItem>
 
-        {/* --- Désactiver --- */}
         {radioValue === 'active' && !selectedRow?.ismain_user && selectedRow?.email !== user.email && (
           <MenuItem
             onClick={() => {
@@ -772,7 +837,6 @@ const ContactsList = () => {
           </MenuItem>
         )}
 
-        {/* --- Réactiver --- */}
         {radioValue === 'inactive' && (
           <MenuItem
             onClick={() => {
@@ -784,7 +848,6 @@ const ContactsList = () => {
           </MenuItem>
         )}
       </Menu>
-
     </Box>
   );
 };

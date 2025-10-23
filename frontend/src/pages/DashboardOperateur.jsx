@@ -840,6 +840,10 @@ export default function DashboardOperateur() {
     return (
         <Box sx={{ ml: { xs: 0, md: '240px' }, p: 2 }}>
             <Helmet><title>Dashboard Opérateur</title></Helmet>
+            <Typography variant="h5" mb={3}>
+  Bienvenue <strong>{user?.full_name || "Opérateur"}</strong>
+</Typography>
+
 
             {/* Header */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>

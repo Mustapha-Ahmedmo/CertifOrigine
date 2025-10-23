@@ -35,15 +35,30 @@ import {
   useTheme,
   useMediaQuery,
   Menu,
+  IconButton,
 } from '@mui/material';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faPlus, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { faEllipsisV } from '@fortawesome/free-solid-svg-icons';
-import { IconButton } from '@mui/material';
+
+import Autocomplete from '@mui/material/Autocomplete';
+import countryCodes from '../components/countryCodes';
 
 // juste après vos imports utilitaires
- const getFullAddress = (r) => r.address_1;
+const getFullAddress = (r) => r.address_1;
+
+// Validation regex pour numéro international (+ ou 00, 8 à 16 chiffres)
+const isValidInternationalPhone = (value) => {
+  return /^(?:\+|00)[1-9][0-9]*$/.test(value) && value.length >= 8 && value.length <= 16;
+};
+
+// Validation numéro local FR-like (0 + 9 chiffres)
+const isValidLocalPhone = (v) => /^0\d{9}$/.test(v);
+
+// helpers Autocomplete
+const normalize = (s) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+const dialOptions = countryCodes.map((c) => ({ name: c.name, code: c.code, flag: c.flag }));
 
 const DestinataireList = () => {
   // Récupération de l’utilisateur depuis Redux
@@ -63,26 +78,27 @@ const DestinataireList = () => {
   const [newRecipient, setNewRecipient] = useState({
     recipientName: '',
     address1: '',
-    address2: '',
+    address2: '',     // téléphone (édition: international / création: rempli à l’enregistrement)
     address3: '',
     country: '',
+    // Champs spécifiques à la création
+    phoneCode: '+253',
+    phoneLocal: '',
   });
   const [errorMessage, setErrorMessage] = useState('');
 
-  // en haut de ton composant, après la déclaration de newRecipient et errorMessage
+  // nettoyage erreur si tel valide
   useEffect(() => {
-    if (newRecipient.address2 && isValidInternationalPhone(newRecipient.address2)) {
-      setErrorMessage('');
+    if (editingRecipientId) {
+      if (newRecipient.address2 && isValidInternationalPhone(newRecipient.address2)) {
+        setErrorMessage('');
+      }
+    } else {
+      if (newRecipient.phoneLocal && isValidLocalPhone(newRecipient.phoneLocal)) {
+        setErrorMessage('');
+      }
     }
-  }, [newRecipient.address2]);
-
-
-  // Validation regex pour numéro international (+ ou 00, 8 à 16 chiffres)
-const isValidInternationalPhone = (value) => {
-  return /^(?:\+|00)[1-9][0-9]*$/.test(value)
-    && value.length >= 8
-    && value.length <= 16;
-};
+  }, [newRecipient.address2, newRecipient.phoneLocal, editingRecipientId]);
 
   // Responsive
   const theme = useTheme();
@@ -101,7 +117,6 @@ const isValidInternationalPhone = (value) => {
     setSelectedRow(null);
   };
 
-
   // Chargement initial
   useEffect(() => {
     loadRecipients();
@@ -110,9 +125,8 @@ const isValidInternationalPhone = (value) => {
 
   const loadRecipients = async () => {
     try {
-      const response = await fetchRecipients({ idListCA: customerAccountId, statutFlagR : 1  });
+      const response = await fetchRecipients({ idListCA: customerAccountId, statutFlagR: 1 });
       const data = response.data || [];
-      console.log('Destinataires reçus:', data); // Ajoutez cette ligne pour voir la structure
       setRecipients(data);
     } catch (err) {
       console.error('Erreur lors de la récupération des destinataires:', err);
@@ -128,10 +142,8 @@ const isValidInternationalPhone = (value) => {
     }
   };
 
-  // Ouvrir la modale d'édition
+  // Ouvrir la modale d'édition (on ne change rien au comportement d’édition)
   const handleOpenEditModal = (recipient) => {
-    console.log('[DEBUG] open edit modal for:', recipient,
-      'id_country =>', recipient.id_country, typeof recipient.id_country);
     setErrorMessage('');
     setEditingRecipientId(recipient.id_recipient_account);
     setNewRecipient({
@@ -140,21 +152,25 @@ const isValidInternationalPhone = (value) => {
       address2: recipient.address_2 || '',
       address3: recipient.address_3 || '',
       country: recipient.id_country_recipient ?? '',
-      phone: recipient.phone_number || '',
+      // champs création remis à défaut (non utilisés en édition)
+      phoneCode: '+253',
+      phoneLocal: '',
     });
     setShowAddModal(true);
   };
 
-  // Ouvrir la modale d'ajout
+  // Ouvrir la modale d'ajout (nouveau comportement : indicatif + téléphone local)
   const handleOpenAddModal = () => {
     setErrorMessage('');
     setEditingRecipientId(null);
     setNewRecipient({
       recipientName: '',
       address1: '',
-      address2: '',
+      address2: '', // sera rempli comme phoneCode + phoneLocal à l’enregistrement
       address3: '',
       country: '',
+      phoneCode: '+253',
+      phoneLocal: '',
     });
     setShowAddModal(true);
   };
@@ -169,22 +185,49 @@ const isValidInternationalPhone = (value) => {
 
   // Lors de la sauvegarde, vérification des champs obligatoires et du téléphone
   const handleSaveNewRecipient = async () => {
-    if (!newRecipient.address2 || !newRecipient.recipientName || !newRecipient.address1 || !newRecipient.address3 || !newRecipient.country) {
-      setErrorMessage("Veuillez renseigner le nom, l'adresse, le code postal - ville, le payset le téléphone.");
+    // validations communes
+    if (!newRecipient.recipientName || !newRecipient.address1 || !newRecipient.address3 || !newRecipient.country) {
+      setErrorMessage("Veuillez renseigner le nom, l'adresse, le code postal - ville et le pays.");
       return;
     }
-    try {
-      setErrorMessage('');
+
+    // Validation du téléphone selon mode
+    if (editingRecipientId) {
+      // Édition : format international dans address2
+      if (!newRecipient.address2) {
+        setErrorMessage("Veuillez renseigner le numéro de téléphone.");
+        return;
+      }
       if (!isValidInternationalPhone(newRecipient.address2)) {
         setErrorMessage("Numéro de téléphone invalide. Format international requis (+ ou 00, 8–16 chiffres).");
         return;
       }
+    } else {
+      // Création : indicatif + numéro local
+      if (!newRecipient.phoneLocal) {
+        setErrorMessage("Veuillez renseigner le numéro de téléphone.");
+        return;
+      }
+      if (!isValidLocalPhone(newRecipient.phoneLocal)) {
+        setErrorMessage("Numéro local invalide. Doit commencer par 0 et contenir 10 chiffres.");
+        return;
+      }
+    }
+
+    try {
+      setErrorMessage('');
+
+      // Compose le téléphone pour la création, inchangé en édition
+      const phoneToSave = editingRecipientId
+        ? newRecipient.address2
+        : `${newRecipient.phoneCode}${newRecipient.phoneLocal}`;
+
       const payload = {
         idRecipientAccount: editingRecipientId ? editingRecipientId : null,
         idCustAccount: customerAccountId,
         recipientName: newRecipient.recipientName,
         address1: newRecipient.address1,
-        address2: newRecipient.address2,
+        address2: phoneToSave,          // <- on enregistre ici le téléphone
         address3: newRecipient.address3,
         idCountry: newRecipient.country,
         statutFlag: 1,
@@ -205,38 +248,34 @@ const isValidInternationalPhone = (value) => {
     }
   };
 
-  // Suppression
+  // Suppression (désactivation) – inchangé, si besoin de réactiver, tu as déjà la logique ailleurs
   const handleDelete = async (recipient) => {
     if (!window.confirm('Voulez-vous vraiment désactiver ce destinataire ?')) return;
     try {
-
       const payload = {
-        idRecipientAccount : recipient.id_recipient_account,
-        idCustAccount      : recipient.id_cust_account,
-        recipientName      : recipient.recipient_name,
-        address1           : recipient.address_1,
-        address2           : recipient.address_2,
-        address3           : recipient.address_3,
-        idCountry          : recipient.id_country_recipient,   // champ dispo depuis la fonction SQL
-        statutFlag         : 2,                                // ← désactivé
-        activationDate     : recipient.activation_date,        // on conserve la date d’activation d’origine
-        deactivationDate   : new Date().toISOString(),         // on le rend inactif maintenant
-        idLoginInsert      : recipient.idlogin_insert,
-        idLoginModify      : user?.id_login_user || 1,
-        phone_number       : recipient.phone_number,
+        idRecipientAccount: recipient.id_recipient_account,
+        idCustAccount: recipient.id_cust_account,
+        recipientName: recipient.recipient_name,
+        address1: recipient.address_1,
+        address2: recipient.address_2,
+        address3: recipient.address_3,
+        idCountry: recipient.id_country_recipient,
+        statutFlag: 2,
+        activationDate: recipient.activation_date,
+        deactivationDate: new Date().toISOString(),
+        idLoginInsert: recipient.idlogin_insert,
+        idLoginModify: user?.id_login_user || 1,
+        phone_number: recipient.phone_number,
       };
 
-      await addRecipient(payload);      // “update” avec statut_flag = 2
-      await loadRecipients();           // on recharge la liste (filtrée sur actifs)
-      
+      await addRecipient(payload);
+      await loadRecipients();
       alert('Destinataire désactivé avec succès.');
     } catch (err) {
       console.error('Erreur lors de la suppression du destinataire:', err);
       alert('Impossible de supprimer ce destinataire.');
     }
   };
-
-
 
   // ----- RENDU Desktop : Table -----
   const renderDesktopTable = () => (
@@ -260,16 +299,10 @@ const isValidInternationalPhone = (value) => {
                 <TableCell>{formatDate(recipient.insertdate)}</TableCell>
                 <TableCell>{recipient.recipient_name}</TableCell>
                 <TableCell>{getFullAddress(recipient)}</TableCell>
-                <TableCell>{recipient.address_2 || 'N/A'}</TableCell>  {/* <-- on lit address_2 */}
+                <TableCell>{recipient.address_2 || 'N/A'}</TableCell>
                 <TableCell>{recipient.address_3 || 'N/A'}</TableCell>
                 <TableCell>{recipient.country_symbol_fr_recipient || 'N/A'}</TableCell>
-                <TableCell
-                  align="center"
-                  sx={{            // ← styles supplémentaires
-                    p: 0,          // plus de padding dans la cellule
-                    textAlign: 'center'
-                  }}
-                >
+                <TableCell align="center" sx={{ p: 0, textAlign: 'center' }}>
                   <IconButton onClick={(e) => handleMenuOpen(e, recipient)}>
                     <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
                   </IconButton>
@@ -278,7 +311,7 @@ const isValidInternationalPhone = (value) => {
             ))}
             {recipients.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} align="center">
+                <TableCell colSpan={7} align="center">
                   Aucun destinataire trouvé.
                 </TableCell>
               </TableRow>
@@ -293,41 +326,18 @@ const isValidInternationalPhone = (value) => {
   const renderMobileCards = () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {recipients.map((recipient) => (
-        <Paper
-          key={recipient.id_recipient_account}
-          sx={{
-            p: 2,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1,
-            borderRadius: 2,
-          }}
-        >
-          <Typography variant="body2">
-            <strong>Date Création : </strong> {formatDate(recipient.insertdate)}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Nom du destinataire : </strong> {recipient.recipient_name}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Adresse : </strong> {getFullAddress(recipient)}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Code postal / Ville : </strong> {recipient.address_3 || 'N/A'}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Pays : </strong> {recipient.country_symbol_fr_recipient || 'N/A'}
-          </Typography>
-          <Typography variant="body2">
-            <strong>N° de téléphone : </strong> {recipient.address_2 || 'N/A'}
-          </Typography>
+        <Paper key={recipient.id_recipient_account} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1, borderRadius: 2 }}>
+          <Typography variant="body2"><strong>Date Création : </strong> {formatDate(recipient.insertdate)}</Typography>
+          <Typography variant="body2"><strong>Nom du destinataire : </strong> {recipient.recipient_name}</Typography>
+          <Typography variant="body2"><strong>Adresse : </strong> {getFullAddress(recipient)}</Typography>
+          <Typography variant="body2"><strong>Code postal / Ville : </strong> {recipient.address_3 || 'N/A'}</Typography>
+          <Typography variant="body2"><strong>Pays : </strong> {recipient.country_symbol_fr_recipient || 'N/A'}</Typography>
+          <Typography variant="body2"><strong>N° de téléphone : </strong> {recipient.address_2 || 'N/A'}</Typography>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
             <IconButton onClick={(e) => handleMenuOpen(e, recipient)}>
               <FontAwesomeIcon icon={faEllipsisV} style={{ color: '#DCAF26' }} />
             </IconButton>
-
           </Box>
-
         </Paper>
       ))}
       {recipients.length === 0 && (
@@ -338,10 +348,8 @@ const isValidInternationalPhone = (value) => {
     </Box>
   );
 
-  // Gestion de la recherche (à implémenter selon vos besoins)
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
+  // Recherche (à implémenter si besoin)
+  const handleSearch = (e) => setSearchTerm(e.target.value);
 
   return (
     <Box
@@ -354,36 +362,36 @@ const isValidInternationalPhone = (value) => {
       }}
     >
       <AppBar position="static" color="default" sx={{ borderRadius: 4 }}>
-      <Toolbar sx={{ position: 'relative', px: 2 }}>
-    <Typography
-      variant="button"
-      sx={theme => ({
-        ...theme.typography.button,
-        textTransform: 'uppercase',
-        position: 'absolute',
-        left: '50%',
-        transform: 'translateX(-50%)',
-      })}
-    >
-      LISTE DES DESTINATAIRES
-    </Typography>
-    <Button
-      variant="contained"
-      onClick={handleOpenAddModal}
-      size="small"
-      sx={{
-        backgroundColor: '#DCAF26',
-        fontSize: { xs: '0.7rem', sm: '0.85rem' },
-        px: { xs: 1, sm: 2 },
-        py: { xs: 0.5, sm: 1 },
-        borderRadius: 2,
-        ml: 'auto',
-      }}
-    >
-      <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
-      Ajouter un destinataire
-    </Button>
-  </Toolbar>
+        <Toolbar sx={{ position: 'relative', px: 2 }}>
+          <Typography
+            variant="button"
+            sx={(theme) => ({
+              ...theme.typography.button,
+              textTransform: 'uppercase',
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+            })}
+          >
+            LISTE DES DESTINATAIRES
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={handleOpenAddModal}
+            size="small"
+            sx={{
+              backgroundColor: '#DCAF26',
+              fontSize: { xs: '0.7rem', sm: '0.85rem' },
+              px: { xs: 1, sm: 2 },
+              py: { xs: 0.5, sm: 1 },
+              borderRadius: 2,
+              ml: 'auto',
+            }}
+          >
+            <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
+            Ajouter un destinataire
+          </Button>
+        </Toolbar>
       </AppBar>
 
       <Box mb={2} mt={2} display="flex" alignItems="center" gap={2}>
@@ -429,21 +437,91 @@ const isValidInternationalPhone = (value) => {
             sx={{ mb: 2 }}
           />
 
-          <TextField
-            label="N° de téléphone *"
-            fullWidth
-            variant="outlined"
-            value={newRecipient.address2}
-            onChange={(e) => handleNewRecipientChange('address2', e.target.value)}
-            onBlur={() => {
-              if (newRecipient.address2 && !isValidInternationalPhone(newRecipient.address2)){
-                setErrorMessage('Numéro invalide (+ ou 00, 8–16 chiffres)');
-              }
-            }}            
+          {/* Téléphone – Ajout : Autocomplete indicatif + numéro local | Édition : champ international */}
+          {editingRecipientId ? (
+            <TextField
+              label="N° de téléphone * (format international)"
+              fullWidth
+              variant="outlined"
+              value={newRecipient.address2}
+              onChange={(e) => handleNewRecipientChange('address2', e.target.value)}
+              onBlur={() => {
+                if (newRecipient.address2 && !isValidInternationalPhone(newRecipient.address2)) {
+                  setErrorMessage('Numéro invalide (+ ou 00, 8–16 chiffres)');
+                }
+              }}
               error={!!errorMessage && newRecipient.address2 && !isValidInternationalPhone(newRecipient.address2)}
               helperText={newRecipient.address2 && !isValidInternationalPhone(newRecipient.address2) ? 'Format incorrect.' : ''}
               sx={{ mb: 2 }}
             />
+          ) : (
+            <>
+              <Autocomplete
+                options={dialOptions}
+                value={dialOptions.find((o) => o.code === newRecipient.phoneCode) || null}
+                onChange={(_, val) => {
+                  if (val) handleNewRecipientChange('phoneCode', val.code);
+                }}
+                getOptionLabel={(opt) => (opt ? opt.code : '')}
+                filterOptions={(options, state) => {
+                  const q = state.inputValue.trim();
+                  const nq = normalize(q.replace('+', ''));
+                  return options.filter((o) => {
+                    const name = normalize(o.name);
+                    const digits = o.code.replace('+', '');
+                    return name.includes(nq) || digits.startsWith(nq) || (`+${digits}`).startsWith(q);
+                  });
+                }}
+                renderOption={(props, option) => (
+                  <li {...props}>
+                    <Box display="flex" alignItems="center" gap={8}>
+                      <span>{option.flag}</span>
+                      <span>{option.name}</span>
+                      <span>({option.code})</span>
+                    </Box>
+                  </li>
+                )}
+                isOptionEqualToValue={(o, v) => o.code === v.code}
+                renderInput={(params) => {
+                  const current = dialOptions.find((o) => o.code === newRecipient.phoneCode);
+                  return (
+                    <TextField
+                      {...params}
+                      label="Indicatif (téléphone)"
+                      InputProps={{
+                        ...params.InputProps,
+                        startAdornment: current ? <Box mr={1}>{current.flag}</Box> : params.InputProps.startAdornment,
+                      }}
+                      fullWidth
+                      sx={{ mb: 2 }}
+                    />
+                  );
+                }}
+                autoHighlight
+                disableClearable
+                fullWidth
+              />
+
+              <TextField
+                label="N° de téléphone local *"
+                fullWidth
+                variant="outlined"
+                value={newRecipient.phoneLocal}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (/^0\d{0,9}$/.test(v)) handleNewRecipientChange('phoneLocal', v);
+                }}
+                inputProps={{ maxLength: 10 }}
+                error={!!newRecipient.phoneLocal && !isValidLocalPhone(newRecipient.phoneLocal)}
+                helperText={
+                  !!newRecipient.phoneLocal && !isValidLocalPhone(newRecipient.phoneLocal)
+                    ? 'Doit commencer par 0 et contenir 10 chiffres'
+                    : ''
+                }
+                sx={{ mb: 2 }}
+              />
+            </>
+          )}
 
           <TextField
             label="Code postal - Ville *"
@@ -466,29 +544,24 @@ const isValidInternationalPhone = (value) => {
               <MenuItem value="">
                 <em>-- Sélectionnez un pays --</em>
               </MenuItem>
-              {countries.map(c => (
+              {countries.map((c) => (
                 <MenuItem key={c.id_country} value={c.id_country}>
                   {c.symbol_fr}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-
         </DialogContent>
+
         <DialogActions>
           <Button onClick={handleCloseAddModal}>Annuler</Button>
-          <Button
-            variant="contained"
-            onClick={handleSaveNewRecipient}
-            sx={{ backgroundColor: '#DCAF26' }}
-          >
+          <Button variant="contained" onClick={handleSaveNewRecipient} sx={{ backgroundColor: '#DCAF26' }}>
             Enregistrer
           </Button>
         </DialogActions>
       </Dialog>
 
-
-      {/* --- menu Actions : Modifier / Supprimer --- */}
+      {/* --- menu Actions : Modifier (désactiver laissé en commentaire) --- */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem
           onClick={() => {
@@ -499,20 +572,18 @@ const isValidInternationalPhone = (value) => {
           Modifier
         </MenuItem>
 
-      {/* --- menu Actions : Modifier / Supprimer ---
-      <MenuItem
+        {/* 
+        <MenuItem
           onClick={() => {
             if (selectedRow) handleDelete(selectedRow);
             handleMenuClose();
           }}
         >
           Désactiver
-        </MenuItem> */}
+        </MenuItem> 
+        */}
       </Menu>
-
     </Box>
-
-
   );
 };
 

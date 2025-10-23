@@ -221,7 +221,7 @@ const MenuOP = ({ isMenuOpen, toggleMenu }) => {
                   sx={{ pl: 3, ...selectedStyle }}
                 >
                   <ListItemIcon><FontAwesomeIcon icon={faUsers} /></ListItemIcon>
-                  <ListItemText primary="Clients valides" primaryTypographyProps={{ fontSize: "12px" }} />
+                  <ListItemText primary="Liste des clients" primaryTypographyProps={{ fontSize: "12px" }} />
                 </ListItemButton>
               </ListItem>
 
