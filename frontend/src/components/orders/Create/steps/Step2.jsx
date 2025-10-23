@@ -22,7 +22,7 @@ import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import InputLabel from '@mui/material/InputLabel';
-import InputAdornment from '@mui/material/InputAdornment';
+
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Button from '@mui/material/Button';
@@ -33,11 +33,22 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Alert from '@mui/material/Alert';
 import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
+import countryCodes from "../../../countryCodes";
+import Autocomplete from '@mui/material/Autocomplete';
 
-const isValidInternationalPhone = (value) => {
-  return /^(?:\+|00)[1-9][0-9]*$/.test(value)
-    && value.length >= 8
-    && value.length <= 16;
+const normalize = (s='') =>
+  s.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
+
+
+// Helpers pour la saisie FR et la concat E.164 (+336...)
+const isValidFr10 = (val) => /^0\d{9}$/.test(val);
+const isUpTo10Digits = (val) => /^0\d{0,9}$/.test(val);
+
+const joinE164 = (code, national) => {
+  if (!code || !national) return '';
+  const plusCode = code.replace(/^00/, '+');
+  const digits = national.replace(/\D/g, '').replace(/^0/, '');
+  return `${plusCode}${digits}`;
 };
 
 const customFieldStyle = {
@@ -69,6 +80,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   const [errorMessage, setErrorMessage] = useState('');
   const [merchEditStates, setMerchEditStates] = useState([]);
 
+ 
   // Navigation multi-sections
   const totalSections = 8; // Sections de 1/8 à 8/8
   const [currentSection, setCurrentSection] = useState(0);
@@ -80,7 +92,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
   const customerAccountId = user?.id_cust_account;
 
   // Query params
-  const params = new URLSearchParams(location.search);
+  const params = new URLSearchParams(window.location.search);
   const certifId = params.get('certifId');
   const orderId = params.get('orderId');
 
@@ -115,6 +127,22 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     5: "Veuillez renseigner le nombre de copies certifiées.",
     6: "Veuillez certifier votre engagement.",
   };
+
+  const splitE164 = (val) => {
+       if (!val) return { code: '+33', national: '' };
+       const raw = String(val).trim().replace(/^00/, '+');
+       // Garde le + éventuel puis enlève tout sauf chiffres
+       const plus = raw.startsWith('+') ? '+' : '';
+       const digits = raw.replace(/[^\d]/g, '');
+       const normalized = `${plus}${digits}`;
+       const m = normalized.match(/^\+?(\d{1,3})(\d{6,14})$/);
+       if (!m) return { code: '+33', national: '' };
+       const code = `+${m[1]}`;
+       let rest = m[2];
+       // Cas FR : 9 chiffres → re-présenter en 0XXXXXXXXX
+       if (rest.length === 9 && rest[0] !== '0') rest = `0${rest}`;
+       return { code, national: rest };
+     };
 
   // Chargement initial des données
   useEffect(() => {
@@ -190,6 +218,10 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     receiverPostalCity: '',
     receiverCountry:    '',
 
+    /* ↓↓↓ AJOUTE CES 2 CHAMPS */
+  receiverPhoneMobileCode:   values?.receiverPhoneMobileCode   || '+33',
+  receiverPhoneMobileNumber: values?.receiverPhoneMobileNumber || '',
+
     /* ---------- AUTRES CHAMPS ---------- */
     goodsOrigin:        '',
     goodsDestination:   '',
@@ -239,11 +271,14 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       }
     });
     if (currentSection === 1 && isNewDestinataire) {
-      const phone = safeValues.receiverAddress2 || '';
-      if (!isValidInternationalPhone(phone)) {
-        missingFields.push('receiverAddress2');
+      const okMobile =
+        safeValues.receiverPhoneMobileCode &&
+        isValidFr10(safeValues.receiverPhoneMobileNumber);
+      if (!okMobile) {
+        missingFields.push('receiverPhoneMobile');
       }
     }
+    
     console.log('Section', currentSection, '- Missing fields:', missingFields);
     return missingFields.length;
   };
@@ -564,11 +599,15 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                         (rec) => rec.id_recipient_account.toString() === selectedId
                       );
                       if (r) {
-                        handleChange('receiverName',       r.recipient_name);         // Nom
-                        handleChange('receiverAddress',    r.address_1);              // Adresse
-                        handleChange('receiverAddress2',   r.address_2);              // Complément
-                        handleChange('receiverPostalCity', r.address_3);              // Code postal / Ville
-                        handleChange('receiverCountry',    r.country_symbol_fr_recipient); // Pays
+                      handleChange('receiverName',       r.recipient_name);              // Nom
+                      handleChange('receiverAddress',    r.address_1);                   // Adresse
+                      handleChange('receiverPostalCity', r.address_3);                   // Code postal / Ville
+                      handleChange('receiverCountry',    r.country_symbol_fr_recipient); // Pays
+                      // r.address_2 contient l'E.164 (ex: +33612345678) → hydrate l'UI
+                      handleChange('receiverAddress2', r.address_2);
+                      const { code, national } = splitE164(r.address_2);
+                      handleChange('receiverPhoneMobileCode', code);
+                      handleChange('receiverPhoneMobileNumber', national);
                       }                      
                     }}
                     label="Choisir une entreprise *"
@@ -606,30 +645,96 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                   sx={{ mb: 2, ...customFieldStyle }}
                 />
               
-                {/* 3. Complément d’adresse */}
-                <TextField
-                  label="N° de téléphone *"
-                  fullWidth
-                  value={safeValues.receiverAddress2}
-                  onChange={(e) => handleChange('receiverAddress2', e.target.value)}
-                  onBlur={() => {
-                    const val = safeValues.receiverAddress2;
-                    if (val && !isValidInternationalPhone(val)) {
-                      setErrorMessage('Numéro invalide (+ ou 00, 8–16 chiffres)');
-                    }
-                  }}
-                  error={
-                    !!errorMessage &&
-                    safeValues.receiverAddress2 &&
-                    !isValidInternationalPhone(safeValues.receiverAddress2)
-                  }
-                  helperText={
-                    safeValues.receiverAddress2 && !isValidInternationalPhone(safeValues.receiverAddress2)
-                      ? 'Format incorrect.'
-                      : ''
-                  }
-                  sx={{ mb: 2, ...customFieldStyle }}
-                />
+                {/* 3. Téléphone mobile : Indicatif (avec drapeau et +) - Numéro */}
+<Box
+  sx={{
+    display: 'grid',
+    gridTemplateColumns: { xs: '1fr', sm: '240px 24px 1fr' },
+    alignItems: 'center',
+    gap: 2,
+    mb: 2,
+  }}
+>
+  {/* Indicatif */}
+  <Autocomplete
+  options={countryCodes}
+  value={countryCodes.find(c => c.code === (safeValues.receiverPhoneMobileCode || '+33')) || null}
+  onChange={(_, val) => {
+    const code = val ? val.code : '';
+    handleChange('receiverPhoneMobileCode', code);
+    const full = joinE164(code, safeValues.receiverPhoneMobileNumber);
+    handleChange('receiverAddress2', full);
+  }}
+  // permet de taper "france", "fra", "+33", "33"...
+  filterOptions={(options, state) => {
+    const q = state.inputValue.trim();
+    const nq = normalize(q.replace('+',''));
+    return options.filter(o => {
+      const name = normalize(o.name);
+      const digits = o.code.replace('+','');
+      return (
+        name.includes(nq) ||
+        digits.startsWith(nq) ||
+        (`+${digits}`).startsWith(q)
+      );
+    });
+  }}
+  getOptionLabel={(opt) => opt ? `${opt.flag} ${opt.code} — ${opt.name}` : ''}
+  isOptionEqualToValue={(o, v) => o.code === v.code}
+  renderInput={(params) => (
+    <TextField
+      {...params}
+      label="Indicatif (mobile)"
+      sx={{ ...customFieldStyle }}
+      placeholder="France, +33…"
+    />
+  )}
+  autoHighlight
+  disableClearable
+/>
+
+
+  {/* Séparateur " - " */}
+  <Typography
+    variant="h6"
+    component="div"
+    sx={{ textAlign: 'center', userSelect: 'none' }}
+    aria-hidden
+  >
+    -
+  </Typography>
+
+  {/* Numéro FR (0XXXXXXXXX) */}
+  <TextField
+    fullWidth
+    required
+    label="Numéro mobile"
+    placeholder="0XXXXXXXXX"
+    value={safeValues.receiverPhoneMobileNumber || ''}
+    onChange={(e) => {
+      const val = e.target.value;
+      if (isUpTo10Digits(val)) {
+        handleChange('receiverPhoneMobileNumber', val);
+        // Synchronise E.164 dans receiverAddress2
+        const full = joinE164(safeValues.receiverPhoneMobileCode, val);
+        handleChange('receiverAddress2', full);
+      }
+    }}
+    inputProps={{ maxLength: 10 }}
+    error={
+      !!safeValues.receiverPhoneMobileNumber &&
+      !isValidFr10(safeValues.receiverPhoneMobileNumber)
+    }
+    helperText={
+      safeValues.receiverPhoneMobileNumber &&
+      !isValidFr10(safeValues.receiverPhoneMobileNumber)
+        ? "Doit commencer par 0 et contenir 10 chiffres"
+        : ""
+    }
+    sx={{ ...customFieldStyle }}
+  />
+</Box>
+
               
                 {/* 4. Code postal / Ville */}
                 <TextField
@@ -882,14 +987,17 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
                       </Select>
                     </FormControl>
                     <TextField
-                      label="Référence doc. justificatif"
-                      variant="outlined"
-                      fullWidth
-                      value={m.docReference || ''}
-                      onChange={(e) => handleMerchChange(index, 'docReference', e.target.value)}
-                      disabled={!isEditable}
-                      sx={{ ...customFieldStyle }}
-                    />
+  label="Référence doc. justificatif"
+  placeholder="Ex : n° Bill of Lading, certificat sanitaire, Air Waybill…"
+  helperText="Exemples : n° Bill of Lading, certificat sanitaire, Air Waybill, etc."
+  variant="outlined"
+  fullWidth
+  value={m.docReference || ''}
+  onChange={(e) => handleMerchChange(index, 'docReference', e.target.value)}
+  disabled={!isEditable}
+  sx={{ ...customFieldStyle }}
+/>
+
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                       {isEditable ? (
                         <IconButton
@@ -1110,7 +1218,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
       <Button
         variant="contained"
-        onClick={prevStep}
+        onClick={onBack}
         sx={{
           backgroundColor: '#DCAF26',
           '&:hover': {

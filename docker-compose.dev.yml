@@ -23,6 +23,7 @@ services:
       - /usr/src/app/node_modules
       - ./backend/data:/usr/src/app/data
     environment:
+      - RECAPTCHA_SECRET_KEY=${RECAPTCHA_SECRET_KEY}
       - JWT_SECRET=your_jwt_secret
     networks:
       - app-network

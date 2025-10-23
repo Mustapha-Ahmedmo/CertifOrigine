@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { login } from '../slices/authSlice';
@@ -22,6 +22,8 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import logo from '../assets/logo3.jpeg';
 import backgroundImage from '../assets/image_ccd.jpeg';
 
+const SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -32,6 +34,9 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  const [submitting, setSubmitting] = useState(false);
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,7 +53,7 @@ const Login = () => {
       setErrorMessage("Certaines de vos informations sont incorrectes. Réessayez.");
     }
   };
-
+  
   const textFieldSx = {
     mb: 2,
     backgroundColor: '#eaeaea',
@@ -62,7 +67,6 @@ const Login = () => {
       color: '#DCAF26',
     },
   };
-
   return (
     <Box
       display="flex"
@@ -84,8 +88,6 @@ const Login = () => {
           maxWidth: isMobile ? '90%' : 600,
           color: 'white',
           textAlign: isMobile ? 'center' : 'left',
-          /* Au lieu de '10rem' (160px) on met moins pour éviter
-             de trop pousser le contenu et générer un scroll */
           mt: isMobile ? 2 : '3rem',
         }}
       >
@@ -110,10 +112,7 @@ const Login = () => {
             textAlign: 'justify',
           }}
         >
-          La Chambre de Commerce de Djibouti (CCD) est habilitée à effectuer une partie des
-          formalités requises par les activités à l'international des entreprises. La CCD délivre
-          les Certificats d'origine et légalise les documents commerciaux : Facture commerciales,
-          Contrats, Licences de vente, etc.
+          La Chambre de Commerce de Djibouti (CCD) est habilitée à effectuer une partie des formalités...
         </Typography>
         <Button variant="contained" color="warning" size="small">
           Lire plus
@@ -128,7 +127,6 @@ const Login = () => {
           boxShadow: 3,
           maxWidth: 400,
           width: '100%',
-          /* On réduit également ici pour éviter de trop descendre la carte */
           mt: isMobile ? 2 : '3rem',
           display: 'flex',
           flexDirection: 'column',
@@ -155,6 +153,7 @@ const Login = () => {
         >
           Connexion
         </Typography>
+
         <Box
           component="form"
           onSubmit={handleSubmit}
@@ -191,11 +190,15 @@ const Login = () => {
               ),
             }}
           />
+
+          {/* Messages d'erreur */}
           {errorMessage && (
             <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
               {errorMessage}
             </Alert>
           )}
+
+          {/* Lien MDP oublié */}
           <Link
             component={RouterLink}
             to="/forgot-password"
@@ -203,6 +206,10 @@ const Login = () => {
           >
             Mot de passe oublié ?
           </Link>
+
+          
+
+          {/* Boutons */}
           <Box
             sx={{
               display: 'flex',
@@ -219,6 +226,7 @@ const Login = () => {
               color="warning"
               size="small"
               sx={{ flex: 1 }}
+              disabled={submitting}
             >
               Créer un compte
             </Button>
@@ -228,8 +236,9 @@ const Login = () => {
               color="warning"
               size="small"
               sx={{ flex: 1 }}
+              disabled={submitting}
             >
-              Se connecter
+              {submitting ? 'Connexion…' : 'Se connecter'}
             </Button>
           </Box>
         </Box>

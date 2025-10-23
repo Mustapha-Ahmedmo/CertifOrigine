@@ -237,56 +237,54 @@ const Notifications = () => {
                     dangerouslySetInnerHTML={{ __html: memo_body || 'Pas de description.' }}
                   />
 {(() => {
-                  const files = memoFilesMap[id_memo] || []
-                  const original = files.find(f => f.id_files_repo_typeof === 1002)
-                  const copie    = files.find(f => f.id_files_repo_typeof === 1003)
-
-                  if (!original && !copie) return null
-
-                  // Construit l'URL publique pour un mémo
+                  const files = memoFilesMap[id_memo] || [];
+                  const originals = files.filter(f => f.id_files_repo_typeof === 1002);
+                  const copies    = files.filter(f => f.id_files_repo_typeof === 1003);
+                
+                  if (originals.length === 0 && copies.length === 0) return null;
+                
                   const buildUrl = (file) => {
-                    // file.file_path === "/usr/src/app/data/memos/2025/86dae320-...pdf"
-                    const parts = file.file_path.split('/')
-                    const year  = parts[parts.length - 2]   // "2025"
-                    const name  = parts[parts.length - 1]   // "86dae320-...pdf"
-                // Variante 1 : servir depuis le dossier statique
-                return `${import.meta.env.VITE_API_URL}/data/memos/${year}/${name}`
-
-                // Variante 2 : ou via votre route Express download_memo
-                // return `${import.meta.env.VITE_API_URL}/mailers/download_memo/${year}/${name}`
-                }
-                return (
-                  <Box sx={{ mt: 1 }}>
-  <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.7rem', mb: 0.5 }}>
-    Document(s) de la commande :
-  </Typography>
-  <Box sx={{ display: 'flex', flexDirection: 'column', pl: 2 }}>
-    {original && (
-      <MuiLink
-        href={buildUrl(original)}
-        target="_blank"
-        rel="noopener"
-        underline="always"
-        sx={{ fontSize: '0.7rem', mb: 0.5 }}
-      >
-        • PDF Certificat d'Origine
-      </MuiLink>
-    )}
-    {copie && (
-      <MuiLink
-        href={buildUrl(copie)}
-        target="_blank"
-        rel="noopener"
-        underline="always"
-        sx={{ fontSize: '0.7rem' }}
-      >
-        • PDF copie Certificat d'Origine
-      </MuiLink>
-    )}
-  </Box>
-</Box>
-
-                )
+                    const parts = file.file_path.split('/');
+                    const year  = parts[parts.length - 2];
+                    const name  = parts[parts.length - 1];
+                    return `${import.meta.env.VITE_API_URL}/data/memos/${year}/${name}`;
+                    // ou: return `${import.meta.env.VITE_API_URL}/mailers/download_memo/${year}/${name}`;
+                  };
+                  return (
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.7rem', mb: 0.5 }}>
+                        Document(s) de la commande :
+                      </Typography>
+                
+                      <Box sx={{ display: 'flex', flexDirection: 'column', pl: 2 }}>
+                        {originals.map((f, idx) => (
+                          <MuiLink
+                            key={`orig-${id_memo}-${idx}`}
+                            href={buildUrl(f)}
+                            target="_blank"
+                            rel="noopener"
+                            underline="always"
+                            sx={{ fontSize: '0.7rem', mb: 0.5 }}
+                          >
+                            • PDF Certificat d'Origine{originals.length > 1 ? ` (${idx + 1})` : ''}
+                          </MuiLink>
+                        ))}
+                
+                        {copies.map((f, idx) => (
+                          <MuiLink
+                            key={`copy-${id_memo}-${idx}`}
+                            href={buildUrl(f)}
+                            target="_blank"
+                            rel="noopener"
+                            underline="always"
+                            sx={{ fontSize: '0.7rem', mb: 0.5 }}
+                          >
+                            • PDF copie Certificat d'Origine {idx + 1}
+                          </MuiLink>
+                        ))}
+                      </Box>
+                    </Box>
+                  );
                 })()}
                   {isOperator && cust_name && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: '0.7rem' }}>
@@ -304,7 +302,7 @@ const Notifications = () => {
         variant="body2"
         onClick={() =>
           navigate(
-            `/dashboard/order-details?orderId=${orderIdToShow}&certifId=${id_ord_certif_ori || ''}`
+            `/order-details?orderId=${orderIdToShow}&certifId=${id_ord_certif_ori || ''}`
           )
         }
         sx={{ textDecoration: 'underline', cursor: 'pointer', fontSize: '0.7rem' }}

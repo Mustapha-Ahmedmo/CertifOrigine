@@ -1956,6 +1956,7 @@ INSERT INTO COUNTRY (SYMBOL_FR, SYMBOL_ENG) VALUES
 ('DOMINIQUE','Dominica'),
 ('EGYPTE','Egypt'),
 ('EL SALVADOR','El Salvador'),
+('EMIRATS ARABES UNIS','United Arab Emirates'),
 ('EQUATEUR','Ecuador'),
 ('ERYTHREE','Eritrea'),
 ('ETATS-UNIS','United States'),
@@ -4528,7 +4529,7 @@ BEGIN
         -- Si p_isopuser est FALSE, filtrer sur id_cust_account et typeof = p_type
         p_isopuser IS TRUE 
         OR (p_isopuser IS NOT TRUE AND me."id_cust_account" = p_id_cust_account)
-    );
+    )ORDER BY me."memo_date" DESC;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -6190,11 +6191,11 @@ CALL add_files_repo_typeof(51, 'Numéro Immatriculation RCS', 'Registration numb
 CALL add_files_repo_typeof(500, 'Certificat d''origine - Certificat sanitaire', 'Certificate of origin - Health certificate', TRUE);
 CALL add_files_repo_typeof(501, 'Certificat d''origine - Agrément exploitation', 'Certificate of origin - Operating license', TRUE);
 CALL add_files_repo_typeof(502, 'Certificat d''origine - Bill of loading', 'Certificate of origin - Bill of loading', TRUE);
-CALL add_files_repo_typeof(503, 'Certificat d''origine - Lettre de transport aérien', 'Certificate of origin - Airway Bill', TRUE);
+CALL add_files_repo_typeof(503, 'Certificat d''origine - Airway bill', 'Certificate of origin - Airway Bill', TRUE);
 CALL add_files_repo_typeof(504, 'Certificat d''origine - Facture fournisseur', 'Certificate of origin - Supplier invoice', TRUE);
 CALL add_files_repo_typeof(505, 'Certificat d''origine - Patente industrie', 'Certificate of origin - Industrial patent', TRUE);
-CALL add_files_repo_typeof(506, 'Certificat d''origine - Facture Commerciale', 'Certificate of origin - Commercial Invoice', TRUE);
-CALL add_files_repo_typeof(507, 'Certificat d''origine - Liste de colisage', 'Certificate of origin - Packing List', TRUE);
+/*CALL add_files_repo_typeof(506, 'Certificat d''origine - Facture Commerciale', 'Certificate of origin - Commercial Invoice', TRUE);
+CALL add_files_repo_typeof(507, 'Certificat d''origine - Liste de colisage', 'Certificate of origin - Packing List', TRUE);*/
 CALL add_files_repo_typeof(508, 'Certificat d''origine - Certificat de poids', 'Certificate of origin - Weight Certificate', TRUE);
 CALL add_files_repo_typeof(509, 'Certificat d''origine - Autres', 'Certificate of origin - Others', TRUE);
 

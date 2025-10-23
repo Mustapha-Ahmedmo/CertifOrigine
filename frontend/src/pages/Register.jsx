@@ -1,6 +1,7 @@
-import React, { useState, forwardRef, useEffect } from 'react';
+import React, { useState, forwardRef, useEffect, useRef } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 import {
   Container,
   Box,
@@ -50,11 +51,10 @@ import {
   addSubscriptionWithFile,
 } from '../services/apiServices';
 import { homemadeHash } from '../utils/hashUtils';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 // Fonction de validation pour un numéro de téléphone international
-const isValidInternationalPhone = (number) => {
-  return /^\+[0-9]+$/.test(number) && number.length <= 12;
-};
+
 
 // Fonction de validation pour un email au format standard
 const isValidEmail = (email) => {
@@ -66,6 +66,9 @@ const Alert = forwardRef(function Alert(props, ref) {
 });
 
 const Register = () => {
+  const SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const recaptchaRef = useRef(null);
   const navigate = useNavigate();
   const allowedFileTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
 
@@ -75,8 +78,10 @@ const Register = () => {
     gender: 'Mr',
     name: '',
     position: '',
-    phoneFixedNumber: '',
-    phoneMobileNumber: '',
+    phoneFixedCode: '+253', // indicatif par défaut Djibouti
+   phoneFixedNumber: '',
+   phoneMobileCode: '+253',
+   phoneMobileNumber: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -116,7 +121,9 @@ const Register = () => {
     if (reason === 'clickaway') return;
     setSnackbarOpen(false);
   };
-
+  const normalize = (s) =>
+    s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -181,11 +188,13 @@ const Register = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const phoneFixedError =
-    formData.phoneFixedNumber !== "" && !isValidInternationalPhone(formData.phoneFixedNumber);
-  const phoneMobileError =
-    formData.phoneMobileNumber !== "" && !isValidInternationalPhone(formData.phoneMobileNumber);
+  const dialOptions = countryCodes.map(c => ({
+    name: c.name,
+    code: c.code,   // e.g. "+33"
+    flag: c.flag,   // e.g. "🇫🇷"
+  }));
 
+  
   // Styles communs pour les champs
   const commonFieldSx = {
     '& .MuiOutlinedInput-root': {
@@ -212,6 +221,13 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // ✅ Bloque toute soumission (même via Entrée) si le captcha n'est pas validé
+    if (SITE_KEY && !captchaToken) {
+        setSnackbarMessage("Veuillez valider le reCAPTCHA avant de créer votre compte.");
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+        return;
+      }
     const filesToValidate = [
       { name: 'licenseFile', file: formData.licenseFile },
       { name: 'patenteFile', file: formData.patenteFile },
@@ -250,14 +266,15 @@ const Register = () => {
       setSnackbarOpen(true);
       return;
     }
-    if (!isValidInternationalPhone(formData.phoneFixedNumber)) {
-      setSnackbarMessage('Le numéro de téléphone fixe est invalide. Format international requis (max 12 caractères, commence par "+").');
+    if (!/^0\d{9}$/.test(formData.phoneFixedNumber)) {
+      setSnackbarMessage("Le numéro de téléphone fixe est invalide. Doit commencer par 0 et contenir 10 chiffres.");
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
-    if (!isValidInternationalPhone(formData.phoneMobileNumber)) {
-      setSnackbarMessage('Le numéro de téléphone portable est invalide. Format international requis (max 12 caractères, commence par "+").');
+    
+    if (!/^0\d{9}$/.test(formData.phoneMobileNumber)) {
+      setSnackbarMessage("Le numéro de téléphone portable est invalide. Doit commencer par 0 et contenir 10 chiffres.");
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
@@ -270,8 +287,8 @@ const Register = () => {
       return;
     }
     try {
-      const fullPhoneFixed = formData.phoneFixedNumber;
-      const fullPhoneMobile = formData.phoneMobileNumber;
+      const fullPhoneFixed = `${formData.phoneFixedCode}${formData.phoneFixedNumber}`;
+      const fullPhoneMobile = `${formData.phoneMobileCode}${formData.phoneMobileNumber}`;
       const legalForm = formData.companyCategory === 'Autre' ? null : formData.companyCategory;
       const otherLegalForm = formData.companyCategory === 'Autre' ? formData.otherCompanyCategory : null;
 
@@ -333,6 +350,7 @@ const Register = () => {
         licenseFile: formData.isFreeZoneCompany ? formData.licenseFile : null,
         patenteFile: formData.isOtherCompany ? formData.patenteFile : null,
         rchFile: null,
+        captchaToken: captchaToken || undefined,
       };
 
       const response = await addSubscriptionWithFile(subscriptionData);
@@ -341,6 +359,9 @@ const Register = () => {
       setSnackbarMessage('Inscription réussie');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
+      // ✅ reset du captcha après succès
+      setCaptchaToken(null);
+      if (recaptchaRef.current) recaptchaRef.current.reset();
       navigate('/account-created');
     } catch (err) {
       setError(err.message);
@@ -603,10 +624,17 @@ const Register = () => {
                 </Typography>
 
                 {formData.licenseFile && (
-                  <Typography variant="caption" sx={{ ml: 1 }}>
-                    {formData.licenseFile.name}
-                  </Typography>
-                )}
+  <Box display="flex" alignItems="center" mt={1}>
+    <Typography variant="caption">{formData.licenseFile.name}</Typography>
+    <IconButton
+      size="small"
+      onClick={() => setFormData((prev) => ({ ...prev, licenseFile: null }))}
+      sx={{ ml: 1, color: 'red' }}
+    >
+      ✖
+    </IconButton>
+  </Box>
+)}
               </Grid>
             </>
           )}
@@ -651,10 +679,17 @@ const Register = () => {
                 </Typography>
 
                 {formData.patenteFile && (
-                  <Typography variant="caption" sx={{ ml: 1 }}>
-                    {formData.patenteFile.name}
-                  </Typography>
-                )}
+  <Box display="flex" alignItems="center" mt={1}>
+    <Typography variant="caption">{formData.patenteFile.name}</Typography>
+    <IconButton
+      size="small"
+      onClick={() => setFormData((prev) => ({ ...prev, patenteFile: null }))}
+      sx={{ ml: 1, color: 'red' }}
+    >
+      ✖
+    </IconButton>
+  </Box>
+)}
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -714,45 +749,154 @@ const Register = () => {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              required
-              fullWidth
-              label="Téléphone (fixe, format international)"
-              name="phoneFixedNumber"
-              placeholder="+123456789"
-              value={formData.phoneFixedNumber}
-              onChange={handleChange}
-              inputProps={{ maxLength: 12 }}
-              error={phoneFixedError}
-              helperText={
-                phoneFixedError
-                  ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
-                  : ""
-              }
-              sx={commonFieldSx}
-            />
-          </Grid>
+          {/* Téléphone fixe — Indicatif */}
+<Grid item xs={12} sm={3}>
+    <Autocomplete
+  options={dialOptions}
+  value={dialOptions.find(o => o.code === formData.phoneFixedCode) || null}
+  onChange={(_, val) => { if (val) setFormData(p => ({ ...p, phoneFixedCode: val.code })); }}
+  // Show ONLY the code in the input
+  getOptionLabel={(opt) => (opt ? opt.code : '')}
+  // Let users search by country name OR digits (+33 / 33)
+  filterOptions={(options, state) => {
+    const q = state.inputValue.trim();
+    const nq = normalize(q.replace('+', ''));
+    return options.filter(o => {
+      const name = normalize(o.name);
+      const digits = o.code.replace('+', '');
+      return name.includes(nq) || digits.startsWith(nq) || (`+${digits}`).startsWith(q);
+    });
+  }}
+  renderOption={(props, option) => (
+    <li {...props}>
+      <Box display="flex" alignItems="center" gap={8}>
+        <span>{option.flag}</span>
+        <span>{option.name}</span>
+        <span>({option.code})</span>
+      </Box>
+    </li>
+  )}
+  isOptionEqualToValue={(o, v) => o.code === v.code}
+  renderInput={(params) => {
+    const current = dialOptions.find(o => o.code === formData.phoneFixedCode);
+    return (
+      <TextField
+        {...params}
+        label="Indicatif"
+        sx={commonFieldSx}
+        // 👉 Only the flag in the adornment (no code here to avoid duplicates)
+        InputProps={{
+          ...params.InputProps,
+          startAdornment: current ? <Box mr={1}>{current.flag}</Box> : params.InputProps.startAdornment,
+        }}
+      />
+    );
+  }}
+  autoHighlight
+  disableClearable
+  fullWidth
+/>
+</Grid>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              required
-              fullWidth
-              label="Téléphone (portable, format international)"
-              name="phoneMobileNumber"
-              placeholder="+123456789"
-              value={formData.phoneMobileNumber}
-              onChange={handleChange}
-              inputProps={{ maxLength: 12 }}
-              error={phoneMobileError}
-              helperText={
-                phoneMobileError
-                  ? "Format incorrect. Doit commencer par '+' suivi uniquement de chiffres et ne pas dépasser 12 caractères."
-                  : ""
-              }
-              sx={commonFieldSx}
-            />
-          </Grid>
+{/* Téléphone fixe — Numéro (10 chiffres) */}
+<Grid item xs={12} sm={3}>
+  <TextField
+    required
+    fullWidth
+    label="Numéro fixe"
+    name="phoneFixedNumber"
+    placeholder="0XXXXXXXXX"
+    value={formData.phoneFixedNumber}
+    onChange={(e) => {
+      const val = e.target.value;
+      if (/^0\d{0,9}$/.test(val)) {
+        setFormData((prev) => ({ ...prev, phoneFixedNumber: val }));
+      }
+    }}
+    inputProps={{ maxLength: 10 }}
+    error={formData.phoneFixedNumber !== "" && !/^0\d{9}$/.test(formData.phoneFixedNumber)}
+    helperText={
+      formData.phoneFixedNumber !== "" && !/^0\d{9}$/.test(formData.phoneFixedNumber)
+        ? "Doit commencer par 0 et contenir 10 chiffres"
+        : ""
+    }
+    sx={commonFieldSx}
+  />
+</Grid>
+
+{/* Téléphone portable — Indicatif */}
+<Grid item xs={12} sm={3}>
+    <Autocomplete
+  options={dialOptions}
+  value={dialOptions.find(o => o.code === formData.phoneMobileCode) || null}
+  onChange={(_, val) => { if (val) setFormData(p => ({ ...p, phoneMobileCode: val.code })); }}
+  getOptionLabel={(opt) => (opt ? opt.code : '')}
+  filterOptions={(options, state) => {
+    const q = state.inputValue.trim();
+    const nq = normalize(q.replace('+', ''));
+    return options.filter(o => {
+      const name = normalize(o.name);
+      const digits = o.code.replace('+', '');
+      return name.includes(nq) || digits.startsWith(nq) || (`+${digits}`).startsWith(q);
+    });
+  }}
+  renderOption={(props, option) => (
+    <li {...props}>
+      <Box display="flex" alignItems="center" gap={8}>
+        <span>{option.flag}</span>
+        <span>{option.name}</span>
+        <span>({option.code})</span>
+      </Box>
+    </li>
+  )}
+  isOptionEqualToValue={(o, v) => o.code === v.code}
+  renderInput={(params) => {
+    const current = dialOptions.find(o => o.code === formData.phoneMobileCode);
+    return (
+      <TextField
+        {...params}
+        label="Indicatif"
+        sx={commonFieldSx}
+        InputProps={{
+          ...params.InputProps,
+          startAdornment: current ? <Box mr={1}>{current.flag}</Box> : params.InputProps.startAdornment,
+        }}
+      />
+    );
+  }}
+  autoHighlight
+  disableClearable
+  fullWidth
+/>
+</Grid>
+
+{/* Téléphone portable — Numéro (10 chiffres) */}
+<Grid item xs={12} sm={3}>
+  <TextField
+    required
+    fullWidth
+    label="Numéro portable"
+    name="phoneMobileNumber"
+    placeholder="0XXXXXXXXX"
+    value={formData.phoneMobileNumber}
+    onChange={(e) => {
+      const val = e.target.value;
+      if (/^0\d{0,9}$/.test(val)) {
+        setFormData((prev) => ({ ...prev, phoneMobileNumber: val }));
+      }
+    }}
+    inputProps={{ maxLength: 10 }}
+    error={formData.phoneMobileNumber !== "" && !/^0\d{9}$/.test(formData.phoneMobileNumber)}
+    helperText={
+      formData.phoneMobileNumber !== "" && !/^0\d{9}$/.test(formData.phoneMobileNumber)
+        ? "Doit commencer par 0 et contenir 10 chiffres"
+        : ""
+    }
+    sx={commonFieldSx}
+  />
+</Grid>
+
+
 
           <Grid item xs={12} sm={6}>
             <TextField
@@ -855,8 +999,23 @@ const Register = () => {
           />
         </Box>
 
-        <Box mt={4} textAlign="center">
-          <Button variant="contained" type="submit" sx={commonButtonSx}>
+        {SITE_KEY && (
+          <Box mt={3} display="flex" justifyContent="center">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={SITE_KEY}
+              onChange={(token) => setCaptchaToken(token)}
+              onExpired={() => setCaptchaToken(null)}
+            />
+          </Box>
+        )}
+        <Box mt={3} textAlign="center">
+          <Button
+            variant="contained"
+            type="submit"
+            sx={commonButtonSx}
+            disabled={!!SITE_KEY && !captchaToken}
+          >
             Créer
           </Button>
         </Box>
