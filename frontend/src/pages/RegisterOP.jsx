@@ -21,6 +21,12 @@ import {
 } from '@mui/material';
 
 // --- Helpers ---
+// chiffres uniquement
+const onlyDigits = (s='') => String(s).replace(/\D/g, '');
+
+// local: 4–13 chiffres
+const isValidLocalPhone = (v) => /^\d{4,13}$/.test(onlyDigits(v));
+
 // téléphone international (édition)
 const isValidInternationalPhone = (number) => {
   return /^(?:\+|00)[1-9][0-9]*$/.test(number) && number.length >= 8 && number.length <= 16;
@@ -78,9 +84,9 @@ const RegisterOP = ({ onClose }) => {
 
   // erreurs (création)
   const localFixedError =
-    formData.phoneFixedLocal !== '' && !/^0\d{9}$/.test(formData.phoneFixedLocal);
-  const localMobileError =
-    formData.phoneMobileLocal !== '' && !/^0\d{9}$/.test(formData.phoneMobileLocal);
+  formData.phoneFixedLocal !== '' && !isValidLocalPhone(formData.phoneFixedLocal);
+const localMobileError =
+  formData.phoneMobileLocal !== '' && !isValidLocalPhone(formData.phoneMobileLocal);
 
   // Préchargement en mode édition
   useEffect(() => {
@@ -161,14 +167,14 @@ const RegisterOP = ({ onClose }) => {
       }
     } else {
       // --- Création : indicatif + local ---
-      if (!/^0\d{9}$/.test(formData.phoneFixedLocal)) {
-        setSnackbarMessage('Le numéro de téléphone fixe est invalide. Doit commencer par 0 et contenir 10 chiffres.');
+      if (!isValidLocalPhone(formData.phoneFixedLocal)) {
+        setSnackbarMessage('Numéro fixe invalide : 4 à 13 chiffres (sans indicatif).');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
         return;
       }
-      if (!/^0\d{9}$/.test(formData.phoneMobileLocal)) {
-        setSnackbarMessage('Le numéro de téléphone portable est invalide. Doit commencer par 0 et contenir 10 chiffres.');
+      if (!isValidLocalPhone(formData.phoneMobileLocal)) {
+        setSnackbarMessage('Numéro portable invalide : 4 à 13 chiffres (sans indicatif).');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
         return;
@@ -184,14 +190,10 @@ const RegisterOP = ({ onClose }) => {
 
     try {
       // concat selon mode
-      const phoneFixedToSend = id
-        ? formData.phoneFixedNumber
-        : `${formData.phoneFixedCode}${formData.phoneFixedLocal}`;
+      const stripTrunk = (s) => onlyDigits(s).replace(/^0+/, '');
 
-      const phoneMobileToSend = id
-        ? formData.phoneMobileNumber
-        : `${formData.phoneMobileCode}${formData.phoneMobileLocal}`;
-
+      const phoneFixedToSend  = id ? formData.phoneFixedNumber  : `${formData.phoneFixedCode}${stripTrunk(formData.phoneFixedLocal)}`;
+const phoneMobileToSend = id ? formData.phoneMobileNumber : `${formData.phoneMobileCode}${stripTrunk(formData.phoneMobileLocal)}`;
       const tempPassword = generateRandomPassword(12);
 
       const operatorData = {
@@ -364,20 +366,19 @@ const RegisterOP = ({ onClose }) => {
 
             {/* Fixe — Numéro local */}
             <Box sx={{ mb: 2 }}>
-              <TextField
-                label="Numéro fixe *"
-                variant="outlined"
-                name="phoneFixedLocal"
-                value={formData.phoneFixedLocal}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (/^0\d{0,9}$/.test(v)) setFormData((p) => ({ ...p, phoneFixedLocal: v }));
-                }}
-                fullWidth
-                inputProps={{ maxLength: 10 }}
-                error={localFixedError}
-                helperText={localFixedError ? 'Doit commencer par 0 et contenir 10 chiffres' : ''}
-              />
+            <TextField
+  label="Numéro fixe *"
+  name="phoneFixedLocal"
+  value={formData.phoneFixedLocal}
+  onChange={(e) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 13);
+    setFormData((p) => ({ ...p, phoneFixedLocal: digits }));
+  }}
+  fullWidth
+  inputProps={{ maxLength: 13, inputMode: 'numeric' }}
+  error={localFixedError}
+  helperText={localFixedError ? '4 à 13 chiffres (sans indicatif)' : ''}
+/>
             </Box>
 
             {/* Mobile — Indicatif */}
@@ -430,20 +431,19 @@ const RegisterOP = ({ onClose }) => {
 
             {/* Mobile — Numéro local */}
             <Box sx={{ mb: 2 }}>
-              <TextField
-                label="Numéro portable *"
-                variant="outlined"
-                name="phoneMobileLocal"
-                value={formData.phoneMobileLocal}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (/^0\d{0,9}$/.test(v)) setFormData((p) => ({ ...p, phoneMobileLocal: v }));
-                }}
-                fullWidth
-                inputProps={{ maxLength: 10 }}
-                error={localMobileError}
-                helperText={localMobileError ? 'Doit commencer par 0 et contenir 10 chiffres' : ''}
-              />
+            <TextField
+  label="Numéro portable *"
+  name="phoneMobileLocal"
+  value={formData.phoneMobileLocal}
+  onChange={(e) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 13);
+    setFormData((p) => ({ ...p, phoneMobileLocal: digits }));
+  }}
+  fullWidth
+  inputProps={{ maxLength: 13, inputMode: 'numeric' }}
+  error={localMobileError}
+  helperText={localMobileError ? '4 à 13 chiffres (sans indicatif)' : ''}
+/>
             </Box>
           </>
         )}

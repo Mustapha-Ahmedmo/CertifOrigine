@@ -41,8 +41,8 @@ const normalize = (s='') =>
 
 
 // Helpers pour la saisie FR et la concat E.164 (+336...)
-const isValidFr10 = (val) => /^0\d{9}$/.test(val);
-const isUpTo10Digits = (val) => /^0\d{0,9}$/.test(val);
+const isValidPhone = (val) => /^\d{4,13}$/.test(val);
+const isUpTo13Digits = (val) => /^\d{0,13}$/.test(val);
 
 const joinE164 = (code, national) => {
   if (!code || !national) return '';
@@ -135,13 +135,11 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
        const plus = raw.startsWith('+') ? '+' : '';
        const digits = raw.replace(/[^\d]/g, '');
        const normalized = `${plus}${digits}`;
-       const m = normalized.match(/^\+?(\d{1,3})(\d{6,14})$/);
-       if (!m) return { code: '+33', national: '' };
-       const code = `+${m[1]}`;
-       let rest = m[2];
-       // Cas FR : 9 chiffres → re-présenter en 0XXXXXXXXX
-       if (rest.length === 9 && rest[0] !== '0') rest = `0${rest}`;
-       return { code, national: rest };
+       const m = normalized.match(/^\+?(\d{1,3})(\d{4,14})$/);
+if (!m) return { code: '+33', national: '' };
+const code = `+${m[1]}`;
+const rest = m[2].slice(0, 13); // on limite l’affichage à 13 max
+return { code, national: rest };
      };
 
   // Chargement initial des données
@@ -273,7 +271,7 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
     if (currentSection === 1 && isNewDestinataire) {
       const okMobile =
         safeValues.receiverPhoneMobileCode &&
-        isValidFr10(safeValues.receiverPhoneMobileNumber);
+        isValidPhone(safeValues.receiverPhoneMobileNumber);
       if (!okMobile) {
         missingFields.push('receiverPhoneMobile');
       }
@@ -706,29 +704,26 @@ const Step2 = ({ nextStep, prevStep, handleMerchandiseChange, handleChange, valu
 
   {/* Numéro FR (0XXXXXXXXX) */}
   <TextField
-    fullWidth
-    required
-    label="Numéro mobile"
-    placeholder="0XXXXXXXXX"
-    value={safeValues.receiverPhoneMobileNumber || ''}
-    onChange={(e) => {
-      const val = e.target.value;
-      if (isUpTo10Digits(val)) {
-        handleChange('receiverPhoneMobileNumber', val);
-        // Synchronise E.164 dans receiverAddress2
-        const full = joinE164(safeValues.receiverPhoneMobileCode, val);
-        handleChange('receiverAddress2', full);
-      }
-    }}
-    inputProps={{ maxLength: 10 }}
-    error={
-      !!safeValues.receiverPhoneMobileNumber &&
-      !isValidFr10(safeValues.receiverPhoneMobileNumber)
+  fullWidth
+  required
+  label="Numéro mobile"
+  placeholder="XXXXXXXX"
+  value={safeValues.receiverPhoneMobileNumber || ''}
+  onChange={(e) => {
+    const val = e.target.value;
+    if (isUpTo13Digits(val)) {
+      handleChange('receiverPhoneMobileNumber', val);
+      // Synchronise E.164 dans receiverAddress2
+      const full = joinE164(safeValues.receiverPhoneMobileCode, val);
+      handleChange('receiverAddress2', full);
     }
+  }}
+    inputProps={{ input: { maxLength: 13, inputMode: 'numeric' } }}
+    error={!!safeValues.receiverPhoneMobileNumber && !isValidPhone(safeValues.receiverPhoneMobileNumber)}
     helperText={
       safeValues.receiverPhoneMobileNumber &&
-      !isValidFr10(safeValues.receiverPhoneMobileNumber)
-        ? "Doit commencer par 0 et contenir 10 chiffres"
+      !isValidPhone(safeValues.receiverPhoneMobileNumber)
+        ? "4 à 13 chiffres, sans espaces"
         : ""
     }
     sx={{ ...customFieldStyle }}
