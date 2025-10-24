@@ -53,8 +53,8 @@ const isValidInternationalPhone = (value) => {
   return /^(?:\+|00)[1-9][0-9]*$/.test(value) && value.length >= 8 && value.length <= 16;
 };
 
-// Validation numéro local FR-like (0 + 9 chiffres)
-const isValidLocalPhone = (v) => /^0\d{9}$/.test(v);
+// Validation numéro local : 4–13 chiffres, sans contrainte de 0
+const isValidLocalPhone = (v) => /^\d{4,13}$/.test(String(v || '').replace(/\D/g, ''));
 
 // helpers Autocomplete
 const normalize = (s) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
@@ -209,7 +209,7 @@ const DestinataireList = () => {
         return;
       }
       if (!isValidLocalPhone(newRecipient.phoneLocal)) {
-        setErrorMessage("Numéro local invalide. Doit commencer par 0 et contenir 10 chiffres.");
+        setErrorMessage("Numéro local invalide. 4 à 13 chiffres (sans indicatif).");
         return;
       }
     }
@@ -219,9 +219,8 @@ const DestinataireList = () => {
 
       // Compose le téléphone pour la création, inchangé en édition
       const phoneToSave = editingRecipientId
-        ? newRecipient.address2
-        : `${newRecipient.phoneCode}${newRecipient.phoneLocal}`;
-
+  ? newRecipient.address2
+  : `${newRecipient.phoneCode}${newRecipient.phoneLocal.replace(/^0+/, '')}`;
       const payload = {
         idRecipientAccount: editingRecipientId ? editingRecipientId : null,
         idCustAccount: customerAccountId,
@@ -507,19 +506,19 @@ const DestinataireList = () => {
                 fullWidth
                 variant="outlined"
                 value={newRecipient.phoneLocal}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (/^0\d{0,9}$/.test(v)) handleNewRecipientChange('phoneLocal', v);
-                }}
-                inputProps={{ maxLength: 10 }}
-                error={!!newRecipient.phoneLocal && !isValidLocalPhone(newRecipient.phoneLocal)}
-                helperText={
-                  !!newRecipient.phoneLocal && !isValidLocalPhone(newRecipient.phoneLocal)
-                    ? 'Doit commencer par 0 et contenir 10 chiffres'
-                    : ''
-                }
-                sx={{ mb: 2 }}
-              />
+  onChange={(e) => {
+    // n’autoriser que des chiffres et limiter à 13
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 13);
+    handleNewRecipientChange('phoneLocal', digitsOnly);
+  }}
+  inputProps={{ maxLength: 13, inputMode: 'numeric' }}
+  error={!!newRecipient.phoneLocal && !isValidLocalPhone(newRecipient.phoneLocal)}
+  helperText={
+    !!newRecipient.phoneLocal && !isValidLocalPhone(newRecipient.phoneLocal)
+      ? '4 à 13 chiffres (sans indicatif)'
+      : ''
+  }
+/>
             </>
           )}
 

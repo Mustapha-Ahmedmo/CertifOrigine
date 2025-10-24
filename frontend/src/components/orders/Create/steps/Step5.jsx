@@ -58,8 +58,8 @@ const normalize = (s='') =>
   s.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
 
 // Helpers téléphone (même logique que Step2)
-const isValidFr10 = (val) => /^0\d{9}$/.test(val);
-const isUpTo10Digits = (val) => /^0\d{0,9}$/.test(val);
+const isValidPhone = (val) => /^\d{4,13}$/.test(val);
+const isUpTo13Digits = (val) => /^\d{0,13}$/.test(val);
 const joinE164 = (code, national) => {
   if (!code || !national) return '';
   const plusCode = code.replace(/^00/, '+');
@@ -517,10 +517,10 @@ const Step5 = ({
   const handleSaveNewRecipient = async () => {
         // Validation téléphone : indicatif + numéro FR 10 chiffres (0XXXXXXXXX)
         const okMobile =
-          !!newRecipientLocal.receiverPhoneMobileCode &&
-          isValidFr10(newRecipientLocal.receiverPhoneMobileNumber);
+        !!newRecipientLocal.receiverPhoneMobileCode &&
+        isValidPhone(newRecipientLocal.receiverPhoneMobileNumber);
         if (!okMobile) {
-          setErrorMessage('Numéro mobile invalide (ex: 0XXXXXXXXX) ou indicatif manquant.');
+          setErrorMessage('Numéro mobile invalide : 4 à 13 chiffres (sans espaces) ou indicatif manquant.');
           return;
         }
         // Concat E.164 pour l’API
@@ -1991,36 +1991,31 @@ const Step5 = ({
 
   {/* Numéro FR (0XXXXXXXXX) */}
   <TextField
-    fullWidth
-    required
-    label="Numéro mobile"
-    placeholder="0XXXXXXXXX"
-    value={newRecipientLocal.receiverPhoneMobileNumber}
-    onChange={(e) => {
-      const val = e.target.value;
-      if (!isUpTo10Digits(val)) return;
-      setNewRecipientLocal((prev) => {
-        const next = { ...prev, receiverPhoneMobileNumber: val };
-        // MAJ E.164 pour l’API
-        next.receiverAddress2 = joinE164(
-          next.receiverPhoneMobileCode,
-          val
-        );
-        return next;
-      });
-    }}
-    inputProps={{ maxLength: 10 }}
-    error={
-      !!newRecipientLocal.receiverPhoneMobileNumber &&
-      !isValidFr10(newRecipientLocal.receiverPhoneMobileNumber)
-    }
-    helperText={
-      newRecipientLocal.receiverPhoneMobileNumber &&
-      !isValidFr10(newRecipientLocal.receiverPhoneMobileNumber)
-        ? 'Doit commencer par 0 et contenir 10 chiffres'
-        : ''
-    }
-  />
+  fullWidth
+  required
+  label="Numéro mobile"
+  placeholder="XXXXXXXX"
+  value={newRecipientLocal.receiverPhoneMobileNumber}
+  onChange={(e) => {
+    const val = e.target.value;
+    if (!isUpTo13Digits(val)) return;
+    setNewRecipientLocal((prev) => {
+      const next = { ...prev, receiverPhoneMobileNumber: val };
+      // MAJ E.164 pour l’API
+      next.receiverAddress2 = joinE164(next.receiverPhoneMobileCode, val);
+      return next;
+    });
+  }}
+  // MUI v6 : inputProps est déprécié → slotProps
+  slotProps={{ input: { maxLength: 13, inputMode: 'numeric' } }}
+  error={!!newRecipientLocal.receiverPhoneMobileNumber && !isValidPhone(newRecipientLocal.receiverPhoneMobileNumber)}
+  helperText={
+    newRecipientLocal.receiverPhoneMobileNumber &&
+    !isValidPhone(newRecipientLocal.receiverPhoneMobileNumber)
+      ? '4 à 13 chiffres, sans espaces'
+      : ''
+  }
+/>
 </Box>
 <Divider sx={{ my: 1 }} />
 

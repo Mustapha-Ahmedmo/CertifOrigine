@@ -58,8 +58,8 @@ const joinE164 = (code, national) => {
   return `${cleanCode}${natNoTrunk}`;
 };
 
-// Numéro national : 6–14 chiffres
-const isValidNational = (n) => /^\d{6,14}$/.test(onlyDigits(n));
+// Numéro national : 4–13 chiffres
+const isValidNational = (n) => /^\d{4,13}$/.test(onlyDigits(n));
 
 // E.164 (international) : + suivi de 6–15 chiffres
 const isValidInternationalPhone = (v) => /^\+[0-9]{6,15}$/.test(String(v || ''));
@@ -325,11 +325,11 @@ const ContactsList = () => {
         return;
       }
       if (!isValidNational(phone_national)) {
-        setModalError('Téléphone fixe : entre 6 et 14 chiffres (sans indicatif).');
+        setModalError('Téléphone fixe : 4 à 13 chiffres (sans indicatif).');
         return;
       }
       if (!isValidNational(mobile_national)) {
-        setModalError('Téléphone portable : entre 6 et 14 chiffres (sans indicatif).');
+        setModalError('Téléphone portable : 4 à 13 chiffres (sans indicatif).');
         return;
       }
       phone_number_to_send = joinE164(phone_code, phone_national);
@@ -706,13 +706,13 @@ const ContactsList = () => {
                   value={currentContact.phone_national || ''}
                   onChange={(e) => handleChange('phone_national', e.target.value)}
                   inputProps={{ maxLength: 14 }}
-                  error={currentContact.phone_national !== '' && !isValidNational(currentContact.phone_national)}
-                  helperText={
-                    currentContact.phone_national !== '' && !isValidNational(currentContact.phone_national)
-                      ? 'Entre 6 et 14 chiffres (sans indicatif)'
-                      : ''
-                  }
-                />
+  error={currentContact.phone_national !== '' && !isValidNational(currentContact.phone_national)}
+  helperText={
+    currentContact.phone_national !== '' && !isValidNational(currentContact.phone_national)
+      ? 'Entre 6 et 14 chiffres (sans indicatif)'
+      : ''
+  }
+/>
               </Box>
 
               {/* Mobile */}
@@ -766,14 +766,14 @@ const ContactsList = () => {
                   placeholder="numéro national"
                   value={currentContact.mobile_national || ''}
                   onChange={(e) => handleChange('mobile_national', e.target.value)}
-                  inputProps={{ maxLength: 14 }}
-                  error={currentContact.mobile_national !== '' && !isValidNational(currentContact.mobile_national)}
-                  helperText={
-                    currentContact.mobile_national !== '' && !isValidNational(currentContact.mobile_national)
-                      ? 'Entre 6 et 14 chiffres (sans indicatif)'
-                      : ''
-                  }
-                />
+                  slotProps={{ input: { maxLength: 13, inputMode: 'numeric' } }}
+  error={currentContact.mobile_national !== '' && !isValidNational(currentContact.mobile_national)}
+  helperText={
+    currentContact.mobile_national !== '' && !isValidNational(currentContact.mobile_national)
+      ? '4 à 13 chiffres (sans indicatif)'
+      : ''
+  }
+/>
               </Box>
             </>
           )}

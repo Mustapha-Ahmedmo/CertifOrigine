@@ -266,15 +266,15 @@ const Register = () => {
       setSnackbarOpen(true);
       return;
     }
-    if (!/^0\d{9}$/.test(formData.phoneFixedNumber)) {
-      setSnackbarMessage("Le numéro de téléphone fixe est invalide. Doit commencer par 0 et contenir 10 chiffres.");
+    if (!/^\d{4,13}$/.test(formData.phoneFixedNumber)) {
+      setSnackbarMessage("Le numéro de téléphone fixe est invalide. Il doit contenir entre 4 et 13 chiffres (sans espaces).");
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
     
-    if (!/^0\d{9}$/.test(formData.phoneMobileNumber)) {
-      setSnackbarMessage("Le numéro de téléphone portable est invalide. Doit commencer par 0 et contenir 10 chiffres.");
+    if (!/^\d{4,13}$/.test(formData.phoneMobileNumber)) {
+      setSnackbarMessage("Le numéro de téléphone portable est invalide. Il doit contenir entre 4 et 13 chiffres (sans espaces).");
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
@@ -800,28 +800,28 @@ const Register = () => {
 
 {/* Téléphone fixe — Numéro (10 chiffres) */}
 <Grid item xs={12} sm={3}>
-  <TextField
-    required
-    fullWidth
-    label="Numéro fixe"
-    name="phoneFixedNumber"
-    placeholder="0XXXXXXXXX"
-    value={formData.phoneFixedNumber}
-    onChange={(e) => {
-      const val = e.target.value;
-      if (/^0\d{0,9}$/.test(val)) {
-        setFormData((prev) => ({ ...prev, phoneFixedNumber: val }));
-      }
-    }}
-    inputProps={{ maxLength: 10 }}
-    error={formData.phoneFixedNumber !== "" && !/^0\d{9}$/.test(formData.phoneFixedNumber)}
-    helperText={
-      formData.phoneFixedNumber !== "" && !/^0\d{9}$/.test(formData.phoneFixedNumber)
-        ? "Doit commencer par 0 et contenir 10 chiffres"
-        : ""
+<TextField
+  required
+  fullWidth
+  label="Numéro fixe"
+  name="phoneFixedNumber"
+  placeholder="XXXXXXXX"
+  value={formData.phoneFixedNumber}
+  onChange={(e) => {
+    const val = e.target.value;
+    if (/^\d{0,13}$/.test(val)) {
+      setFormData((prev) => ({ ...prev, phoneFixedNumber: val }));
     }
-    sx={commonFieldSx}
-  />
+  }}
+  inputProps={{ maxLength: 13 }}
+  error={formData.phoneFixedNumber !== "" && !/^\d{4,13}$/.test(formData.phoneFixedNumber)}
+  helperText={
+    formData.phoneFixedNumber !== "" && !/^\d{4,13}$/.test(formData.phoneFixedNumber)
+      ? "4 à 13 chiffres, sans espaces"
+      : ""
+  }
+  sx={commonFieldSx}
+/>
 </Grid>
 
 {/* Téléphone portable — Indicatif */}
@@ -872,28 +872,28 @@ const Register = () => {
 
 {/* Téléphone portable — Numéro (10 chiffres) */}
 <Grid item xs={12} sm={3}>
-  <TextField
-    required
-    fullWidth
-    label="Numéro portable"
-    name="phoneMobileNumber"
-    placeholder="0XXXXXXXXX"
-    value={formData.phoneMobileNumber}
-    onChange={(e) => {
-      const val = e.target.value;
-      if (/^0\d{0,9}$/.test(val)) {
-        setFormData((prev) => ({ ...prev, phoneMobileNumber: val }));
-      }
-    }}
-    inputProps={{ maxLength: 10 }}
-    error={formData.phoneMobileNumber !== "" && !/^0\d{9}$/.test(formData.phoneMobileNumber)}
-    helperText={
-      formData.phoneMobileNumber !== "" && !/^0\d{9}$/.test(formData.phoneMobileNumber)
-        ? "Doit commencer par 0 et contenir 10 chiffres"
-        : ""
+<TextField
+  required
+  fullWidth
+  label="Numéro portable"
+  name="phoneMobileNumber"
+  placeholder="XXXXXXXX"
+  value={formData.phoneMobileNumber}
+  onChange={(e) => {
+    const val = e.target.value;
+    if (/^\d{0,13}$/.test(val)) {
+      setFormData((prev) => ({ ...prev, phoneMobileNumber: val }));
     }
-    sx={commonFieldSx}
-  />
+  }}
+  inputProps={{ maxLength: 13 }}
+  error={formData.phoneMobileNumber !== "" && !/^\d{4,13}$/.test(formData.phoneMobileNumber)}
+  helperText={
+    formData.phoneMobileNumber !== "" && !/^\d{4,13}$/.test(formData.phoneMobileNumber)
+      ? "4 à 13 chiffres, sans espaces"
+      : ""
+  }
+  sx={commonFieldSx}
+/>
 </Grid>
 
 
