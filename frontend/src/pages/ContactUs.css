@@ -85,6 +85,22 @@ button.send-message-btn {
 button.send-message-btn:hover {
   background-color: #b38307;
 }
+/* ÉTAT DÉSACTIVÉ (grisé) */
+button.send-message-btn:disabled,
+button.send-message-btn[disabled] {
+  background-color: #c9c9c9;
+  color: #6b6b6b;
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+  transform: none;
+  pointer-events: none; /* neutralise tout hover/clic */
+}
+
+/* (facultatif) si tu gardes le hover, neutralise-le quand disabled */
+button.send-message-btn:disabled:hover {
+  background-color: #c9c9c9;
+}
 
 /* Section responsable produit */
 .responsable-section {
