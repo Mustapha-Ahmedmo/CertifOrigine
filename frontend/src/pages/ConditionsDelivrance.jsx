@@ -1,8 +1,12 @@
 import React from "react";
+import { Link, useLocation } from "react-router-dom";
 import "./ConditionsDelivrance.css";
 
 export default function ConditionsDelivrance() {
-  return (
+    const location = useLocation();
+    const isInDashboard = location.pathname.startsWith('/dashboard');
+    
+    return (
     <div className="cgv-page">
       <h1 className="cgv-title">
         CONDITIONS GÉNÉRALES DE VENTE (CGV)
@@ -143,6 +147,12 @@ export default function ConditionsDelivrance() {
         La validation d’une demande vaut acceptation pleine et irrévocable des
         présentes CGV.
       </p>
+      {!isInDashboard && (
+  <div className="back-to-login-container">
+    <Link to="/login">Revenir à la page de connexion</Link>
+  </div>
+)}
+
     </div>
   );
 }

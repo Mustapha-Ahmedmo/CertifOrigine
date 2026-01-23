@@ -100,6 +100,15 @@ body {
   cursor: pointer;
 }
 
+/* Force liens en noir sur certaines pages */
+.hl-page-header.hl-dark-text .hl-nav-links a {
+  color: #111 !important;
+}
+
+.hl-page-header.hl-dark-text .hl-hamburger-button {
+  color: #111 !important;
+}
+
 @media (max-width: 768px) {
   .hl-page-header {
     position: relative;
