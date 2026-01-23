@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import "./Faq.css";
 
 export default function Faq() {
@@ -72,7 +73,9 @@ export default function Faq() {
     ],
     []
   );
-
+  const location = useLocation();
+  const isInDashboard = location.pathname.startsWith('/dashboard');
+  
   const [openIndex, setOpenIndex] = useState(0);
 
   const toggle = (idx) => {
@@ -126,6 +129,12 @@ export default function Faq() {
           );
         })}
       </div>
+      {!isInDashboard && (
+  <div className="back-to-login-container">
+    <Link to="/login">Revenir à la page de connexion</Link>
+  </div>
+)}
+
     </div>
   );
 }
