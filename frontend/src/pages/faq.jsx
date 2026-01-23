@@ -38,49 +38,23 @@ export default function Faq() {
         ],
         isList: true,
       },
-      {
-        q: "7. Délais de délivrance",
-        a: "Les demandes sont généralement traitées immédiatement pour les entreprises vérifiées, ou sous 24h selon la complexité.",
-      },
-      {
-        q: "8. Frais de délivrance",
-        a: "Les frais varient selon la demande. Ils sont affichés sur la plateforme.",
-      },
-      {
-        q: "9. Que faire en cas de problèmes techniques ?",
-        a: "Vérifier la connexion, essayer un autre navigateur ou réduire la taille des documents. En cas de persistance : support@ccd.dj / +253 21351070.",
-      },
-      {
-        q: "10. À qui m’adresser pour des questions administratives ?",
-        a: "Service Délivrance C.O. – Chambre de Commerce.\nEmail : support@ccd.dj\nTéléphone : (+253) 21351070",
-      },
-      {
-        q: "11. Comment suivre ma demande ?",
-        a: "A chaque modification du statut de votre demande, vous réserverez une notification de la part de la CCD.",
-      },
-      {
-        q: "12. Validité internationale du C.O.",
-        a: "Le C.O. est valable internationalement mais certains pays exigent des formats spécifiques. Vérifiez toujours les exigences du pays importateur.",
-      },
-      {
-        q: "13. Modification d’une demande",
-        a: "Une modification est possible tant que la demande n’a pas été validée. Après validation, une nouvelle demande est requise.",
-      },
-      {
-        q: "14. Sécurisation du certificat d’origine en ligne",
-        a: "Le document inclut un QR code de vérification, une signature électronique et un numéro unique garantissant son authenticité.",
-      },
+      { q: "7. Délais de délivrance", a: "Les demandes sont généralement traitées immédiatement pour les entreprises vérifiées, ou sous 24h selon la complexité." },
+      { q: "8. Frais de délivrance", a: "Les frais varient selon la demande. Ils sont affichés sur la plateforme." },
+      { q: "9. Que faire en cas de problèmes techniques ?", a: "Vérifier la connexion, essayer un autre navigateur ou réduire la taille des documents. En cas de persistance : support@ccd.dj / +253 21351070." },
+      { q: "10. À qui m’adresser pour des questions administratives ?", a: "Service Délivrance C.O. – Chambre de Commerce.\nEmail : support@ccd.dj\nTéléphone : (+253) 21351070" },
+      { q: "11. Comment suivre ma demande ?", a: "A chaque modification du statut de votre demande, vous réserverez une notification de la part de la CCD." },
+      { q: "12. Validité internationale du C.O.", a: "Le C.O. est valable internationalement mais certains pays exigent des formats spécifiques. Vérifiez toujours les exigences du pays importateur." },
+      { q: "13. Modification d’une demande", a: "Une modification est possible tant que la demande n’a pas été validée. Après validation, une nouvelle demande est requise." },
+      { q: "14. Sécurisation du certificat d’origine en ligne", a: "Le document inclut un QR code de vérification, une signature électronique et un numéro unique garantissant son authenticité." },
     ],
     []
   );
-  const location = useLocation();
-  const isInDashboard = location.pathname.startsWith('/dashboard');
-  
-  const [openIndex, setOpenIndex] = useState(0);
 
-  const toggle = (idx) => {
-    setOpenIndex((prev) => (prev === idx ? -1 : idx));
-  };
+  const location = useLocation();
+  const isInDashboard = location.pathname.startsWith("/dashboard");
+
+  const [openIndex, setOpenIndex] = useState(0);
+  const toggle = (idx) => setOpenIndex((prev) => (prev === idx ? -1 : idx));
 
   return (
     <div className="faq-page">
@@ -91,6 +65,12 @@ export default function Faq() {
         <p className="faq-subtitle">
           Retrouvez ici les réponses aux questions les plus fréquentes.
         </p>
+
+        {!isInDashboard && (
+          <div className="back-to-login-container">
+            <Link to="/login">Revenir à la page de connexion</Link>
+          </div>
+        )}
       </div>
 
       <div className="faq-list">
@@ -129,12 +109,6 @@ export default function Faq() {
           );
         })}
       </div>
-      {!isInDashboard && (
-  <div className="back-to-login-container">
-    <Link to="/login">Revenir à la page de connexion</Link>
-  </div>
-)}
-
     </div>
   );
 }
