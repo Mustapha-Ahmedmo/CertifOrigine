@@ -30,6 +30,8 @@ import DestinataireList from '../pages/DestinataireList';
 import CgvPage from '../pages/CgvPage';
 import PrestationServicePage from '../pages/PrestationServicePage';
 import MentionsLegalesPage from '../pages/MentionsLegalesPage';
+import Faq from '../pages/Faq';
+import ConditionsDelivrance from '../pages/ConditionsDelivrance';
 
 // Pages du dashboard
 import Home from '../pages/Home';
@@ -207,6 +209,13 @@ const App = () => {
           <Route path="/register" element={<Register />}>
             <Route index element={<Login />} />
           </Route>
+          <Route path="/faq" element={<HeaderLayout />}>
+  <Route index element={<Faq />} />
+</Route>
+
+<Route path="/conditions" element={<HeaderLayout />}>
+  <Route index element={<ConditionsDelivrance />} />
+</Route>
 
           {/* Catch-all (404) : renvoie vers "/" */}
           <Route path="*" element={<Navigate to="/" replace />} />
