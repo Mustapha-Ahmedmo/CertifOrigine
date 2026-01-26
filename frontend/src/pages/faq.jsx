@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import "./Faq.css";
+import "./faq.css";
 
 export default function Faq() {
   const faqItems = useMemo(
@@ -38,7 +38,10 @@ export default function Faq() {
         ],
         isList: true,
       },
-      { q: "7. Délais de délivrance", a: "Les demandes sont généralement traitées immédiatement pour les entreprises vérifiées, ou sous 24h selon la complexité." },
+      {
+        q: "7. Délais de délivrance",
+        a: "Les demandes sont généralement traitées immédiatement pour les entreprises vérifiées, ou sous 24h selon la complexité.",
+      },
       { q: "8. Frais de délivrance", a: "Les frais varient selon la demande. Ils sont affichés sur la plateforme." },
       { q: "9. Que faire en cas de problèmes techniques ?", a: "Vérifier la connexion, essayer un autre navigateur ou réduire la taille des documents. En cas de persistance : support@ccd.dj / +253 21351070." },
       { q: "10. À qui m’adresser pour des questions administratives ?", a: "Service Délivrance C.O. – Chambre de Commerce.\nEmail : support@ccd.dj\nTéléphone : (+253) 21351070" },
@@ -59,18 +62,8 @@ export default function Faq() {
   return (
     <div className="faq-page">
       <div className="faq-hero">
-        <h1 className="faq-title">
-          FAQ – Service de Délivrance en Ligne du Certificat d’Origine
-        </h1>
-        <p className="faq-subtitle">
-          Retrouvez ici les réponses aux questions les plus fréquentes.
-        </p>
-
-        {!isInDashboard && (
-          <div className="back-to-login-container">
-            <Link to="/login">Revenir à la page de connexion</Link>
-          </div>
-        )}
+        <h1 className="faq-title">FAQ – Service de Délivrance en Ligne du Certificat d’Origine</h1>
+        <p className="faq-subtitle">Retrouvez ici les réponses aux questions les plus fréquentes.</p>
       </div>
 
       <div className="faq-list">
@@ -79,11 +72,7 @@ export default function Faq() {
 
           return (
             <div key={idx} className={`faq-item ${isOpen ? "open" : ""}`}>
-              <button
-                type="button"
-                className="faq-question"
-                onClick={() => toggle(idx)}
-              >
+              <button type="button" className="faq-question" onClick={() => toggle(idx)}>
                 <span className="faq-q">{item.q}</span>
                 <span className={`faq-icon ${isOpen ? "open" : ""}`}>⌄</span>
               </button>
@@ -109,6 +98,12 @@ export default function Faq() {
           );
         })}
       </div>
+
+      {!isInDashboard && (
+        <div className="back-to-login-container">
+          <Link to="/login">Revenir à la page de connexion</Link>
+        </div>
+      )}
     </div>
   );
 }

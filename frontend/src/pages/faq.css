@@ -1,7 +1,7 @@
 .faq-page {
     max-width: 1000px;
     margin: 0 auto;
-    padding: 140px 16px 48px; /* laisse la place au header fixed (plus safe que 110) */
+    padding: 160px 16px 48px; /* laisse la place au header fixed avec marge supplémentaire */
     position: relative;
     z-index: 1;
   }
@@ -94,4 +94,16 @@
   .back-to-login-container a:hover {
     text-decoration: underline;
   }
+  
+  .faq-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 160px 16px 120px;
+    position: relative;
+    z-index: 1;
+    overflow-x: hidden;
+  
+    min-height: calc(100vh - 220px); /* ajuste si besoin */
+  }
+  
   

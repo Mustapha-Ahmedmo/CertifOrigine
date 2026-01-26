@@ -14,7 +14,7 @@ const CgvPage = () => {
     
     <div className="cgv-page-container">
       {/* Titre rouge */}
-      <Box sx={{ textAlign: 'center', my: 3 }}>
+      <Box sx={{ textAlign: 'center', my: 3, mt: 0 }}>
         <Typography variant="h5" sx={{ color: 'red', fontWeight: 'bold' }}>
           Données en attente de la Chambre de Commerce
         </Typography>
