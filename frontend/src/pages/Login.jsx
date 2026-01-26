@@ -1,9 +1,11 @@
-import React, {useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { login } from '../slices/authSlice';
 import { loginUser } from '../services/apiServices';
 import { homemadeHash } from '../utils/hashUtils';
+import ReCAPTCHA from 'react-google-recaptcha';
+
 import {
   Box,
   Card,
@@ -36,24 +38,48 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
-  
+
+  // reCAPTCHA
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const recaptchaRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage('');
+    setSubmitting(true);
+
+    if (SITE_KEY && !captchaToken) {
+      setSubmitting(false);
+      setErrorMessage("Veuillez valider le reCAPTCHA avant de vous connecter.");
+      return;
+    }
+
     try {
-      const response = await loginUser(username, homemadeHash(password));
+      const response = await loginUser(username, homemadeHash(password), captchaToken || undefined);
+
       dispatch(
         login({
           user: response.user,
           token: response.token,
         })
       );
+
+      // reset captcha
+      setCaptchaToken(null);
+      if (recaptchaRef.current) recaptchaRef.current.reset();
+
       navigate('/dashboard');
     } catch (error) {
       setErrorMessage("Certaines de vos informations sont incorrectes. Réessayez.");
+
+      // reset captcha si tentative échoue
+      setCaptchaToken(null);
+      if (recaptchaRef.current) recaptchaRef.current.reset();
+    } finally {
+      setSubmitting(false);
     }
   };
-  
+
   const textFieldSx = {
     mb: 2,
     backgroundColor: '#eaeaea',
@@ -67,6 +93,7 @@ const Login = () => {
       color: '#DCAF26',
     },
   };
+
   return (
     <Box
       display="flex"
@@ -172,6 +199,7 @@ const Login = () => {
             onChange={(e) => setUsername(e.target.value)}
             sx={textFieldSx}
           />
+
           <TextField
             label="Mot de passe"
             variant="outlined"
@@ -191,6 +219,18 @@ const Login = () => {
             }}
           />
 
+          {/* reCAPTCHA (juste sous Mot de passe) */}
+          {SITE_KEY && (
+            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', width: '100%' }}>
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={SITE_KEY}
+                onChange={(t) => setCaptchaToken(t)}
+                onExpired={() => setCaptchaToken(null)}
+              />
+            </Box>
+          )}
+
           {/* Messages d'erreur */}
           {errorMessage && (
             <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
@@ -206,8 +246,6 @@ const Login = () => {
           >
             Mot de passe oublié ?
           </Link>
-
-          
 
           {/* Boutons */}
           <Box
@@ -236,7 +274,7 @@ const Login = () => {
               color="warning"
               size="small"
               sx={{ flex: 1 }}
-              disabled={submitting}
+              disabled={submitting || (!!SITE_KEY && !captchaToken)}
             >
               {submitting ? 'Connexion…' : 'Se connecter'}
             </Button>

@@ -19,13 +19,11 @@ const HeaderLayout = () => {
         className={`hl-page-header ${forceDarkText ? 'hl-dark-text' : ''}`}
         style={{
           width: '100%',
-          backgroundColor: 'transparent',
           margin: 0,
           padding: 0,
           position: 'fixed',
           top: 0,
           left: 0,
-          zIndex: 999,
         }}
       >
         <nav className="hl-header-nav">
@@ -67,7 +65,7 @@ const HeaderLayout = () => {
         </nav>
       </header>
 
-      <main style={{ margin: 0, padding: 0 }}>
+      <main style={{ margin: 0, padding: 0, position: 'relative', zIndex: 1 }}>
         <Outlet />
       </main>
     </div>

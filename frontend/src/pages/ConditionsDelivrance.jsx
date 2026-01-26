@@ -8,13 +8,15 @@ export default function ConditionsDelivrance() {
 
   return (
     <div className="cgv-page">
-      <h1 className="cgv-title">CONDITIONS GÉNÉRALES DE VENTE (CGV)</h1>
-
-      <h2 className="cgv-subtitle">
+      <h1 className="cgv-title">CONDITIONS GÉNÉRALES DE VENTE (CGV)
+      <br />
         Service de Délivrance des Certificats d’Origine
         <br />
         Chambre de Commerce de Djibouti (CCD)
-      </h2>
+      
+      </h1>
+
+      
 
       {!isInDashboard && (
         <div className="back-to-login-container">

@@ -112,7 +112,7 @@ const Footer = () => {
           color="text.primary"
           sx={{ textAlign: 'center' }}
         >
-          (Ver. 1.4.8 - 10.11.25) All right reserved
+          (Ver. 1.5.0 - 26.01.26) All right reserved
         </Typography>
 
         {/* Version en dur dans le coin inférieur droit */}

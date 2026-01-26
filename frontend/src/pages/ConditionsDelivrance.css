@@ -1,11 +1,11 @@
 .cgv-page {
     max-width: 900px;
     margin: 0 auto;
-    padding: 140px 16px 48px; /* laisse la place au header fixed (plus safe que 110) */
+    padding: 160px 16px 120px; /* padding-bottom augmenté pour éviter que le contenu soit trop proche du footer */
     line-height: 1.6;
     position: relative;
     z-index: 1;
-  }
+}
   
   .cgv-title {
     font-size: 30px;
@@ -40,15 +40,27 @@
     border-left: 4px solid #444;
   }
   
+  /* Espacement après le dernier paragraphe pour éviter qu'il soit trop proche du footer */
+  .cgv-page p:last-of-type {
+    margin-bottom: 32px;
+  }
+  
+  .cgv-page h3:last-of-type {
+    margin-bottom: 16px;
+  }
+  
   /* Lien "Revenir à la page de connexion" */
   .back-to-login-container {
-    margin-top: 10px;
+    margin-top: 32px;
+    margin-bottom: 40px;
+    padding: 16px 0;
   }
   
   .back-to-login-container a {
     color: #2b6cb0;
     text-decoration: none;
     font-weight: 500;
+    display: inline-block;
   }
   
   .back-to-login-container a:hover {
