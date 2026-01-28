@@ -30,7 +30,7 @@ import DestinataireList from '../pages/DestinataireList';
 import CgvPage from '../pages/CgvPage';
 import PrestationServicePage from '../pages/PrestationServicePage';
 import MentionsLegalesPage from '../pages/MentionsLegalesPage';
-import Faq from '../pages/Faq';
+import Faq from '../pages/faq';
 import ConditionsDelivrance from '../pages/ConditionsDelivrance';
 
 // Pages du dashboard
