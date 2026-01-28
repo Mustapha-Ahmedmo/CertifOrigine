@@ -39,6 +39,7 @@ services:
       - /usr/src/app/node_modules
     environment:
       - VITE_API_URL=http://localhost/api  # Access backend via service name
+      - VITE_RECAPTCHA_SITE_KEY=6Lf6fe0rAAAAAGucifG6K-ynP2H8lJGSwY_I2zfM
     depends_on:
       - backend
     networks:

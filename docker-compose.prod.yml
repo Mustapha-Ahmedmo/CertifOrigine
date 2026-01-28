@@ -1,10 +1,10 @@
-version: '3.8'
+version: "3.8"
 
 services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.prod  # Use a production Dockerfile
+      dockerfile: Dockerfile.prod
     ports:
       - "5001:5001"
     environment:
@@ -12,36 +12,40 @@ services:
       - POSTGRES_USER=exampleuser
       - POSTGRES_PASSWORD=exampleuserpassword
       - POSTGRES_DB=djiboutiport
-      - POSTGRES_HOST=db  # Reference the db service name
+      - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
+      # ✅ reCAPTCHA secret côté BACKEND uniquement
+      - RECAPTCHA_SECRET_KEY=6Lf6fe0rAAAAPO2iRDmGFicuFRlLq73u0abb2aQ
     depends_on:
       - db
     networks:
       - app-network
     volumes:
-      - ./backend/data:/usr/src/app/data  # Persist data folder
+      - ./backend/data:/usr/src/app/data
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.prod  # Use the updated production Dockerfile
+      dockerfile: Dockerfile.prod
       args:
-        VITE_API_URL: "http://146.59.239.14/api"  # Pass the build argument
-    environment:
-      - VITE_API_URL=http://146.59.239.14/api  # Optional, for runtime use
+        # ✅ API URL injectée AU BUILD (Vite)
+        VITE_API_URL: "http://146.59.239.14/api"
+        # ✅ SITE KEY (publique) = "ID" reCAPTCHA
+        VITE_RECAPTCHA_SITE_KEY: "6Lf6fe0rAAAAAGucifG6K-ynP2H8lJGSwY_I2zfM"
     networks:
       - app-network
+    # On garde ton comportement actuel: build et écriture du dist sur l'hôte
     volumes:
-      - ./frontend/dist:/app/dist  # Mount the host's dist directory to store built frontend
-    command: ["npm", "run", "build"]  # Run the build command
+      - ./frontend/dist:/app/dist
+    command: ["npm", "run", "build"]
 
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80"  # Expose port 80 for the reverse proxy and frontend
+      - "80:80"
     volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf  # Use your custom Nginx config
-      - ./frontend/dist:/usr/share/nginx/html  # Mount the built dist directory from host
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf
+      - ./frontend/dist:/usr/share/nginx/html
     depends_on:
       - backend
       - frontend
@@ -56,9 +60,9 @@ services:
       POSTGRES_PASSWORD: exampleuserpassword
       POSTGRES_DB: djiboutiport
     volumes:
-      - postgres-data:/var/lib/postgresql/data  # Persist PostgreSQL data
+      - postgres-data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"  # Expose PostgreSQL port for external connections (optional)
+      - "5432:5432"
     networks:
       - app-network
 
@@ -71,7 +75,7 @@ services:
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     ports:
-      - "8081:80"  # Expose pgAdmin on port 8081
+      - "8081:80"
     depends_on:
       - db
     networks:
