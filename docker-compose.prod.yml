@@ -42,7 +42,7 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80"
+      - "443:80"
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf
       - ./frontend/dist:/usr/share/nginx/html
