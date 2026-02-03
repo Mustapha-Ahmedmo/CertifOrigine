@@ -39,10 +39,15 @@ const HeaderLayout = () => {
           <div className="hl-header-center">
             <ul className={`hl-nav-links ${menuOpen ? 'open' : ''}`}>
               <li>
-                <Link to="/guide" onClick={() => setMenuOpen(false)}>
+                <a
+                  href="/docs/guide_utilisateur.pdf"
+                  download
+                  onClick={() => setMenuOpen(false)}
+                >
                   Guide d'utilisation
-                </Link>
+                </a>
               </li>
+
               <li>
                 <Link to="/conditions" onClick={() => setMenuOpen(false)}>
                   Conditions de délivrance
