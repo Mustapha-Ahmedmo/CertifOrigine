@@ -29,7 +29,7 @@ services:
       dockerfile: Dockerfile.prod
       args:
         # ✅ API URL injectée AU BUILD (Vite)
-        VITE_API_URL: "http://146.59.239.14/api"
+        VITE_API_URL: "/api"
         # ✅ SITE KEY (publique) = "ID" reCAPTCHA
         VITE_RECAPTCHA_SITE_KEY: "6Lf6fe0rAAAAAGucifG6K-ynP2H8lJGSwY_I2zfM"
     networks:
