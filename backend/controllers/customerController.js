@@ -3,12 +3,12 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const { setMemo } = require('./mailerController');
 const transporter = nodemailer.createTransport({
-  host: 'mail.gandi.net',
-  port: 587,
+  host: 'smtp.gmail.com',
+  port: 465,
   secure: false, // TLS requires secure to be false
   auth: {
-    user: 'myfolioreport@maesys.fr', // SMTP username
-    pass: 'MyFolioReport@123', // SMTP password
+    user: 'siee.certificat@ccd.dj', // SMTP username
+    pass: 'uojc ihei wumc yvgv', // SMTP password
   },
   tls: {
     rejectUnauthorized: false, // Avoid issues with self-signed certificates
@@ -20,7 +20,7 @@ const FRONTEND_URL = "http://146.59.239.14"
 const sendEmail = async (to, subject, text) => {
   try {
     await transporter.sendMail({
-      from: '"Chambre de commerce de Djibouti" <myfolioreport@maesys.fr>', // L'expéditeur
+      from: '"Chambre de commerce de Djibouti" <siee.certificat@ccd.dj>', // L'expéditeur
       to, // Le destinataire
       subject, // Sujet
       text, // Corps du message
@@ -34,7 +34,7 @@ const sendEmail = async (to, subject, text) => {
 const sendHtmlEmail = async (to, subject, htmlContent) => {
   try {
     await transporter.sendMail({
-      from: '"Chambre de commerce de Djibouti" <myfolioreport@maesys.fr>',
+      from: '"Chambre de commerce de Djibouti" <siee.certificat@ccd.dj>',
       to,
       subject,
       html: htmlContent,
@@ -634,7 +634,7 @@ Identifiants de connexion :
 - **Nom d'utilisateur** : ${email}
 - **Mot de passe** : celui que vous avez défini lors de votre inscription.
 
-⚠️ Si vous n'êtes pas à l'origine de cette demande, nous vous invitons à nous signaler immédiatement cet e-mail à l'adresse : abuse@ccd.dj.
+⚠️ Si vous n'êtes pas à l'origine de cette demande, nous vous invitons à nous signaler immédiatement cet e-mail à l'adresse : siee.certificat@ccd.dj.
 
 Nous restons à votre disposition pour toute question.
 
@@ -1351,7 +1351,7 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
         `Vous recevrez un autre email lorsque votre compte sera validé par un de nos opérateurs.\n\n` +
         `En attendant, retrouvez toutes nos informations en cliquant sur le lien ci-dessous :\n` +
         `https://portal.ccd.dj\n\n` +
-        `⚠️ Si vous n'êtes pas à l'origine de cette demande, nous vous invitons à nous signaler immédiatement cet e-mail à l'adresse : abuse@ccd.dj.\n\n` +
+        `⚠️ Si vous n'êtes pas à l'origine de cette demande, nous vous invitons à nous signaler immédiatement cet e-mail à l'adresse : siee.certificat@ccd.dj.\n\n` +
         `Nous restons à votre disposition pour toute question.\n\n` +
         `Bien cordialement,\n` +
         `L'équipe du portail de la Chambre de Commerce de Djibouti`
@@ -1519,7 +1519,7 @@ ${resetLink}
 
 ⚠️ Ce lien expirera dans 24 heures.
 
-Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail ou nous contacter à abuse@ccd.dj.
+Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail ou nous contacter à siee.certificat@ccd.dj.
 
 Cordialement,
 L'équipe du portail Chambre de Commerce de Djibouti`
@@ -1619,7 +1619,7 @@ const executeResetPassword = async (req, res) => {
 
 Votre mot de passe a été réinitialisé avec succès.
 
-Si vous n'avez pas effectué cette action, veuillez contacter notre support immédiatement à abuse@ccd.dj.
+Si vous n'avez pas effectué cette action, veuillez contacter notre support immédiatement à siee.certificat@ccd.dj.
 
 Cordialement,
 L'équipe de la Chambre de Commerce de Djibouti`

@@ -6,11 +6,11 @@ const fs = require('fs');
 const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
   host: 'mail.gandi.net',
-  port: 587,
+  port: 465,
   secure: false, // TLS requires secure to be false
   auth: {
-    user: 'myfolioreport@maesys.fr', // SMTP username
-    pass: 'MyFolioReport@123', // SMTP password
+    user: 'siee.certificat@ccd.dj', // SMTP username
+    pass: 'uojc ihei wumc yvgv', // SMTP password
   },
   tls: {
     rejectUnauthorized: false, // Avoid issues with self-signed certificates
@@ -73,7 +73,7 @@ Merci de vérifier.`;
   }
 
   const mailOptions = {
-    from: '"Chambre de commerce de Djibouti" <myfolioreport@maesys.fr>',
+    from: '"Chambre de commerce de Djibouti" <siee.certificat@ccd.dj>',
     to: recipientEmail,
     subject,
     text: body
@@ -2335,7 +2335,7 @@ const sendOrderDocument = async (req, res) => {
 
 
       await transporter.sendMail({
-        from: '"Chambre de commerce de Djibouti" <myfolioreport@maesys.fr>',
+        from: '"Chambre de commerce de Djibouti" <siee.certificat@ccd.dj>',
         to: recipient.email,
         subject: `Documents de la commande n°${id_order}`,
         text: `Bonjour,\n\nVeuillez trouver en pièce jointe le certificat et les pièces justificatives relatives à votre commande n°${id_order}.\n\nCordialement,\nChambre de commerce de Djibouti`,

@@ -5,11 +5,11 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
   host: 'mail.gandi.net',
-  port: 587,
+  port: 465,
   secure: false, // TLS requires secure to be false
   auth: {
-    user: 'myfolioreport@maesys.fr', // SMTP username
-    pass: 'MyFolioReport@123', // SMTP password
+    user: 'siee.certificat@ccd.dj', // SMTP username
+    pass: 'uojc ihei wumc yvgv', // SMTP password
   },
   tls: {
     rejectUnauthorized: false, // Avoid issues with self-signed certificates
@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
 const sendEmail = async (to, subject, text) => {
   try {
     await transporter.sendMail({
-      from: '"Chambre de commerce de Djibouti" <myfolioreport@maesys.fr>', // L'expéditeur
+      from: '"Chambre de commerce de Djibouti" <siee.certificat@ccd.dj>', // L'expéditeur
       to, // Le destinataire
       subject, // Sujet
       text, // Corps du message
@@ -33,7 +33,7 @@ const sendEmail = async (to, subject, text) => {
 const sendHtmlEmail = async (to, subject, htmlContent) => {
   try {
     await transporter.sendMail({
-      from: '"Chambre de commerce de Djibouti" <myfolioreport@maesys.fr>',
+      from: '"Chambre de commerce de Djibouti" <siee.certificat@ccd.dj>',
       to,
       subject,
       html: htmlContent,

@@ -177,7 +177,7 @@ const ContactUs = () => {
           <div className="footer-info">
             <p>
               Chambre de Commerce de Djibouti . Place Djibouti .
-              Tel : +253-21351070 . Email : <a href="mailto:ccd@ccd.dj">ccd@ccd.dj</a>
+              Tel : +253-21351070 . Email : <a href="mailto:siee.certificat@ccd.dj">siee.certificat@ccd.dj</a>
             </p>
           </div>
 
