@@ -104,7 +104,6 @@ const HeaderOP = ({ toggleMenu, isMenuOpen }) => {
               }}
             >
               <Link to="/profile">Profil</Link>
-              <Link to="/settings">Réglages</Link>
             </Box>
           )}
         </Box>
