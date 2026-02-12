@@ -1236,13 +1236,45 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
         }
       );
 
-      // Attempt to extract the new customer account ID from the procedure result.
-      // Note: Due to INOUT parameter handling, Sequelize may not return the updated value.
-      // You might need to perform an additional query or use a wrapper function.
-      const newAccountId = subscriptionResult?.[0]?.[0]?.p_id_cust_account;
-      if (!newAccountId) {
-        throw new Error('Failed to retrieve id_cust_account from add_Subscription.');
+      // Extract the new customer account ID from the procedure result.
+      // PostgreSQL CALL returns a row; structure may be [rows] or [[row]] with key p_id_cust_account (or lowercased).
+      console.log('🔍 add_Subscription result structure:', JSON.stringify(subscriptionResult, null, 2));
+      const rawRow = subscriptionResult?.[0]?.[0];
+      console.log('🔍 Raw row extracted:', rawRow);
+      
+      // Try multiple ways to extract the ID
+      let newAccountId = null;
+      if (rawRow) {
+        // Try different possible key names
+        newAccountId = rawRow.p_id_cust_account 
+          || rawRow.P_ID_CUST_ACCOUNT 
+          || rawRow.p_id_cust_account 
+          || (typeof rawRow === 'object' && rawRow !== null ? Object.values(rawRow)[0] : null);
       }
+      
+      // If still not found, try to get it from the database directly
+      if (!newAccountId) {
+        console.log('⚠️ Could not extract ID from procedure result, querying database...');
+        const lastAccountQuery = await sequelize.query(
+          `SELECT id_cust_account FROM cust_account WHERE idlogin_insert = :idlogin ORDER BY insertdate DESC LIMIT 1`,
+          {
+            replacements: { idlogin },
+            type: sequelize.QueryTypes.SELECT,
+            transaction,
+          }
+        );
+        if (lastAccountQuery && lastAccountQuery.length > 0) {
+          newAccountId = lastAccountQuery[0].id_cust_account;
+          console.log('✅ Found account ID from database query:', newAccountId);
+        }
+      }
+      
+      if (!newAccountId) {
+        console.error('❌ Failed to retrieve id_cust_account. Full result:', JSON.stringify(subscriptionResult, null, 2));
+        throw new Error('Failed to retrieve id_cust_account from add_Subscription. Vérifiez que l\'email n\'est pas déjà utilisé.');
+      }
+      
+      console.log('✅ Successfully extracted account ID:', newAccountId);
 
       // Process file uploads if provided
       if (req.files) {
@@ -1342,8 +1374,9 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
         second: '2-digit'
       });
       
-      // Send confirmation email
-      await sendEmail(
+      // Send confirmation email (ne pas bloquer l'inscription si l'email échoue)
+      try {
+        await sendEmail(
         email,
         'Confirmation de votre demande d’inscription',
         `Bonjour ${full_name},\n\n` +
@@ -1355,7 +1388,11 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
         `Nous restons à votre disposition pour toute question.\n\n` +
         `Bien cordialement,\n` +
         `L'équipe du portail de la Chambre de Commerce de Djibouti`
-      );
+        );
+      } catch (emailError) {
+        // Log l'erreur mais ne bloque pas l'inscription
+        console.error(`⚠️ L'inscription a réussi mais l'email de confirmation n'a pas pu être envoyé à ${email}:`, emailError.message);
+      }
 
       res.status(201).json({
         message: 'Inscription réussie avec fichier. Votre compte est en attente de validation.',
@@ -1367,10 +1404,25 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
       throw err;
     }
   } catch (error) {
-    console.error('Error executing create subscription with file:', error);
+    console.error('❌ Error executing create subscription with file:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error original:', error.original);
+    
+    const errorMessage = error.message || 'Erreur inconnue.';
+    const errorDetails = error.original?.message || error.original?.detail || error.details;
+    
+    // Détecter les erreurs spécifiques
+    if (errorMessage.includes('does not exist') || errorMessage.includes('database')) {
+      console.error('❌ ERREUR DE BASE DE DONNÉES:', errorMessage);
+    }
+    if (errorMessage.includes('Email non valide') || errorMessage.includes('duplication')) {
+      console.error('❌ ERREUR EMAIL DÉJÀ UTILISÉ:', errorMessage);
+    }
+    
     res.status(500).json({
       message: 'Erreur lors de la création de l\'inscription avec fichier.',
-      error: error.message || 'Erreur inconnue.',
+      error: errorMessage,
+      ...(errorDetails && { details: errorDetails }),
     });
   }
 };
