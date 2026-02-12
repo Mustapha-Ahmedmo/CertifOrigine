@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import {
   getCustAccountInfo,
   updateCustAccountStatus,
@@ -73,6 +74,9 @@ function a11yProps(index) {
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Inscriptions = () => {
+  // Obtenir l'utilisateur connecté depuis Redux
+  const user = useSelector((state) => state.auth.user);
+  
   const [custAccounts, setCustAccounts] = useState([]);
   const [removingAccounts, setRemovingAccounts] = useState([]);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -122,7 +126,9 @@ const Inscriptions = () => {
       return;
     }
     try {
-      await updateCustAccountStatus(id);
+      // Utiliser l'ID de l'utilisateur connecté depuis Redux (déjà obtenu au niveau du composant)
+      const idlogin = user?.id_login_user || null;
+      await updateCustAccountStatus(id, idlogin);
       alert('Le statut du compte client a été mis à jour avec succès.');
       setRemovingAccounts((prev) => [...prev, id]);
       setTimeout(() => {
@@ -152,7 +158,8 @@ const Inscriptions = () => {
     }
 
     try {
-      const idlogin = 1; // Remplace par l'ID opérateur réel
+      // Utiliser l'ID de l'utilisateur connecté depuis Redux (déjà obtenu au niveau du composant)
+      const idlogin = user?.id_login_user || null; // Utiliser l'ID de l'utilisateur connecté ou null
       await rejectCustAccount(rejectingAccountId, rejectionReason, idlogin);
 
       alert('Le compte client a été rejeté avec succès.');
