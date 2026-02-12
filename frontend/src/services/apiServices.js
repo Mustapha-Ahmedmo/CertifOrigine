@@ -154,7 +154,7 @@ export const loginUser = async (email, password) => {
   }
 };
 
-export const updateCustAccountStatus = async (id) => {
+export const updateCustAccountStatus = async (id, idlogin = null) => {
   try {
     const response = await fetch(`${API_URL}/customer/update-status/${id}`, {
       method: 'PUT',
@@ -162,6 +162,7 @@ export const updateCustAccountStatus = async (id) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`, // Inclure le token JWT si nécessaire
       },
+      body: JSON.stringify({ idlogin }), // Envoyer idlogin dans le body (peut être null)
     });
 
     if (!response.ok) {

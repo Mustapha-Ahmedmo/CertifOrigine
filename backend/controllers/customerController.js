@@ -33,6 +33,7 @@ const getSystemLoginId = async () => {
     }
     
     // Créer un utilisateur système si aucun n'existe
+    console.log(`🔧 Création d'un utilisateur système...`);
     const createSystemUser = await sequelize.query(
       `INSERT INTO login_user (username, pwd, isadmin_login, deactivation_date) 
        VALUES ('system', '$2a$10$system', TRUE, CURRENT_TIMESTAMP + INTERVAL '100 years')
@@ -49,9 +50,25 @@ const getSystemLoginId = async () => {
     throw new Error('Impossible de créer ou trouver un utilisateur système');
   } catch (error) {
     console.error('❌ Erreur lors de la gestion de l\'utilisateur système:', error);
-    // Fallback: essayer d'utiliser l'ID 1 (supposant qu'il sera créé manuellement si nécessaire)
-    console.warn(`⚠️ Utilisation de l'ID par défaut: 1`);
-    return 1;
+    console.error('❌ Stack:', error.stack);
+    
+    // Dernier recours : chercher n'importe quel utilisateur existant
+    try {
+      const anyUser = await sequelize.query(
+        `SELECT id_login_user FROM login_user ORDER BY id_login_user LIMIT 1`,
+        { type: sequelize.QueryTypes.SELECT }
+      );
+      if (anyUser && anyUser.length > 0) {
+        const loginId = anyUser[0].id_login_user;
+        console.log(`⚠️ Utilisation du premier utilisateur trouvé: ${loginId}`);
+        return loginId;
+      }
+    } catch (fallbackError) {
+      console.error('❌ Erreur lors de la recherche d\'un utilisateur de fallback:', fallbackError);
+    }
+    
+    // Si vraiment rien ne fonctionne, lancer une erreur plutôt que retourner 1
+    throw new Error('Aucun utilisateur système valide trouvé et impossible d\'en créer un. Veuillez créer manuellement un utilisateur dans login_user.');
   }
 };
 
@@ -624,17 +641,24 @@ const updateCustAccountStatus = async (req, res) => {
     const accountDetails = account[0];
 
     // Obtenir un ID utilisateur système valide si idlogin n'est pas fourni ou invalide
+    console.log(`🔍 updateCustAccountStatus - idlogin reçu:`, idlogin, typeof idlogin);
     let validLoginId = null;
-    if (idlogin && idlogin !== 'undefined' && idlogin !== 'null' && idlogin !== '') {
+    
+    // Nettoyer idlogin : ignorer les valeurs invalides ou égales à 1
+    if (idlogin && idlogin !== 'undefined' && idlogin !== 'null' && idlogin !== '' && idlogin !== 1 && idlogin !== '1') {
       validLoginId = parseInt(idlogin, 10);
-      if (isNaN(validLoginId)) {
+      if (isNaN(validLoginId) || validLoginId === 1) {
         validLoginId = null;
       }
     }
     
-    if (!validLoginId) {
+    // Si idlogin n'est pas valide ou égal à 1, utiliser getSystemLoginId()
+    if (!validLoginId || validLoginId === 1) {
+      console.log(`⚠️ idlogin invalide ou égal à 1, utilisation de getSystemLoginId()`);
       validLoginId = await getSystemLoginId();
     }
+    
+    console.log(`✅ updateCustAccountStatus - validLoginId final:`, validLoginId);
 
     // --► NEW: Call the procedure instead of direct UPDATE ◄--
     await sequelize.query(
@@ -740,17 +764,24 @@ const rejectCustAccount = async (req, res) => {
     }
 
     // Obtenir un ID utilisateur système valide si idlogin n'est pas fourni ou invalide
+    console.log(`🔍 rejectCustAccount - idlogin reçu:`, idlogin, typeof idlogin);
     let validLoginId = null;
-    if (idlogin && idlogin !== 'undefined' && idlogin !== 'null' && idlogin !== '') {
+    
+    // Nettoyer idlogin : ignorer les valeurs invalides ou égales à 1
+    if (idlogin && idlogin !== 'undefined' && idlogin !== 'null' && idlogin !== '' && idlogin !== 1 && idlogin !== '1') {
       validLoginId = parseInt(idlogin, 10);
-      if (isNaN(validLoginId)) {
+      if (isNaN(validLoginId) || validLoginId === 1) {
         validLoginId = null;
       }
     }
     
-    if (!validLoginId) {
+    // Si idlogin n'est pas valide ou égal à 1, utiliser getSystemLoginId()
+    if (!validLoginId || validLoginId === 1) {
+      console.log(`⚠️ idlogin invalide ou égal à 1, utilisation de getSystemLoginId()`);
       validLoginId = await getSystemLoginId();
     }
+    
+    console.log(`✅ rejectCustAccount - validLoginId final:`, validLoginId);
 
     // --► NEW: Call the procedure with p_statut_flag = 4 ◄--
     await sequelize.query(
@@ -837,17 +868,24 @@ const disableCustAccount = async (req, res) => {
     }
 
     // Obtenir un ID utilisateur système valide si idlogin n'est pas fourni ou invalide
+    console.log(`🔍 updateCustAccountStatus - idlogin reçu:`, idlogin, typeof idlogin);
     let validLoginId = null;
-    if (idlogin && idlogin !== 'undefined' && idlogin !== 'null' && idlogin !== '') {
+    
+    // Nettoyer idlogin : ignorer les valeurs invalides ou égales à 1
+    if (idlogin && idlogin !== 'undefined' && idlogin !== 'null' && idlogin !== '' && idlogin !== 1 && idlogin !== '1') {
       validLoginId = parseInt(idlogin, 10);
-      if (isNaN(validLoginId)) {
+      if (isNaN(validLoginId) || validLoginId === 1) {
         validLoginId = null;
       }
     }
     
-    if (!validLoginId) {
+    // Si idlogin n'est pas valide ou égal à 1, utiliser getSystemLoginId()
+    if (!validLoginId || validLoginId === 1) {
+      console.log(`⚠️ idlogin invalide ou égal à 1, utilisation de getSystemLoginId()`);
       validLoginId = await getSystemLoginId();
     }
+    
+    console.log(`✅ updateCustAccountStatus - validLoginId final:`, validLoginId);
 
     // Call the procedure with p_statut_flag = 3 => désactivé
     await sequelize.query(
@@ -952,17 +990,24 @@ const reactivateCustAccount = async (req, res) => {
     }
 
     // Obtenir un ID utilisateur système valide si idlogin n'est pas fourni ou invalide
+    console.log(`🔍 updateCustAccountStatus - idlogin reçu:`, idlogin, typeof idlogin);
     let validLoginId = null;
-    if (idlogin && idlogin !== 'undefined' && idlogin !== 'null' && idlogin !== '') {
+    
+    // Nettoyer idlogin : ignorer les valeurs invalides ou égales à 1
+    if (idlogin && idlogin !== 'undefined' && idlogin !== 'null' && idlogin !== '' && idlogin !== 1 && idlogin !== '1') {
       validLoginId = parseInt(idlogin, 10);
-      if (isNaN(validLoginId)) {
+      if (isNaN(validLoginId) || validLoginId === 1) {
         validLoginId = null;
       }
     }
     
-    if (!validLoginId) {
+    // Si idlogin n'est pas valide ou égal à 1, utiliser getSystemLoginId()
+    if (!validLoginId || validLoginId === 1) {
+      console.log(`⚠️ idlogin invalide ou égal à 1, utilisation de getSystemLoginId()`);
       validLoginId = await getSystemLoginId();
     }
+    
+    console.log(`✅ updateCustAccountStatus - validLoginId final:`, validLoginId);
 
     // Call the procedure with p_statut_flag = 2 => réactivé
     await sequelize.query(
