@@ -336,9 +336,9 @@ const Register = () => {
         id_country_headoffice: selectedHeadOfficeCountry ? selectedHeadOfficeCountry.id_country : null,
         other_legal_form: formData.otherCompanyCategory,
         statut_flag: 1,
-        idlogin: 1,
-        billed_cust_name: formData.billed_cust_name,
-        bill_full_address: formData.bill_full_address,
+        idlogin: null, // NULL pour les nouvelles inscriptions (sera géré par la procédure stockée)
+        billed_cust_name: formData.billed_cust_name || null,
+        bill_full_address: formData.bill_full_address || null,
         gender: formData.gender === 'Mr' ? 0 : 1,
         full_name: formData.name,
         ismain_user: true,

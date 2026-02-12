@@ -1116,6 +1116,18 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
       other_business_type,
     } = req.body;
 
+    // Nettoyer les valeurs 'undefined' et 'null' (chaînes) en vraies valeurs null
+    const cleanValue = (val) => {
+      if (val === undefined || val === 'undefined' || val === 'null' || val === '') {
+        return null;
+      }
+      return val;
+    };
+
+    // Nettoyer billed_cust_name et bill_full_address
+    const cleanedBilledCustName = cleanValue(billed_cust_name);
+    const cleanedBillFullAddress = cleanValue(bill_full_address);
+
     // Create a map of required fields and check for missing ones
     const requiredFields = {
       uploadType,
@@ -1151,6 +1163,62 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
         missingFields,
       });
     }
+
+    // Vérifier/créer un utilisateur système pour les inscriptions (idlogin_insert)
+    // Si idlogin est null ou invalide, créer ou utiliser un utilisateur système
+    let systemLoginId = null;
+    
+    // Nettoyer idlogin : convertir les chaînes 'null'/'undefined' en null, sinon convertir en int
+    if (idlogin && idlogin !== 'undefined' && idlogin !== 'null' && idlogin !== '') {
+      systemLoginId = parseInt(idlogin, 10);
+      if (isNaN(systemLoginId)) {
+        systemLoginId = null;
+      }
+    }
+    
+    if (!systemLoginId) {
+      try {
+        // Chercher un utilisateur système existant (par exemple avec username 'system' ou 'admin')
+        const systemUser = await sequelize.query(
+          `SELECT id_login_user FROM login_user WHERE username = 'system' OR isadmin_login = TRUE LIMIT 1`,
+          { type: sequelize.QueryTypes.SELECT }
+        );
+        
+        if (systemUser && systemUser.length > 0) {
+          systemLoginId = systemUser[0].id_login_user;
+          console.log(`✅ Utilisation de l'utilisateur système existant: ${systemLoginId}`);
+        } else {
+          // Créer un utilisateur système si aucun n'existe
+          const createSystemUser = await sequelize.query(
+            `INSERT INTO login_user (username, pwd, isadmin_login, deactivation_date) 
+             VALUES ('system', '$2a$10$system', TRUE, CURRENT_TIMESTAMP + INTERVAL '100 years')
+             RETURNING id_login_user`,
+            { type: sequelize.QueryTypes.SELECT }
+          );
+          
+          if (createSystemUser && createSystemUser.length > 0) {
+            systemLoginId = createSystemUser[0].id_login_user;
+            console.log(`✅ Utilisateur système créé avec ID: ${systemLoginId}`);
+          } else {
+            throw new Error('Impossible de créer ou trouver un utilisateur système pour les inscriptions');
+          }
+        }
+      } catch (systemUserError) {
+        console.error('❌ Erreur lors de la gestion de l\'utilisateur système:', systemUserError);
+        // Si on ne peut pas créer/utiliser un utilisateur système, utiliser 1 par défaut
+        // (supposant qu'il existe ou sera créé manuellement)
+        systemLoginId = 1;
+        console.warn(`⚠️ Utilisation de l'ID par défaut: ${systemLoginId}`);
+      }
+    }
+    
+    // S'assurer que systemLoginId est un entier valide
+    if (!systemLoginId || isNaN(systemLoginId)) {
+      throw new Error('Impossible de déterminer un ID utilisateur valide pour l\'inscription');
+    }
+    
+    systemLoginId = parseInt(systemLoginId, 10);
+    console.log(`✅ ID utilisateur système final: ${systemLoginId}`);
 
     // Start a transaction
     const transaction = await sequelize.transaction();
@@ -1215,9 +1283,9 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
             p_other_sector: other_sector || null,
             p_id_country: id_country,
             p_statut_flag: statut_flag,
-            p_idlogin: idlogin,
-            p_billed_cust_name: billed_cust_name,
-            p_bill_full_address: bill_full_address,
+            p_idlogin: systemLoginId, // Utiliser l'ID système trouvé ou créé
+            p_billed_cust_name: cleanedBilledCustName,
+            p_bill_full_address: cleanedBillFullAddress,
             p_gender: gender,
             p_full_name: full_name,
             p_ismain_user: ismain_user,
@@ -1256,9 +1324,9 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
       if (!newAccountId) {
         console.log('⚠️ Could not extract ID from procedure result, querying database...');
         const lastAccountQuery = await sequelize.query(
-          `SELECT id_cust_account FROM cust_account WHERE idlogin_insert = :idlogin ORDER BY insertdate DESC LIMIT 1`,
+          `SELECT id_cust_account FROM cust_account WHERE idlogin_insert = :systemLoginId ORDER BY insertdate DESC LIMIT 1`,
           {
-            replacements: { idlogin },
+            replacements: { systemLoginId },
             type: sequelize.QueryTypes.SELECT,
             transaction,
           }
@@ -1344,7 +1412,7 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
                   p_file_origin_name: file.originalname,
                   p_file_guid: file.filename,
                   p_file_path: file.path,
-                  p_idlogin_insert: idlogin,
+                  p_idlogin_insert: systemLoginId, // Utiliser l'ID système calculé plus tôt
                 },
                 type: sequelize.QueryTypes.RAW,
                 transaction,
@@ -1411,18 +1479,37 @@ const executeCreateSubscriptionWithFile = async (req, res) => {
     const errorMessage = error.message || 'Erreur inconnue.';
     const errorDetails = error.original?.message || error.original?.detail || error.details;
     
-    // Détecter les erreurs spécifiques
+    // Détecter les erreurs spécifiques et améliorer les messages
+    let userFriendlyMessage = 'Erreur lors de la création de l\'inscription avec fichier.';
+    let userFriendlyError = errorMessage;
+    
     if (errorMessage.includes('does not exist') || errorMessage.includes('database')) {
       console.error('❌ ERREUR DE BASE DE DONNÉES:', errorMessage);
-    }
-    if (errorMessage.includes('Email non valide') || errorMessage.includes('duplication')) {
+      userFriendlyMessage = 'Erreur de connexion à la base de données.';
+      userFriendlyError = 'La base de données n\'est pas accessible. Veuillez contacter l\'administrateur.';
+    } else if (errorMessage.includes('Email non valide') || errorMessage.includes('duplication') || errorMessage.includes('already exists')) {
       console.error('❌ ERREUR EMAIL DÉJÀ UTILISÉ:', errorMessage);
+      userFriendlyMessage = 'Email déjà utilisé';
+      userFriendlyError = 'Cet email est déjà enregistré dans notre système. Veuillez utiliser un autre email ou vous connecter.';
+    } else if (errorMessage.includes('Failed to retrieve id_cust_account')) {
+      console.error('❌ ERREUR EXTRACTION ID:', errorMessage);
+      userFriendlyMessage = 'Erreur lors de la création du compte';
+      userFriendlyError = 'Le compte a peut-être été créé mais nous n\'avons pas pu confirmer. Veuillez vérifier votre email ou contacter le support.';
+    } else if (errorMessage.includes('constraint') || errorMessage.includes('violates')) {
+      console.error('❌ ERREUR CONTRAINTE BASE DE DONNÉES:', errorMessage);
+      userFriendlyMessage = 'Données invalides';
+      userFriendlyError = 'Certaines informations fournies ne sont pas valides. Veuillez vérifier vos données et réessayer.';
     }
     
+    // En production, ne pas exposer les détails techniques complets pour la sécurité
+    // Mais retourner assez d'infos pour le debug
+    const isProduction = process.env.NODE_ENV === 'production';
+    
     res.status(500).json({
-      message: 'Erreur lors de la création de l\'inscription avec fichier.',
-      error: errorMessage,
-      ...(errorDetails && { details: errorDetails }),
+      message: userFriendlyMessage,
+      error: userFriendlyError,
+      ...(errorDetails && !isProduction && { details: errorDetails }),
+      ...(isProduction && { debug: 'Vérifiez les logs du serveur pour plus de détails' }),
     });
   }
 };

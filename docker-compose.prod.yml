@@ -9,11 +9,12 @@ services:
       - "5001:5001"
     environment:
       - JWT_SECRET=your_jwt_secret
-      - POSTGRES_USER=exampleuser
-      - POSTGRES_PASSWORD=exampleuserpassword
-      - POSTGRES_DB=djiboutiport
-      - POSTGRES_HOST=db
-      - POSTGRES_PORT=5432
+      - PG_HOST=db
+      - PG_DATABASE=djiboutiport
+      - PG_USER=exampleuser
+      - PG_PASSWORD=exampleuserpassword
+      - PORT=5001
+      - NODE_ENV=production
       # ✅ reCAPTCHA secret côté BACKEND uniquement
       - RECAPTCHA_SECRET_KEY=6Lf6fe0rAAAAPO2iRDmGFicuFRlLq73u0abb2aQ
     depends_on:
