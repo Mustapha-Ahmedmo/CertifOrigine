@@ -3,9 +3,9 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const { setMemo } = require('./mailerController');
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
+  host: 'mail.gandi.net',
   port: 465,
-  secure: false, // TLS requires secure to be false
+  secure: true, // Port 465 requires secure: true for SSL/TLS
   auth: {
     user: 'siee.certificat@ccd.dj', // SMTP username
     pass: 'uojc ihei wumc yvgv', // SMTP password
@@ -16,6 +16,44 @@ const transporter = nodemailer.createTransport({
 });
 
 const FRONTEND_URL = "http://146.59.239.14"
+
+// Helper function to get or create a system user for operations
+const getSystemLoginId = async () => {
+  try {
+    // Chercher un utilisateur système existant (par exemple avec username 'system' ou 'admin')
+    const systemUser = await sequelize.query(
+      `SELECT id_login_user FROM login_user WHERE username = 'system' OR isadmin_login = TRUE LIMIT 1`,
+      { type: sequelize.QueryTypes.SELECT }
+    );
+    
+    if (systemUser && systemUser.length > 0) {
+      const loginId = systemUser[0].id_login_user;
+      console.log(`✅ Utilisation de l'utilisateur système existant: ${loginId}`);
+      return loginId;
+    }
+    
+    // Créer un utilisateur système si aucun n'existe
+    const createSystemUser = await sequelize.query(
+      `INSERT INTO login_user (username, pwd, isadmin_login, deactivation_date) 
+       VALUES ('system', '$2a$10$system', TRUE, CURRENT_TIMESTAMP + INTERVAL '100 years')
+       RETURNING id_login_user`,
+      { type: sequelize.QueryTypes.SELECT }
+    );
+    
+    if (createSystemUser && createSystemUser.length > 0) {
+      const loginId = createSystemUser[0].id_login_user;
+      console.log(`✅ Utilisateur système créé avec ID: ${loginId}`);
+      return loginId;
+    }
+    
+    throw new Error('Impossible de créer ou trouver un utilisateur système');
+  } catch (error) {
+    console.error('❌ Erreur lors de la gestion de l\'utilisateur système:', error);
+    // Fallback: essayer d'utiliser l'ID 1 (supposant qu'il sera créé manuellement si nécessaire)
+    console.warn(`⚠️ Utilisation de l'ID par défaut: 1`);
+    return 1;
+  }
+};
 
 const sendEmail = async (to, subject, text) => {
   try {
@@ -585,6 +623,19 @@ const updateCustAccountStatus = async (req, res) => {
 
     const accountDetails = account[0];
 
+    // Obtenir un ID utilisateur système valide si idlogin n'est pas fourni ou invalide
+    let validLoginId = null;
+    if (idlogin && idlogin !== 'undefined' && idlogin !== 'null' && idlogin !== '') {
+      validLoginId = parseInt(idlogin, 10);
+      if (isNaN(validLoginId)) {
+        validLoginId = null;
+      }
+    }
+    
+    if (!validLoginId) {
+      validLoginId = await getSystemLoginId();
+    }
+
     // --► NEW: Call the procedure instead of direct UPDATE ◄--
     await sequelize.query(
       `CALL upd_cust_account_statut(:p_id_cust_account, :p_statut_flag, :p_idlogin)`,
@@ -592,7 +643,7 @@ const updateCustAccountStatus = async (req, res) => {
         replacements: {
           p_id_cust_account: id,
           p_statut_flag: 2, // 2 => inscription validée
-          p_idlogin: idlogin || 1, // Fallback if not provided
+          p_idlogin: validLoginId,
         },
         type: sequelize.QueryTypes.RAW,
       }
@@ -688,6 +739,19 @@ const rejectCustAccount = async (req, res) => {
       });
     }
 
+    // Obtenir un ID utilisateur système valide si idlogin n'est pas fourni ou invalide
+    let validLoginId = null;
+    if (idlogin && idlogin !== 'undefined' && idlogin !== 'null' && idlogin !== '') {
+      validLoginId = parseInt(idlogin, 10);
+      if (isNaN(validLoginId)) {
+        validLoginId = null;
+      }
+    }
+    
+    if (!validLoginId) {
+      validLoginId = await getSystemLoginId();
+    }
+
     // --► NEW: Call the procedure with p_statut_flag = 4 ◄--
     await sequelize.query(
       `CALL upd_cust_account_statut(:p_id_cust_account, :p_statut_flag, :p_idlogin)`,
@@ -695,7 +759,7 @@ const rejectCustAccount = async (req, res) => {
         replacements: {
           p_id_cust_account: id,
           p_statut_flag: 4, // 4 => inscription rejetée
-          p_idlogin: idlogin || 1, // Fallback if not provided
+          p_idlogin: validLoginId,
         },
         type: sequelize.QueryTypes.RAW,
       }
@@ -772,6 +836,19 @@ const disableCustAccount = async (req, res) => {
       });
     }
 
+    // Obtenir un ID utilisateur système valide si idlogin n'est pas fourni ou invalide
+    let validLoginId = null;
+    if (idlogin && idlogin !== 'undefined' && idlogin !== 'null' && idlogin !== '') {
+      validLoginId = parseInt(idlogin, 10);
+      if (isNaN(validLoginId)) {
+        validLoginId = null;
+      }
+    }
+    
+    if (!validLoginId) {
+      validLoginId = await getSystemLoginId();
+    }
+
     // Call the procedure with p_statut_flag = 3 => désactivé
     await sequelize.query(
       `CALL upd_cust_account_statut(:p_id_cust_account, :p_statut_flag, :p_idlogin)`,
@@ -779,7 +856,7 @@ const disableCustAccount = async (req, res) => {
         replacements: {
           p_id_cust_account: id,
           p_statut_flag: 3, // 3 => désactivé
-          p_idlogin: idlogin || 1, // Fallback if not provided
+          p_idlogin: validLoginId,
         },
         type: sequelize.QueryTypes.RAW,
       }
@@ -817,7 +894,7 @@ const disableCustAccount = async (req, res) => {
       p_id_order: null,                 // or whichever order ID applies (0 if none)
       p_id_cust_account: id,         // the disabled account
       p_typeof: 1,   // or any label you prefer
-      p_idlogin_insert: idlogin || 1,
+      p_idlogin_insert: validLoginId,
       p_memo_date: nowISO,           // must be a valid ISO string
       p_memo_subject: 'Désactivation du compte client',
       p_memo_body: reason || 'Aucune raison spécifiée.',
@@ -874,6 +951,19 @@ const reactivateCustAccount = async (req, res) => {
       });
     }
 
+    // Obtenir un ID utilisateur système valide si idlogin n'est pas fourni ou invalide
+    let validLoginId = null;
+    if (idlogin && idlogin !== 'undefined' && idlogin !== 'null' && idlogin !== '') {
+      validLoginId = parseInt(idlogin, 10);
+      if (isNaN(validLoginId)) {
+        validLoginId = null;
+      }
+    }
+    
+    if (!validLoginId) {
+      validLoginId = await getSystemLoginId();
+    }
+
     // Call the procedure with p_statut_flag = 2 => réactivé
     await sequelize.query(
       `CALL upd_cust_account_statut(:p_id_cust_account, :p_statut_flag, :p_idlogin)`,
@@ -881,7 +971,7 @@ const reactivateCustAccount = async (req, res) => {
         replacements: {
           p_id_cust_account: id,
           p_statut_flag: 2, // 2 => réactivé (ou “validé”)
-          p_idlogin: idlogin || 1, // Fallback if not provided
+          p_idlogin: validLoginId,
         },
         type: sequelize.QueryTypes.RAW,
       }
@@ -920,7 +1010,7 @@ const reactivateCustAccount = async (req, res) => {
       p_id_order: null,                 // or 0 if none
       p_id_cust_account: id,
       p_typeof: 1,                      // distinct from the "disable" type if you prefer
-      p_idlogin_insert: idlogin || 1,
+      p_idlogin_insert: validLoginId,
       p_memo_date: nowISO,
       p_memo_subject: 'Réactivation du compte client',
       p_memo_body: 'Aucune raison spécifiée.',
